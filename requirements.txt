@@ -1,0 +1,10 @@
+fastapi
+uvicorn
+pydantic[email]
+sqlalchemy
+python-jose[cryptography]
+passlib[bcrypt]
+python-multipart
+razorpay
+fpdf2
+python-dotenv
