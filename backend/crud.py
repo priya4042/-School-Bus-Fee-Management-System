@@ -1,4 +1,3 @@
-
 from sqlalchemy.orm import Session
 from . import models, schemas
 import datetime
@@ -15,6 +14,57 @@ def log_action(db: Session, user_id: int, action: str, entity_type: str, entity_
     )
     db.add(log)
     db.commit()
+
+def create_user(db: Session, user: schemas.UserCreate):
+    db_user = models.User(
+        email=user.email,
+        full_name=user.full_name,
+        role=user.role,
+        password_hash=user.password, # In prod, use pwd_context.hash
+        phone_number=user.phone_number
+    )
+    db.add(db_user)
+    db.commit()
+    db.refresh(db_user)
+    return db_user
+
+def create_student(db: Session, student: schemas.StudentCreate):
+    db_student = models.Student(
+        admission_number=student.admission_number,
+        full_name=student.full_name,
+        class_name=student.class_name,
+        section=student.section,
+        route_id=student.route_id,
+        parent_id=student.parent_id
+    )
+    db.add(db_student)
+    db.commit()
+    db.refresh(db_student)
+    return db_student
+
+def register_parent_with_admission(db: Session, payload: dict):
+    # Check if student exists
+    student = db.query(models.Student).filter(models.Student.admission_number == payload["admissionNo"]).first()
+    if not student:
+        raise ValueError("Admission ID not found in records")
+    
+    # Create the user
+    db_user = models.User(
+        email=payload["email"],
+        full_name=payload["fullName"],
+        phone_number=payload["phone"],
+        password_hash=payload["password"], # hashed in endpoint
+        role=models.UserRole.PARENT
+    )
+    db.add(db_user)
+    db.flush() # Get ID
+    
+    # Link student to parent
+    student.parent_id = db_user.id
+    
+    db.commit()
+    db.refresh(db_user)
+    return db_user
 
 def mark_due_as_paid(db: Session, due_id: int, txn_id: str, method: str = "online"):
     db_due = db.query(models.MonthlyDue).filter(models.MonthlyDue.id == due_id).first()

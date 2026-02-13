@@ -1,5 +1,4 @@
-
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel, EmailStr, ConfigDict
 from typing import Optional, List, Any
 from datetime import datetime
 from .models import UserRole, PaymentStatus, TripStatus
@@ -17,9 +16,7 @@ class User(UserBase):
     id: int
     is_active: bool
     created_at: datetime
-
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 class RouteBase(BaseModel):
     name: str
@@ -33,9 +30,7 @@ class RouteCreate(RouteBase):
 class Route(RouteBase):
     id: int
     is_active: bool
-
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 class StudentBase(BaseModel):
     admission_number: str
@@ -51,9 +46,7 @@ class Student(StudentBase):
     id: int
     is_active: bool
     route: Optional[Route] = None
-
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 class DueBase(BaseModel):
     student_id: int
@@ -68,9 +61,7 @@ class Due(DueBase):
     discount: float
     total_due: float
     status: PaymentStatus
-
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 class AuditLogBase(BaseModel):
     user_id: Optional[int] = None
@@ -83,9 +74,7 @@ class AuditLogBase(BaseModel):
 
 class AuditLog(AuditLogBase):
     id: int
-
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 class NotificationBase(BaseModel):
     user_id: int
@@ -96,6 +85,4 @@ class NotificationBase(BaseModel):
 
 class Notification(NotificationBase):
     id: int
-
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)

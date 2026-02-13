@@ -1,11 +1,10 @@
-
 from fastapi import APIRouter, Depends, HTTPException, Query, UploadFile, File
 from sqlalchemy.orm import Session
 from typing import List
 import csv
 import io
-from ....database import get_db
-from .... import crud, schemas, models
+from backend.database import get_db
+from backend import crud, schemas, models
 
 router = APIRouter()
 

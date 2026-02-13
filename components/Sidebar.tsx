@@ -56,36 +56,46 @@ const Sidebar: React.FC<SidebarProps> = ({ user, onLogout, activeTab, setActiveT
                 isDriver ? driverLinks : parentLinks;
 
   return (
-    <div className="w-64 bg-slate-900 text-white flex flex-col hidden md:flex">
-      <div className="p-6 flex items-center gap-3 border-b border-slate-800">
-        <div className="bg-primary p-2 rounded-lg">
-          <i className="fas fa-bus text-xl"></i>
+    <div className="w-72 bg-slate-950 text-white flex flex-col hidden md:flex shrink-0 border-r border-white/5">
+      <div className="p-8 flex items-center gap-4">
+        <div className="bg-primary p-2.5 rounded-2xl shadow-xl shadow-primary/30">
+          <i className="fas fa-bus-alt text-2xl"></i>
         </div>
-        <span className="font-bold text-xl tracking-tight">{APP_NAME}</span>
+        <div className="flex flex-col">
+          <span className="font-black text-xl tracking-tighter uppercase">{APP_NAME}</span>
+          <span className="text-[8px] font-black text-primary uppercase tracking-[0.4em]">Fleet Intelligence</span>
+        </div>
       </div>
 
-      <nav className="flex-1 mt-6 px-4 space-y-2 overflow-y-auto">
+      <nav className="flex-1 mt-6 px-6 space-y-2 overflow-y-auto scrollbar-hide pb-10">
+        <p className="text-[9px] font-black text-slate-500 uppercase tracking-widest mb-4 ml-4">Main Portal</p>
         {links.map((link) => (
           <button
             key={link.name}
             onClick={() => setActiveTab(link.name)}
-            className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-colors text-left ${
-              activeTab === link.name ? 'bg-primary text-white shadow-lg shadow-primary/20' : 'text-slate-400 hover:bg-slate-800 hover:text-white'
+            className={`w-full flex items-center gap-4 px-5 py-4 rounded-2xl transition-all text-left group ${
+              activeTab === link.name 
+                ? 'bg-primary text-white shadow-2xl shadow-primary/40' 
+                : 'text-slate-500 hover:bg-white/5 hover:text-white'
             }`}
           >
-            <i className={`fas ${link.icon} w-5`}></i>
-            <span className="font-medium">{link.name}</span>
+            <i className={`fas ${link.icon} w-6 text-lg transition-transform group-hover:scale-110`}></i>
+            <span className="font-black text-xs uppercase tracking-widest">{link.name}</span>
           </button>
         ))}
       </nav>
 
-      <div className="p-4 mt-auto border-t border-slate-800">
+      <div className="p-6 mt-auto border-t border-white/5 bg-slate-900/30">
+        <div className="flex items-center gap-3 mb-6 p-3 bg-white/5 rounded-2xl border border-white/5">
+           <div className="w-2 h-2 rounded-full bg-success animate-pulse"></div>
+           <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Systems Connected</span>
+        </div>
         <button
           onClick={onLogout}
-          className="w-full flex items-center gap-3 px-4 py-3 text-slate-400 hover:bg-red-500/10 hover:text-red-500 rounded-lg transition-colors"
+          className="w-full flex items-center gap-4 px-5 py-4 text-slate-500 hover:bg-danger/10 hover:text-danger rounded-2xl transition-all group"
         >
-          <i className="fas fa-sign-out-alt w-5"></i>
-          <span className="font-medium">Logout</span>
+          <i className="fas fa-power-off w-6 text-lg transition-transform group-hover:rotate-12"></i>
+          <span className="font-black text-xs uppercase tracking-widest">Logout</span>
         </button>
       </div>
     </div>
