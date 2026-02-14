@@ -1,7 +1,8 @@
 
 import React, { useState } from 'react';
 import { User, UserRole } from '../types';
-import { APP_NAME, MOCK_ADMIN_USER, MOCK_PARENT_USER, MOCK_STUDENTS } from '../constants';
+import { APP_NAME } from '../constants';
+import { showToast } from '../lib/swal';
 
 interface LoginProps {
   onLogin: (user: User) => void;
@@ -14,7 +15,6 @@ const Login: React.FC<LoginProps> = ({ onLogin, onGoToRegister }) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   
-  // States for different forms
   const [parentAdm, setParentAdm] = useState('');
   const [parentPass, setParentPass] = useState('');
   const [email, setEmail] = useState('');
@@ -23,50 +23,64 @@ const Login: React.FC<LoginProps> = ({ onLogin, onGoToRegister }) => {
   const [otpSent, setOtpSent] = useState(false);
   const [otp, setOtp] = useState('');
 
+  const getRegisteredUsers = (): any[] => {
+    const data = localStorage.getItem('registered_users');
+    return data ? JSON.parse(data) : [];
+  };
+
   const handleLoginSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError('');
 
+    const users = getRegisteredUsers();
+
     setTimeout(() => {
       if (loginRole === UserRole.PARENT) {
-        if (method === 'phone' && !otpSent) {
-          if (phone.length < 10) {
-            setError('Please enter a valid 10-digit phone number');
+        if (method === 'phone') {
+          const registeredUser = users.find(u => u.phoneNumber === phone && u.role === UserRole.PARENT);
+          
+          if (!registeredUser) {
+            setError(`Mobile number ${phone} is not recognized. Please register your parent profile first.`);
             setLoading(false);
             return;
           }
-          setOtpSent(true);
-          setLoading(false);
-          return;
-        }
-        
-        // Fix: Use admission_number instead of admissionNumber
-        const student = MOCK_STUDENTS.find(s => s.admission_number === parentAdm);
-        if (method === 'admission' && !student && parentAdm !== '1001') {
-          setError('Invalid Admission Number');
-          setLoading(false);
-          return;
-        }
-        
-        onLogin(MOCK_PARENT_USER);
-      } else if (loginRole === UserRole.ADMIN) {
-        if (email === 'admin@school.com' && password === 'admin123') {
-          onLogin(MOCK_ADMIN_USER);
-        } else {
-          setError('Invalid Administrative Credentials');
+
+          if (!otpSent) {
+            setOtpSent(true);
+            showToast('Verification code sent to ' + phone, 'info');
+            setLoading(false);
+            return;
+          } else {
+            if (otp !== '123456') { 
+              setError('Security breach: Invalid verification code. (Hint: 123456)');
+              setLoading(false);
+              return;
+            }
+            onLogin(registeredUser);
+          }
+        } else if (method === 'admission') {
+          const registeredUser = users.find(u => u.admissionNumber === parentAdm && u.password === parentPass && u.role === UserRole.PARENT);
+          if (!registeredUser) {
+            setError('Account match failed. Check Admission ID/Password or register your profile.');
+            setLoading(false);
+            return;
+          }
+          onLogin(registeredUser);
         }
       } else {
-        // Teacher/Driver
-        onLogin({
-          id: Math.random().toString(),
-          fullName: loginRole === UserRole.DRIVER ? 'Driver Dave' : 'Teacher Sarah',
-          email: email || 'staff@school.com',
-          role: loginRole
-        });
+        // Staff/Admin login - Strict registration check
+        const registeredStaff = users.find(u => u.email === email && u.password === password && u.role === loginRole);
+        
+        if (!registeredStaff) {
+          setError(`No authorized ${loginRole.toLowerCase()} account found for ${email}. You must be registered by the system admin or register via the portal.`);
+          setLoading(false);
+          return;
+        }
+        onLogin(registeredStaff);
       }
       setLoading(false);
-    }, 1200);
+    }, 1000);
   };
 
   const getRoleLabel = () => {
@@ -79,10 +93,8 @@ const Login: React.FC<LoginProps> = ({ onLogin, onGoToRegister }) => {
   };
 
   return (
-    <div className="min-h-screen bg-slate-900 flex items-center justify-center p-6 bg-[radial-gradient(ellipse_at_top_left,_var(--tw-gradient-stops))] from-slate-800 via-slate-900 to-black">
+    <div className="min-h-screen bg-slate-900 flex items-center justify-center p-6 bg-[radial-gradient(ellipse_at_top_left,_var(--tw-gradient-stops))] from-slate-800 via-slate-900 to-black font-sans">
       <div className="max-w-md w-full space-y-8 animate-in fade-in zoom-in duration-500">
-        
-        {/* Brand Header */}
         <div className="text-center space-y-2">
            <div className="w-20 h-20 bg-primary rounded-3xl flex items-center justify-center mx-auto shadow-2xl shadow-primary/30 border-2 border-white/10 mb-6">
               <i className="fas fa-bus-alt text-4xl text-white"></i>
@@ -91,9 +103,7 @@ const Login: React.FC<LoginProps> = ({ onLogin, onGoToRegister }) => {
            <p className="text-slate-400 font-bold uppercase text-[10px] tracking-[0.4em]">Unified Transport Intelligence</p>
         </div>
 
-        {/* Main Auth Card */}
         <div className="bg-white rounded-[2.5rem] shadow-2xl overflow-hidden border border-white/10 relative">
-          {/* Header */}
           <div className={`p-8 text-white ${loginRole === UserRole.ADMIN ? 'bg-slate-800' : 'bg-primary'} relative overflow-hidden`}>
             <div className="absolute right-0 bottom-0 opacity-10 pointer-events-none">
               <i className={`fas ${loginRole === UserRole.ADMIN ? 'fa-lock' : 'fa-users'} text-[100px] translate-x-1/4 translate-y-1/4`}></i>
@@ -103,7 +113,6 @@ const Login: React.FC<LoginProps> = ({ onLogin, onGoToRegister }) => {
           </div>
 
           <div className="p-8">
-            {/* Role Switcher (Parent vs Staff) */}
             {loginRole !== UserRole.ADMIN && (
               <div className="flex gap-2 p-1.5 bg-slate-100 rounded-2xl mb-8">
                 <button 
@@ -122,7 +131,7 @@ const Login: React.FC<LoginProps> = ({ onLogin, onGoToRegister }) => {
             )}
 
             {error && (
-              <div className="mb-6 p-4 bg-red-50 border border-red-100 text-red-600 rounded-2xl text-xs font-bold flex items-center gap-3 animate-in shake duration-300">
+              <div className="mb-6 p-4 bg-red-50 border border-red-100 text-red-600 rounded-2xl text-[10px] font-bold uppercase flex items-center gap-3 animate-in shake duration-300">
                 <i className="fas fa-exclamation-triangle"></i>
                 {error}
               </div>
@@ -132,8 +141,8 @@ const Login: React.FC<LoginProps> = ({ onLogin, onGoToRegister }) => {
               {loginRole === UserRole.PARENT ? (
                 <>
                   <div className="flex border-b border-slate-100 mb-6">
-                    <button type="button" onClick={() => setMethod('phone')} className={`pb-3 px-4 text-[9px] font-black uppercase tracking-widest border-b-2 transition-all ${method === 'phone' ? 'border-primary text-primary' : 'border-transparent text-slate-400'}`}>Phone</button>
-                    <button type="button" onClick={() => setMethod('admission')} className={`pb-3 px-4 text-[9px] font-black uppercase tracking-widest border-b-2 transition-all ${method === 'admission' ? 'border-primary text-primary' : 'border-transparent text-slate-400'}`}>Admission ID</button>
+                    <button type="button" onClick={() => {setMethod('phone'); setError('');}} className={`pb-3 px-4 text-[9px] font-black uppercase tracking-widest border-b-2 transition-all ${method === 'phone' ? 'border-primary text-primary' : 'border-transparent text-slate-400'}`}>Phone</button>
+                    <button type="button" onClick={() => {setMethod('admission'); setError('');}} className={`pb-3 px-4 text-[9px] font-black uppercase tracking-widest border-b-2 transition-all ${method === 'admission' ? 'border-primary text-primary' : 'border-transparent text-slate-400'}`}>Admission ID</button>
                   </div>
 
                   {method === 'phone' ? (
@@ -154,7 +163,7 @@ const Login: React.FC<LoginProps> = ({ onLogin, onGoToRegister }) => {
                       </div>
                     ) : (
                       <div className="space-y-4 animate-in slide-in-from-right-4">
-                        <label className="block text-center text-[10px] font-black text-slate-400 uppercase tracking-widest">Enter 6-Digit OTP</label>
+                        <label className="block text-center text-[10px] font-black text-slate-400 uppercase tracking-widest">Enter Verification Code</label>
                         <input 
                           required
                           type="text" 
@@ -185,7 +194,7 @@ const Login: React.FC<LoginProps> = ({ onLogin, onGoToRegister }) => {
                           type="password" 
                           value={parentPass}
                           onChange={(e) => setParentPass(e.target.value)}
-                          className="w-full px-6 py-4 rounded-2xl bg-slate-50 border border-slate-100 focus:border-primary outline-none"
+                          className="w-full px-6 py-4 rounded-2xl bg-slate-50 border border-slate-100 focus:border-primary outline-none font-bold"
                           placeholder="••••••••"
                         />
                       </div>
@@ -193,7 +202,7 @@ const Login: React.FC<LoginProps> = ({ onLogin, onGoToRegister }) => {
                   )}
                 </>
               ) : (
-                <div className="space-y-4 animate-in fade-in">
+                <div className="space-y-4">
                   {loginRole !== UserRole.ADMIN && (
                     <div className="flex gap-2 p-1 bg-slate-50 rounded-xl mb-4">
                       <button 
@@ -213,7 +222,7 @@ const Login: React.FC<LoginProps> = ({ onLogin, onGoToRegister }) => {
                     </div>
                   )}
                   <div className="space-y-1">
-                    <label className="text-[10px] font-black text-slate-400 uppercase ml-1">Email Address</label>
+                    <label className="text-[10px] font-black text-slate-400 uppercase ml-1">Work Email</label>
                     <input 
                       required
                       type="email" 
@@ -230,7 +239,7 @@ const Login: React.FC<LoginProps> = ({ onLogin, onGoToRegister }) => {
                       type="password" 
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
-                      className="w-full px-6 py-4 rounded-2xl bg-slate-50 border border-slate-100 focus:border-primary outline-none"
+                      className="w-full px-6 py-4 rounded-2xl bg-slate-50 border border-slate-100 focus:border-primary outline-none font-bold"
                       placeholder="••••••••"
                     />
                   </div>
@@ -248,30 +257,18 @@ const Login: React.FC<LoginProps> = ({ onLogin, onGoToRegister }) => {
             </form>
 
             <div className="mt-8 text-center space-y-4">
-               {loginRole !== UserRole.ADMIN ? (
-                 <>
-                  <div className="flex items-center gap-4">
-                    <div className="h-px bg-slate-100 flex-1"></div>
-                    <span className="text-[8px] font-black text-slate-300 uppercase tracking-widest">Or login with</span>
-                    <div className="h-px bg-slate-100 flex-1"></div>
-                  </div>
-                  <button className="w-full py-3 border border-slate-100 rounded-xl text-slate-600 text-[10px] font-black uppercase flex items-center justify-center gap-3 hover:bg-slate-50 transition-all">
-                    <i className="fab fa-google text-red-500"></i> Google Account
-                  </button>
-                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
-                    New user? <button onClick={() => onGoToRegister(loginRole)} className="text-primary hover:underline underline-offset-4">Create Account</button>
-                  </p>
-                 </>
-               ) : (
-                 <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
-                   Access trouble? <button onClick={() => onGoToRegister(UserRole.ADMIN)} className="text-slate-800 hover:underline underline-offset-4">Register Admin</button>
-                 </p>
-               )}
+              <div className="flex items-center gap-4">
+                <div className="h-px bg-slate-100 flex-1"></div>
+                <span className="text-[8px] font-black text-slate-300 uppercase tracking-widest">Or create a profile</span>
+                <div className="h-px bg-slate-100 flex-1"></div>
+              </div>
+              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+                Need an account? <button onClick={() => onGoToRegister(loginRole)} className="text-primary hover:underline underline-offset-4">Register Now</button>
+              </p>
             </div>
           </div>
         </div>
 
-        {/* Hidden Footer Control */}
         <div className="text-center">
            {loginRole !== UserRole.ADMIN ? (
              <button 

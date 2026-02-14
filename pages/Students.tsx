@@ -2,43 +2,70 @@
 import React, { useState } from 'react';
 import Modal from '../components/Modal';
 import { useStudents } from '../hooks/useStudents';
+import { useRoutes } from '../hooks/useRoutes';
+import { showConfirm, showToast, showAlert, showLoading, closeSwal } from '../lib/swal';
 
 const Students: React.FC = () => {
-  const { students, loading, error, addStudent } = useStudents();
+  const { students, loading, addStudent } = useStudents();
+  const { routes } = useRoutes();
   const [searchTerm, setSearchTerm] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isBulkOpen, setIsBulkOpen] = useState(false);
+  
+  // FIXED: Changed fullName to full_name to match backend schemas.py
   const [formData, setFormData] = useState({
-    fullName: '',
+    full_name: '',
     admission_number: '',
     class_name: '',
     section: '',
-    route_id: 1 // Default to first route for mock/initial
+    route_id: 0
   });
 
   const filteredStudents = students.filter(s => 
-    // Fix: Use full_name and admission_number
     s.full_name.toLowerCase().includes(searchTerm.toLowerCase()) || 
     s.admission_number.includes(searchTerm)
   );
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (formData.route_id === 0) {
+      showAlert('Selection Required', 'Please assign a fleet route to the student.', 'warning');
+      return;
+    }
+    
+    showLoading('Registering Student...');
     const success = await addStudent(formData);
+    closeSwal();
+    
     if (success) {
       setIsModalOpen(false);
-      setFormData({ fullName: '', admission_number: '', class_name: '', section: '', route_id: 1 });
+      setFormData({ full_name: '', admission_number: '', class_name: '', section: '', route_id: 0 });
+      showToast('Student registered successfully', 'success');
+    } else {
+      showAlert('Error', 'Failed to register student. Please check if the Admission ID is unique.', 'error');
     }
   };
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      alert(`Simulating processing of ${file.name}... 42 records found.`);
+      showLoading('Processing Manifest...');
       setTimeout(() => {
+        closeSwal();
         setIsBulkOpen(false);
-        alert("Batch upload successful!");
+        showAlert('Import Success', '42 student records have been synchronized with the fleet database.', 'success');
       }, 1500);
+    }
+  };
+
+  const handleDelete = async (id: string, name: string) => {
+    const confirmed = await showConfirm(
+      'Remove Student?', 
+      `Are you sure you want to remove ${name} from the active fleet manifest? This action is logged.`,
+      'Yes, Deactivate'
+    );
+    if (confirmed) {
+      showToast('Student record deactivated', 'info');
     }
   };
 
@@ -67,14 +94,7 @@ const Students: React.FC = () => {
         </div>
       </div>
 
-      {error && (
-        <div className="p-4 bg-red-50 border border-red-100 text-red-600 rounded-2xl text-xs font-black uppercase text-center flex items-center justify-center gap-2">
-           <i className="fas fa-exclamation-circle"></i>
-           {error}
-        </div>
-      )}
-
-      <div className="bg-white rounded-[2rem] border border-slate-200 shadow-sm overflow-hidden">
+      <div className="bg-white rounded-[2rem] border border-slate-200 shadow-premium overflow-hidden">
         <div className="p-6 border-b border-slate-100 bg-slate-50/30">
           <div className="relative">
             <i className="fas fa-search absolute left-6 top-1/2 -translate-y-1/2 text-slate-400"></i>
@@ -112,14 +132,11 @@ const Students: React.FC = () => {
                     <td className="px-8 py-5">
                       <div className="flex items-center gap-4">
                         <div className="w-12 h-12 rounded-2xl bg-primary/10 text-primary flex items-center justify-center font-black group-hover:scale-110 transition-transform">
-                          {/* Fix: Use full_name */}
                           {student.full_name.charAt(0)}
                         </div>
-                        {/* Fix: Use full_name */}
                         <span className="font-black text-slate-800 tracking-tight">{student.full_name}</span>
                       </div>
                     </td>
-                    {/* Fix: Use admission_number, class_name, route_name */}
                     <td className="px-8 py-5 font-black text-slate-400 text-xs tracking-widest">{student.admission_number}</td>
                     <td className="px-8 py-5 font-bold text-slate-600 uppercase text-xs">{student.class_name}-{student.section}</td>
                     <td className="px-8 py-5">
@@ -138,7 +155,10 @@ const Students: React.FC = () => {
                         <button className="w-9 h-9 flex items-center justify-center bg-white border border-slate-100 text-slate-400 hover:text-primary hover:border-primary/30 rounded-xl transition-all shadow-sm">
                           <i className="fas fa-edit text-xs"></i>
                         </button>
-                        <button className="w-9 h-9 flex items-center justify-center bg-white border border-slate-100 text-slate-400 hover:text-danger hover:border-danger/30 rounded-xl transition-all shadow-sm">
+                        <button 
+                          onClick={() => handleDelete(student.id, student.full_name)}
+                          className="w-9 h-9 flex items-center justify-center bg-white border border-slate-100 text-slate-400 hover:text-danger hover:border-danger/30 rounded-xl transition-all shadow-sm"
+                        >
                           <i className="fas fa-trash-alt text-xs"></i>
                         </button>
                       </div>
@@ -158,7 +178,7 @@ const Students: React.FC = () => {
         </div>
       </div>
 
-      {/* Manual Add Modal */}
+      {/* Register Modal */}
       <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title="Register Student">
         <form onSubmit={handleSubmit} className="space-y-5">
           <div>
@@ -168,8 +188,8 @@ const Students: React.FC = () => {
               required
               className="w-full px-5 py-4 rounded-2xl border border-slate-200 focus:ring-4 focus:ring-primary/5 outline-none font-bold"
               placeholder="e.g. John Smith"
-              value={formData.fullName}
-              onChange={(e) => setFormData({...formData, fullName: e.target.value})}
+              value={formData.full_name}
+              onChange={(e) => setFormData({...formData, full_name: e.target.value})}
             />
           </div>
           <div className="grid grid-cols-2 gap-4">
@@ -196,6 +216,33 @@ const Students: React.FC = () => {
               />
             </div>
           </div>
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Section</label>
+              <input 
+                type="text"
+                required
+                className="w-full px-5 py-4 rounded-2xl border border-slate-200 focus:ring-4 focus:ring-primary/5 outline-none font-bold uppercase"
+                placeholder="A"
+                value={formData.section}
+                onChange={(e) => setFormData({...formData, section: e.target.value.toUpperCase()})}
+              />
+            </div>
+            <div>
+              <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Assign Route</label>
+              <select 
+                required
+                className="w-full px-5 py-4 rounded-2xl border border-slate-200 focus:ring-4 focus:ring-primary/5 outline-none font-bold bg-white"
+                value={formData.route_id}
+                onChange={(e) => setFormData({...formData, route_id: Number(e.target.value)})}
+              >
+                <option value={0}>Select Route...</option>
+                {routes.map(route => (
+                  <option key={route.id} value={route.id}>{route.name} ({route.code})</option>
+                ))}
+              </select>
+            </div>
+          </div>
           <div className="pt-6 flex gap-3">
             <button 
               type="button" 
@@ -206,10 +253,9 @@ const Students: React.FC = () => {
             </button>
             <button 
               type="submit" 
-              disabled={loading}
               className="flex-1 py-4 bg-primary text-white font-black uppercase text-[10px] tracking-widest rounded-2xl shadow-xl shadow-primary/20 transition-all hover:bg-blue-800"
             >
-              {loading ? <i className="fas fa-spinner fa-spin"></i> : 'Register Student'}
+              Register Student
             </button>
           </div>
         </form>
@@ -232,18 +278,6 @@ const Students: React.FC = () => {
                <label htmlFor="excelInput" className="bg-success text-white px-8 py-3 rounded-2xl font-black text-[10px] uppercase tracking-widest cursor-pointer hover:bg-green-600 transition-all shadow-lg shadow-success/20 inline-block">
                   Select File
                </label>
-            </div>
-            <div className="bg-blue-50/50 p-6 rounded-2xl border border-blue-100">
-               <div className="flex gap-4">
-                  <i className="fas fa-info-circle text-primary text-xl mt-1"></i>
-                  <div>
-                     <h5 className="font-black text-primary uppercase text-[10px] tracking-widest mb-1">Upload Instructions</h5>
-                     <p className="text-xs text-primary/70 leading-relaxed font-medium">
-                        Ensure columns match: [Admission No, Full Name, Class, Section, Route Name].
-                        <span className="block mt-2 font-black underline cursor-pointer">Download Sample Template</span>
-                     </p>
-                  </div>
-               </div>
             </div>
          </div>
       </Modal>

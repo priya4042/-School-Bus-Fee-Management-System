@@ -29,6 +29,9 @@ export interface User {
   role: UserRole;
   admissionNumber?: string;
   phoneNumber?: string;
+  staffId?: string;
+  licenseNo?: string;
+  location?: string;
   preferences?: UserPreferences;
 }
 
@@ -61,4 +64,6 @@ export interface Route {
   name: string;
   code: string;
   base_fee: number;
+  // Fix: Added distance_km property to match usage in pages/Routes.tsx
+  distance_km: number;
 }

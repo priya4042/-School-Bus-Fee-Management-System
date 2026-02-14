@@ -1,6 +1,7 @@
 
 import { useState } from 'react';
 import api from '../lib/api';
+import { showAlert } from '../lib/swal';
 
 export const useReceipts = () => {
   const [downloading, setDownloading] = useState<string | null>(null);
@@ -19,9 +20,10 @@ export const useReceipts = () => {
       document.body.appendChild(link);
       link.click();
       link.remove();
+      window.URL.revokeObjectURL(url);
     } catch (err) {
       console.error('Download failed:', err);
-      alert('Could not download receipt. Please try again later.');
+      showAlert('Vault Error', 'We could not generate the PDF receipt at this moment. Please try again later.', 'error');
     } finally {
       setDownloading(null);
     }

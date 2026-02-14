@@ -4,37 +4,44 @@ from sqlalchemy.orm import sessionmaker
 import os
 import re
 
-# Production handling for Postgres URLs
-# Handles: psql 'postgresql://user:pass@host/db'
-db_url = os.getenv("DATABASE_URL", "sqlite:///./school_bus.db")
+def get_url():
+    url = os.getenv("DATABASE_URL", "sqlite:///./school_bus.db")
+    
+    # Render/Neon specific cleanup
+    if url.startswith("psql "):
+        url = url.replace("psql ", "", 1)
+    
+    url = url.strip("'\" ")
+    
+    # Fix legacy postgres:// prefix
+    if url.startswith("postgres://"):
+        url = url.replace("postgres://", "postgresql://", 1)
+        
+    # ENFORCE SSL (Required for Neon/Render)
+    if "postgresql" in url:
+        if "sslmode" not in url:
+            separator = "&" if "?" in url else "?"
+            url += f"{separator}sslmode=require"
+        
+    return url
 
-# 1. Strip psql wrapper if present
-if db_url.startswith("psql "):
-    # Extracts everything between the first and last single quote
-    match = re.search(r"'(.*?)'", db_url)
-    if match:
-        db_url = match.group(1)
+SQLALCHEMY_DATABASE_URL = get_url()
 
-# 2. Fix legacy 'postgres://' prefix
-if db_url.startswith("postgres://"):
-    db_url = db_url.replace("postgres://", "postgresql://", 1)
-
-# 3. Handle SSL for Neon/Render
-if "postgresql" in db_url and "sslmode" not in db_url:
-    separator = "&" if "?" in db_url else "?"
-    db_url += f"{separator}sslmode=require"
-
-# 4. Connection Pooling (Critical for Free Tiers)
+# Optimization for Render Free Tier (Limit connections)
 engine_args = {
     "pool_pre_ping": True,
-    "pool_size": 5,
-    "max_overflow": 0, # Strict limit to stay under DB connection caps
 }
 
-if "sqlite" in db_url:
-    engine_args = {"connect_args": {"check_same_thread": False}}
+if SQLALCHEMY_DATABASE_URL.startswith("postgresql"):
+    engine_args.update({
+        "pool_size": 2, # Stay well within Neon's free limit
+        "max_overflow": 0,
+        "pool_timeout": 60
+    })
+else:
+    engine_args["connect_args"] = {"check_same_thread": False}
 
-engine = create_engine(db_url, **engine_args)
+engine = create_engine(SQLALCHEMY_DATABASE_URL, **engine_args)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 Base = declarative_base()
 

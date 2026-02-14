@@ -1,88 +1,87 @@
 
 import React, { useState } from 'react';
 import Modal from '../components/Modal';
-
-const MOCK_ROUTES = [
-  { id: 'r1', name: 'North Zone Express', code: 'NZ-01', distance: '12km', students: 45, fee: 1500 },
-  { id: 'r2', name: 'South City Route', code: 'SC-02', distance: '8km', students: 32, fee: 1200 },
-  { id: 'r3', name: 'East Highland', code: 'EH-03', distance: '20km', students: 28, fee: 2000 },
-];
+import { useRoutes } from '../hooks/useRoutes';
 
 const Routes: React.FC = () => {
+  const { routes, loading, addRoute } = useRoutes();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [formData, setFormData] = useState({
     name: '',
     code: '',
-    distance: '',
-    fee: 0
+    distance_km: 0,
+    base_fee: 0
   });
 
-  const handleCreateRoute = (e: React.FormEvent) => {
+  const handleCreateRoute = async (e: React.FormEvent) => {
     e.preventDefault();
-    alert(`Route ${formData.name} created successfully!`);
-    setIsModalOpen(false);
+    const success = await addRoute(formData);
+    if (success) {
+      setIsModalOpen(false);
+      setFormData({ name: '', code: '', distance_km: 0, base_fee: 0 });
+    }
   };
 
   return (
     <div className="space-y-6">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h2 className="text-2xl font-bold text-slate-800">Route Management</h2>
-          <p className="text-slate-50">Configure bus routes and pickup zones</p>
+          <h2 className="text-2xl font-black text-slate-800 tracking-tight">Route Intelligence</h2>
+          <p className="text-slate-500 font-bold uppercase text-[10px] tracking-widest">Fleet zones and pricing configuration</p>
         </div>
         <button 
           onClick={() => setIsModalOpen(true)}
-          className="bg-primary text-white px-4 py-2 rounded-lg font-bold flex items-center gap-2 hover:bg-blue-700 transition-colors shadow-lg shadow-primary/20"
+          className="bg-primary text-white px-8 py-3 rounded-2xl font-black text-[10px] uppercase tracking-widest flex items-center gap-3 hover:bg-blue-700 transition-all shadow-xl shadow-primary/20"
         >
           <i className="fas fa-plus"></i>
-          Create New Route
+          Provision New Route
         </button>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {MOCK_ROUTES.map((route) => (
-          <div key={route.id} className="bg-white rounded-xl border border-slate-200 p-6 shadow-sm hover:shadow-md transition-shadow">
-            <div className="flex justify-between items-start mb-4">
-              <div className="p-3 bg-blue-50 text-primary rounded-lg">
-                <i className="fas fa-route text-xl"></i>
-              </div>
-              <span className="text-xs font-bold text-slate-400 uppercase tracking-widest">{route.code}</span>
+        {loading ? (
+          <div className="col-span-full py-20 text-center">
+             <i className="fas fa-circle-notch fa-spin text-primary text-2xl"></i>
+          </div>
+        ) : routes.length > 0 ? routes.map((route) => (
+          <div key={route.id} className="bg-white rounded-[2rem] border border-slate-200 p-8 shadow-premium hover:shadow-2xl transition-all group overflow-hidden relative">
+            <div className="absolute top-0 right-0 p-8 opacity-5 group-hover:scale-110 transition-transform">
+              <i className="fas fa-route text-6xl text-primary"></i>
             </div>
-            <h3 className="text-lg font-bold text-slate-800">{route.name}</h3>
-            <div className="mt-4 space-y-2">
-              <div className="flex justify-between text-sm">
-                <span className="text-slate-500">Distance</span>
-                <span className="font-semibold text-slate-700">{route.distance}</span>
+            <div className="flex justify-between items-start mb-6">
+              <div className="p-4 bg-primary/10 text-primary rounded-2xl border border-primary/10 group-hover:bg-primary group-hover:text-white transition-colors">
+                <i className="fas fa-route text-2xl"></i>
               </div>
-              <div className="flex justify-between text-sm">
-                <span className="text-slate-500">Active Students</span>
-                <span className="font-semibold text-slate-700">{route.students}</span>
-              </div>
-              <div className="flex justify-between text-sm">
-                <span className="text-slate-500">Monthly Fee</span>
-                <span className="font-bold text-primary">₹{route.fee}</span>
-              </div>
+              <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest bg-slate-100 px-3 py-1 rounded-full">{route.code}</span>
             </div>
-            <div className="mt-6 pt-4 border-t border-slate-50 flex gap-2">
-              <button className="flex-1 py-2 text-xs font-bold text-slate-600 bg-slate-50 rounded-lg hover:bg-slate-100 transition-colors">
-                Edit Details
-              </button>
-              <button className="flex-1 py-2 text-xs font-bold text-slate-600 bg-slate-50 rounded-lg hover:bg-slate-100 transition-colors">
-                View Stops
-              </button>
+            <h3 className="text-xl font-black text-slate-800 tracking-tight">{route.name}</h3>
+            <div className="mt-8 space-y-4">
+              <div className="flex justify-between items-center p-3 bg-slate-50 rounded-xl border border-slate-100">
+                <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Distance</span>
+                <span className="text-sm font-bold text-slate-700">{route.distance_km} KM</span>
+              </div>
+              <div className="flex justify-between items-center p-3 bg-slate-50 rounded-xl border border-slate-100">
+                <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Pricing</span>
+                <span className="text-lg font-black text-primary">₹{route.base_fee.toLocaleString()}</span>
+              </div>
             </div>
           </div>
-        ))}
+        )) : (
+          <div className="col-span-full py-20 text-center glass-card rounded-[3rem]">
+             <i className="fas fa-map-marked text-4xl text-slate-200 mb-4"></i>
+             <p className="text-[10px] font-black text-slate-300 uppercase tracking-widest">No routes registered in fleet</p>
+          </div>
+        )}
       </div>
 
-      <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title="Create New Route">
-        <form onSubmit={handleCreateRoute} className="space-y-4">
+      <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title="Provision New Route">
+        <form onSubmit={handleCreateRoute} className="space-y-5">
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">Route Name</label>
+            <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Route Identifier (Name)</label>
             <input 
               required
               type="text" 
-              className="w-full px-4 py-2 rounded-lg border border-slate-200 outline-none focus:ring-2 focus:ring-primary/20" 
+              className="w-full px-5 py-4 rounded-2xl border border-slate-200 outline-none focus:ring-4 focus:ring-primary/5 font-bold" 
               placeholder="e.g. West Coast Link"
               value={formData.name}
               onChange={(e) => setFormData({...formData, name: e.target.value})}
@@ -90,42 +89,45 @@ const Routes: React.FC = () => {
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">Route Code</label>
+              <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Internal Code</label>
               <input 
                 required
                 type="text" 
-                className="w-full px-4 py-2 rounded-lg border border-slate-200 outline-none focus:ring-2 focus:ring-primary/20" 
+                className="w-full px-5 py-4 rounded-2xl border border-slate-200 outline-none focus:ring-4 focus:ring-primary/5 font-black text-primary uppercase" 
                 placeholder="WC-05"
                 value={formData.code}
-                onChange={(e) => setFormData({...formData, code: e.target.value})}
+                onChange={(e) => setFormData({...formData, code: e.target.value.toUpperCase()})}
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">Distance (km)</label>
+              <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Distance (KM)</label>
               <input 
                 required
-                type="text" 
-                className="w-full px-4 py-2 rounded-lg border border-slate-200 outline-none focus:ring-2 focus:ring-primary/20" 
-                placeholder="15km"
-                value={formData.distance}
-                onChange={(e) => setFormData({...formData, distance: e.target.value})}
+                type="number" 
+                className="w-full px-5 py-4 rounded-2xl border border-slate-200 outline-none focus:ring-4 focus:ring-primary/5 font-bold" 
+                placeholder="15"
+                value={formData.distance_km}
+                onChange={(e) => setFormData({...formData, distance_km: Number(e.target.value)})}
               />
             </div>
           </div>
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">Monthly Fee (INR)</label>
-            <input 
-              required
-              type="number" 
-              className="w-full px-4 py-2 rounded-lg border border-slate-200 outline-none focus:ring-2 focus:ring-primary/20" 
-              placeholder="1800"
-              value={formData.fee}
-              onChange={(e) => setFormData({...formData, fee: Number(e.target.value)})}
-            />
+            <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Base Monthly Fee (INR)</label>
+            <div className="relative">
+              <span className="absolute left-6 top-1/2 -translate-y-1/2 font-black text-slate-300">₹</span>
+              <input 
+                required
+                type="number" 
+                className="w-full pl-12 pr-6 py-4 rounded-2xl border border-slate-200 outline-none focus:ring-4 focus:ring-primary/5 font-black text-primary" 
+                placeholder="1800"
+                value={formData.base_fee}
+                onChange={(e) => setFormData({...formData, base_fee: Number(e.target.value)})}
+              />
+            </div>
           </div>
-          <div className="pt-4 flex gap-3">
-             <button type="button" onClick={() => setIsModalOpen(false)} className="flex-1 py-2 bg-slate-100 text-slate-600 font-bold rounded-lg">Cancel</button>
-             <button type="submit" className="flex-1 py-2 bg-primary text-white font-bold rounded-lg">Create Route</button>
+          <div className="pt-6 flex gap-3">
+             <button type="button" onClick={() => setIsModalOpen(false)} className="flex-1 py-4 bg-slate-100 text-slate-600 font-black uppercase text-[10px] tracking-widest rounded-2xl transition-all">Cancel</button>
+             <button type="submit" className="flex-1 py-4 bg-primary text-white font-black uppercase text-[10px] tracking-widest rounded-2xl shadow-xl shadow-primary/20 hover:bg-blue-800 transition-all">Activate Route</button>
           </div>
         </form>
       </Modal>

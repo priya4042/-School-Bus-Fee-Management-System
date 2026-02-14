@@ -3,79 +3,52 @@ from fastapi.middleware.cors import CORSMiddleware
 import os
 import json
 import logging
+import uvicorn
 from backend.api.v1 import endpoints
 from backend.database import engine, SessionLocal
 from backend import models
 
-# Configure logging
+# Configure standard uvicorn logging
 logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
+logger = logging.getLogger("uvicorn")
 
-# Initialize Database Tables
-try:
-    logger.info("Initializing database tables...")
-    models.Base.metadata.create_all(bind=engine)
-    logger.info("Database tables initialized successfully.")
-except Exception as e:
-    logger.error(f"Critical error initializing database: {e}")
+# Initialize Database with safety
+def init_db():
+    try:
+        logger.info("⚡ Attempting database connection...")
+        models.Base.metadata.create_all(bind=engine)
+        logger.info("✅ Database tables synchronized.")
+    except Exception as e:
+        logger.error(f"❌ DATABASE ERROR: {str(e)}")
+        # Don't crash immediately, allow health check to report status
 
-# Optional: Auto-seed on first run
 def initial_seed():
     db = SessionLocal()
     try:
-        if not db.query(models.User).filter(models.User.role == models.UserRole.ADMIN).first():
-            logger.info("No admin user found. Running seed data...")
+        admin_exists = db.query(models.User).filter(models.User.role == models.UserRole.ADMIN).first()
+        if not admin_exists:
+            logger.info("🌱 Seeding initial data...")
             from backend.seed import seed_data
             seed_data()
-            logger.info("Seed data completed.")
     except Exception as e:
-        logger.warning(f"Seed skipped or failed: {e}")
+        logger.warning(f"⚠️ Seed check skipped: {e}")
     finally:
         db.close()
 
+init_db()
 initial_seed()
 
 app = FastAPI(title="BusWay Pro API")
 
+# Updated CORS for Production
+frontend_url = os.getenv("FRONTEND_URL", "*")
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"], 
+    allow_origins=[frontend_url] if frontend_url != "*" else ["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
-class ConnectionManager:
-    def __init__(self):
-        self.active_connections: dict[int, list[WebSocket]] = {}
-
-    async def connect(self, websocket: WebSocket, bus_id: int):
-        await websocket.accept()
-        if bus_id not in self.active_connections:
-            self.active_connections[bus_id] = []
-        self.active_connections[bus_id].append(websocket)
-
-    def disconnect(self, websocket: WebSocket, bus_id: int):
-        if bus_id in self.active_connections:
-            self.active_connections[bus_id].remove(websocket)
-
-    async def broadcast(self, bus_id: int, message: dict):
-        if bus_id in self.active_connections:
-            for connection in self.active_connections[bus_id]:
-                await connection.send_json(message)
-
-manager = ConnectionManager()
-
-@app.websocket("/ws/tracking/{bus_id}")
-async def tracking_websocket(websocket: WebSocket, bus_id: int):
-    await manager.connect(websocket, bus_id)
-    try:
-        while True:
-            data = await websocket.receive_text()
-            message = json.loads(data)
-            await manager.broadcast(bus_id, message)
-    except WebSocketDisconnect:
-        manager.disconnect(websocket, bus_id)
 
 # API Route Registration
 app.include_router(endpoints.auth.router, prefix="/api/v1/auth", tags=["Authentication"])
@@ -96,8 +69,13 @@ app.include_router(endpoints.attendance.router, prefix="/api/v1/attendance", tag
 
 @app.get("/")
 def root():
-    return {"message": "BusWay Pro API is Online", "docs": "/docs"}
+    return {"message": "BusWay Pro API is Online", "status": "active"}
 
 @app.get("/health")
 def health_check():
-    return {"status": "healthy", "version": "1.2.0"}
+    return {"status": "healthy", "env": os.getenv("RENDER", "local")}
+
+if __name__ == "__main__":
+    # Render uses the PORT env var
+    port = int(os.environ.get("PORT", 8000))
+    uvicorn.run("main:app", host="0.0.0.0", port=port, reload=False)

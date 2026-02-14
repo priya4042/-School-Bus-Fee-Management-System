@@ -3,6 +3,7 @@ import React, { useState } from 'react';
 import { MOCK_STUDENTS } from '../constants';
 import { useAttendance } from '../hooks/useAttendance';
 import { useAuthStore } from '../store/authStore';
+import { showAlert } from '../lib/swal';
 
 const Attendance: React.FC = () => {
   const { user } = useAuthStore();
@@ -12,14 +13,12 @@ const Attendance: React.FC = () => {
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
   const [attendance, setAttendance] = useState<Record<string, boolean>>({});
 
-  // Fix: Use route_name instead of routeName
   const routeStudents = MOCK_STUDENTS.filter(s => s.route_name === selectedRoute);
 
   const toggleStatus = async (studentId: string) => {
     const currentStatus = attendance[studentId] || false;
     const newStatus = !currentStatus;
     
-    // Optimistic Update
     setAttendance(prev => ({
       ...prev,
       [studentId]: newStatus
@@ -33,7 +32,7 @@ const Attendance: React.FC = () => {
           ...prev,
           [studentId]: currentStatus
         }));
-        alert("Failed to sync attendance. Check connection.");
+        showAlert('Sync Failed', 'Could not synchronize attendance with the central cloud. Please check your internet connection.', 'error');
       }
     }
   };
@@ -43,7 +42,7 @@ const Attendance: React.FC = () => {
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h2 className="text-2xl font-black text-slate-800 tracking-tight">Fleet Attendance</h2>
-          <p className="text-slate-500 font-bold uppercase text-[10px] tracking-widest">Real-time Student Manifest Tracking</p>
+          <p className="text-slate-500 font-bold uppercase text-[10px] tracking-widest">Real-time Manifest Tracking</p>
         </div>
         <div className="flex gap-4">
            <div className="flex p-1 bg-white border border-slate-200 rounded-2xl shadow-sm">
@@ -85,7 +84,7 @@ const Attendance: React.FC = () => {
         ))}
       </div>
 
-      <div className="bg-white rounded-[2.5rem] border border-slate-200 shadow-sm overflow-hidden">
+      <div className="bg-white rounded-[2.5rem] border border-slate-200 shadow-premium overflow-hidden">
         <div className="p-8 bg-slate-50/50 border-b border-slate-100 flex items-center justify-between">
            <div className="flex items-center gap-4">
               <div className={`w-12 h-12 rounded-2xl flex items-center justify-center text-white shadow-lg ${selectedShift === 'MORNING' ? 'bg-orange-500 shadow-orange-500/20' : 'bg-primary shadow-primary/20'}`}>
@@ -115,18 +114,15 @@ const Attendance: React.FC = () => {
                   <td className="px-8 py-5">
                     <div className="flex items-center gap-4">
                       <div className="w-10 h-10 rounded-xl bg-slate-100 flex items-center justify-center text-slate-400 font-black">
-                        {/* Fix: Use full_name */}
                         {student.full_name.charAt(0)}
                       </div>
                       <div>
-                        {/* Fix: Use full_name and admission_number */}
                         <p className="font-black text-slate-800 tracking-tight">{student.full_name}</p>
                         <p className="text-[10px] text-slate-400 font-black uppercase tracking-widest">{student.admission_number}</p>
                       </div>
                     </div>
                   </td>
                   <td className="px-8 py-5">
-                    {/* Fix: Use class_name */}
                     <span className="text-xs font-bold text-slate-500 uppercase">{student.class_name}-{student.section}</span>
                   </td>
                   <td className="px-8 py-5 text-center">

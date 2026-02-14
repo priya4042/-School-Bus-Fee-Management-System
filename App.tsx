@@ -22,6 +22,7 @@ import AdminNotifications from './pages/AdminNotifications';
 import Notifications from './pages/Notifications';
 import AuditLogs from './pages/AuditLogs';
 import AdminManagement from './pages/AdminManagement';
+import UserDirectory from './pages/UserDirectory';
 import Sidebar from './components/Sidebar';
 import Topbar from './components/Topbar';
 import { useAuthStore } from './store/authStore';
@@ -31,28 +32,18 @@ const App: React.FC = () => {
   const [activeTab, setActiveTab] = useState('Dashboard');
   const [isRegistering, setIsRegistering] = useState(false);
   const [registerRole, setRegisterRole] = useState<UserRole | undefined>();
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   useEffect(() => {
-    // PWA Service Worker Registration
-    if ('serviceWorker' in navigator) {
-      window.addEventListener('load', () => {
-        navigator.serviceWorker.register('/service-worker.js').catch(err => {
-          console.error('ServiceWorker registration failed: ', err);
-        });
-      });
-    }
-
     const savedUser = localStorage.getItem('user');
     if (savedUser) {
       try {
         const parsed = JSON.parse(savedUser);
-        // Normalize name property
         if (parsed.full_name && !parsed.fullName) {
           parsed.fullName = parsed.full_name;
         }
         setUser(parsed);
       } catch (e) {
-        console.error("Failed to parse saved user", e);
         localStorage.removeItem('user');
       }
     }
@@ -60,7 +51,6 @@ const App: React.FC = () => {
   }, [setUser, setLoading]);
 
   const handleLogin = (userData: User) => {
-    // Normalize before saving
     if (userData.full_name && !userData.fullName) {
       userData.fullName = userData.full_name;
     }
@@ -116,6 +106,7 @@ const App: React.FC = () => {
         case 'Notifications': return <AdminNotifications />;
         case 'Audit Logs': return <AuditLogs />;
         case 'Admins': return <AdminManagement />;
+        case 'User Directory': return <UserDirectory />;
         default: return <AdminDashboard />;
       }
     } 
@@ -162,12 +153,19 @@ const App: React.FC = () => {
   };
 
   return (
-    <div className="flex min-h-screen bg-slate-50 selection:bg-primary/10">
-      <Sidebar user={user} onLogout={handleLogout} activeTab={activeTab} setActiveTab={setActiveTab} />
+    <div className="flex min-h-screen bg-slate-50 selection:bg-primary/10 font-sans">
+      <Sidebar 
+        user={user} 
+        onLogout={handleLogout} 
+        activeTab={activeTab} 
+        setActiveTab={setActiveTab} 
+        isOpen={isSidebarOpen}
+        onClose={() => setIsSidebarOpen(false)}
+      />
       <div className="flex-1 flex flex-col min-w-0">
-        <Topbar user={user} />
+        <Topbar user={user} onMenuClick={() => setIsSidebarOpen(true)} />
         <main className="p-4 md:p-8 flex-1 overflow-auto bg-[radial-gradient(circle_at_top_right,_var(--tw-gradient-stops))] from-white via-slate-50 to-slate-100">
-          <div className="max-w-7xl mx-auto">
+          <div className="max-w-7xl mx-auto animate-in fade-in duration-500">
             {renderContent()}
           </div>
         </main>

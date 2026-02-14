@@ -8,9 +8,11 @@ interface SidebarProps {
   onLogout: () => void;
   activeTab: string;
   setActiveTab: (tab: string) => void;
+  isOpen?: boolean;
+  onClose?: () => void;
 }
 
-const Sidebar: React.FC<SidebarProps> = ({ user, onLogout, activeTab, setActiveTab }) => {
+const Sidebar: React.FC<SidebarProps> = ({ user, onLogout, activeTab, setActiveTab, isOpen, onClose }) => {
   const isSuperAdmin = user.role === UserRole.SUPER_ADMIN;
   const isAdmin = user.role === UserRole.ADMIN || isSuperAdmin;
   const isTeacher = user.role === UserRole.TEACHER;
@@ -21,6 +23,7 @@ const Sidebar: React.FC<SidebarProps> = ({ user, onLogout, activeTab, setActiveT
     { name: 'Dashboard', icon: 'fa-chart-pie' },
     { name: 'Students', icon: 'fa-user-graduate' },
     { name: 'Attendance', icon: 'fa-clipboard-check' },
+    { name: 'User Directory', icon: 'fa-address-book' },
     { name: 'Routes', icon: 'fa-route' },
     { name: 'Buses', icon: 'fa-bus' },
     { name: 'Fees', icon: 'fa-file-invoice-dollar' },
@@ -55,50 +58,66 @@ const Sidebar: React.FC<SidebarProps> = ({ user, onLogout, activeTab, setActiveT
                 isTeacher ? teacherLinks : 
                 isDriver ? driverLinks : parentLinks;
 
+  const sidebarClasses = `
+    fixed inset-y-0 left-0 z-[60] w-72 bg-slate-950 text-white flex flex-col transition-transform duration-300 lg:static lg:translate-x-0
+    ${isOpen ? 'translate-x-0' : '-translate-x-full'}
+  `;
+
+  const handleTabClick = (name: string) => {
+    setActiveTab(name);
+    if (onClose) onClose();
+  };
+
   return (
-    <div className="w-72 bg-slate-950 text-white flex flex-col hidden md:flex shrink-0 border-r border-white/5">
-      <div className="p-8 flex items-center gap-4">
-        <div className="bg-primary p-2.5 rounded-2xl shadow-xl shadow-primary/30">
-          <i className="fas fa-bus-alt text-2xl"></i>
-        </div>
-        <div className="flex flex-col">
-          <span className="font-black text-xl tracking-tighter uppercase">{APP_NAME}</span>
-          <span className="text-[8px] font-black text-primary uppercase tracking-[0.4em]">Fleet Intelligence</span>
-        </div>
-      </div>
+    <>
+      {/* Mobile Overlay */}
+      {isOpen && (
+        <div 
+          className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[55] lg:hidden"
+          onClick={onClose}
+        ></div>
+      )}
 
-      <nav className="flex-1 mt-6 px-6 space-y-2 overflow-y-auto scrollbar-hide pb-10">
-        <p className="text-[9px] font-black text-slate-500 uppercase tracking-widest mb-4 ml-4">Main Portal</p>
-        {links.map((link) => (
+      <div className={sidebarClasses}>
+        <div className="p-8 flex items-center gap-4">
+          <div className="bg-primary p-2.5 rounded-2xl shadow-xl shadow-primary/30">
+            <i className="fas fa-bus-alt text-2xl text-white"></i>
+          </div>
+          <div className="flex flex-col">
+            <span className="font-black text-xl tracking-tighter uppercase leading-none">{APP_NAME}</span>
+            <span className="text-[8px] font-black text-primary uppercase tracking-[0.4em] mt-1">Enterprise Fleet</span>
+          </div>
+        </div>
+
+        <nav className="flex-1 mt-6 px-6 space-y-2 overflow-y-auto scrollbar-hide pb-10">
+          <p className="text-[9px] font-black text-slate-500 uppercase tracking-widest mb-4 ml-4">Main Portal</p>
+          {links.map((link) => (
+            <button
+              key={link.name}
+              onClick={() => handleTabClick(link.name)}
+              className={`w-full flex items-center gap-4 px-5 py-3.5 rounded-2xl transition-all text-left group ${
+                activeTab === link.name 
+                  ? 'bg-primary text-white shadow-2xl shadow-primary/40 scale-[1.02]' 
+                  : 'text-slate-500 hover:bg-white/5 hover:text-white'
+              }`}
+            >
+              <i className={`fas ${link.icon} w-6 text-lg transition-transform group-hover:scale-110`}></i>
+              <span className="font-bold text-xs uppercase tracking-widest">{link.name}</span>
+            </button>
+          ))}
+        </nav>
+
+        <div className="p-6 mt-auto border-t border-white/5 bg-slate-900/20">
           <button
-            key={link.name}
-            onClick={() => setActiveTab(link.name)}
-            className={`w-full flex items-center gap-4 px-5 py-4 rounded-2xl transition-all text-left group ${
-              activeTab === link.name 
-                ? 'bg-primary text-white shadow-2xl shadow-primary/40' 
-                : 'text-slate-500 hover:bg-white/5 hover:text-white'
-            }`}
+            onClick={onLogout}
+            className="w-full flex items-center gap-4 px-5 py-4 text-slate-500 hover:bg-danger/10 hover:text-danger rounded-2xl transition-all group"
           >
-            <i className={`fas ${link.icon} w-6 text-lg transition-transform group-hover:scale-110`}></i>
-            <span className="font-black text-xs uppercase tracking-widest">{link.name}</span>
+            <i className="fas fa-power-off w-6 text-lg transition-transform group-hover:rotate-12"></i>
+            <span className="font-bold text-xs uppercase tracking-widest">Logout</span>
           </button>
-        ))}
-      </nav>
-
-      <div className="p-6 mt-auto border-t border-white/5 bg-slate-900/30">
-        <div className="flex items-center gap-3 mb-6 p-3 bg-white/5 rounded-2xl border border-white/5">
-           <div className="w-2 h-2 rounded-full bg-success animate-pulse"></div>
-           <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Systems Connected</span>
         </div>
-        <button
-          onClick={onLogout}
-          className="w-full flex items-center gap-4 px-5 py-4 text-slate-500 hover:bg-danger/10 hover:text-danger rounded-2xl transition-all group"
-        >
-          <i className="fas fa-power-off w-6 text-lg transition-transform group-hover:rotate-12"></i>
-          <span className="font-black text-xs uppercase tracking-widest">Logout</span>
-        </button>
       </div>
-    </div>
+    </>
   );
 };
 

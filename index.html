@@ -7,22 +7,43 @@
     <title>BusWay Pro | Enterprise Fleet Manager</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,200..800;1,200..800&display=swap" rel="stylesheet">
+    <!-- Leaflet Maps -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <!-- SweetAlert2 for Premium Modals -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🚌</text></svg>">
     <script>
       tailwind.config = {
         theme: {
           extend: {
+            fontFamily: {
+              sans: ['"Plus Jakarta Sans"', 'sans-serif'],
+            },
             colors: {
-              primary: '#1e40af',
+              primary: {
+                DEFAULT: '#1e40af',
+                light: '#3b82f6',
+                dark: '#1e3a8a',
+              },
               secondary: '#64748b',
-              success: '#22c55e',
+              success: '#10b981',
               warning: '#f59e0b',
               danger: '#ef4444',
+              surface: '#f8fafc',
             },
             borderRadius: {
+              '2xl': '1rem',
               '3xl': '1.5rem',
               '4xl': '2rem',
               '5xl': '2.5rem',
+            },
+            boxShadow: {
+              'premium': '0 10px 40px -10px rgba(0, 0, 0, 0.05)',
+              'glass': 'inset 0 0 0 1px rgba(255, 255, 255, 0.1)',
             }
           }
         }
@@ -45,6 +66,13 @@
   }
 }
 </script>
+<style>
+  body { font-family: 'Plus Jakarta Sans', sans-serif; }
+  .scrollbar-hide::-webkit-scrollbar { display: none; }
+  #map { height: 100%; width: 100%; border-radius: 2rem; }
+  .swal2-popup { border-radius: 2rem !important; padding: 2.5rem !important; }
+  .swal2-confirm { background-color: #1e40af !important; border-radius: 1rem !important; }
+</style>
 <link rel="stylesheet" href="/index.css">
 </head>
 <body class="bg-slate-50 text-slate-900 overflow-x-hidden selection:bg-primary/10">

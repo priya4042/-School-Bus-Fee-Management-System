@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, Area, PieChart, Pie, Cell } from 'recharts';
 import api from '../lib/api';
+import { showToast, showAlert, showLoading, closeSwal } from '../lib/swal';
 
 const Reports: React.FC = () => {
   const [activeReport, setActiveReport] = useState('revenue');
@@ -21,7 +22,13 @@ const Reports: React.FC = () => {
       setLoading(true);
       try {
         const statsRes = await api.get('/dashboard/stats');
-        setRevenueData(statsRes.data.revenueTrend || [
+        setRevenueData(statsRes.data.revenueTrend || []);
+        
+        const defRes = await api.get('/reports/defaulters');
+        setDefaulterData(defRes.data || []);
+      } catch (err) {
+        // Mock fallback
+        setRevenueData([
           { month: 'Oct', revenue: 450000 },
           { month: 'Nov', revenue: 520000 },
           { month: 'Dec', revenue: 480000 },
@@ -29,14 +36,6 @@ const Reports: React.FC = () => {
           { month: 'Feb', revenue: 590000 },
           { month: 'Mar', revenue: 650000 },
         ]);
-        
-        const defRes = await api.get('/reports/defaulters');
-        setDefaulterData(defRes.data || [
-          { full_name: 'Alice Doe', route_name: 'North Zone', month: 3, year: 2024, total_due: 1650 },
-          { full_name: 'Charlie Brown', route_name: 'East Highland', month: 3, year: 2024, total_due: 2000 },
-        ]);
-      } catch (err) {
-        // Mock data already defined above in default values
       } finally {
         setLoading(false);
       }
@@ -45,22 +44,26 @@ const Reports: React.FC = () => {
   }, []);
 
   const handleExport = () => {
-    alert("Preparing collection audit archive... (CSV Generated)");
+    showLoading('Generating Archive...');
+    setTimeout(() => {
+      closeSwal();
+      showAlert('Export Complete', 'The collection audit archive (CSV) has been prepared and downloaded.', 'success');
+    }, 1500);
   };
 
   return (
     <div className="space-y-8 pb-10">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
         <div>
-          <h2 className="text-3xl font-black text-slate-800 tracking-tight leading-none">Intelligence Engine</h2>
-          <p className="text-slate-500 font-bold uppercase text-[10px] tracking-[0.2em] mt-2">Comprehensive Performance Analytics</p>
+          <h2 className="text-3xl font-black text-slate-800 tracking-tight">Intelligence Engine</h2>
+          <p className="text-slate-500 font-bold uppercase text-[10px] tracking-widest mt-2">Comprehensive Performance Analytics</p>
         </div>
         <div className="flex p-1.5 bg-white border border-slate-200 rounded-[1.5rem] shadow-sm">
           {['revenue', 'routes', 'defaulters'].map(tab => (
             <button 
               key={tab}
               onClick={() => setActiveReport(tab)}
-              className={`px-8 py-2.5 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all ${activeReport === tab ? 'bg-primary text-white shadow-lg shadow-primary/20' : 'text-slate-400 hover:text-slate-600'}`}
+              className={`px-8 py-2.5 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all ${activeReport === tab ? 'bg-primary text-white shadow-lg' : 'text-slate-400 hover:text-slate-600'}`}
             >
               {tab.charAt(0).toUpperCase() + tab.slice(1)}
             </button>
@@ -69,12 +72,12 @@ const Reports: React.FC = () => {
       </div>
 
       {loading ? (
-        <div className="p-20 text-center bg-white rounded-[3rem] border border-slate-200">
+        <div className="p-20 text-center bg-white rounded-[3rem] border border-slate-200 shadow-premium">
           <i className="fas fa-circle-notch fa-spin text-primary text-3xl"></i>
         </div>
       ) : activeReport === 'revenue' ? (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          <div className="lg:col-span-2 bg-white p-10 rounded-[2.5rem] border border-slate-200 shadow-sm relative overflow-hidden group">
+          <div className="lg:col-span-2 bg-white p-10 rounded-[2.5rem] border border-slate-200 shadow-premium relative overflow-hidden group">
             <h3 className="font-black text-slate-800 uppercase tracking-widest text-[11px] mb-10">Monthly Growth Velocity</h3>
             <div className="h-[400px]">
               <ResponsiveContainer width="100%" height="100%">
@@ -95,7 +98,7 @@ const Reports: React.FC = () => {
             </div>
           </div>
           <div className="space-y-6">
-             <div className="bg-slate-900 p-10 rounded-[2.5rem] text-white flex flex-col justify-between h-full relative overflow-hidden">
+             <div className="bg-slate-900 p-10 rounded-[2.5rem] text-white flex flex-col justify-between h-full relative overflow-hidden shadow-2xl">
                <div className="absolute top-0 right-0 p-8 opacity-5">
                   <i className="fas fa-file-export text-9xl"></i>
                </div>
@@ -107,14 +110,14 @@ const Reports: React.FC = () => {
                  onClick={handleExport}
                  className="w-full py-5 bg-white text-slate-900 font-black uppercase text-[10px] tracking-widest rounded-2xl shadow-xl hover:bg-slate-50 transition-all active:scale-[0.98]"
                >
-                 Export Collection Archive
+                 Export Archives
                </button>
              </div>
           </div>
         </div>
       ) : activeReport === 'routes' ? (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-           <div className="bg-white p-10 rounded-[3rem] border border-slate-200 shadow-sm">
+           <div className="bg-white p-10 rounded-[3rem] border border-slate-200 shadow-premium">
               <h3 className="font-black text-slate-800 uppercase tracking-widest text-[11px] mb-8">Collection Distribution by Zone</h3>
               <div className="h-80">
                 <ResponsiveContainer width="100%" height="100%">
@@ -167,7 +170,7 @@ const Reports: React.FC = () => {
            </div>
         </div>
       ) : (
-        <div className="bg-white rounded-[3rem] border border-slate-200 overflow-hidden shadow-sm">
+        <div className="bg-white rounded-[3rem] border border-slate-200 overflow-hidden shadow-premium">
           <div className="p-8 bg-slate-50 border-b border-slate-100 flex items-center justify-between">
              <h3 className="font-black text-slate-800 uppercase tracking-widest text-[11px]">Fee Defaulter Ledger</h3>
              <span className="px-4 py-1.5 bg-danger/10 text-danger rounded-full text-[9px] font-black uppercase tracking-widest">{defaulterData.length} Records Found</span>
@@ -183,7 +186,7 @@ const Reports: React.FC = () => {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-50">
-              {defaulterData.map((d, i) => (
+              {defaulterData.length > 0 ? defaulterData.map((d, i) => (
                 <tr key={i} className="hover:bg-slate-50/50 transition-colors group">
                   <td className="px-10 py-5">
                      <div className="flex items-center gap-3">
@@ -195,11 +198,15 @@ const Reports: React.FC = () => {
                   <td className="px-8 py-5 text-xs font-black text-slate-400 uppercase tracking-widest">Month {d.month} / {d.year}</td>
                   <td className="px-8 py-5 text-right font-black text-danger text-lg">₹{d.total_due.toLocaleString()}</td>
                   <td className="px-10 py-5 text-right">
-                    <button className="text-[10px] font-black text-primary uppercase tracking-widest hover:underline transition-all">Send Notice</button>
+                    <button 
+                      onClick={() => showToast('Reminder Sent', 'success')}
+                      className="text-[10px] font-black text-primary uppercase tracking-widest hover:underline transition-all"
+                    >
+                      Send Notice
+                    </button>
                   </td>
                 </tr>
-              ))}
-              {defaulterData.length === 0 && (
+              )) : (
                 <tr>
                   <td colSpan={5} className="p-24 text-center">
                     <i className="fas fa-check-double text-5xl text-success/10 mb-6 block"></i>

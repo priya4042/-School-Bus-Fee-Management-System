@@ -25,7 +25,26 @@ export const useRoutes = () => {
       await fetchRoutes();
       return true;
     } catch (err) {
-      console.error(err);
+      return false;
+    }
+  };
+
+  const updateRoute = async (id: string, routeData: any) => {
+    try {
+      await api.put(`/routes/${id}`, routeData);
+      await fetchRoutes();
+      return true;
+    } catch (err) {
+      return false;
+    }
+  };
+
+  const deleteRoute = async (id: string) => {
+    try {
+      await api.delete(`/routes/${id}`);
+      await fetchRoutes();
+      return true;
+    } catch (err) {
       return false;
     }
   };
@@ -34,5 +53,5 @@ export const useRoutes = () => {
     fetchRoutes();
   }, []);
 
-  return { routes, loading, addRoute, fetchRoutes };
+  return { routes, loading, addRoute, updateRoute, deleteRoute, fetchRoutes };
 };

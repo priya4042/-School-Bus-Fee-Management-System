@@ -22,16 +22,32 @@ export const useStudents = () => {
   };
 
   const addStudent = async (studentData: any) => {
-    setLoading(true);
     try {
       await api.post('/students', studentData);
       await fetchStudents();
       return true;
     } catch (err: any) {
-      setError(err.message || 'Failed to add student');
       return false;
-    } finally {
-      setLoading(false);
+    }
+  };
+
+  const updateStudent = async (id: string, studentData: any) => {
+    try {
+      await api.put(`/students/${id}`, studentData);
+      await fetchStudents();
+      return true;
+    } catch (err: any) {
+      return false;
+    }
+  };
+
+  const deleteStudent = async (id: string) => {
+    try {
+      await api.delete(`/students/${id}`);
+      await fetchStudents();
+      return true;
+    } catch (err: any) {
+      return false;
     }
   };
 
@@ -39,5 +55,5 @@ export const useStudents = () => {
     fetchStudents();
   }, []);
 
-  return { students, loading, error, fetchStudents, addStudent };
+  return { students, loading, error, fetchStudents, addStudent, updateStudent, deleteStudent };
 };

@@ -18,6 +18,17 @@ class User(UserBase):
     created_at: datetime
     model_config = ConfigDict(from_attributes=True)
 
+class LateFeeRuleBase(BaseModel):
+    daily_rate: float
+    grace_period_days: int
+    max_late_fee: float
+
+class LateFeeRule(LateFeeRuleBase):
+    id: Optional[int] = None
+    name: Optional[str] = None
+    is_active: bool = True
+    model_config = ConfigDict(from_attributes=True)
+
 class RouteBase(BaseModel):
     name: str
     code: str
