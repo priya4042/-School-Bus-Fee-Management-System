@@ -1,6 +1,7 @@
 
 import { useState } from 'react';
-import { showToast, showAlert, showLoading, closeSwal } from '../lib/swal';
+import { showToast } from '../lib/swal';
+import { PaymentStatus } from '../types';
 
 export type PaymentMethod = 'CARD' | 'UPI' | 'GPAY' | 'PAYTM';
 
@@ -40,33 +41,38 @@ export const usePayments = () => {
 
   const selectMethod = (method: PaymentMethod) => {
     if (method === 'GPAY' || method === 'PAYTM') {
+      // Simulate App Redirection immediately for Wallets
+      setPaymentState(prev => ({ ...prev, method, step: 'PROCESSING' }));
       processPayment(method);
     } else {
       setPaymentState(prev => ({ ...prev, method, step: 'DETAILS' }));
     }
   };
 
+  // Renamed from executePayment to processPayment to match pages/ParentDashboard.tsx and pages/Payments.tsx
   const processPayment = (method: PaymentMethod, details?: any) => {
     setPaymentState(prev => ({ ...prev, method, step: 'PROCESSING' }));
     
-    // Simulate Gateway Communication
+    // Simulate Network Latency / Bank Processing
     setTimeout(() => {
+      // Update local storage to persist the "PAID" status
+      const savedDues = localStorage.getItem('fee_dues');
+      if (savedDues) {
+        const dues = JSON.parse(savedDues);
+        const updatedDues = dues.map((d: any) => 
+          String(d.id) === String(paymentState.dueId) ? { ...d, status: PaymentStatus.PAID } : d
+        );
+        localStorage.setItem('fee_dues', JSON.stringify(updatedDues));
+      }
+
       setPaymentState(prev => ({ ...prev, step: 'SUCCESS' }));
+      showToast('Transaction Settled', 'success');
       
-      // Update local storage/state to reflect payment
-      const existingDues = JSON.parse(localStorage.getItem('fee_dues') || '[]');
-      const updatedDues = existingDues.map((d: any) => 
-        String(d.id) === String(paymentState.dueId) ? { ...d, status: 'PAID' } : d
-      );
-      localStorage.setItem('fee_dues', JSON.stringify(updatedDues));
-      
-      showToast('Payment Settled Successfully', 'success');
-      
-      // Refresh page after a delay to show updated ledger
+      // Auto-reload after success to refresh parent dashboard/ledger
       setTimeout(() => {
         window.location.reload();
-      }, 2000);
-    }, 2500);
+      }, 1500);
+    }, 3000);
   };
 
   return { 

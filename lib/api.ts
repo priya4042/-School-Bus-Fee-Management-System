@@ -1,11 +1,27 @@
 
+
 import axios from 'axios';
 
-// Prioritize the environment variable provided by Vercel/Vite
-const BASE_URL = (import.meta as any).env?.VITE_API_URL || 'http://localhost:8000/api/v1';
+/**
+ * BusWay Pro - Production API Bridge
+ */
+
+// Use standard Vite env access
+// Fix: Added type assertion to any on import.meta to satisfy TypeScript when accessing Vite-specific env properties
+const ENV_API_URL = (import.meta as any).env?.VITE_API_URL;
+
+const IS_LOCAL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+
+const getBaseUrl = () => {
+  if (ENV_API_URL) return ENV_API_URL;
+  if (IS_LOCAL) return 'http://localhost:8000/api/v1';
+  
+  // Default to relative path if no env is found on production
+  return '/api/v1'; 
+};
 
 const api = axios.create({
-  baseURL: BASE_URL,
+  baseURL: getBaseUrl(),
   headers: {
     'Content-Type': 'application/json',
   },
@@ -22,6 +38,10 @@ api.interceptors.request.use((config) => {
 api.interceptors.response.use(
   (response) => response,
   (error) => {
+    if (error.code === 'ERR_NETWORK' || error.code === 'ECONNABORTED') {
+      console.warn("Backend connection issue. Check VITE_API_URL.");
+    }
+    
     if (error.response?.status === 401) {
       localStorage.removeItem('token');
       localStorage.removeItem('user');

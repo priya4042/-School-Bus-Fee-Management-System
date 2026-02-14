@@ -1,3 +1,4 @@
+
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 import os
@@ -8,43 +9,43 @@ from backend.api.v1 import endpoints
 from backend.database import engine, SessionLocal
 from backend import models
 
-# Configure standard uvicorn logging
+# Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("uvicorn")
 
-# Initialize Database with safety
 def init_db():
     try:
-        logger.info("⚡ Attempting database connection...")
+        logger.info("⚡ Synchronizing database tables...")
         models.Base.metadata.create_all(bind=engine)
-        logger.info("✅ Database tables synchronized.")
+        logger.info("✅ Database ready.")
     except Exception as e:
-        logger.error(f"❌ DATABASE ERROR: {str(e)}")
-        # Don't crash immediately, allow health check to report status
+        logger.error(f"❌ DATABASE CONNECTION FAILED: {str(e)}")
 
 def initial_seed():
     db = SessionLocal()
     try:
-        admin_exists = db.query(models.User).filter(models.User.role == models.UserRole.ADMIN).first()
-        if not admin_exists:
-            logger.info("🌱 Seeding initial data...")
+        # Only seed if the database is empty
+        count = db.query(models.User).count()
+        if count == 0:
+            logger.info("🌱 Database empty. Running initial seed...")
             from backend.seed import seed_data
             seed_data()
     except Exception as e:
-        logger.warning(f"⚠️ Seed check skipped: {e}")
+        logger.warning(f"⚠️ Seeding check skipped: {e}")
     finally:
         db.close()
 
+# Start DB sync
 init_db()
 initial_seed()
 
 app = FastAPI(title="BusWay Pro API")
 
-# Updated CORS for Production
+# Setup CORS for live environment
 frontend_url = os.getenv("FRONTEND_URL", "*")
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[frontend_url] if frontend_url != "*" else ["*"],
+    allow_origins=["*", frontend_url],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -69,13 +70,10 @@ app.include_router(endpoints.attendance.router, prefix="/api/v1/attendance", tag
 
 @app.get("/")
 def root():
-    return {"message": "BusWay Pro API is Online", "status": "active"}
-
-@app.get("/health")
-def health_check():
-    return {"status": "healthy", "env": os.getenv("RENDER", "local")}
+    return {"status": "online", "app": "BusWay Pro API", "version": "1.2.0"}
 
 if __name__ == "__main__":
-    # Render uses the PORT env var
+    # REQUIRED: PORT environment variable for Render/Railway/Heroku
     port = int(os.environ.get("PORT", 8000))
+    # REQUIRED: 0.0.0.0 for external access
     uvicorn.run("main:app", host="0.0.0.0", port=port, reload=False)
