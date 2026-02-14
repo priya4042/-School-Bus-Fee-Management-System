@@ -11,8 +11,7 @@ export const useStudents = () => {
   const fetchStudents = async () => {
     setLoading(true);
     try {
-      // Relative path: 'students/' instead of '/students'
-      const response = await api.get('students/');
+      const response = await api.get('students');
       setStudents(response.data);
       setError(null);
     } catch (err: any) {
@@ -24,7 +23,7 @@ export const useStudents = () => {
 
   const addStudent = async (studentData: any) => {
     try {
-      await api.post('students/', studentData);
+      await api.post('students', studentData);
       await fetchStudents();
       return true;
     } catch (err: any) {
@@ -34,7 +33,7 @@ export const useStudents = () => {
 
   const updateStudent = async (id: string, studentData: any) => {
     try {
-      await api.put(`students/${id}/`, studentData);
+      await api.put(`students/${id}`, studentData);
       await fetchStudents();
       return true;
     } catch (err: any) {
@@ -44,7 +43,7 @@ export const useStudents = () => {
 
   const deleteStudent = async (id: string) => {
     try {
-      await api.delete(`students/${id}/`);
+      await api.delete(`students/${id}`);
       await fetchStudents();
       return true;
     } catch (err: any) {

@@ -9,8 +9,9 @@ def seed_data():
     
     db = SessionLocal()
     try:
-        # 1. Create Default Routes
+        # 1. Create Default Routes (Including Kangra as requested)
         routes = [
+            models.Route(name="Kangra Main Express", code="KNG-01", base_fee=1800.0, distance_km=15.0),
             models.Route(name="North Zone Express", code="NZ-01", base_fee=1500.0, distance_km=12.5),
             models.Route(name="South City Route", code="SC-02", base_fee=1200.0, distance_km=8.2),
             models.Route(name="East Highland", code="EH-03", base_fee=2000.0, distance_km=20.0),
@@ -25,14 +26,14 @@ def seed_data():
             email="admin@school.com",
             full_name="System Admin",
             role=models.UserRole.ADMIN,
-            password_hash="admin123" # Note: In production, use security.get_password_hash
+            password_hash="admin123" 
         )
         existing_admin = db.query(models.User).filter(models.User.email == admin.email).first()
         if not existing_admin:
             db.add(admin)
             
         db.commit()
-        print("✅ Seeding completed successfully.")
+        print("✅ Seeding completed successfully. Kangra route is now available.")
     except Exception as e:
         print(f"❌ Seeding failed: {e}")
         db.rollback()

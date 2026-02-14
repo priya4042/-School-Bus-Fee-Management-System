@@ -10,8 +10,8 @@ export const useRoutes = () => {
   const fetchRoutes = async () => {
     setLoading(true);
     try {
-      // Changed from '/routes/' to 'routes/'
-      const { data } = await api.get('routes/');
+      // Relative path matches baseURL/routes
+      const { data } = await api.get('routes');
       setRoutes(data);
     } catch (err) {
       console.error('Fetch Routes Error:', err);
@@ -22,7 +22,6 @@ export const useRoutes = () => {
 
   const addRoute = async (routeData: any) => {
     try {
-      // Ensure the payload matches the expected schema exactly
       const payload = {
         name: String(routeData.name).trim(),
         code: String(routeData.code).trim().toUpperCase(),
@@ -30,48 +29,30 @@ export const useRoutes = () => {
         base_fee: Number(routeData.base_fee)
       };
 
-      // Changed from '/routes/' to 'routes/'
-      const response = await api.post('routes/', payload);
-      console.log('Route added successfully:', response.data);
+      const response = await api.post('routes', payload);
       await fetchRoutes();
       return { success: true };
     } catch (err: any) {
-      let errorMessage = 'Unknown error occurred';
+      let errorMessage = 'Route provision failed';
       
       if (err.response) {
-        // Handle FastAPI detail array (422 Validation errors)
         const detail = err.response.data?.detail;
         if (Array.isArray(detail)) {
-          errorMessage = detail.map(d => `${d.loc.join('.')}: ${d.msg}`).join(', ');
-        } else if (typeof detail === 'string') {
-          errorMessage = detail;
+          errorMessage = detail.map(d => d.msg).join(', ');
         } else {
-          errorMessage = `Server Error (${err.response.status}): ${err.response.statusText}`;
+          errorMessage = detail || `Error ${err.response.status}`;
         }
-      } else if (err.request) {
-        errorMessage = 'Network Error: Cannot reach the backend server. Please ensure the API is running.';
       } else {
-        errorMessage = err.message;
+        errorMessage = "Network error: API unreachable.";
       }
 
-      console.error('Add Route API Error:', errorMessage);
       return { success: false, error: errorMessage };
-    }
-  };
-
-  const updateRoute = async (id: string, routeData: any) => {
-    try {
-      await api.put(`routes/${id}/`, routeData);
-      await fetchRoutes();
-      return true;
-    } catch (err) {
-      return false;
     }
   };
 
   const deleteRoute = async (id: string) => {
     try {
-      await api.delete(`routes/${id}/`);
+      await api.delete(`routes/${id}`);
       await fetchRoutes();
       return true;
     } catch (err) {
@@ -83,5 +64,5 @@ export const useRoutes = () => {
     fetchRoutes();
   }, []);
 
-  return { routes, loading, addRoute, updateRoute, deleteRoute, fetchRoutes };
+  return { routes, loading, addRoute, deleteRoute, fetchRoutes };
 };

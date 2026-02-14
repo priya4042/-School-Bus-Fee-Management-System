@@ -8,14 +8,13 @@ from backend import models, schemas
 
 router = APIRouter()
 
-@router.get("/", response_model=List[schemas.Route])
+@router.get("", response_model=List[schemas.Route])
 def read_routes(db: Session = Depends(get_db)):
     return db.query(models.Route).filter(models.Route.is_active == True).all()
 
-@router.post("/", response_model=schemas.Route)
+@router.post("", response_model=schemas.Route)
 def create_route(route: schemas.RouteCreate, db: Session = Depends(get_db)):
     try:
-        # Cross-version Pydantic support
         data = route.model_dump() if hasattr(route, 'model_dump') else route.dict()
         
         db_route = models.Route(**data)
@@ -25,17 +24,15 @@ def create_route(route: schemas.RouteCreate, db: Session = Depends(get_db)):
         return db_route
     except IntegrityError as e:
         db.rollback()
-        # Specific error for unique constraint violations (Route Code)
         raise HTTPException(
             status_code=400, 
-            detail=f"Integrity Error: A route with code '{route.code}' already exists."
+            detail=f"Route code '{route.code}' is already in use."
         )
     except Exception as e:
         db.rollback()
-        print(f"CRITICAL ERROR creating route: {str(e)}")
         raise HTTPException(
             status_code=500, 
-            detail=f"Internal Server Error: {str(e)}"
+            detail=str(e)
         )
 
 @router.delete("/{route_id}")

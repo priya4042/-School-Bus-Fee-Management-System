@@ -2,23 +2,26 @@
 import axios from 'axios';
 
 /**
- * BusWay Pro - Production API Bridge
+ * BusWay Pro - API Configuration
+ * Fixed: Ensured baseURL always ends with / to allow relative path calls.
  */
 
-// Use standard Vite env access via typed import.meta defined in vite-env.d.ts
 const ENV_API_URL = import.meta.env?.VITE_API_URL;
-
 const IS_LOCAL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
 
 const getBaseUrl = () => {
-  // We append a trailing slash to ensure relative axios calls (no leading slash) 
-  // correctly append to the base path rather than replacing it.
-  if (ENV_API_URL) return ENV_API_URL.endsWith('/') ? ENV_API_URL : `${ENV_API_URL}/`;
+  let base = '';
   
-  if (IS_LOCAL) return 'http://localhost:8000/api/v1/';
-  
-  // Default to relative path if no env is found on production
-  return '/api/v1/'; 
+  if (ENV_API_URL) {
+    base = ENV_API_URL;
+  } else if (IS_LOCAL) {
+    base = 'http://localhost:8000/api/v1';
+  } else {
+    base = '/api/v1';
+  }
+
+  // CRITICAL: Must end with / for relative paths (e.g. api.get('routes')) to work correctly
+  return base.endsWith('/') ? base : `${base}/`;
 };
 
 const api = axios.create({
@@ -40,7 +43,7 @@ api.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.code === 'ERR_NETWORK' || error.code === 'ECONNABORTED') {
-      console.warn("Backend connection issue. Check VITE_API_URL.");
+      console.error("Backend Connection Failed. Ensure your API server is running.");
     }
     
     if (error.response?.status === 401) {
