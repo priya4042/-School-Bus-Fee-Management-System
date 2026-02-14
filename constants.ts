@@ -1,5 +1,5 @@
 
-import { UserRole, PaymentStatus, Student, MonthlyDue } from './types';
+import { UserRole, PaymentStatus, Student, MonthlyDue, Route } from './types';
 
 export const APP_NAME = "BusWay Pro";
 
@@ -8,16 +8,17 @@ export const MONTHS = [
   "July", "August", "September", "October", "November", "December"
 ];
 
-// Re-mapped to numeric IDs for backend compatibility
+export const DEFAULT_ROUTES: Route[] = [
+  { id: 'r1', name: 'Kangra Main Express', code: 'KNG-01', base_fee: 1800, distance_km: 15 },
+  { id: 'r2', name: 'Kangra Valley Route', code: 'KNG-02', base_fee: 1600, distance_km: 12 },
+  { id: 'r3', name: 'Dharamshala Link', code: 'DHM-01', base_fee: 2200, distance_km: 25 },
+];
+
 export const MOCK_STUDENTS: Student[] = [
-  { id: '1', admission_number: '1001', full_name: 'Alice Doe', class_name: '5th', section: 'A', route_name: 'North Zone', base_fee: 1500, status: 'active' },
-  { id: '2', admission_number: '1002', full_name: 'Bob Smith', class_name: '3rd', section: 'B', route_name: 'South Zone', base_fee: 1800, status: 'active' },
-  { id: '3', admission_number: '1003', full_name: 'Charlie Brown', class_name: '7th', section: 'C', route_name: 'East Zone', base_fee: 2000, status: 'active' }
+  { id: 's1', admission_number: '1001', full_name: 'Rahul Sharma', class_name: '5th', section: 'A', route_name: 'Kangra Main Express', base_fee: 1800, status: 'active' },
+  { id: 's2', admission_number: '1002', full_name: 'Priya Verma', class_name: '3rd', section: 'B', route_name: 'Kangra Valley Route', base_fee: 1600, status: 'active' },
 ];
 
 export const MOCK_DUES: MonthlyDue[] = [
-  { id: '101', student_id: '1', month: 1, year: 2024, base_fee: 1500, late_fee: 0, discount: 0, total_due: 1500, due_date: '2024-01-10', status: PaymentStatus.PAID },
-  { id: '102', student_id: '1', month: 2, year: 2024, base_fee: 1500, late_fee: 0, discount: 0, total_due: 1500, due_date: '2024-02-10', status: PaymentStatus.PAID },
-  { id: '103', student_id: '1', month: 3, year: 2024, base_fee: 1500, late_fee: 150, discount: 0, total_due: 1650, due_date: '2024-03-10', status: PaymentStatus.OVERDUE },
-  { id: '104', student_id: '1', month: 4, year: 2024, base_fee: 1500, late_fee: 0, discount: 0, total_due: 1500, due_date: '2024-04-10', status: PaymentStatus.UNPAID },
+  { id: 'd1', student_id: 's1', month: 3, year: 2024, base_fee: 1800, late_fee: 0, discount: 0, total_due: 1800, due_date: '2024-03-10', status: PaymentStatus.UNPAID },
 ];

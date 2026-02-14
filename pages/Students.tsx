@@ -12,7 +12,6 @@ const Students: React.FC = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isBulkOpen, setIsBulkOpen] = useState(false);
   
-  // FIXED: Changed fullName to full_name to match backend schemas.py
   const [formData, setFormData] = useState({
     full_name: '',
     admission_number: '',
@@ -46,23 +45,11 @@ const Students: React.FC = () => {
     }
   };
 
-  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      showLoading('Processing Manifest...');
-      setTimeout(() => {
-        closeSwal();
-        setIsBulkOpen(false);
-        showAlert('Import Success', '42 student records have been synchronized with the fleet database.', 'success');
-      }, 1500);
-    }
-  };
-
   const handleDelete = async (id: string, name: string) => {
     const confirmed = await showConfirm(
       'Remove Student?', 
-      `Are you sure you want to remove ${name} from the active fleet manifest? This action is logged.`,
-      'Yes, Deactivate'
+      `Are you sure you want to remove ${name} from the manifest?`,
+      'Deactivate'
     );
     if (confirmed) {
       showToast('Student record deactivated', 'info');
@@ -71,22 +58,22 @@ const Students: React.FC = () => {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
         <div>
-          <h2 className="text-2xl font-black text-slate-800 tracking-tight">Student Directory</h2>
-          <p className="text-slate-500 font-bold uppercase text-[10px] tracking-widest">Manage bus registrations and student details</p>
+          <h2 className="text-xl md:text-2xl font-black text-slate-800 tracking-tight uppercase">Student Directory</h2>
+          <p className="text-slate-500 font-bold uppercase text-[9px] md:text-[10px] tracking-widest">Manage registrations and fleet details</p>
         </div>
-        <div className="flex gap-3">
+        <div className="flex flex-col sm:flex-row gap-2 md:gap-3">
           <button 
             onClick={() => setIsBulkOpen(true)}
-            className="bg-white border-2 border-slate-100 text-slate-600 px-6 py-3 rounded-2xl font-black text-[10px] uppercase tracking-widest flex items-center gap-3 hover:bg-slate-50 transition-all shadow-sm"
+            className="bg-white border-2 border-slate-100 text-slate-600 px-4 md:px-6 py-3 rounded-xl md:rounded-2xl font-black text-[9px] md:text-[10px] uppercase tracking-widest flex items-center justify-center gap-3 hover:bg-slate-50 transition-all shadow-sm"
           >
             <i className="fas fa-file-excel text-success"></i>
-            Bulk Upload
+            Bulk Import
           </button>
           <button 
             onClick={() => setIsModalOpen(true)}
-            className="bg-primary text-white px-8 py-3 rounded-2xl font-black text-[10px] uppercase tracking-widest flex items-center gap-3 hover:bg-blue-700 transition-all shadow-xl shadow-primary/20"
+            className="bg-primary text-white px-6 md:px-8 py-3 rounded-xl md:rounded-2xl font-black text-[9px] md:text-[10px] uppercase tracking-widest flex items-center justify-center gap-3 hover:bg-blue-700 transition-all shadow-xl shadow-primary/20"
           >
             <i className="fas fa-plus"></i>
             Add Student
@@ -94,70 +81,69 @@ const Students: React.FC = () => {
         </div>
       </div>
 
-      <div className="bg-white rounded-[2rem] border border-slate-200 shadow-premium overflow-hidden">
-        <div className="p-6 border-b border-slate-100 bg-slate-50/30">
+      <div className="bg-white rounded-2xl md:rounded-[2rem] border border-slate-200 shadow-premium overflow-hidden">
+        <div className="p-4 md:p-6 border-b border-slate-100 bg-slate-50/30">
           <div className="relative">
-            <i className="fas fa-search absolute left-6 top-1/2 -translate-y-1/2 text-slate-400"></i>
+            <i className="fas fa-search absolute left-5 md:left-6 top-1/2 -translate-y-1/2 text-slate-400"></i>
             <input 
               type="text" 
-              placeholder="Search by student name, admission number or class..." 
+              placeholder="Search by name or admission ID..." 
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-16 pr-6 py-4 rounded-2xl border border-slate-200 outline-none focus:ring-4 focus:ring-primary/5 transition-all font-bold text-slate-700"
+              className="w-full pl-12 md:pl-16 pr-6 py-3 md:py-4 rounded-xl md:rounded-2xl border border-slate-200 outline-none focus:ring-4 focus:ring-primary/5 transition-all font-bold text-sm text-slate-700"
             />
           </div>
         </div>
 
-        <div className="overflow-x-auto min-h-[400px]">
+        <div className="responsive-table-container">
           {loading ? (
             <div className="flex flex-col items-center justify-center h-80 gap-4">
               <i className="fas fa-circle-notch fa-spin text-primary text-3xl"></i>
               <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Syncing Records...</p>
             </div>
           ) : (
-            <table className="w-full text-left">
+            <table className="w-full text-left responsive-table">
               <thead>
                 <tr className="bg-slate-50/50 text-slate-400 text-[9px] font-black uppercase tracking-[0.2em] border-b border-slate-100">
-                  <th className="px-8 py-5">Student Identity</th>
-                  <th className="px-8 py-5">ID / Adm.</th>
-                  <th className="px-8 py-5">Class-Section</th>
-                  <th className="px-8 py-5">Assigned Route</th>
-                  <th className="px-8 py-5 text-center">Lifecycle</th>
-                  <th className="px-8 py-5 text-right">Actions</th>
+                  <th className="px-6 md:px-8 py-4 md:py-5">Student Identity</th>
+                  <th className="px-6 md:px-8 py-4 md:py-5">ID / Adm.</th>
+                  <th className="px-6 md:px-8 py-4 md:py-5">Class-Section</th>
+                  <th className="px-6 md:px-8 py-4 md:py-5">Assigned Route</th>
+                  <th className="px-6 md:px-8 py-4 md:py-5 text-center">Status</th>
+                  <th className="px-6 md:px-8 py-4 md:py-5 text-right">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-50">
                 {filteredStudents.length > 0 ? filteredStudents.map((student) => (
                   <tr key={student.id} className="hover:bg-slate-50/50 transition-colors group">
-                    <td className="px-8 py-5">
-                      <div className="flex items-center gap-4">
-                        <div className="w-12 h-12 rounded-2xl bg-primary/10 text-primary flex items-center justify-center font-black group-hover:scale-110 transition-transform">
+                    <td className="px-6 md:px-8 py-4 md:py-5">
+                      <div className="flex items-center gap-3 md:gap-4">
+                        <div className="w-10 h-10 md:w-12 md:h-12 rounded-lg md:rounded-2xl bg-primary/10 text-primary flex items-center justify-center font-black group-hover:scale-110 transition-transform text-sm">
                           {student.full_name.charAt(0)}
                         </div>
-                        <span className="font-black text-slate-800 tracking-tight">{student.full_name}</span>
+                        <span className="font-black text-slate-800 tracking-tight text-sm">{student.full_name}</span>
                       </div>
                     </td>
-                    <td className="px-8 py-5 font-black text-slate-400 text-xs tracking-widest">{student.admission_number}</td>
-                    <td className="px-8 py-5 font-bold text-slate-600 uppercase text-xs">{student.class_name}-{student.section}</td>
-                    <td className="px-8 py-5">
-                      <span className="inline-flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-slate-500 bg-slate-100 px-4 py-1.5 rounded-full border border-slate-200">
-                        <i className="fas fa-route text-[8px] text-primary/50"></i>
-                        {student.route_name || 'Assigned'}
+                    <td className="px-6 md:px-8 py-4 md:py-5 font-black text-slate-400 text-[10px] md:text-xs tracking-widest">{student.admission_number}</td>
+                    <td className="px-6 md:px-8 py-4 md:py-5 font-bold text-slate-600 uppercase text-[10px] md:text-xs">{student.class_name}-{student.section}</td>
+                    <td className="px-6 md:px-8 py-4 md:py-5">
+                      <span className="inline-flex items-center gap-2 text-[9px] md:text-[10px] font-black uppercase tracking-widest text-slate-500 bg-slate-100 px-3 md:px-4 py-1 md:py-1.5 rounded-full border border-slate-200">
+                        {student.route_name || 'KNG-01'}
                       </span>
                     </td>
-                    <td className="px-8 py-5 text-center">
-                      <span className="px-4 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest bg-success/10 text-success border border-success/10">
-                        {student.status}
+                    <td className="px-6 md:px-8 py-4 md:py-5 text-center">
+                      <span className="px-3 md:px-4 py-1 md:py-1.5 rounded-full text-[8px] md:text-[9px] font-black uppercase tracking-widest bg-success/10 text-success border border-success/10">
+                        ACTIVE
                       </span>
                     </td>
-                    <td className="px-8 py-5 text-right">
-                      <div className="flex justify-end gap-3 opacity-0 group-hover:opacity-100 transition-opacity">
-                        <button className="w-9 h-9 flex items-center justify-center bg-white border border-slate-100 text-slate-400 hover:text-primary hover:border-primary/30 rounded-xl transition-all shadow-sm">
+                    <td className="px-6 md:px-8 py-4 md:py-5 text-right">
+                      <div className="flex justify-end gap-2 md:gap-3">
+                        <button className="w-8 h-8 md:w-9 md:h-9 flex items-center justify-center bg-white border border-slate-100 text-slate-400 hover:text-primary hover:border-primary/30 rounded-lg md:rounded-xl transition-all shadow-sm">
                           <i className="fas fa-edit text-xs"></i>
                         </button>
                         <button 
                           onClick={() => handleDelete(student.id, student.full_name)}
-                          className="w-9 h-9 flex items-center justify-center bg-white border border-slate-100 text-slate-400 hover:text-danger hover:border-danger/30 rounded-xl transition-all shadow-sm"
+                          className="w-8 h-8 md:w-9 md:h-9 flex items-center justify-center bg-white border border-slate-100 text-slate-400 hover:text-danger hover:border-danger/30 rounded-lg md:rounded-xl transition-all shadow-sm"
                         >
                           <i className="fas fa-trash-alt text-xs"></i>
                         </button>
@@ -167,8 +153,8 @@ const Students: React.FC = () => {
                 )) : (
                   <tr>
                     <td colSpan={6} className="px-8 py-20 text-center">
-                       <i className="fas fa-users-slash text-4xl text-slate-200 mb-4"></i>
-                       <p className="text-[10px] font-black text-slate-300 uppercase tracking-widest">No matching students found in directory</p>
+                       <i className="fas fa-users-slash text-3xl text-slate-200 mb-4"></i>
+                       <p className="text-[10px] font-black text-slate-300 uppercase tracking-widest">No matching students</p>
                     </td>
                   </tr>
                 )}
@@ -178,108 +164,86 @@ const Students: React.FC = () => {
         </div>
       </div>
 
-      {/* Register Modal */}
       <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title="Register Student">
-        <form onSubmit={handleSubmit} className="space-y-5">
+        <form onSubmit={handleSubmit} className="space-y-4 md:space-y-5">
           <div>
-            <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Full Legal Name</label>
+            <label className="block text-[9px] md:text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5 ml-1">Legal Name</label>
             <input 
               type="text" 
               required
-              className="w-full px-5 py-4 rounded-2xl border border-slate-200 focus:ring-4 focus:ring-primary/5 outline-none font-bold"
+              className="w-full px-4 md:px-5 py-3 md:py-4 rounded-xl md:rounded-2xl border border-slate-200 outline-none font-bold text-sm"
               placeholder="e.g. John Smith"
               value={formData.full_name}
               onChange={(e) => setFormData({...formData, full_name: e.target.value})}
             />
           </div>
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Admission ID</label>
+              <label className="block text-[9px] md:text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5 ml-1">Admission ID</label>
               <input 
                 type="text" 
                 required
-                className="w-full px-5 py-4 rounded-2xl border border-slate-200 focus:ring-4 focus:ring-primary/5 outline-none font-black text-primary"
+                className="w-full px-4 md:px-5 py-3 md:py-4 rounded-xl md:rounded-2xl border border-slate-200 outline-none font-black text-primary text-sm"
                 placeholder="10XX"
                 value={formData.admission_number}
                 onChange={(e) => setFormData({...formData, admission_number: e.target.value})}
               />
             </div>
             <div>
-              <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Class/Grade</label>
+              <label className="block text-[9px] md:text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5 ml-1">Grade</label>
               <input 
                 type="text"
                 required
-                className="w-full px-5 py-4 rounded-2xl border border-slate-200 focus:ring-4 focus:ring-primary/5 outline-none font-bold uppercase"
+                className="w-full px-4 md:px-5 py-3 md:py-4 rounded-xl md:rounded-2xl border border-slate-200 outline-none font-bold uppercase text-sm"
                 placeholder="e.g. 5th"
                 value={formData.class_name}
                 onChange={(e) => setFormData({...formData, class_name: e.target.value})}
               />
             </div>
           </div>
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Section</label>
+              <label className="block text-[9px] md:text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5 ml-1">Section</label>
               <input 
                 type="text"
                 required
-                className="w-full px-5 py-4 rounded-2xl border border-slate-200 focus:ring-4 focus:ring-primary/5 outline-none font-bold uppercase"
+                className="w-full px-4 md:px-5 py-3 md:py-4 rounded-xl md:rounded-2xl border border-slate-200 outline-none font-bold uppercase text-sm"
                 placeholder="A"
                 value={formData.section}
                 onChange={(e) => setFormData({...formData, section: e.target.value.toUpperCase()})}
               />
             </div>
             <div>
-              <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Assign Route</label>
+              <label className="block text-[9px] md:text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5 ml-1">Assign Route</label>
               <select 
                 required
-                className="w-full px-5 py-4 rounded-2xl border border-slate-200 focus:ring-4 focus:ring-primary/5 outline-none font-bold bg-white"
+                className="w-full px-4 md:px-5 py-3 md:py-4 rounded-xl md:rounded-2xl border border-slate-200 outline-none font-bold bg-white text-sm"
                 value={formData.route_id}
                 onChange={(e) => setFormData({...formData, route_id: Number(e.target.value)})}
               >
                 <option value={0}>Select Route...</option>
                 {routes.map(route => (
-                  <option key={route.id} value={route.id}>{route.name} ({route.code})</option>
+                  <option key={route.id} value={route.id}>{route.name}</option>
                 ))}
               </select>
             </div>
           </div>
-          <div className="pt-6 flex gap-3">
+          <div className="pt-4 flex flex-col sm:flex-row gap-3">
             <button 
               type="button" 
               onClick={() => setIsModalOpen(false)}
-              className="flex-1 py-4 bg-slate-100 text-slate-600 font-black uppercase text-[10px] tracking-widest rounded-2xl"
+              className="w-full py-3 md:py-4 bg-slate-100 text-slate-600 font-black uppercase text-[9px] md:text-[10px] tracking-widest rounded-xl md:rounded-2xl"
             >
               Cancel
             </button>
             <button 
               type="submit" 
-              className="flex-1 py-4 bg-primary text-white font-black uppercase text-[10px] tracking-widest rounded-2xl shadow-xl shadow-primary/20 transition-all hover:bg-blue-800"
+              className="w-full py-3 md:py-4 bg-primary text-white font-black uppercase text-[9px] md:text-[10px] tracking-widest rounded-xl md:rounded-2xl shadow-xl shadow-primary/20 transition-all hover:bg-blue-800"
             >
               Register Student
             </button>
           </div>
         </form>
-      </Modal>
-
-      {/* Bulk Upload Modal */}
-      <Modal isOpen={isBulkOpen} onClose={() => setIsBulkOpen(false)} title="Excel Bulk Import">
-         <div className="space-y-8 py-4">
-            <div className="text-center p-8 border-2 border-dashed border-slate-100 rounded-[2rem] bg-slate-50/50">
-               <i className="fas fa-file-excel text-5xl text-success/20 mb-4"></i>
-               <h4 className="font-black text-slate-800 uppercase text-xs mb-2">Drop Excel File Here</h4>
-               <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-6">or click to browse from device</p>
-               <input 
-                  type="file" 
-                  accept=".csv,.xlsx,.xls" 
-                  onChange={handleFileUpload}
-                  className="hidden" 
-                  id="excelInput" 
-               />
-               <label htmlFor="excelInput" className="bg-success text-white px-8 py-3 rounded-2xl font-black text-[10px] uppercase tracking-widest cursor-pointer hover:bg-green-600 transition-all shadow-lg shadow-success/20 inline-block">
-                  Select File
-               </label>
-            </div>
-         </div>
       </Modal>
     </div>
   );

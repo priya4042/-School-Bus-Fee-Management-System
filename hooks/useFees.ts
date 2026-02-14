@@ -46,20 +46,9 @@ export const useFees = () => {
     }
   };
 
-  const applyDiscount = async (dueId: string | number, amount: number) => {
-    try {
-      await api.post(`fees/discount/${dueId}`, { amount });
-      await fetchDues();
-      return true;
-    } catch (err: any) {
-      setError(err.message || 'Failed to apply discount');
-      return false;
-    }
-  };
-
   useEffect(() => {
     fetchDues();
   }, []);
 
-  return { dues, loading, error, fetchDues, generateMonthlyBills, waiveLateFee, applyDiscount };
+  return { dues, loading, error, fetchDues, generateMonthlyBills, waiveLateFee };
 };

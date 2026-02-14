@@ -16,24 +16,17 @@ def read_routes(db: Session = Depends(get_db)):
 def create_route(route: schemas.RouteCreate, db: Session = Depends(get_db)):
     try:
         data = route.model_dump() if hasattr(route, 'model_dump') else route.dict()
-        
         db_route = models.Route(**data)
         db.add(db_route)
         db.commit()
         db.refresh(db_route)
         return db_route
-    except IntegrityError as e:
+    except IntegrityError:
         db.rollback()
-        raise HTTPException(
-            status_code=400, 
-            detail=f"Route code '{route.code}' is already in use."
-        )
+        raise HTTPException(status_code=400, detail="Route code already exists")
     except Exception as e:
         db.rollback()
-        raise HTTPException(
-            status_code=500, 
-            detail=str(e)
-        )
+        raise HTTPException(status_code=500, detail=str(e))
 
 @router.delete("/{route_id}")
 def delete_route(route_id: int, db: Session = Depends(get_db)):
