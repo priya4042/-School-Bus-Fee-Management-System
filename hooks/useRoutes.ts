@@ -21,14 +21,14 @@ export const useRoutes = () => {
 
   const addRoute = async (routeData: any) => {
     try {
-      // Explicitly calling the /routes endpoint relative to the v1 base
       const response = await api.post('/routes/', routeData);
       console.log('Route added successfully:', response.data);
       await fetchRoutes();
-      return true;
+      return { success: true };
     } catch (err: any) {
-      console.error('Add Route API Error:', err.response?.data || err.message);
-      return false;
+      const errorMessage = err.response?.data?.detail || err.message || 'Unknown network error';
+      console.error('Add Route API Error:', errorMessage);
+      return { success: false, error: errorMessage };
     }
   };
 

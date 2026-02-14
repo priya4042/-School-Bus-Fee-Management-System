@@ -19,20 +19,27 @@ const Routes: React.FC = () => {
     e.preventDefault();
     if (isSubmitting) return;
 
+    // Basic Validation
+    if (formData.distance_km <= 0 || formData.base_fee <= 0) {
+      showAlert('Invalid Input', 'Distance and Base Fee must be greater than zero.', 'warning');
+      return;
+    }
+
     setIsSubmitting(true);
     showLoading('Provisioning Fleet Route...');
     
-    const success = await addRoute(formData);
+    const result = await addRoute(formData);
     
     closeSwal();
     setIsSubmitting(false);
 
-    if (success) {
+    if (result.success) {
       setIsModalOpen(false);
       setFormData({ name: '', code: '', distance_km: 0, base_fee: 0 });
       showToast('Route activated successfully', 'success');
     } else {
-      showAlert('Provisioning Failed', 'Could not save route to the database. Please check if the Route Code is unique.', 'error');
+      // Show the specific error from the backend (result.error)
+      showAlert('Provisioning Failed', result.error || 'The system could not save the route. This is likely due to a duplicate Route Code or a lost database connection.', 'error');
     }
   };
 
@@ -118,6 +125,7 @@ const Routes: React.FC = () => {
               <input 
                 required
                 type="number" 
+                step="0.1"
                 className="w-full px-5 py-4 rounded-2xl border border-slate-200 outline-none focus:ring-4 focus:ring-primary/5 font-bold" 
                 placeholder="15"
                 value={formData.distance_km}
