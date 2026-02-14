@@ -11,7 +11,7 @@ export const useFees = () => {
   const fetchDues = async () => {
     setLoading(true);
     try {
-      const { data } = await api.get('/fees/dues');
+      const { data } = await api.get('fees/dues');
       setDues(data);
       setError(null);
     } catch (err: any) {
@@ -24,7 +24,7 @@ export const useFees = () => {
   const generateMonthlyBills = async () => {
     setLoading(true);
     try {
-      await api.post('/fees/generate-monthly');
+      await api.post('fees/generate-monthly');
       await fetchDues();
       return true;
     } catch (err: any) {
@@ -37,7 +37,7 @@ export const useFees = () => {
 
   const waiveLateFee = async (dueId: string | number) => {
     try {
-      await api.post(`/fees/waive/${dueId}`);
+      await api.post(`fees/waive/${dueId}`);
       await fetchDues();
       return true;
     } catch (err: any) {
@@ -48,8 +48,7 @@ export const useFees = () => {
 
   const applyDiscount = async (dueId: string | number, amount: number) => {
     try {
-      // In prod: await api.post(`/fees/discount/${dueId}`, { amount });
-      alert(`Applied discount of ₹${amount} to Due ID: ${dueId}`);
+      await api.post(`fees/discount/${dueId}`, { amount });
       await fetchDues();
       return true;
     } catch (err: any) {

@@ -10,7 +10,8 @@ export const useRoutes = () => {
   const fetchRoutes = async () => {
     setLoading(true);
     try {
-      const { data } = await api.get('/routes/');
+      // Changed from '/routes/' to 'routes/'
+      const { data } = await api.get('routes/');
       setRoutes(data);
     } catch (err) {
       console.error('Fetch Routes Error:', err);
@@ -29,7 +30,8 @@ export const useRoutes = () => {
         base_fee: Number(routeData.base_fee)
       };
 
-      const response = await api.post('/routes/', payload);
+      // Changed from '/routes/' to 'routes/'
+      const response = await api.post('routes/', payload);
       console.log('Route added successfully:', response.data);
       await fetchRoutes();
       return { success: true };
@@ -59,7 +61,7 @@ export const useRoutes = () => {
 
   const updateRoute = async (id: string, routeData: any) => {
     try {
-      await api.put(`/routes/${id}/`, routeData);
+      await api.put(`routes/${id}/`, routeData);
       await fetchRoutes();
       return true;
     } catch (err) {
@@ -69,7 +71,7 @@ export const useRoutes = () => {
 
   const deleteRoute = async (id: string) => {
     try {
-      await api.delete(`/routes/${id}/`);
+      await api.delete(`routes/${id}/`);
       await fetchRoutes();
       return true;
     } catch (err) {

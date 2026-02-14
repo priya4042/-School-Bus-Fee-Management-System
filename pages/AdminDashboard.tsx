@@ -15,7 +15,8 @@ const AdminDashboard: React.FC = () => {
   useEffect(() => {
     const fetchStats = async () => {
       try {
-        const { data } = await api.get('/dashboard/stats');
+        // Relative path: 'dashboard/stats'
+        const { data } = await api.get('dashboard/stats');
         setStats(data);
       } catch (err) {
         setStats({

@@ -24,7 +24,8 @@ const Topbar: React.FC<TopbarProps> = ({ user, onMenuClick }) => {
     if (!user?.id) return;
     const fetchNotifications = async () => {
       try {
-        const { data } = await api.get(`/notifications/my-alerts?user_id=${user.id}`);
+        // Relative path: 'notifications/my-alerts'
+        const { data } = await api.get(`notifications/my-alerts?user_id=${user.id}`);
         setNotifications(data);
       } catch (err) {
         setNotifications([

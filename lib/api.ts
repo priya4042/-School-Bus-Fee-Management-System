@@ -1,3 +1,4 @@
+
 import axios from 'axios';
 
 /**
@@ -10,11 +11,14 @@ const ENV_API_URL = import.meta.env?.VITE_API_URL;
 const IS_LOCAL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
 
 const getBaseUrl = () => {
-  if (ENV_API_URL) return ENV_API_URL;
-  if (IS_LOCAL) return 'http://localhost:8000/api/v1';
+  // We append a trailing slash to ensure relative axios calls (no leading slash) 
+  // correctly append to the base path rather than replacing it.
+  if (ENV_API_URL) return ENV_API_URL.endsWith('/') ? ENV_API_URL : `${ENV_API_URL}/`;
+  
+  if (IS_LOCAL) return 'http://localhost:8000/api/v1/';
   
   // Default to relative path if no env is found on production
-  return '/api/v1'; 
+  return '/api/v1/'; 
 };
 
 const api = axios.create({

@@ -126,4 +126,55 @@ const Routes: React.FC = () => {
               <input 
                 required
                 type="text" 
-                className="w-full px-5 py-4 rounded-2xl border border-slate-200 outline-none focus:ring
+                className="w-full px-5 py-4 rounded-2xl border border-slate-200 outline-none focus:ring-4 focus:ring-primary/5 font-bold uppercase" 
+                placeholder="R-XXX"
+                value={formData.code}
+                onChange={(e) => setFormData({...formData, code: e.target.value.toUpperCase()})}
+              />
+            </div>
+            <div>
+              <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Distance (KM)</label>
+              <input 
+                required
+                type="number" 
+                className="w-full px-5 py-4 rounded-2xl border border-slate-200 outline-none focus:ring-4 focus:ring-primary/5 font-bold" 
+                placeholder="0"
+                value={formData.distance_km || ''}
+                onChange={(e) => setFormData({...formData, distance_km: Number(e.target.value)})}
+              />
+            </div>
+          </div>
+          <div>
+            <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Monthly Base Fee (₹)</label>
+            <input 
+              required
+              type="number" 
+              className="w-full px-5 py-4 rounded-2xl border border-slate-200 outline-none focus:ring-4 focus:ring-primary/5 font-bold" 
+              placeholder="0"
+              value={formData.base_fee || ''}
+              onChange={(e) => setFormData({...formData, base_fee: Number(e.target.value)})}
+            />
+          </div>
+          <div className="pt-6 flex gap-3">
+            <button 
+              type="button" 
+              onClick={() => setIsModalOpen(false)}
+              className="flex-1 py-4 bg-slate-100 text-slate-600 font-black uppercase text-[10px] tracking-widest rounded-2xl"
+            >
+              Cancel
+            </button>
+            <button 
+              type="submit" 
+              className="flex-1 py-4 bg-primary text-white font-black uppercase text-[10px] tracking-widest rounded-2xl shadow-xl shadow-primary/20 transition-all hover:bg-blue-800"
+            >
+              Provision Route
+            </button>
+          </div>
+        </form>
+      </Modal>
+    </div>
+  );
+};
+
+// Fix: Add missing default export
+export default Routes;
