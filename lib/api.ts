@@ -1,14 +1,11 @@
-
-
 import axios from 'axios';
 
 /**
  * BusWay Pro - Production API Bridge
  */
 
-// Use standard Vite env access
-// Fix: Added type assertion to any on import.meta to satisfy TypeScript when accessing Vite-specific env properties
-const ENV_API_URL = (import.meta as any).env?.VITE_API_URL;
+// Use standard Vite env access via typed import.meta defined in vite-env.d.ts
+const ENV_API_URL = import.meta.env?.VITE_API_URL;
 
 const IS_LOCAL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
 

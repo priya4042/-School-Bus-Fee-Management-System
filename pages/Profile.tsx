@@ -13,7 +13,6 @@ const Profile: React.FC<{ user: User }> = ({ user }) => {
   const [message, setMessage] = useState('');
 
   useEffect(() => {
-    // Initial load from user object
     if (user.preferences) {
       setPreferences(user.preferences);
     }
@@ -29,11 +28,19 @@ const Profile: React.FC<{ user: User }> = ({ user }) => {
       setTimeout(() => setMessage(''), 3000);
     } catch (err) {
       console.error(err);
-      // Revert on error
       setPreferences(preferences);
     } finally {
       setUpdating(false);
     }
+  };
+
+  const getInitial = () => {
+    const name = user.fullName || user.full_name || 'U';
+    return name.charAt(0).toUpperCase();
+  };
+
+  const getFullName = () => {
+    return user.fullName || user.full_name || 'User';
   };
 
   return (
@@ -60,10 +67,10 @@ const Profile: React.FC<{ user: User }> = ({ user }) => {
           <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
             <div className="bg-slate-50 p-8 flex items-center gap-6 border-b border-slate-100">
               <div className="w-20 h-20 bg-primary text-white rounded-2xl flex items-center justify-center text-3xl font-bold shadow-lg shadow-primary/20 rotate-3">
-                {user.fullName?.charAt(0) || user.full_name?.charAt(0) || 'U'}
+                {getInitial()}
               </div>
               <div>
-                <h3 className="text-xl font-bold text-slate-800">{user.fullName || user.full_name}</h3>
+                <h3 className="text-xl font-bold text-slate-800">{getFullName()}</h3>
                 <p className="text-slate-500 text-sm">{user.email}</p>
                 <div className="flex gap-2 mt-2">
                    <span className="px-2 py-0.5 bg-primary/10 text-primary text-[10px] font-black uppercase rounded-full">
