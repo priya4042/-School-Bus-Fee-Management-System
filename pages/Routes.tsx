@@ -19,7 +19,12 @@ const Routes: React.FC = () => {
     e.preventDefault();
     if (isSubmitting) return;
 
-    // Basic Validation
+    // Field-level Validation
+    if (!formData.name.trim() || !formData.code.trim()) {
+      showAlert('Required Fields', 'Please provide both a Name and a Route Code.', 'warning');
+      return;
+    }
+
     if (formData.distance_km <= 0 || formData.base_fee <= 0) {
       showAlert('Invalid Input', 'Distance and Base Fee must be greater than zero.', 'warning');
       return;
@@ -38,8 +43,15 @@ const Routes: React.FC = () => {
       setFormData({ name: '', code: '', distance_km: 0, base_fee: 0 });
       showToast('Route activated successfully', 'success');
     } else {
-      // Show the specific error from the backend (result.error)
-      showAlert('Provisioning Failed', result.error || 'The system could not save the route. This is likely due to a duplicate Route Code or a lost database connection.', 'error');
+      // Prioritize the actual error from the API result
+      const specificError = result.error;
+      const genericError = 'The system encountered an error saving the route. Please check the developer console for details.';
+      
+      showAlert(
+        'Provisioning Failed', 
+        specificError || genericError, 
+        'error'
+      );
     }
   };
 
@@ -47,8 +59,8 @@ const Routes: React.FC = () => {
     <div className="space-y-6">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h2 className="text-2xl font-black text-slate-800 tracking-tight">Route Intelligence</h2>
-          <p className="text-slate-500 font-bold uppercase text-[10px] tracking-widest">Fleet zones and pricing configuration</p>
+          <h2 className="text-2xl font-black text-slate-800 tracking-tight uppercase">Fleet Intelligence</h2>
+          <p className="text-slate-500 font-bold uppercase text-[10px] tracking-widest">Configuration of zones and transport pricing</p>
         </div>
         <button 
           onClick={() => setIsModalOpen(true)}
@@ -88,7 +100,7 @@ const Routes: React.FC = () => {
             </div>
           </div>
         )) : (
-          <div className="col-span-full py-20 text-center glass-card rounded-[3rem]">
+          <div className="col-span-full py-20 text-center bg-white border border-dashed border-slate-200 rounded-[3rem]">
              <i className="fas fa-map-marked text-4xl text-slate-200 mb-4"></i>
              <p className="text-[10px] font-black text-slate-300 uppercase tracking-widest">No routes registered in fleet</p>
           </div>
@@ -114,54 +126,4 @@ const Routes: React.FC = () => {
               <input 
                 required
                 type="text" 
-                className="w-full px-5 py-4 rounded-2xl border border-slate-200 outline-none focus:ring-4 focus:ring-primary/5 font-black text-primary uppercase" 
-                placeholder="WC-05"
-                value={formData.code}
-                onChange={(e) => setFormData({...formData, code: e.target.value.toUpperCase()})}
-              />
-            </div>
-            <div>
-              <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Distance (KM)</label>
-              <input 
-                required
-                type="number" 
-                step="0.1"
-                className="w-full px-5 py-4 rounded-2xl border border-slate-200 outline-none focus:ring-4 focus:ring-primary/5 font-bold" 
-                placeholder="15"
-                value={formData.distance_km}
-                onChange={(e) => setFormData({...formData, distance_km: Number(e.target.value)})}
-              />
-            </div>
-          </div>
-          <div>
-            <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Base Monthly Fee (INR)</label>
-            <div className="relative">
-              <span className="absolute left-6 top-1/2 -translate-y-1/2 font-black text-slate-300">₹</span>
-              <input 
-                required
-                type="number" 
-                className="w-full pl-12 pr-6 py-4 rounded-2xl border border-slate-200 outline-none focus:ring-4 focus:ring-primary/5 font-black text-primary" 
-                placeholder="1800"
-                value={formData.base_fee}
-                onChange={(e) => setFormData({...formData, base_fee: Number(e.target.value)})}
-              />
-            </div>
-          </div>
-          <div className="pt-6 flex gap-3">
-             <button type="button" onClick={() => setIsModalOpen(false)} className="flex-1 py-4 bg-slate-100 text-slate-600 font-black uppercase text-[10px] tracking-widest rounded-2xl transition-all">Cancel</button>
-             <button 
-               type="submit" 
-               disabled={isSubmitting}
-               className="flex-1 py-4 bg-primary text-white font-black uppercase text-[10px] tracking-widest rounded-2xl shadow-xl shadow-primary/20 hover:bg-blue-800 transition-all disabled:opacity-50"
-             >
-               {isSubmitting ? <i className="fas fa-spinner fa-spin mr-2"></i> : null}
-               Activate Route
-             </button>
-          </div>
-        </form>
-      </Modal>
-    </div>
-  );
-};
-
-export default Routes;
+                className="w-full px-5 py-4 rounded-2xl border border-slate-200 outline-none focus:ring
