@@ -13,7 +13,7 @@ export const useRoutes = () => {
       const { data } = await api.get('/routes');
       setRoutes(data);
     } catch (err) {
-      console.error(err);
+      console.error('Fetch Routes Error:', err);
     } finally {
       setLoading(false);
     }
@@ -21,10 +21,13 @@ export const useRoutes = () => {
 
   const addRoute = async (routeData: any) => {
     try {
-      await api.post('/routes', routeData);
+      // Explicitly calling the /routes endpoint relative to the v1 base
+      const response = await api.post('/routes/', routeData);
+      console.log('Route added successfully:', response.data);
       await fetchRoutes();
       return true;
-    } catch (err) {
+    } catch (err: any) {
+      console.error('Add Route API Error:', err.response?.data || err.message);
       return false;
     }
   };

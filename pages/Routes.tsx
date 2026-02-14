@@ -2,10 +2,12 @@
 import React, { useState } from 'react';
 import Modal from '../components/Modal';
 import { useRoutes } from '../hooks/useRoutes';
+import { showToast, showLoading, closeSwal, showAlert } from '../lib/swal';
 
 const Routes: React.FC = () => {
   const { routes, loading, addRoute } = useRoutes();
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState({
     name: '',
     code: '',
@@ -15,10 +17,22 @@ const Routes: React.FC = () => {
 
   const handleCreateRoute = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (isSubmitting) return;
+
+    setIsSubmitting(true);
+    showLoading('Provisioning Fleet Route...');
+    
     const success = await addRoute(formData);
+    
+    closeSwal();
+    setIsSubmitting(false);
+
     if (success) {
       setIsModalOpen(false);
       setFormData({ name: '', code: '', distance_km: 0, base_fee: 0 });
+      showToast('Route activated successfully', 'success');
+    } else {
+      showAlert('Provisioning Failed', 'Could not save route to the database. Please check if the Route Code is unique.', 'error');
     }
   };
 
@@ -127,7 +141,14 @@ const Routes: React.FC = () => {
           </div>
           <div className="pt-6 flex gap-3">
              <button type="button" onClick={() => setIsModalOpen(false)} className="flex-1 py-4 bg-slate-100 text-slate-600 font-black uppercase text-[10px] tracking-widest rounded-2xl transition-all">Cancel</button>
-             <button type="submit" className="flex-1 py-4 bg-primary text-white font-black uppercase text-[10px] tracking-widest rounded-2xl shadow-xl shadow-primary/20 hover:bg-blue-800 transition-all">Activate Route</button>
+             <button 
+               type="submit" 
+               disabled={isSubmitting}
+               className="flex-1 py-4 bg-primary text-white font-black uppercase text-[10px] tracking-widest rounded-2xl shadow-xl shadow-primary/20 hover:bg-blue-800 transition-all disabled:opacity-50"
+             >
+               {isSubmitting ? <i className="fas fa-spinner fa-spin mr-2"></i> : null}
+               Activate Route
+             </button>
           </div>
         </form>
       </Modal>

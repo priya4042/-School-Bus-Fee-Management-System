@@ -1,3 +1,4 @@
+
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from typing import List
@@ -12,12 +13,19 @@ def read_routes(db: Session = Depends(get_db)):
 
 @router.post("/", response_model=schemas.Route)
 def create_route(route: schemas.RouteCreate, db: Session = Depends(get_db)):
-    # Use model_dump() for Pydantic v2 compatibility
-    db_route = models.Route(**route.model_dump())
-    db.add(db_route)
-    db.commit()
-    db.refresh(db_route)
-    return db_route
+    try:
+        # Cross-version Pydantic support (v1: .dict(), v2: .model_dump())
+        data = route.model_dump() if hasattr(route, 'model_dump') else route.dict()
+        
+        db_route = models.Route(**data)
+        db.add(db_route)
+        db.commit()
+        db.refresh(db_route)
+        return db_route
+    except Exception as e:
+        db.rollback()
+        print(f"ERROR creating route: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Internal Server Error: {str(e)}")
 
 @router.delete("/{route_id}")
 def delete_route(route_id: int, db: Session = Depends(get_db)):
