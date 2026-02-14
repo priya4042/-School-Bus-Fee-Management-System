@@ -1,28 +1,67 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { useBuses } from '../hooks/useBuses';
+import Modal from '../components/Modal';
+import { showConfirm, showToast, showLoading, closeSwal } from '../lib/swal';
 
 const Buses: React.FC = () => {
-  const { buses, loading } = useBuses();
+  const { buses, loading, registerBus, deleteBus } = useBuses();
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [formData, setFormData] = useState({
+    plate: '',
+    model: '',
+    capacity: 40,
+    status: 'Idle'
+  });
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    showLoading('Registering Asset...');
+    const success = await registerBus(formData);
+    closeSwal();
+    if (success) {
+      setIsModalOpen(false);
+      setFormData({ plate: '', model: '', capacity: 40, status: 'Idle' });
+      showToast('Vehicle registered to fleet', 'success');
+    }
+  };
+
+  const handleDelete = async (id: string, plate: string) => {
+    const confirmed = await showConfirm(
+      'Decommission Vehicle?',
+      `Are you sure you want to remove ${plate} from the active fleet?`,
+      'Remove Asset'
+    );
+    if (confirmed) {
+      showLoading('Removing Asset...');
+      await deleteBus(id);
+      closeSwal();
+      showToast('Asset removed successfully', 'info');
+    }
+  };
 
   return (
     <div className="space-y-6">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h2 className="text-2xl font-black text-slate-800 tracking-tight">Fleet Asset Control</h2>
+          <h2 className="text-2xl font-black text-slate-800 tracking-tight uppercase">Fleet Asset Control</h2>
           <p className="text-slate-500 font-bold uppercase text-[10px] tracking-widest">Active vehicle inventory and monitoring</p>
         </div>
-        <button className="bg-primary text-white px-8 py-3 rounded-2xl font-black text-[10px] uppercase tracking-widest flex items-center gap-3 hover:bg-blue-700 transition-all shadow-xl shadow-primary/20">
+        <button 
+          onClick={() => setIsModalOpen(true)}
+          className="bg-primary text-white px-8 py-3 rounded-2xl font-black text-[10px] uppercase tracking-widest flex items-center gap-3 hover:bg-blue-700 transition-all shadow-xl shadow-primary/20"
+        >
           <i className="fas fa-bus-alt"></i>
           Register Fleet Asset
         </button>
       </div>
 
       <div className="bg-white rounded-[2.5rem] border border-slate-200 overflow-hidden shadow-premium">
-        <div className="overflow-x-auto">
+        <div className="overflow-x-auto min-h-[400px]">
           {loading ? (
-             <div className="p-20 text-center">
-                <i className="fas fa-circle-notch fa-spin text-primary text-2xl"></i>
+             <div className="flex flex-col items-center justify-center h-80 gap-4">
+                <i className="fas fa-circle-notch fa-spin text-primary text-3xl"></i>
+                <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Scanning Hangar...</p>
              </div>
           ) : (
             <table className="w-full text-left">
@@ -63,16 +102,24 @@ const Buses: React.FC = () => {
                       </span>
                     </td>
                     <td className="px-8 py-5 text-right">
-                      <button className="w-10 h-10 bg-slate-50 hover:bg-slate-100 rounded-xl transition-all text-slate-400 flex items-center justify-center mx-auto lg:ml-auto lg:mr-0">
-                        <i className="fas fa-ellipsis-v"></i>
-                      </button>
+                      <div className="flex justify-end gap-2">
+                        <button className="w-9 h-9 bg-slate-50 hover:bg-slate-100 rounded-xl transition-all text-slate-400 flex items-center justify-center">
+                          <i className="fas fa-edit text-xs"></i>
+                        </button>
+                        <button 
+                          onClick={() => handleDelete(bus.id, bus.plate)}
+                          className="w-9 h-9 bg-slate-50 hover:bg-red-50 hover:text-red-500 rounded-xl transition-all text-slate-400 flex items-center justify-center"
+                        >
+                          <i className="fas fa-trash-alt text-xs"></i>
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 )) : (
                   <tr>
-                    <td colSpan={4} className="p-20 text-center">
-                       <i className="fas fa-truck-monster text-4xl text-slate-100 mb-4"></i>
-                       <p className="text-[10px] font-black text-slate-300 uppercase tracking-widest">No assets logged in fleet</p>
+                    <td colSpan={4} className="p-32 text-center">
+                       <i className="fas fa-truck-monster text-5xl text-slate-100 mb-6 block"></i>
+                       <p className="text-[11px] font-black text-slate-300 uppercase tracking-[0.4em]">Zero assets logged in fleet</p>
                     </td>
                   </tr>
                 )}
@@ -81,6 +128,72 @@ const Buses: React.FC = () => {
           )}
         </div>
       </div>
+
+      <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title="Register Fleet Asset">
+        <form onSubmit={handleSubmit} className="space-y-5">
+          <div>
+            <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Registration Plate</label>
+            <input 
+              required
+              type="text" 
+              className="w-full px-5 py-4 rounded-2xl border border-slate-200 focus:ring-4 focus:ring-primary/5 outline-none font-bold uppercase" 
+              placeholder="e.g. KNG-01-A"
+              value={formData.plate}
+              onChange={(e) => setFormData({...formData, plate: e.target.value.toUpperCase()})}
+            />
+          </div>
+          <div>
+            <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Vehicle Model / Make</label>
+            <input 
+              required
+              type="text" 
+              className="w-full px-5 py-4 rounded-2xl border border-slate-200 focus:ring-4 focus:ring-primary/5 outline-none font-bold" 
+              placeholder="e.g. Tata Starbus"
+              value={formData.model}
+              onChange={(e) => setFormData({...formData, model: e.target.value})}
+            />
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Seating Capacity</label>
+              <input 
+                required
+                type="number" 
+                className="w-full px-5 py-4 rounded-2xl border border-slate-200 outline-none font-bold" 
+                value={formData.capacity}
+                onChange={(e) => setFormData({...formData, capacity: Number(e.target.value)})}
+              />
+            </div>
+            <div>
+              <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Initial Status</label>
+              <select 
+                className="w-full px-5 py-4 rounded-2xl border border-slate-200 outline-none font-bold bg-white"
+                value={formData.status}
+                onChange={(e) => setFormData({...formData, status: e.target.value})}
+              >
+                <option value="Idle">Idle</option>
+                <option value="On Route">On Route</option>
+                <option value="Maintenance">Maintenance</option>
+              </select>
+            </div>
+          </div>
+          <div className="pt-6 flex gap-3">
+            <button 
+              type="button" 
+              onClick={() => setIsModalOpen(false)}
+              className="flex-1 py-4 bg-slate-100 text-slate-600 font-black uppercase text-[10px] tracking-widest rounded-2xl"
+            >
+              Cancel
+            </button>
+            <button 
+              type="submit" 
+              className="flex-1 py-4 bg-primary text-white font-black uppercase text-[10px] tracking-widest rounded-2xl shadow-xl shadow-primary/20 transition-all hover:bg-blue-800"
+            >
+              Register Asset
+            </button>
+          </div>
+        </form>
+      </Modal>
     </div>
   );
 };

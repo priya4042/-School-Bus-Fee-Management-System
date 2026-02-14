@@ -12,7 +12,7 @@ export const useBuses = () => {
       const { data } = await api.get('/buses');
       setBuses(data);
     } catch (err) {
-      console.error(err);
+      console.error('Failed to fetch buses', err);
     } finally {
       setLoading(false);
     }
@@ -20,11 +20,21 @@ export const useBuses = () => {
 
   const registerBus = async (busData: any) => {
     try {
-      await api.post('/buses', busData);
-      await fetchBuses();
+      const { data } = await api.post('/buses', busData);
+      setBuses(prev => [...prev, data]);
       return true;
     } catch (err) {
       console.error(err);
+      return false;
+    }
+  };
+
+  const deleteBus = async (id: string) => {
+    try {
+      await api.delete(`/buses/${id}`);
+      setBuses(prev => prev.filter(b => b.id !== id));
+      return true;
+    } catch (err) {
       return false;
     }
   };
@@ -33,5 +43,5 @@ export const useBuses = () => {
     fetchBuses();
   }, []);
 
-  return { buses, loading, registerBus, fetchBuses };
+  return { buses, loading, registerBus, deleteBus, fetchBuses };
 };
