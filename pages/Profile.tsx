@@ -13,7 +13,7 @@ const Profile: React.FC<{ user: User }> = ({ user }) => {
   const [message, setMessage] = useState('');
 
   useEffect(() => {
-    if (user.preferences) {
+    if (user && user.preferences) {
       setPreferences(user.preferences);
     }
   }, [user]);
@@ -23,9 +23,11 @@ const Profile: React.FC<{ user: User }> = ({ user }) => {
     setPreferences(newPrefs);
     setUpdating(true);
     try {
-      await api.put(`/users/${user.id}/preferences`, newPrefs);
-      setMessage('Preferences updated successfully');
-      setTimeout(() => setMessage(''), 3000);
+      if (user && user.id) {
+        await api.put(`/users/${user.id}/preferences`, newPrefs);
+        setMessage('Preferences updated successfully');
+        setTimeout(() => setMessage(''), 3000);
+      }
     } catch (err) {
       console.error(err);
       setPreferences(preferences);
@@ -35,13 +37,15 @@ const Profile: React.FC<{ user: User }> = ({ user }) => {
   };
 
   const getInitial = () => {
-    const name = user.fullName || user.full_name || 'U';
+    const name = user?.fullName || user?.full_name || 'User';
     return name.charAt(0).toUpperCase();
   };
 
   const getFullName = () => {
-    return user.fullName || user.full_name || 'User';
+    return user?.fullName || user?.full_name || 'User';
   };
+
+  if (!user) return null;
 
   return (
     <div className="max-w-4xl space-y-8 pb-12">
