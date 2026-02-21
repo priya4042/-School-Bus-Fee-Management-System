@@ -1,9 +1,10 @@
 import { useState, useEffect } from 'react';
 import api from '../lib/api';
-import { MonthlyDue } from '../types';
+import { MonthlyDue, Defaulter } from '../types';
 
 export const useFees = () => {
   const [dues, setDues] = useState<MonthlyDue[]>([]);
+  const [defaulters, setDefaulters] = useState<Defaulter[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -15,6 +16,19 @@ export const useFees = () => {
       setError(null);
     } catch (err: any) {
       setError(err.message || 'Failed to fetch dues');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchDefaulters = async () => {
+    setLoading(true);
+    try {
+      const { data } = await api.get('fees/defaulters');
+      setDefaulters(data);
+      setError(null);
+    } catch (err: any) {
+      setError(err.message || 'Failed to fetch defaulters');
     } finally {
       setLoading(false);
     }
@@ -81,9 +95,11 @@ export const useFees = () => {
 
   return { 
     dues, 
+    defaulters,
     loading, 
     error, 
     fetchDues, 
+    fetchDefaulters,
     generateMonthlyBills, 
     waiveLateFee,
     createFee,

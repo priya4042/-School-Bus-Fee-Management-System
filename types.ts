@@ -88,3 +88,33 @@ export interface Route {
   base_fee: number;
   distance_km: number;
 }
+
+export interface Defaulter {
+  studentId: string;
+  studentName: string;
+  class: string;
+  section: string;
+  parentName: string;
+  parentPhone: string;
+  month: string;
+  year: number;
+  totalAmount: number;
+  daysOverdue: number;
+}
+
+export interface Receipt {
+  receiptNumber: string;
+  date: string;
+  studentName: string;
+  admissionId: string;
+  className: string;
+  parentName: string;
+  month: string;
+  baseFee: number;
+  lateFee: number;
+  discount: number;
+  totalPaid: number;
+  paymentMethod: string;
+  transactionId: string;
+  barcode: string;
+}

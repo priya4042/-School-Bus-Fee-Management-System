@@ -1,20 +1,44 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { MONTHS } from '../constants';
 import { PaymentStatus, MonthlyDue, Student } from '../types';
 import Modal from '../components/Modal';
 import { useFees } from '../hooks/useFees';
 import { useStudents } from '../hooks/useStudents';
 import { showConfirm, showToast, showAlert, showLoading, closeSwal } from '../lib/swal';
+import DefaultersTable from '../components/Fees/DefaultersTable';
+import BarcodeScanner from '../components/Payment/BarcodeScanner';
+import axios from 'axios';
 
 const Fees: React.FC = () => {
-  const { dues, loading: duesLoading, generateMonthlyBills, waiveLateFee, createFee, updateFee, deleteFee } = useFees();
+  const { dues, defaulters, loading: duesLoading, fetchDefaulters, generateMonthlyBills, waiveLateFee, createFee, updateFee, deleteFee } = useFees();
   const { students } = useStudents();
   
-  const [view, setView] = useState<'pending' | 'history'>('pending');
+  const [view, setView] = useState<'pending' | 'history' | 'defaulters'>('pending');
   const [isWaiverModalOpen, setIsWaiverModalOpen] = useState(false);
   const [isFeeBuilderOpen, setIsFeeBuilderOpen] = useState(false);
   const [isManualPayModalOpen, setIsManualPayModalOpen] = useState(false);
+  const [isScannerOpen, setIsScannerOpen] = useState(false);
   const [selectedDue, setSelectedDue] = useState<MonthlyDue | null>(null);
+
+  useEffect(() => {
+    if (view === 'defaulters') {
+      fetchDefaulters();
+    }
+  }, [view]);
+
+  const handleBarcodeScan = async (barcode: string) => {
+    setIsScannerOpen(false);
+    showLoading('Fetching Fee Details...');
+    try {
+      const { data } = await axios.get(`/api/v1/fees/barcode/${barcode}`);
+      setSelectedDue(data);
+      setIsManualPayModalOpen(true);
+      closeSwal();
+    } catch (err) {
+      closeSwal();
+      showAlert('Error', 'Invalid or expired barcode.', 'error');
+    }
+  };
   
   const [feeFormData, setFeeFormData] = useState({
     student_id: '',
@@ -124,7 +148,20 @@ const Fees: React.FC = () => {
              >
                History
              </button>
+             <button 
+               onClick={() => setView('defaulters')}
+               className={`flex-1 sm:flex-none px-4 md:px-6 py-2 md:py-2.5 text-[8px] md:text-[9px] font-black uppercase tracking-widest rounded-lg md:rounded-xl transition-all ${view === 'defaulters' ? 'bg-slate-900 text-white shadow-lg' : 'text-slate-400'}`}
+             >
+               Defaulters
+             </button>
           </div>
+          <button 
+            onClick={() => setIsScannerOpen(true)}
+            className="bg-slate-900 text-white px-6 md:px-8 py-3 rounded-xl md:rounded-2xl font-black text-[9px] md:text-[10px] uppercase tracking-widest flex items-center justify-center gap-3 hover:bg-black transition-all shadow-xl shadow-slate-200"
+          >
+            <i className="fas fa-barcode"></i>
+            Scan Barcode
+          </button>
           <button 
             onClick={() => {
               setSelectedDue(null);
@@ -149,8 +186,16 @@ const Fees: React.FC = () => {
       </div>
 
       <div className="bg-white rounded-2xl md:rounded-[2.5rem] border border-slate-200 shadow-premium overflow-hidden">
-        <div className="responsive-table-container">
-          {duesLoading ? (
+        {view === 'defaulters' ? (
+          <DefaultersTable 
+            defaulters={defaulters}
+            onSendReminder={(id) => showToast('Reminder sent', 'success')}
+            onCall={(phone) => window.open(`tel:${phone}`)}
+            onWhatsApp={(phone, name) => window.open(`https://wa.me/${phone}?text=Hi, this is a reminder for ${name}'s school bus fee.`)}
+          />
+        ) : (
+          <div className="responsive-table-container">
+            {duesLoading ? (
             <div className="flex flex-col items-center justify-center h-80 gap-4">
               <i className="fas fa-circle-notch fa-spin text-primary text-3xl"></i>
               <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Syncing Ledger...</p>
@@ -221,7 +266,8 @@ const Fees: React.FC = () => {
             </table>
           )}
         </div>
-      </div>
+      )}
+    </div>
 
       <Modal isOpen={isFeeBuilderOpen} onClose={() => setIsFeeBuilderOpen(false)} title={selectedDue ? "Edit Fee Record" : "Create New Fee Entry"}>
         <form onSubmit={handleCreateFee} className="space-y-5">
@@ -353,6 +399,13 @@ const Fees: React.FC = () => {
           </button>
         </div>
       </Modal>
+      
+      {isScannerOpen && (
+        <BarcodeScanner 
+          onScan={handleBarcodeScan}
+          onClose={() => setIsScannerOpen(false)}
+        />
+      )}
     </div>
   );
 };
