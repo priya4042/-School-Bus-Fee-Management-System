@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import Modal from '../components/Modal';
 import { useAdmin } from '../hooks/useAdmin';
@@ -22,6 +21,9 @@ const AdminManagement: React.FC = () => {
       setFormData({ fullName: '', email: '', password: '', role: UserRole.ADMIN });
     }
   };
+
+  const inputClass = "w-full px-5 py-4 rounded-2xl bg-primary/5 border border-primary/20 focus:border-primary focus:ring-4 focus:ring-primary/10 outline-none font-bold text-slate-800 placeholder-slate-300 transition-all";
+  const selectClass = "w-full px-5 py-4 rounded-2xl bg-primary/5 border border-primary/20 focus:border-primary focus:ring-4 focus:ring-primary/10 outline-none font-bold bg-white text-slate-800 cursor-pointer transition-all";
 
   return (
     <div className="space-y-6">
@@ -103,33 +105,15 @@ const AdminManagement: React.FC = () => {
         <form onSubmit={handleSubmit} className="space-y-5">
           <div>
             <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Full Name</label>
-            <input 
-              type="text" 
-              required
-              className="w-full px-5 py-4 rounded-2xl border border-slate-200 focus:ring-4 focus:ring-primary/5 outline-none font-bold"
-              placeholder="Admin Name"
-              value={formData.fullName}
-              onChange={(e) => setFormData({...formData, fullName: e.target.value})}
-            />
+            <input type="text" required className={inputClass} placeholder="Admin Name" value={formData.fullName} onChange={(e) => setFormData({...formData, fullName: e.target.value})} />
           </div>
           <div>
             <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Email Address</label>
-            <input 
-              type="email" 
-              required
-              className="w-full px-5 py-4 rounded-2xl border border-slate-200 focus:ring-4 focus:ring-primary/5 outline-none font-bold"
-              placeholder="admin@school.com"
-              value={formData.email}
-              onChange={(e) => setFormData({...formData, email: e.target.value})}
-            />
+            <input type="email" required className={inputClass} placeholder="admin@school.com" value={formData.email} onChange={(e) => setFormData({...formData, email: e.target.value})} />
           </div>
           <div>
             <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Role Level</label>
-            <select 
-              className="w-full px-5 py-4 rounded-2xl border border-slate-200 focus:ring-4 focus:ring-primary/5 outline-none font-bold"
-              value={formData.role}
-              onChange={(e) => setFormData({...formData, role: e.target.value as UserRole})}
-            >
+            <select className={selectClass} value={formData.role} onChange={(e) => setFormData({...formData, role: e.target.value as UserRole})}>
               <option value={UserRole.ADMIN}>Standard Admin</option>
               <option value={UserRole.ACCOUNTANT}>Accountant</option>
               <option value={UserRole.SUPER_ADMIN}>Super Administrator</option>
@@ -137,29 +121,11 @@ const AdminManagement: React.FC = () => {
           </div>
           <div>
             <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Initial Password</label>
-            <input 
-              type="password" 
-              required
-              className="w-full px-5 py-4 rounded-2xl border border-slate-200 focus:ring-4 focus:ring-primary/5 outline-none font-bold"
-              placeholder="••••••••"
-              value={formData.password}
-              onChange={(e) => setFormData({...formData, password: e.target.value})}
-            />
+            <input type="password" required className={inputClass} placeholder="••••••••" value={formData.password} onChange={(e) => setFormData({...formData, password: e.target.value})} />
           </div>
           <div className="pt-6 flex gap-3">
-            <button 
-              type="button" 
-              onClick={() => setIsModalOpen(false)}
-              className="flex-1 py-4 bg-slate-100 text-slate-600 font-black uppercase text-[10px] tracking-widest rounded-2xl"
-            >
-              Cancel
-            </button>
-            <button 
-              type="submit" 
-              className="flex-1 py-4 bg-primary text-white font-black uppercase text-[10px] tracking-widest rounded-2xl shadow-xl shadow-primary/20"
-            >
-              Create Account
-            </button>
+            <button type="button" onClick={() => setIsModalOpen(false)} className="flex-1 py-4 bg-slate-100 text-slate-600 font-black uppercase text-[10px] tracking-widest rounded-2xl hover:bg-slate-200 transition-all active:scale-95">Cancel</button>
+            <button type="submit" className="flex-1 py-4 bg-primary text-white font-black uppercase text-[10px] tracking-widest rounded-2xl shadow-xl shadow-primary/20 transition-all active:scale-95">Create Account</button>
           </div>
         </form>
       </Modal>

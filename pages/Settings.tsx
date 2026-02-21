@@ -1,8 +1,67 @@
-
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import api from '../lib/api';
+import { showToast, showLoading, closeSwal } from '../lib/swal';
 
 const Settings: React.FC = () => {
   const [activeTab, setActiveTab] = useState('fees');
+  const [loading, setLoading] = useState(true);
+  const [settings, setSettings] = useState({
+    cutoffDay: 10,
+    gracePeriod: 2,
+    dailyPenalty: 50,
+    maxPenalty: 500,
+    strictNoSkip: true,
+    enforce2FA: false
+  });
+
+  useEffect(() => {
+    const fetchSettings = async () => {
+      try {
+        const { data } = await api.get('settings/fees');
+        setSettings(data);
+      } catch (err) {
+        console.error("Failed to load settings:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchSettings();
+  }, []);
+
+  const handleSave = async () => {
+    showLoading('Syncing Global Parameters...');
+    try {
+      await api.post('settings/fees', settings);
+      closeSwal();
+      showToast('Configuration updated successfully', 'success');
+    } catch (err) {
+      closeSwal();
+      showToast('Failed to sync settings', 'error');
+    }
+  };
+
+  const handleResetDefaults = () => {
+     setSettings({
+        cutoffDay: 10,
+        gracePeriod: 2,
+        dailyPenalty: 50,
+        maxPenalty: 500,
+        strictNoSkip: true,
+        enforce2FA: false
+     });
+     showToast('Parameters reset to defaults locally. Click Save to commit.', 'info');
+  };
+
+  if (loading) {
+    return (
+      <div className="h-96 flex flex-col items-center justify-center gap-4">
+        <i className="fas fa-circle-notch fa-spin text-primary text-3xl"></i>
+        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Accessing Core Config...</p>
+      </div>
+    );
+  }
+
+  const themedInputClass = "w-full px-6 py-4 rounded-2xl bg-primary/5 border border-primary/20 focus:border-primary focus:ring-4 focus:ring-primary/10 outline-none font-black transition-all text-slate-800";
 
   return (
     <div className="max-w-5xl space-y-10 pb-20">
@@ -36,20 +95,28 @@ const Settings: React.FC = () => {
                   <div className="space-y-3">
                     <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Monthly Due Cutoff (Day)</label>
                     <div className="relative">
-                       <i className="fas fa-calendar-day absolute left-5 top-1/2 -translate-y-1/2 text-slate-300"></i>
-                       <input type="number" defaultValue={10} className="w-full pl-14 pr-6 py-4 rounded-2xl bg-slate-50 border border-slate-100 focus:border-primary outline-none font-black text-primary text-lg" />
+                       <i className="fas fa-calendar-day absolute left-5 top-1/2 -translate-y-1/2 text-primary/30"></i>
+                       <input 
+                         type="number" 
+                         value={settings.cutoffDay} 
+                         onChange={(e) => setSettings({...settings, cutoffDay: parseInt(e.target.value)})}
+                         className={themedInputClass + " pl-14 text-primary text-lg"} 
+                       />
                     </div>
                     <p className="text-[9px] font-bold text-slate-400 uppercase ml-2">Payments are marked OVERDUE after this day.</p>
                   </div>
                   
                   <div className="space-y-3">
                     <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">No-Skip Constraint</label>
-                    <div className="flex items-center gap-4 p-4 bg-blue-50/50 rounded-2xl border border-blue-100">
-                       <i className="fas fa-lock text-primary"></i>
-                       <p className="text-[10px] font-black text-primary uppercase tracking-widest leading-relaxed">
-                          STRICT: Parents cannot pay future months if previous dues exist.
+                    <button 
+                      onClick={() => setSettings({...settings, strictNoSkip: !settings.strictNoSkip})}
+                      className={`w-full flex items-center gap-4 p-4 rounded-2xl border transition-all ${settings.strictNoSkip ? 'bg-primary/5 border-primary/20 text-primary' : 'bg-slate-50 border-slate-100 text-slate-400'}`}
+                    >
+                       <i className={`fas ${settings.strictNoSkip ? 'fa-lock' : 'fa-unlock'}`}></i>
+                       <p className="text-[10px] font-black uppercase tracking-widest leading-relaxed text-left">
+                          {settings.strictNoSkip ? 'STRICT: Parents cannot pay future months if previous dues exist.' : 'LAX: Parents may settle any month in any order.'}
                        </p>
-                    </div>
+                    </button>
                   </div>
                 </div>
               </section>
@@ -68,21 +135,36 @@ const Settings: React.FC = () => {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
                   <div className="space-y-3">
                     <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Grace Period (Days)</label>
-                    <input type="number" defaultValue={2} className="w-full px-6 py-4 rounded-2xl bg-slate-50 border border-slate-100 focus:border-primary outline-none font-black" />
+                    <input 
+                      type="number" 
+                      value={settings.gracePeriod} 
+                      onChange={(e) => setSettings({...settings, gracePeriod: parseInt(e.target.value)})}
+                      className={themedInputClass} 
+                    />
                     <p className="text-[9px] font-bold text-slate-400 uppercase ml-2">Days allowed after due date before penalties.</p>
                   </div>
                   <div className="space-y-3">
                     <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Daily Penalty Rate</label>
                     <div className="relative">
-                      <span className="absolute left-6 top-1/2 -translate-y-1/2 text-slate-300 font-black">₹</span>
-                      <input type="number" defaultValue={50} className="w-full pl-12 pr-6 py-4 rounded-2xl bg-slate-50 border border-slate-100 focus:border-primary outline-none font-black text-danger" />
+                      <span className="absolute left-6 top-1/2 -translate-y-1/2 text-primary font-black">₹</span>
+                      <input 
+                        type="number" 
+                        value={settings.dailyPenalty} 
+                        onChange={(e) => setSettings({...settings, dailyPenalty: parseInt(e.target.value)})}
+                        className={themedInputClass + " pl-12 text-danger"} 
+                      />
                     </div>
                   </div>
                   <div className="md:col-span-2 space-y-3">
                     <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Maximum Late Fee Threshold</label>
                     <div className="relative">
-                      <span className="absolute left-6 top-1/2 -translate-y-1/2 text-slate-300 font-black">₹</span>
-                      <input type="number" defaultValue={500} className="w-full pl-12 pr-6 py-4 rounded-2xl bg-slate-50 border border-slate-100 focus:border-primary outline-none font-black text-danger text-xl tracking-tighter" />
+                      <span className="absolute left-6 top-1/2 -translate-y-1/2 text-primary font-black">₹</span>
+                      <input 
+                        type="number" 
+                        value={settings.maxPenalty} 
+                        onChange={(e) => setSettings({...settings, maxPenalty: parseInt(e.target.value)})}
+                        className={themedInputClass + " pl-12 text-danger text-xl tracking-tighter"} 
+                      />
                     </div>
                     <p className="text-[9px] font-bold text-slate-400 uppercase ml-2">The highest total late fee a student can accumulate per month.</p>
                   </div>
@@ -106,18 +188,12 @@ const Settings: React.FC = () => {
                          <p className="font-black uppercase text-[10px] tracking-widest">Enforce 2FA for Staff</p>
                          <p className="text-[9px] font-bold text-white/40 uppercase mt-1">Drivers & Teachers require OTP login</p>
                       </div>
-                      <div className="w-14 h-7 bg-success rounded-full relative">
-                         <div className="absolute top-1 right-1 w-5 h-5 bg-white rounded-full"></div>
-                      </div>
-                   </div>
-                   <div className="flex items-center justify-between p-6 bg-white/5 rounded-3xl border border-white/5">
-                      <div>
-                         <p className="font-black uppercase text-[10px] tracking-widest">Audit Detailed Changes</p>
-                         <p className="text-[9px] font-bold text-white/40 uppercase mt-1">Log old vs new values in the database</p>
-                      </div>
-                      <div className="w-14 h-7 bg-success rounded-full relative">
-                         <div className="absolute top-1 right-1 w-5 h-5 bg-white rounded-full"></div>
-                      </div>
+                      <button 
+                        onClick={() => setSettings({...settings, enforce2FA: !settings.enforce2FA})}
+                        className={`w-14 h-7 rounded-full relative transition-all ${settings.enforce2FA ? 'bg-success' : 'bg-slate-700'}`}
+                      >
+                         <div className={`absolute top-1 w-5 h-5 bg-white rounded-full transition-all ${settings.enforce2FA ? 'right-1' : 'left-1'}`}></div>
+                      </button>
                    </div>
                 </div>
              </section>
@@ -134,11 +210,17 @@ const Settings: React.FC = () => {
                  All system changes are logged and broadcasted to relevant stakeholders. Saving these updates will recalibrate the fee calculation engine instantly.
               </p>
               <div className="space-y-4">
-                 <button className="w-full py-5 bg-white text-primary font-black uppercase text-[10px] tracking-widest rounded-2xl hover:shadow-2xl transition-all shadow-xl active:scale-[0.98]">
+                 <button 
+                   onClick={handleSave}
+                   className="w-full py-5 bg-white text-primary font-black uppercase text-[10px] tracking-widest rounded-2xl hover:shadow-2xl transition-all shadow-xl active:scale-[0.98]"
+                 >
                     Commit Global Changes
                  </button>
-                 <button className="w-full py-5 bg-white/10 text-white font-black uppercase text-[10px] tracking-widest rounded-2xl hover:bg-white/20 transition-all">
-                    Reset To System Defaults
+                 <button 
+                   onClick={handleResetDefaults}
+                   className="w-full py-5 bg-white/10 text-white font-black uppercase text-[10px] tracking-widest rounded-2xl hover:bg-white/20 transition-all"
+                 >
+                    Reset To Session Defaults
                  </button>
               </div>
            </div>
@@ -160,8 +242,8 @@ const Settings: React.FC = () => {
                  </div>
                  <div className="h-px bg-slate-50"></div>
                  <div className="flex justify-between items-center">
-                    <span className="text-[9px] font-black uppercase tracking-widest text-slate-500">Last Seed</span>
-                    <span className="text-[10px] font-black text-slate-800">24 JAN 2024</span>
+                    <span className="text-[9px] font-black uppercase tracking-widest text-slate-500">Last Sync</span>
+                    <span className="text-[10px] font-black text-slate-800 uppercase">{new Date().toLocaleDateString('en-GB')}</span>
                  </div>
               </div>
            </div>

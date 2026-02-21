@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import Modal from '../components/Modal';
 import { useRoutes } from '../hooks/useRoutes';
@@ -19,7 +18,6 @@ const Routes: React.FC = () => {
     e.preventDefault();
     if (isSubmitting) return;
 
-    // Field-level Validation
     if (!formData.name.trim() || !formData.code.trim()) {
       showAlert('Required Fields', 'Please provide both a Name and a Route Code.', 'warning');
       return;
@@ -43,17 +41,11 @@ const Routes: React.FC = () => {
       setFormData({ name: '', code: '', distance_km: 0, base_fee: 0 });
       showToast('Route activated successfully', 'success');
     } else {
-      // Prioritize the actual error from the API result
-      const specificError = result.error;
-      const genericError = 'The system encountered an error saving the route. Please check the developer console for details.';
-      
-      showAlert(
-        'Provisioning Failed', 
-        specificError || genericError, 
-        'error'
-      );
+      showAlert('Provisioning Failed', result.error || 'System error. Try again.', 'error');
     }
   };
+
+  const inputClass = "w-full px-5 py-4 rounded-2xl bg-primary/5 border border-primary/20 focus:border-primary focus:ring-4 focus:ring-primary/10 outline-none font-bold text-slate-800 placeholder-slate-300 transition-all";
 
   return (
     <div className="space-y-6">
@@ -114,7 +106,7 @@ const Routes: React.FC = () => {
             <input 
               required
               type="text" 
-              className="w-full px-5 py-4 rounded-2xl border border-slate-200 outline-none focus:ring-4 focus:ring-primary/5 font-bold" 
+              className={inputClass} 
               placeholder="e.g. West Coast Link"
               value={formData.name}
               onChange={(e) => setFormData({...formData, name: e.target.value})}
@@ -126,7 +118,7 @@ const Routes: React.FC = () => {
               <input 
                 required
                 type="text" 
-                className="w-full px-5 py-4 rounded-2xl border border-slate-200 outline-none focus:ring-4 focus:ring-primary/5 font-bold uppercase" 
+                className={inputClass + " font-black uppercase text-primary"} 
                 placeholder="R-XXX"
                 value={formData.code}
                 onChange={(e) => setFormData({...formData, code: e.target.value.toUpperCase()})}
@@ -137,7 +129,7 @@ const Routes: React.FC = () => {
               <input 
                 required
                 type="number" 
-                className="w-full px-5 py-4 rounded-2xl border border-slate-200 outline-none focus:ring-4 focus:ring-primary/5 font-bold" 
+                className={inputClass} 
                 placeholder="0"
                 value={formData.distance_km || ''}
                 onChange={(e) => setFormData({...formData, distance_km: Number(e.target.value)})}
@@ -149,7 +141,7 @@ const Routes: React.FC = () => {
             <input 
               required
               type="number" 
-              className="w-full px-5 py-4 rounded-2xl border border-slate-200 outline-none focus:ring-4 focus:ring-primary/5 font-bold" 
+              className={inputClass + " text-primary text-lg font-black"} 
               placeholder="0"
               value={formData.base_fee || ''}
               onChange={(e) => setFormData({...formData, base_fee: Number(e.target.value)})}
@@ -159,13 +151,13 @@ const Routes: React.FC = () => {
             <button 
               type="button" 
               onClick={() => setIsModalOpen(false)}
-              className="flex-1 py-4 bg-slate-100 text-slate-600 font-black uppercase text-[10px] tracking-widest rounded-2xl"
+              className="flex-1 py-4 bg-slate-100 text-slate-600 font-black uppercase text-[10px] tracking-widest rounded-2xl hover:bg-slate-200 transition-all active:scale-95"
             >
               Cancel
             </button>
             <button 
               type="submit" 
-              className="flex-1 py-4 bg-primary text-white font-black uppercase text-[10px] tracking-widest rounded-2xl shadow-xl shadow-primary/20 transition-all hover:bg-blue-800"
+              className="flex-1 py-4 bg-primary text-white font-black uppercase text-[10px] tracking-widest rounded-2xl shadow-xl shadow-primary/20 transition-all hover:bg-blue-800 active:scale-95"
             >
               Provision Route
             </button>
@@ -176,5 +168,4 @@ const Routes: React.FC = () => {
   );
 };
 
-// Fix: Add missing default export
 export default Routes;

@@ -1,83 +1,46 @@
 
 import React, { useState, useEffect } from 'react';
-import { UserRole, User } from './types';
-import Login from './pages/Login';
-import Register from './pages/Register';
-import AdminDashboard from './pages/AdminDashboard';
-import ParentDashboard from './pages/ParentDashboard';
-import TeacherDashboard from './pages/TeacherDashboard';
-import DriverDashboard from './pages/DriverDashboard';
-import AccountantDashboard from './pages/AccountantDashboard';
-import Students from './pages/Students';
-import Fees from './pages/Fees';
-import Reports from './pages/Reports';
-import Routes from './pages/Routes';
-import Buses from './pages/Buses';
-import Settings from './pages/Settings';
-import Receipts from './pages/Receipts';
-import Profile from './pages/Profile';
-import Attendance from './pages/Attendance';
-import Payments from './pages/Payments';
-import AdminNotifications from './pages/AdminNotifications';
-import Notifications from './pages/Notifications';
-import AuditLogs from './pages/AuditLogs';
-import AdminManagement from './pages/AdminManagement';
-import UserDirectory from './pages/UserDirectory';
-import Sidebar from './components/Sidebar';
-import Topbar from './components/Topbar';
-import { useAuthStore } from './store/authStore';
+import { UserRole, User } from './types.ts';
+import Login from './pages/Login.tsx';
+import Register from './pages/Register.tsx';
+import AdminDashboard from './pages/AdminDashboard.tsx';
+import ParentDashboard from './pages/ParentDashboard.tsx';
+import Students from './pages/Students.tsx';
+import Fees from './pages/Fees.tsx';
+import Reports from './pages/Reports.tsx';
+import Routes from './pages/Routes.tsx';
+import Buses from './pages/Buses.tsx';
+import Settings from './pages/Settings.tsx';
+import Receipts from './pages/Receipts.tsx';
+import Profile from './pages/Profile.tsx';
+import Attendance from './pages/Attendance.tsx';
+import Payments from './pages/Payments.tsx';
+import AdminNotifications from './pages/AdminNotifications.tsx';
+import Notifications from './pages/Notifications.tsx';
+import AuditLogs from './pages/AuditLogs.tsx';
+import AdminManagement from './pages/AdminManagement.tsx';
+import UserDirectory from './pages/UserDirectory.tsx';
+import Sidebar from './components/Sidebar.tsx';
+import Topbar from './components/Topbar.tsx';
+import { useAuthStore } from './store/authStore.ts';
 
 const App: React.FC = () => {
-  const { user, setUser, logout, loading, setLoading } = useAuthStore();
+  const { user, init, logout, loading, initialized } = useAuthStore();
   const [activeTab, setActiveTab] = useState('Dashboard');
   const [isRegistering, setIsRegistering] = useState(false);
   const [registerRole, setRegisterRole] = useState<UserRole | undefined>();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   useEffect(() => {
-    const savedUser = localStorage.getItem('user');
-    if (savedUser) {
-      try {
-        const parsed = JSON.parse(savedUser);
-        if (parsed.full_name && !parsed.fullName) {
-          parsed.fullName = parsed.full_name;
-        }
-        setUser(parsed);
-      } catch (e) {
-        localStorage.removeItem('user');
-      }
-    }
-    setLoading(false);
-  }, [setUser, setLoading]);
+    init();
+  }, [init]);
 
-  const handleLogin = (userData: User) => {
-    if (userData.full_name && !userData.fullName) {
-      userData.fullName = userData.full_name;
-    }
-    setUser(userData);
-    localStorage.setItem('user', JSON.stringify(userData));
-    setActiveTab('Dashboard');
-    setIsRegistering(false);
-  };
-
-  const handleLogout = () => {
-    logout();
-    localStorage.removeItem('user');
-    localStorage.removeItem('token');
-    setActiveTab('Dashboard');
-  };
-
-  const handleGoToRegister = (role?: UserRole) => {
-    setRegisterRole(role);
-    setIsRegistering(true);
-  };
-
-  if (loading) {
+  if (!initialized || (loading && !user)) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-slate-900">
+      <div className="min-h-screen flex items-center justify-center bg-slate-950">
         <div className="flex flex-col items-center gap-6">
-          <div className="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-primary"></div>
-          <p className="text-slate-400 font-black text-[10px] uppercase tracking-[0.4em] animate-pulse">Initializing BusWay Pro</p>
+          <div className="w-16 h-16 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
+          <p className="text-slate-500 font-black text-[10px] uppercase tracking-[0.4em]">Establishing Secure Cloud Tunnel</p>
         </div>
       </div>
     );
@@ -85,14 +48,13 @@ const App: React.FC = () => {
 
   if (!user) {
     if (isRegistering) {
-      return <Register onRegister={handleLogin} onBackToLogin={() => setIsRegistering(false)} initialRole={registerRole} />;
+      return <Register onRegister={() => init()} onBackToLogin={() => setIsRegistering(false)} initialRole={registerRole} />;
     }
-    return <Login onLogin={handleLogin} onGoToRegister={handleGoToRegister} />;
+    return <Login onLogin={() => init()} onGoToRegister={(role) => { setRegisterRole(role); setIsRegistering(true); }} />;
   }
 
   const renderContent = () => {
     const role = user.role;
-
     if (role === UserRole.ADMIN || role === UserRole.SUPER_ADMIN) {
       switch (activeTab) {
         case 'Dashboard': return <AdminDashboard />;
@@ -121,42 +83,14 @@ const App: React.FC = () => {
         default: return <ParentDashboard user={user} />;
       }
     }
-
-    if (role === UserRole.TEACHER) {
-      switch (activeTab) {
-        case 'Dashboard': return <TeacherDashboard user={user} />;
-        case 'Attendance': return <Attendance />;
-        case 'Profile': return <Profile user={user} />;
-        default: return <TeacherDashboard user={user} />;
-      }
-    }
-
-    if (role === UserRole.DRIVER) {
-      switch (activeTab) {
-        case 'Dashboard': return <DriverDashboard user={user} />;
-        case 'Attendance': return <Attendance />;
-        case 'Profile': return <Profile user={user} />;
-        default: return <DriverDashboard user={user} />;
-      }
-    }
-
-    if (role === UserRole.ACCOUNTANT) {
-      switch (activeTab) {
-        case 'Dashboard': return <AccountantDashboard />;
-        case 'Reports': return <Reports />;
-        case 'Fees': return <Fees />;
-        default: return <AccountantDashboard />;
-      }
-    }
-
-    return <div className="p-8 text-center text-slate-500">Access Denied</div>;
+    return <AdminDashboard />;
   };
 
   return (
-    <div className="flex min-h-screen bg-slate-50 selection:bg-primary/10 font-sans">
+    <div className="flex min-h-screen bg-slate-50 font-sans">
       <Sidebar 
         user={user} 
-        onLogout={handleLogout} 
+        onLogout={logout} 
         activeTab={activeTab} 
         setActiveTab={setActiveTab} 
         isOpen={isSidebarOpen}
@@ -164,8 +98,8 @@ const App: React.FC = () => {
       />
       <div className="flex-1 flex flex-col min-w-0">
         <Topbar user={user} onMenuClick={() => setIsSidebarOpen(true)} />
-        <main className="p-4 md:p-8 flex-1 overflow-auto bg-[radial-gradient(circle_at_top_right,_var(--tw-gradient-stops))] from-white via-slate-50 to-slate-100">
-          <div className="max-w-7xl mx-auto animate-in fade-in duration-500">
+        <main className="p-4 md:p-8 flex-1 overflow-auto bg-slate-50">
+          <div className="max-w-7xl mx-auto">
             {renderContent()}
           </div>
         </main>

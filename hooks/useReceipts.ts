@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import api from '../lib/api';
 import { showAlert } from '../lib/swal';
@@ -13,17 +12,39 @@ export const useReceipts = () => {
         responseType: 'blob',
       });
       
-      const url = window.URL.createObjectURL(new Blob([response.data]));
+      // Ensure we have data before proceeding
+      if (!response.data) {
+        throw new Error('No receipt data received from vault.');
+      }
+
+      // Ensure data is wrapped in a Blob properly for URL construction
+      const blob = response.data instanceof Blob 
+        ? response.data 
+        : new Blob([response.data], { type: 'application/pdf' });
+
+      // Check if Blob is valid size
+      if (blob.size === 0) {
+        throw new Error('Generated receipt file is empty.');
+      }
+
+      const url = window.URL.createObjectURL(blob);
+      
       const link = document.createElement('a');
       link.href = url;
       link.setAttribute('download', `Receipt_${txnId}.pdf`);
       document.body.appendChild(link);
       link.click();
-      link.remove();
-      window.URL.revokeObjectURL(url);
-    } catch (err) {
+      
+      // Cleanup to prevent memory leaks and handle link lifecycle
+      setTimeout(() => {
+        link.remove();
+        window.URL.revokeObjectURL(url);
+      }, 100);
+
+    } catch (err: any) {
       console.error('Download failed:', err);
-      showAlert('Vault Error', 'We could not generate the PDF receipt at this moment. Please try again later.', 'error');
+      const errorMsg = err?.message || 'We could not generate the PDF receipt at this moment. Please try again later.';
+      showAlert('Vault Error', errorMsg, 'error');
     } finally {
       setDownloading(null);
     }

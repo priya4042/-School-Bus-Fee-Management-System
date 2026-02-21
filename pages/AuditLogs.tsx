@@ -5,19 +5,15 @@ import api from '../lib/api';
 const AuditLogs: React.FC = () => {
   const [logs, setLogs] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState('');
 
   useEffect(() => {
     const fetchLogs = async () => {
       try {
-        // Mocking for now, in prod: const { data } = await api.get('/admin/audit-logs');
-        setLogs([
-          { id: 1, action: 'LATE_FEE_WAIVED', entity: 'STUDENT (Alice Doe)', user: 'Admin Sarah', date: '2024-03-24 10:45 AM', status: 'CRITICAL' },
-          { id: 2, action: 'MANUAL_PAYMENT_ENTRY', entity: 'DUE (Feb 2024)', user: 'Accountant Bob', date: '2024-03-23 04:12 PM', status: 'FINANCE' },
-          { id: 3, action: 'SYSTEM_SETTINGS_UPDATE', entity: 'CONFIG (Grace Period)', user: 'SuperAdmin', date: '2024-03-23 09:00 AM', status: 'SYSTEM' },
-          { id: 4, action: 'STUDENT_BULK_UPLOAD', entity: 'CSV (42 Records)', user: 'Admin Sarah', date: '2024-03-22 11:30 AM', status: 'DATA' },
-        ]);
+        const { data } = await api.get('audit-logs');
+        setLogs(data);
       } catch (err) {
-        console.error(err);
+        console.error("Failed to fetch audit stream:", err);
       } finally {
         setLoading(false);
       }
@@ -30,9 +26,16 @@ const AuditLogs: React.FC = () => {
       case 'CRITICAL': return 'bg-red-50 text-red-600 border-red-100';
       case 'FINANCE': return 'bg-green-50 text-green-600 border-green-100';
       case 'SYSTEM': return 'bg-primary/5 text-primary border-primary/10';
+      case 'DATA': return 'bg-amber-50 text-amber-600 border-amber-100';
       default: return 'bg-slate-50 text-slate-500 border-slate-100';
     }
   };
+
+  const filteredLogs = logs.filter(log => 
+    log.action.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    log.entity.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    log.user.toLowerCase().includes(searchTerm.toLowerCase())
+  );
 
   return (
     <div className="space-y-6">
@@ -51,7 +54,13 @@ const AuditLogs: React.FC = () => {
         <div className="p-8 bg-slate-50/50 border-b border-slate-100 flex flex-col md:flex-row md:items-center justify-between gap-4">
            <div className="relative flex-1 max-w-md">
               <i className="fas fa-search absolute left-5 top-1/2 -translate-y-1/2 text-slate-300"></i>
-              <input type="text" placeholder="Search by action, user or entity..." className="w-full pl-12 pr-6 py-3 rounded-xl border border-slate-200 outline-none focus:border-primary font-bold text-slate-700 bg-white" />
+              <input 
+                type="text" 
+                placeholder="Search by action, user or entity..." 
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-full pl-12 pr-6 py-3 rounded-xl border border-slate-200 outline-none focus:border-primary font-bold text-slate-700 bg-white" 
+              />
            </div>
            <button className="text-[10px] font-black text-primary uppercase tracking-widest hover:underline">Export Full CSV Archive</button>
         </div>
@@ -74,7 +83,7 @@ const AuditLogs: React.FC = () => {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-50">
-                {logs.map(log => (
+                {filteredLogs.length > 0 ? filteredLogs.map(log => (
                   <tr key={log.id} className="hover:bg-slate-50/50 transition-all group">
                     <td className="px-8 py-5">
                        <span className="font-black text-slate-800 tracking-tight text-sm uppercase">{log.action.replace(/_/g, ' ')}</span>
@@ -99,7 +108,14 @@ const AuditLogs: React.FC = () => {
                        </span>
                     </td>
                   </tr>
-                ))}
+                )) : (
+                  <tr>
+                    <td colSpan={5} className="p-20 text-center">
+                       <i className="fas fa-search-minus text-3xl text-slate-200 mb-4"></i>
+                       <p className="text-[10px] font-black text-slate-300 uppercase tracking-widest">No matching logs found</p>
+                    </td>
+                  </tr>
+                )}
               </tbody>
             </table>
           )}

@@ -1,8 +1,7 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import { User } from '../types';
 import { MOCK_STUDENTS } from '../constants';
-import api from '../lib/api';
+import api, { BusTelemetry } from '../lib/api';
 import { showToast, showAlert, showLoading, closeSwal } from '../lib/swal';
 
 const DriverDashboard: React.FC<{ user: User }> = ({ user }) => {
@@ -11,66 +10,71 @@ const DriverDashboard: React.FC<{ user: User }> = ({ user }) => {
   const [currentCoords, setCurrentCoords] = useState<{ lat: number; lng: number } | null>(null);
   const [boardingStatus, setBoardingStatus] = useState<Record<string, boolean>>({});
   const watchId = useRef<number | null>(null);
+  const simulationInterval = useRef<number | null>(null);
+
+  // Kangra School Destination (approx)
+  const SCHOOL_LAT = 32.1024;
+  const SCHOOL_LNG = 76.2734;
 
   const startTrip = async () => {
     showLoading('Initializing Fleet GPS...');
     try {
-      const response = await api.post('/tracking/trip/start?bus_id=1&route_id=1&driver_id=' + user.id);
-      setTripData(response.data);
       setIsTripActive(true);
       
+      // 1. Real GPS Hook
       if ("geolocation" in navigator) {
         watchId.current = navigator.geolocation.watchPosition(
           (position) => {
             const { latitude, longitude, speed } = position.coords;
             setCurrentCoords({ lat: latitude, lng: longitude });
-            api.post('/tracking/location', {
-              trip_id: response.data.id,
-              bus_id: 1,
-              lat: latitude,
-              lng: longitude,
-              speed: speed || 0
-            }).catch(console.error);
+            BusTelemetry.broadcastLocation('b1', latitude, longitude, speed || 0);
           },
           (error) => console.error("GPS Error:", error),
-          { enableHighAccuracy: true, maximumAge: 5000, timeout: 5000 }
+          { enableHighAccuracy: true, maximumAge: 2000, timeout: 5000 }
         );
       }
+
+      // 2. Simulated Movement (Fall-back or demo)
+      let currentLat = 32.0900;
+      let currentLng = 76.2600;
+      simulationInterval.current = window.setInterval(() => {
+          // Slowly move towards school
+          currentLat += (SCHOOL_LAT - currentLat) * 0.05;
+          currentLng += (SCHOOL_LNG - currentLng) * 0.05;
+          const mockSpeed = 35 + Math.random() * 10;
+          BusTelemetry.broadcastLocation('b1', currentLat, currentLng, mockSpeed);
+      }, 3000);
+
       closeSwal();
       showToast('Morning Trip Started', 'success');
     } catch (err) {
       closeSwal();
-      showAlert('Sync Error', 'Could not establish satellite link. Please check device GPS.', 'error');
+      showAlert('Sync Error', 'Could not establish satellite link.', 'error');
     }
   };
 
   const endTrip = async () => {
     showLoading('Broadcasting Arrival to Parents...');
-    if (tripData) await api.post(`/tracking/trip/${tripData.id}/end`);
     
-    // Simulate "Student Reached School" notification broadcast
+    // Broadcast arrival notification globally
+    BusTelemetry.notifyArrival('b1', 'KNG-01-A');
+
     setTimeout(() => {
         if (watchId.current !== null) navigator.geolocation.clearWatch(watchId.current);
+        if (simulationInterval.current !== null) clearInterval(simulationInterval.current);
+        
         setIsTripActive(false);
         setTripData(null);
         setCurrentCoords(null);
         closeSwal();
-        showAlert('Trip Completed', 'Arrival notification has been sent to all parents on this manifest.', 'success');
+        showAlert('Arrived at School', 'Arrival notification has been sent to all parents on this manifest.', 'success');
     }, 1500);
   };
 
   const toggleStudentStatus = async (studentId: string) => {
     const isPicked = !boardingStatus[studentId];
     setBoardingStatus(prev => ({ ...prev, [studentId]: isPicked }));
-    
-    if (tripData) {
-      api.post('/tracking/pickup', {
-        trip_id: tripData.id,
-        student_id: studentId,
-        action_type: isPicked ? 'PICKED_UP' : 'DROPPED_OFF'
-      });
-      showToast(isPicked ? 'Student Boarded' : 'Student Dropped', 'success');
-    }
+    showToast(isPicked ? 'Student Boarded' : 'Marked Absence', 'success');
   };
 
   return (
@@ -135,7 +139,7 @@ const DriverDashboard: React.FC<{ user: User }> = ({ user }) => {
                          </div>
                          <div>
                             <p className="font-black text-slate-800 text-lg tracking-tight">{student.full_name}</p>
-                            <p className="text-[10px] text-slate-400 font-black uppercase tracking-widest">Stop ID: ST-442 • Sector 14</p>
+                            <p className="text-[10px] text-slate-400 font-black uppercase tracking-widest">Stop ID: ST-442 • Kangra Gate</p>
                          </div>
                       </div>
                       <button 
@@ -170,11 +174,11 @@ const DriverDashboard: React.FC<{ user: User }> = ({ user }) => {
                 <div className="flex justify-between items-end">
                     <div>
                        <p className="text-slate-400 text-[10px] font-black uppercase tracking-widest mb-2">Ground Velocity</p>
-                       <p className="text-3xl font-black">42 <span className="text-sm text-slate-600 ml-1 uppercase">km/h</span></p>
+                       <p className="text-3xl font-black">{isTripActive ? 'Simulated' : '0'} <span className="text-sm text-slate-600 ml-1 uppercase">km/h</span></p>
                     </div>
                     <div className="text-right">
                        <p className="text-slate-400 text-[10px] font-black uppercase tracking-widest mb-2">Next Destination</p>
-                       <p className="text-sm font-black text-primary-light uppercase">Sector 45 Crossing</p>
+                       <p className="text-sm font-black text-primary-light uppercase">Main Campus</p>
                     </div>
                 </div>
              </div>

@@ -1,7 +1,7 @@
-
 import React, { useState, useEffect } from 'react';
 import Modal from './Modal';
 import { PaymentMethod } from '../hooks/usePayments';
+import { useReceipts } from '../hooks/useReceipts';
 
 interface PaymentPortalProps {
   state: any;
@@ -11,12 +11,12 @@ interface PaymentPortalProps {
 }
 
 const PaymentPortal: React.FC<PaymentPortalProps> = ({ state, onClose, onSelectMethod, onConfirm }) => {
+  const { downloadReceipt, downloading } = useReceipts();
   const [cardNumber, setCardNumber] = useState('');
   const [expiry, setExpiry] = useState('');
   const [cvv, setCvv] = useState('');
   const [upiId, setUpiId] = useState('');
 
-  // Reset inputs when portal opens/changes
   useEffect(() => {
     if (state.step === 'SELECT') {
       setCardNumber('');
@@ -28,18 +28,14 @@ const PaymentPortal: React.FC<PaymentPortalProps> = ({ state, onClose, onSelectM
 
   const handleCardFormat = (val: string) => {
     const v = val.replace(/\s+/g, '').replace(/[^0-9]/gi, '');
-    const matches = v.match(/\d{4,16}/g);
-    const match = matches && matches[0] || '';
     const parts = [];
-    for (let i = 0, len = match.length; i < len; i += 4) {
-      parts.push(match.substring(i, i + 4));
+    for (let i = 0; i < v.length; i += 4) {
+      parts.push(v.substring(i, i + 4));
     }
-    if (parts.length) {
-      setCardNumber(parts.join(' '));
-    } else {
-      setCardNumber(v);
-    }
+    setCardNumber(parts.join(' ').slice(0, 19));
   };
+
+  const inputClass = "w-full px-5 py-4 rounded-2xl bg-primary/5 border border-primary/20 focus:border-primary focus:ring-4 focus:ring-primary/10 outline-none font-bold transition-all text-slate-800 placeholder-slate-400";
 
   const renderContent = () => {
     if (state.step === 'SELECT') {
@@ -80,17 +76,11 @@ const PaymentPortal: React.FC<PaymentPortalProps> = ({ state, onClose, onSelectM
             </button>
 
             <div className="grid grid-cols-2 gap-3">
-              <button 
-                onClick={() => onSelectMethod('GPAY')}
-                className="group flex flex-col items-center justify-center gap-3 p-5 bg-slate-50 border border-slate-100 rounded-2xl hover:border-[#4285F4] hover:bg-white transition-all active:scale-[0.98]"
-              >
+              <button onClick={() => onSelectMethod('GPAY')} className="group flex flex-col items-center justify-center gap-3 p-5 bg-slate-50 border border-slate-100 rounded-2xl hover:border-[#4285F4] hover:bg-white transition-all active:scale-[0.98]">
                 <i className="fab fa-google-pay text-4xl text-[#5f6368] group-hover:text-[#4285F4] transition-colors"></i>
                 <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Google Pay</span>
               </button>
-              <button 
-                onClick={() => onSelectMethod('PAYTM')}
-                className="group flex flex-col items-center justify-center gap-3 p-5 bg-slate-50 border border-slate-100 rounded-2xl hover:border-[#00BAF2] hover:bg-white transition-all active:scale-[0.98]"
-              >
+              <button onClick={() => onSelectMethod('PAYTM')} className="group flex flex-col items-center justify-center gap-3 p-5 bg-slate-50 border border-slate-100 rounded-2xl hover:border-[#00BAF2] hover:bg-white transition-all active:scale-[0.98]">
                 <div className="w-10 h-10 bg-white rounded-lg flex items-center justify-center border border-slate-100 group-hover:border-[#00BAF2] transition-colors">
                    <span className="text-[#002970] font-black text-xs">Paytm</span>
                 </div>
@@ -108,63 +98,32 @@ const PaymentPortal: React.FC<PaymentPortalProps> = ({ state, onClose, onSelectM
           {state.method === 'CARD' ? (
             <div className="space-y-4">
               <div className="p-6 bg-slate-900 rounded-3xl text-white relative overflow-hidden shadow-2xl mb-6">
-                <div className="absolute top-0 right-0 p-6 opacity-10">
-                   <i className="fas fa-wifi rotate-90 text-5xl"></i>
-                </div>
-                <p className="text-[9px] font-black text-white/30 uppercase tracking-[0.3em] mb-10">SECURE TRANSACTION NODE</p>
+                <div className="absolute top-0 right-0 p-6 opacity-10"><i className="fas fa-wifi rotate-90 text-5xl"></i></div>
+                <p className="text-[9px] font-black text-white/30 uppercase tracking-[0.3em] mb-10">SECURE NODE</p>
                 <p className="text-2xl font-black tracking-[0.2em] mb-6">{cardNumber || '•••• •••• •••• ••••'}</p>
                 <div className="flex justify-between items-end">
-                   <div>
-                      <p className="text-[8px] font-black text-white/20 uppercase tracking-widest mb-1">Validity</p>
-                      <p className="text-sm font-bold tracking-widest">{expiry || 'MM/YY'}</p>
-                   </div>
-                   <div className="w-12 h-8 bg-white/10 rounded-lg border border-white/10 flex items-center justify-center">
-                      <i className="fab fa-cc-visa text-xl text-white"></i>
-                   </div>
+                   <div><p className="text-[8px] font-black text-white/20 uppercase tracking-widest mb-1">Validity</p><p className="text-sm font-bold tracking-widest">{expiry || 'MM/YY'}</p></div>
+                   <div className="w-12 h-8 bg-white/10 rounded-lg border border-white/10 flex items-center justify-center"><i className="fab fa-cc-visa text-xl text-white"></i></div>
                 </div>
               </div>
               <div className="space-y-4">
-                <input 
-                  type="text" 
-                  placeholder="Card Number"
-                  value={cardNumber}
-                  onChange={(e) => handleCardFormat(e.target.value)}
-                  className="w-full px-5 py-4 rounded-2xl border border-slate-200 outline-none font-bold"
-                />
+                <input type="text" placeholder="Card Number" value={cardNumber} onChange={(e) => handleCardFormat(e.target.value)} className={inputClass} />
                 <div className="grid grid-cols-2 gap-4">
-                  <input 
-                    type="text" 
-                    placeholder="MM/YY"
-                    value={expiry}
-                    onChange={(e) => setExpiry(e.target.value)}
-                    className="w-full px-5 py-4 rounded-2xl border border-slate-200 outline-none font-bold"
-                  />
-                  <input 
-                    type="password" 
-                    placeholder="CVV"
-                    value={cvv}
-                    onChange={(e) => setCvv(e.target.value)}
-                    className="w-full px-5 py-4 rounded-2xl border border-slate-200 outline-none font-bold"
-                  />
+                  <input type="text" placeholder="MM/YY" value={expiry} onChange={(e) => setExpiry(e.target.value)} className={inputClass} />
+                  <input type="password" placeholder="CVV" value={cvv} onChange={(e) => setCvv(e.target.value)} className={inputClass} />
                 </div>
               </div>
             </div>
           ) : (
             <div className="space-y-4">
-               <div className="p-6 bg-success/5 rounded-3xl border border-success/10 flex items-center gap-4 mb-6">
-                  <i className="fas fa-bolt text-success text-3xl"></i>
+               <div className="p-6 bg-primary/5 rounded-3xl border border-primary/20 flex items-center gap-4 mb-6">
+                  <i className="fas fa-bolt text-primary text-3xl"></i>
                   <div>
-                    <p className="text-[10px] font-black text-success uppercase tracking-widest">UPI Real-time Settlement</p>
-                    <p className="text-xs text-slate-500 font-medium">Funds are transferred directly from your bank.</p>
+                    <p className="text-[10px] font-black text-primary uppercase tracking-widest">UPI ID Required</p>
+                    <p className="text-xs text-slate-500 font-medium">Verified VPA for secure bank-to-bank settlement.</p>
                   </div>
                </div>
-               <input 
-                 type="text" 
-                 placeholder="yourname@upi"
-                 value={upiId}
-                 onChange={(e) => setUpiId(e.target.value)}
-                 className="w-full px-5 py-4 rounded-2xl border border-slate-200 outline-none font-bold text-center text-lg"
-               />
+               <input type="text" placeholder="yourname@upi" value={upiId} onChange={(e) => setUpiId(e.target.value)} className={inputClass + " text-center text-lg"} />
             </div>
           )}
           <button 
@@ -194,13 +153,30 @@ const PaymentPortal: React.FC<PaymentPortalProps> = ({ state, onClose, onSelectM
 
     if (state.step === 'SUCCESS') {
       return (
-        <div className="py-20 flex flex-col items-center justify-center space-y-8 animate-in slide-in-from-bottom-8 duration-500">
+        <div className="py-12 flex flex-col items-center justify-center space-y-8 animate-in slide-in-from-bottom-8 duration-500">
            <div className="w-24 h-24 bg-success text-white rounded-[2.5rem] flex items-center justify-center text-5xl shadow-2xl shadow-success/30">
               <i className="fas fa-check"></i>
            </div>
            <div className="text-center space-y-2">
               <h3 className="text-2xl font-black text-slate-800 tracking-tight">Transaction Authorized</h3>
-              <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Receipt generated in cloud vault</p>
+              <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Transaction ID: {state.transactionId}</p>
+           </div>
+           
+           <div className="w-full space-y-3 pt-6 border-t border-slate-100">
+              <button 
+                onClick={() => downloadReceipt(state.transactionId, state.transactionId)}
+                disabled={!!downloading}
+                className="w-full py-4 bg-primary text-white font-black uppercase text-[10px] tracking-widest rounded-2xl shadow-xl shadow-primary/20 hover:bg-blue-800 transition-all flex items-center justify-center gap-3 active:scale-95"
+              >
+                {downloading ? <i className="fas fa-circle-notch fa-spin"></i> : <i className="fas fa-file-pdf"></i>}
+                Download Digital Receipt
+              </button>
+              <button 
+                onClick={onClose}
+                className="w-full py-4 bg-slate-100 text-slate-500 font-black uppercase text-[10px] tracking-widest rounded-2xl hover:bg-slate-200 transition-all active:scale-95"
+              >
+                Return to Dashboard
+              </button>
            </div>
         </div>
       );
@@ -210,11 +186,10 @@ const PaymentPortal: React.FC<PaymentPortalProps> = ({ state, onClose, onSelectM
   };
 
   return (
-    <Modal isOpen={state.isOpen} onClose={onClose} title={`Settle Fee: ${state.studentName}`}>
+    <Modal isOpen={state.isOpen} onClose={onClose} title={state.step === 'SUCCESS' ? 'Payment Complete' : `Settle Fee: ${state.studentName}`}>
       {renderContent()}
     </Modal>
   );
 };
 
-// Fix: Add default export to resolve "Module has no default export" error.
 export default PaymentPortal;

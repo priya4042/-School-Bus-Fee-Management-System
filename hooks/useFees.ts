@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import api from '../lib/api';
 import { MonthlyDue } from '../types';
@@ -18,6 +17,36 @@ export const useFees = () => {
       setError(err.message || 'Failed to fetch dues');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const createFee = async (feeData: Partial<MonthlyDue>) => {
+    try {
+      const { data } = await api.post('fees/add', feeData);
+      setDues(prev => [...prev, data]);
+      return true;
+    } catch (err) {
+      return false;
+    }
+  };
+
+  const updateFee = async (id: string, feeData: Partial<MonthlyDue>) => {
+    try {
+      const { data } = await api.put(`fees/edit/${id}`, feeData);
+      setDues(prev => prev.map(d => d.id === id ? data : d));
+      return true;
+    } catch (err) {
+      return false;
+    }
+  };
+
+  const deleteFee = async (id: string) => {
+    try {
+      await api.delete(`fees/delete/${id}`);
+      setDues(prev => prev.filter(d => d.id !== id));
+      return true;
+    } catch (err) {
+      return false;
     }
   };
 
@@ -50,5 +79,15 @@ export const useFees = () => {
     fetchDues();
   }, []);
 
-  return { dues, loading, error, fetchDues, generateMonthlyBills, waiveLateFee };
+  return { 
+    dues, 
+    loading, 
+    error, 
+    fetchDues, 
+    generateMonthlyBills, 
+    waiveLateFee,
+    createFee,
+    updateFee,
+    deleteFee
+  };
 };

@@ -11,9 +11,11 @@ export const useStudents = () => {
     setLoading(true);
     try {
       const { data } = await api.get('students');
-      setStudents(data);
+      // Ensure data is always an array
+      setStudents(Array.isArray(data) ? data : []);
     } catch (err) {
-      console.error('API Connection issue: Fallback failed');
+      console.error("Failed to fetch students from virtual DB:", err);
+      setStudents([]);
     } finally {
       setLoading(false);
     }
@@ -22,9 +24,10 @@ export const useStudents = () => {
   const addStudent = async (studentData: any) => {
     try {
       const { data } = await api.post('students', studentData);
-      setStudents(prev => [...prev, data]);
+      setStudents(prev => [...(prev || []), data]);
       return true;
     } catch (err) {
+      console.error("Student registration failed in virtual DB:", err);
       return false;
     }
   };

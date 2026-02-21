@@ -1,7 +1,8 @@
 
 import { useState } from 'react';
 import { showToast } from '../lib/swal';
-import { PaymentStatus } from '../types';
+import { PaymentStatus, MonthlyDue } from '../types';
+import { MONTHS } from '../constants';
 
 export type PaymentMethod = 'CARD' | 'UPI' | 'GPAY' | 'PAYTM';
 
@@ -12,6 +13,8 @@ interface PaymentState {
   studentName: string;
   method: PaymentMethod | null;
   step: 'SELECT' | 'DETAILS' | 'PROCESSING' | 'SUCCESS';
+  transactionId: string | null;
+  monthYear: string | null;
 }
 
 export const usePayments = () => {
@@ -22,9 +25,20 @@ export const usePayments = () => {
     studentName: '',
     method: null,
     step: 'SELECT',
+    transactionId: null,
+    monthYear: null
   });
 
   const openPortal = (dueId: string | number, amount: number, studentName: string) => {
+    // Find due details for the receipt
+    const savedDues = localStorage.getItem('fee_dues');
+    let monthYear = "N/A";
+    if (savedDues) {
+        const dues = JSON.parse(savedDues);
+        const due = dues.find((d: any) => String(d.id) === String(dueId));
+        if (due) monthYear = `${MONTHS[due.month-1]} ${due.year}`;
+    }
+
     setPaymentState({
       isOpen: true,
       dueId,
@@ -32,6 +46,8 @@ export const usePayments = () => {
       studentName,
       method: null,
       step: 'SELECT',
+      transactionId: null,
+      monthYear
     });
   };
 
@@ -41,7 +57,6 @@ export const usePayments = () => {
 
   const selectMethod = (method: PaymentMethod) => {
     if (method === 'GPAY' || method === 'PAYTM') {
-      // Simulate App Redirection immediately for Wallets
       setPaymentState(prev => ({ ...prev, method, step: 'PROCESSING' }));
       processPayment(method);
     } else {
@@ -49,13 +64,14 @@ export const usePayments = () => {
     }
   };
 
-  // Renamed from executePayment to processPayment to match pages/ParentDashboard.tsx and pages/Payments.tsx
   const processPayment = (method: PaymentMethod, details?: any) => {
     setPaymentState(prev => ({ ...prev, method, step: 'PROCESSING' }));
     
-    // Simulate Network Latency / Bank Processing
     setTimeout(() => {
-      // Update local storage to persist the "PAID" status
+      const txnId = 'TXN-' + Math.random().toString(36).substr(2, 9).toUpperCase();
+      const paymentDate = new Date().toISOString().split('T')[0];
+
+      // 1. Update Due Status
       const savedDues = localStorage.getItem('fee_dues');
       if (savedDues) {
         const dues = JSON.parse(savedDues);
@@ -65,14 +81,30 @@ export const usePayments = () => {
         localStorage.setItem('fee_dues', JSON.stringify(updatedDues));
       }
 
-      setPaymentState(prev => ({ ...prev, step: 'SUCCESS' }));
-      showToast('Transaction Settled', 'success');
+      // 2. Create Receipt Entry
+      const savedReceipts = localStorage.getItem('db_receipts');
+      const receipts = savedReceipts ? JSON.parse(savedReceipts) : [];
+      const newReceipt = {
+          id: txnId,
+          transaction_id: txnId,
+          amount: paymentState.amount,
+          studentName: paymentState.studentName,
+          monthYear: paymentState.monthYear,
+          date: paymentDate,
+          method: method,
+          status: 'SUCCESS'
+      };
+      receipts.unshift(newReceipt);
+      localStorage.setItem('db_receipts', JSON.stringify(receipts));
+
+      setPaymentState(prev => ({ 
+          ...prev, 
+          step: 'SUCCESS',
+          transactionId: txnId
+      }));
       
-      // Auto-reload after success to refresh parent dashboard/ledger
-      setTimeout(() => {
-        window.location.reload();
-      }, 1500);
-    }, 3000);
+      showToast('Transaction Settled', 'success');
+    }, 2500);
   };
 
   return { 

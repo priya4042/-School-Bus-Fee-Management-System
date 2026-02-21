@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useBuses } from '../hooks/useBuses';
 import Modal from '../components/Modal';
@@ -39,6 +38,9 @@ const Buses: React.FC = () => {
       showToast('Asset removed successfully', 'info');
     }
   };
+
+  const inputClass = "w-full px-5 py-4 rounded-2xl bg-primary/5 border border-primary/20 focus:border-primary focus:ring-4 focus:ring-primary/10 outline-none font-bold text-slate-800 placeholder-slate-300 transition-all";
+  const selectClass = "w-full px-5 py-4 rounded-2xl bg-primary/5 border border-primary/20 focus:border-primary focus:ring-4 focus:ring-primary/10 outline-none font-bold bg-white text-slate-800 cursor-pointer transition-all";
 
   return (
     <div className="space-y-6">
@@ -136,7 +138,7 @@ const Buses: React.FC = () => {
             <input 
               required
               type="text" 
-              className="w-full px-5 py-4 rounded-2xl border border-slate-200 focus:ring-4 focus:ring-primary/5 outline-none font-bold uppercase" 
+              className={inputClass + " font-black uppercase text-primary"} 
               placeholder="e.g. KNG-01-A"
               value={formData.plate}
               onChange={(e) => setFormData({...formData, plate: e.target.value.toUpperCase()})}
@@ -147,7 +149,7 @@ const Buses: React.FC = () => {
             <input 
               required
               type="text" 
-              className="w-full px-5 py-4 rounded-2xl border border-slate-200 focus:ring-4 focus:ring-primary/5 outline-none font-bold" 
+              className={inputClass} 
               placeholder="e.g. Tata Starbus"
               value={formData.model}
               onChange={(e) => setFormData({...formData, model: e.target.value})}
@@ -159,7 +161,7 @@ const Buses: React.FC = () => {
               <input 
                 required
                 type="number" 
-                className="w-full px-5 py-4 rounded-2xl border border-slate-200 outline-none font-bold" 
+                className={inputClass + " font-black"} 
                 value={formData.capacity}
                 onChange={(e) => setFormData({...formData, capacity: Number(e.target.value)})}
               />
@@ -167,7 +169,7 @@ const Buses: React.FC = () => {
             <div>
               <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Initial Status</label>
               <select 
-                className="w-full px-5 py-4 rounded-2xl border border-slate-200 outline-none font-bold bg-white"
+                className={selectClass}
                 value={formData.status}
                 onChange={(e) => setFormData({...formData, status: e.target.value})}
               >
@@ -181,13 +183,13 @@ const Buses: React.FC = () => {
             <button 
               type="button" 
               onClick={() => setIsModalOpen(false)}
-              className="flex-1 py-4 bg-slate-100 text-slate-600 font-black uppercase text-[10px] tracking-widest rounded-2xl"
+              className="flex-1 py-4 bg-slate-100 text-slate-600 font-black uppercase text-[10px] tracking-widest rounded-2xl hover:bg-slate-200 transition-all active:scale-95"
             >
               Cancel
             </button>
             <button 
               type="submit" 
-              className="flex-1 py-4 bg-primary text-white font-black uppercase text-[10px] tracking-widest rounded-2xl shadow-xl shadow-primary/20 transition-all hover:bg-blue-800"
+              className="flex-1 py-4 bg-primary text-white font-black uppercase text-[10px] tracking-widest rounded-2xl shadow-xl shadow-primary/20 transition-all hover:bg-blue-800 active:scale-95"
             >
               Register Asset
             </button>

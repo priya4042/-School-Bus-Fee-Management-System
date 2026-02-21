@@ -1,142 +1,155 @@
-
 import axios from 'axios';
 import { DEFAULT_ROUTES, MOCK_STUDENTS, MOCK_DUES } from '../constants';
-import { PaymentStatus } from '../types';
+import { UserRole } from '../types';
 
 /**
- * BusWay Pro - High-Fidelity Virtual API Engine
- * Manages all persistent data in LocalStorage to simulate a stateful backend.
+ * BusWay Pro - Enterprise Virtual Telemetry & Storage Controller
  */
+
+// Custom Event Names
+export const TELEMETRY_EVENT = 'busway_gps_update';
+export const ARRIVAL_EVENT = 'busway_arrival_notice';
+
+export const BusTelemetry = {
+  broadcastLocation: (busId: string, lat: number, lng: number, speed: number) => {
+    const data = { busId, lat, lng, speed, timestamp: Date.now() };
+    window.dispatchEvent(new CustomEvent(TELEMETRY_EVENT, { detail: data }));
+    // Also persist for page refreshes
+    localStorage.setItem(`live_pos_${busId}`, JSON.stringify(data));
+  },
+  notifyArrival: (busId: string, busPlate: string) => {
+    const data = { busId, busPlate, timestamp: Date.now() };
+    window.dispatchEvent(new CustomEvent(ARRIVAL_EVENT, { detail: data }));
+    
+    // Log into shared notifications
+    const notes = JSON.parse(localStorage.getItem('db_global_notifications') || '[]');
+    notes.unshift({
+      id: Math.random().toString(36).substr(2, 9),
+      title: 'Bus Arrived',
+      message: `Bus ${busPlate} has successfully reached the school campus.`,
+      type: 'SUCCESS',
+      timestamp: 'Just now'
+    });
+    localStorage.setItem('db_global_notifications', JSON.stringify(notes.slice(0, 20)));
+  }
+};
 
 const MOCK_BUSES = [
   { id: 'b1', plate: 'KNG-01-A', model: 'Tata Starbus 40s', capacity: 40, status: 'On Route' },
   { id: 'b2', plate: 'KNG-02-B', model: 'Force Traveller', capacity: 20, status: 'Maintenance' },
 ];
 
-const initDB = () => {
-  if (!localStorage.getItem('db_students')) localStorage.setItem('db_students', JSON.stringify(MOCK_STUDENTS));
-  if (!localStorage.getItem('db_routes')) localStorage.setItem('db_routes', JSON.stringify(DEFAULT_ROUTES));
-  if (!localStorage.getItem('db_dues')) localStorage.setItem('db_dues', JSON.stringify(MOCK_DUES));
-  if (!localStorage.getItem('db_buses')) localStorage.setItem('db_buses', JSON.stringify(MOCK_BUSES));
-  if (!localStorage.getItem('db_users')) {
-    const admin = { 
-      id: 'u-1', 
-      email: 'admin@school.com', 
-      full_name: 'System Admin', 
-      role: 'ADMIN', 
-      password: 'admin123' 
+const DEFAULT_SETTINGS = {
+  cutoffDay: 10,
+  gracePeriod: 2,
+  dailyPenalty: 50,
+  maxPenalty: 500,
+  strictNoSkip: true,
+  enforce2FA: false
+};
+
+export const getDBUsers = (): any[] => {
+    try {
+        const raw = localStorage.getItem('db_users');
+        return raw ? JSON.parse(raw) : [];
+    } catch (e) {
+        return [];
+    }
+};
+
+export const saveDBUser = (user: any) => {
+    const users = getDBUsers();
+    const normalizedUser = { 
+        ...user, 
+        email: user.email?.trim().toLowerCase(),
+        fullName: user.fullName || user.full_name,
+        full_name: user.fullName || user.full_name,
+        phoneNumber: user.phoneNumber,
+        secondaryPhoneNumber: user.secondaryPhoneNumber // Persist secondary number
     };
-    localStorage.setItem('db_users', JSON.stringify([admin]));
+    
+    const index = users.findIndex(u => u.email?.toLowerCase() === normalizedUser.email || (u.admissionNumber && u.admissionNumber === normalizedUser.admissionNumber));
+    if (index !== -1) {
+        users[index] = normalizedUser;
+    } else {
+        users.push(normalizedUser);
+    }
+    
+    localStorage.setItem('db_users', JSON.stringify(users));
+};
+
+const initDB = () => {
+  const tables = {
+    'db_students': MOCK_STUDENTS,
+    'db_routes': DEFAULT_ROUTES,
+    'fee_dues': MOCK_DUES,
+    'db_buses': MOCK_BUSES,
+    'db_settings': DEFAULT_SETTINGS
+  };
+
+  Object.entries(tables).forEach(([key, defaultData]) => {
+    if (!localStorage.getItem(key)) {
+      localStorage.setItem(key, JSON.stringify(defaultData));
+    }
+  });
+  
+  const users = getDBUsers();
+  const adminEmail = 'admin@school.com';
+  if (!users.some(u => u.email?.toLowerCase() === adminEmail)) {
+    saveDBUser({ 
+      id: 'u-admin-01', 
+      email: adminEmail, 
+      fullName: 'Fleet Owner', 
+      role: UserRole.ADMIN, 
+      password: 'admin123',
+      verified: true,
+      phoneNumber: '9000000000',
+      secondaryPhoneNumber: '8000000000', // Default owner with two numbers
+      created_at: new Date().toISOString()
+    });
   }
 };
 
 initDB();
 
-const delay = (ms: number) => new Promise(res => setTimeout(res, ms));
-
-const api = axios.create({
-  baseURL: '/api/v1/',
-});
+const api = axios.create({ baseURL: '/api/v1/' });
 
 api.interceptors.request.use(async (config) => {
-  await delay(250);
+  const url = (config.url || '').replace(/^\/+/, '');
   
-  const rawUrl = config.url || '';
-  const cleanUrl = rawUrl.replace(/^\/+/, '').replace(/^api\/v1\//, '').replace(/\/+$/, '');
-  const method = config.method?.toUpperCase();
-  const data = config.data;
+  await new Promise(res => setTimeout(res, 100));
 
-  // Database helper
-  const getDB = (key: string) => JSON.parse(localStorage.getItem(key) || '[]');
-  const saveDB = (key: string, val: any) => localStorage.setItem(key, JSON.stringify(val));
-
-  // --- VIRTUAL ROUTING TABLE ---
-  
-  // 1. ROUTES
-  if (cleanUrl === 'routes') {
-    const routes = getDB('db_routes');
-    if (method === 'GET') {
-      config.adapter = async () => ({ data: routes, status: 200, statusText: 'OK', headers: {}, config });
-    } else if (method === 'POST') {
-      const newRoute = { ...data, id: `r-${Math.random().toString(36).substr(2, 5)}`, is_active: true };
-      saveDB('db_routes', [...routes, newRoute]);
-      config.adapter = async () => ({ data: newRoute, status: 201, statusText: 'Created', headers: {}, config });
-    }
-  }
-
-  // 2. BUSES (Fleet Assets)
-  if (cleanUrl === 'buses') {
-    const buses = getDB('db_buses');
-    if (method === 'GET') {
-      config.adapter = async () => ({ data: buses, status: 200, statusText: 'OK', headers: {}, config });
-    } else if (method === 'POST') {
-      const newBus = { 
-        ...data, 
-        id: `b-${Math.random().toString(36).substr(2, 5)}`,
-        status: data.status || 'Idle'
-      };
-      saveDB('db_buses', [...buses, newBus]);
-      config.adapter = async () => ({ data: newBus, status: 201, statusText: 'Created', headers: {}, config });
-    }
-  }
-
-  if (cleanUrl.startsWith('buses/')) {
-    const busId = cleanUrl.split('/').pop();
-    if (method === 'DELETE') {
-      const buses = getDB('db_buses');
-      saveDB('db_buses', buses.filter((b: any) => b.id !== busId));
-      config.adapter = async () => ({ data: { status: 'deleted' }, status: 200, statusText: 'OK', headers: {}, config });
-    }
-  }
-
-  // 3. STUDENTS
-  if (cleanUrl === 'students') {
-    const students = getDB('db_students');
-    if (method === 'GET') {
-      config.adapter = async () => ({ data: students, status: 200, statusText: 'OK', headers: {}, config });
-    } else if (method === 'POST') {
-      const routes = getDB('db_routes');
-      const assignedRoute = routes.find((r: any) => r.id === data.route_id || r.id === String(data.route_id));
-      const newStudent = { 
-        ...data, 
-        id: `s-${Math.random().toString(36).substr(2, 5)}`, 
-        status: 'active',
-        route_name: assignedRoute ? assignedRoute.name : 'Unassigned Route',
-        base_fee: assignedRoute ? assignedRoute.base_fee : 1500
-      };
-      saveDB('db_students', [...students, newStudent]);
-      config.adapter = async () => ({ data: newStudent, status: 201, statusText: 'Created', headers: {}, config });
-    }
-  }
-
-  // 4. FEES & DASHBOARD
-  if (cleanUrl === 'fees/dues') {
-    config.adapter = async () => ({ data: getDB('db_dues'), status: 200, statusText: 'OK', headers: {}, config });
-  }
-
-  if (cleanUrl === 'dashboard/stats') {
-    const students = getDB('db_students');
-    const dues = getDB('db_dues');
-    const paid = dues.filter((d: any) => d.status === 'PAID');
+  // Intercept stats
+  if (url === 'dashboard/stats') {
     config.adapter = async () => ({
       data: {
-        totalCollection: `₹${(paid.reduce((a: any, b: any) => a + (b.total_due || 0), 0) / 1000).toFixed(1)}K`,
-        activeStudents: students.length,
-        defaulters: dues.filter((d: any) => d.status === 'OVERDUE').length,
-        lateFeeCollected: "₹0",
-        revenueTrend: [ { month: 'Jan', revenue: 45000 }, { month: 'Feb', revenue: 52000 }, { month: 'Mar', revenue: 65000 } ],
-        paymentHealth: [ { name: 'Paid', value: paid.length, color: '#22c55e' }, { name: 'Unpaid', value: (dues.length - paid.length), color: '#ef4444' } ]
+        totalCollection: "₹12.4L",
+        activeStudents: MOCK_STUDENTS.length,
+        defaulters: 18,
+        lateFeeCollected: "₹4,250",
+        revenueTrend: [
+          { month: 'Oct', revenue: 450000 }, { month: 'Nov', revenue: 520000 }, { month: 'Dec', revenue: 480000 },
+          { month: 'Jan', revenue: 610000 }, { month: 'Feb', revenue: 590000 }, { month: 'Mar', revenue: 650000 }
+        ]
       },
       status: 200, statusText: 'OK', headers: {}, config
     });
   }
 
-  // Catch-all
-  if (!config.adapter) {
-    config.adapter = async () => ({
-      data: { status: "success", message: "Processed by Omni-Engine" },
-      status: 200, statusText: 'OK', headers: {}, config
-    });
+  // Intercept receipts download
+  if (url.includes('receipts/') && url.endsWith('/download')) {
+    config.adapter = async () => {
+      // Return a fake PDF blob for demonstration
+      const dummyContent = "%PDF-1.4 Mock Receipt Data Generated for " + url;
+      const blob = new Blob([dummyContent], { type: 'application/pdf' });
+      return {
+        data: blob,
+        status: 200,
+        statusText: 'OK',
+        headers: { 'content-type': 'application/pdf' },
+        config
+      };
+    };
   }
 
   return config;

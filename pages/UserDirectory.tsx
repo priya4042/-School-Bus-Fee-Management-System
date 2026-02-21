@@ -1,241 +1,169 @@
-
 import React, { useState, useEffect } from 'react';
-import { User, UserRole, Student } from '../types';
-import { MOCK_STUDENTS } from '../constants';
-import Modal from '../components/Modal';
+import { User, UserRole, MonthlyDue, PaymentStatus, Student } from '../types.ts';
+import { MOCK_STUDENTS } from '../constants.ts';
+import Modal from '../components/Modal.tsx';
+import { useFees } from '../hooks/useFees';
 
 const UserDirectory: React.FC = () => {
+  const { dues } = useFees();
   const [users, setUsers] = useState<User[]>([]);
+  const [students, setStudents] = useState<Student[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [roleFilter, setRoleFilter] = useState<string>('ALL');
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   useEffect(() => {
-    const data = localStorage.getItem('registered_users');
-    if (data) {
-      const parsed: User[] = JSON.parse(data);
-      setUsers(parsed);
-    }
+    const userData = localStorage.getItem('db_users');
+    const studentData = localStorage.getItem('db_students');
+    if (userData) setUsers(JSON.parse(userData));
+    if (studentData) setStudents(JSON.parse(studentData));
   }, []);
 
   const filteredUsers = users.filter(u => {
-    const nameMatch = (u.fullName || u.full_name || '').toLowerCase().includes(searchTerm.toLowerCase());
-    const phoneMatch = (u.phoneNumber || '').includes(searchTerm);
-    const emailMatch = (u.email || '').toLowerCase().includes(searchTerm.toLowerCase());
+    const fullName = u.fullName || u.full_name || '';
+    const nameMatch = fullName.toLowerCase().includes(searchTerm.toLowerCase());
     const roleMatch = roleFilter === 'ALL' || u.role === roleFilter;
-    
-    return (nameMatch || phoneMatch || emailMatch) && roleMatch;
+    return nameMatch && roleMatch;
   });
 
-  const getChildName = (admissionNo?: string) => {
-    if (!admissionNo) return 'N/A';
-    const student = MOCK_STUDENTS.find(s => s.admission_number === admissionNo);
-    return student ? student.full_name : `Unlinked (ID: ${admissionNo})`;
+  const getParentStudents = (parent: User) => {
+    return students.filter(s => 
+      (s.parent_phone === parent.phoneNumber) || 
+      (s.admission_number === parent.admissionNumber)
+    );
   };
 
-  const handleViewUser = (user: User) => {
-    setSelectedUser(user);
-    setIsModalOpen(true);
+  const getBillingStatus = (studentId: string) => {
+    const studentDues = dues.filter(d => String(d.student_id) === String(studentId));
+    const overdue = studentDues.some(d => d.status === PaymentStatus.OVERDUE);
+    const unpaid = studentDues.some(d => d.status === PaymentStatus.UNPAID);
+    
+    if (overdue) return { label: 'Overdue', color: 'text-danger bg-red-50 border-red-100' };
+    if (unpaid) return { label: 'Unpaid', color: 'text-warning bg-amber-50 border-amber-100' };
+    return { label: 'Paid', color: 'text-success bg-green-50 border-green-100' };
   };
 
-  const getRoleIcon = (role: UserRole) => {
-    switch (role) {
-      case UserRole.PARENT: return 'fa-house-user text-success';
-      case UserRole.TEACHER: return 'fa-chalkboard-teacher text-primary';
-      case UserRole.DRIVER: return 'fa-id-card text-orange-500';
-      case UserRole.ADMIN:
-      case UserRole.SUPER_ADMIN: return 'fa-shield-halved text-slate-800';
-      default: return 'fa-user text-slate-400';
-    }
-  };
+  const inputClass = "w-full px-6 py-4 rounded-2xl bg-primary/5 border border-primary/20 focus:border-primary focus:ring-4 focus:ring-primary/10 outline-none font-bold text-sm transition-all text-slate-800";
+  const selectClass = "bg-primary/5 px-6 py-3 rounded-2xl border border-primary/20 focus:border-primary focus:ring-4 focus:ring-primary/10 font-black text-[10px] uppercase tracking-widest outline-none shadow-sm text-slate-700 cursor-pointer transition-all";
 
   return (
     <div className="space-y-6">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h2 className="text-2xl font-black text-slate-800 tracking-tight uppercase">User Identity Hub</h2>
-          <p className="text-slate-500 font-bold uppercase text-[10px] tracking-widest">Auditing {users.length} Registered Profiles</p>
+          <h2 className="text-2xl font-black text-slate-800 tracking-tight uppercase">Identity Hub</h2>
+          <p className="text-secondary font-bold uppercase text-[10px] tracking-widest">Family Linkage & Billing Oversight</p>
         </div>
         <div className="flex gap-2">
-           <select 
-             value={roleFilter}
-             onChange={(e) => setRoleFilter(e.target.value)}
-             className="bg-white px-6 py-3 rounded-2xl border border-slate-200 font-black text-[10px] uppercase tracking-widest outline-none focus:ring-4 focus:ring-primary/5 shadow-sm"
-           >
-             <option value="ALL">All Roles</option>
+           <select value={roleFilter} onChange={(e) => setRoleFilter(e.target.value)} className={selectClass}>
+             <option value="ALL">All Profiles</option>
              <option value={UserRole.PARENT}>Parents</option>
-             <option value={UserRole.TEACHER}>Teachers</option>
-             <option value={UserRole.DRIVER}>Drivers</option>
-             <option value={UserRole.ADMIN}>Admins</option>
+             <option value={UserRole.ADMIN}>Staff</option>
            </select>
         </div>
       </div>
 
       <div className="bg-white rounded-[2.5rem] border border-slate-200 shadow-premium overflow-hidden">
         <div className="p-8 border-b border-slate-100 bg-slate-50/30">
-           <div className="relative">
-              <i className="fas fa-search absolute left-6 top-1/2 -translate-y-1/2 text-slate-400"></i>
-              <input 
-                type="text" 
-                placeholder="Lookup by name, phone (+91), or work email..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-16 pr-6 py-4 rounded-2xl border border-slate-200 outline-none focus:ring-4 focus:ring-primary/5 transition-all font-bold text-slate-700 bg-white"
-              />
-           </div>
+           <input 
+              type="text" 
+              placeholder="Lookup name or contact..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className={inputClass}
+           />
         </div>
 
-        <div className="overflow-x-auto min-h-[500px]">
+        <div className="overflow-x-auto">
           <table className="w-full text-left">
             <thead>
-              <tr className="bg-slate-50/50 text-slate-400 text-[9px] font-black uppercase tracking-[0.2em] border-b border-slate-100">
+              <tr className="bg-slate-50 text-slate-400 text-[9px] font-black uppercase tracking-widest border-b border-slate-100">
                 <th className="px-10 py-5">Global Identity</th>
-                <th className="px-8 py-5">Contact Vector</th>
-                <th className="px-8 py-5 text-center">Protocol Level</th>
-                <th className="px-10 py-5 text-right">Vault Entry</th>
+                <th className="px-8 py-5">Family Unit</th>
+                <th className="px-8 py-5 text-center">Status</th>
+                <th className="px-10 py-5 text-right">Audit</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-50">
-              {filteredUsers.length > 0 ? filteredUsers.map((u) => (
-                <tr key={u.id} className="hover:bg-slate-50/50 transition-all group">
-                  <td className="px-10 py-5">
-                     <div className="flex items-center gap-4">
-                        <div className="w-12 h-12 bg-slate-50 border border-slate-100 rounded-2xl flex items-center justify-center text-slate-300 group-hover:scale-110 group-hover:bg-primary/5 group-hover:text-primary transition-all">
-                           <i className={`fas ${getRoleIcon(u.role)} text-lg`}></i>
-                        </div>
-                        <div>
-                           <p className="font-black text-slate-800 tracking-tight leading-none mb-1">{u.fullName || u.full_name}</p>
-                           <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">UID: {u.id.split('-')[1] || 'Internal'}</p>
-                        </div>
-                     </div>
-                  </td>
-                  <td className="px-8 py-5">
-                     <div className="space-y-1">
-                        <p className="text-xs font-bold text-slate-600 lowercase">{u.email}</p>
-                        <p className="text-[10px] font-black text-slate-400 tracking-widest">+91 {u.phoneNumber || 'N/A'}</p>
-                     </div>
-                  </td>
-                  <td className="px-8 py-5 text-center">
-                     <span className={`px-4 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest border ${
-                       u.role === UserRole.PARENT ? 'bg-success/10 text-success border-success/10' :
-                       u.role === UserRole.TEACHER ? 'bg-primary/10 text-primary border-primary/10' :
-                       u.role === UserRole.DRIVER ? 'bg-orange-50 text-orange-600 border-orange-100' : 'bg-slate-800 text-white'
-                     }`}>
-                        {u.role.replace('_', ' ')}
-                     </span>
-                  </td>
-                  <td className="px-10 py-5 text-right">
-                     <button 
-                       onClick={() => handleViewUser(u)}
-                       className="px-6 py-2.5 bg-white border border-slate-200 text-slate-600 text-[9px] font-black uppercase tracking-widest rounded-xl hover:bg-primary hover:text-white hover:border-primary hover:shadow-lg transition-all active:scale-95"
-                     >
-                       View Profile
-                     </button>
-                  </td>
-                </tr>
-              )) : (
-                <tr>
-                   <td colSpan={4} className="p-32 text-center">
-                      <div className="w-20 h-20 bg-slate-50 rounded-[2rem] flex items-center justify-center mx-auto mb-6">
-                         <i className="fas fa-search-minus text-3xl text-slate-200"></i>
-                      </div>
-                      <p className="text-[11px] font-black text-slate-300 uppercase tracking-[0.4em]">Zero identities found in directory</p>
-                   </td>
-                </tr>
-              )}
+              {filteredUsers.map((u) => {
+                const family = getParentStudents(u);
+                return (
+                  <tr key={u.id} className="hover:bg-slate-50/50 transition-all group">
+                    <td className="px-10 py-5">
+                       <p className="font-black text-slate-800 tracking-tight">{u.fullName || u.full_name}</p>
+                       <p className="text-[10px] text-slate-400 font-black uppercase tracking-widest">{u.role}</p>
+                    </td>
+                    <td className="px-8 py-5">
+                       {u.role === UserRole.PARENT ? (
+                         <span className="px-3 py-1 rounded-full bg-primary/5 text-primary text-[9px] font-black uppercase tracking-widest border border-primary/10">
+                            {family.length} Children Linked
+                         </span>
+                       ) : <span className="text-slate-300">---</span>}
+                    </td>
+                    <td className="px-8 py-5 text-center">
+                       <div className={`w-2 h-2 rounded-full mx-auto ${u.role === UserRole.PARENT ? (family.some(s => getBillingStatus(s.id).label === 'Overdue') ? 'bg-danger animate-pulse' : 'bg-success') : 'bg-slate-300'}`}></div>
+                    </td>
+                    <td className="px-10 py-5 text-right">
+                       <button onClick={() => { setSelectedUser(u); setIsModalOpen(true); }} className="px-6 py-2.5 bg-white border border-primary/20 text-primary text-[9px] font-black uppercase tracking-widest rounded-xl hover:bg-primary hover:text-white transition-all active:scale-95">Audit Portal</button>
+                    </td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         </div>
       </div>
 
-      <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title="Identity Deep Dive">
+      <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title="Family Intelligence Detail">
         {selectedUser && (
-          <div className="space-y-8 p-2">
-             <div className="flex items-center gap-6 p-6 bg-slate-50 rounded-[2rem] border border-slate-100">
-                <div className="w-20 h-20 bg-primary text-white rounded-3xl flex items-center justify-center text-3xl shadow-2xl rotate-3">
-                   { (selectedUser.fullName || selectedUser.full_name || 'U').charAt(0) }
-                </div>
+          <div className="space-y-8">
+             <div className="p-8 bg-primary/5 rounded-[2.5rem] border border-primary/10 flex items-center justify-between">
                 <div>
-                   <h3 className="text-2xl font-black text-slate-800 tracking-tighter uppercase leading-none mb-1">{selectedUser.fullName || selectedUser.full_name}</h3>
-                   <div className="flex gap-2">
-                      <span className="text-[10px] font-black text-primary uppercase tracking-widest">{selectedUser.role.replace('_', ' ')}</span>
-                      <span className="text-slate-300 px-1">•</span>
-                      <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Entry: {new Date().toLocaleDateString()}</span>
-                   </div>
+                   <h3 className="text-2xl font-black text-slate-800 tracking-tighter uppercase">{selectedUser.fullName || selectedUser.full_name}</h3>
+                   <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mt-1">{selectedUser.email}</p>
+                </div>
+                <div className="w-16 h-16 bg-white rounded-3xl flex items-center justify-center shadow-xl border border-primary/10">
+                   <i className="fas fa-home-user text-primary text-xl"></i>
                 </div>
              </div>
 
-             <div className="grid grid-cols-2 gap-4">
-                <div className="p-5 bg-white border border-slate-100 rounded-2xl">
-                   <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Communication Channel</p>
-                   <p className="text-xs font-bold text-slate-800 break-all">{selectedUser.email}</p>
-                </div>
-                <div className="p-5 bg-white border border-slate-100 rounded-2xl">
-                   <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Mobile Vector</p>
-                   <p className="text-xs font-bold text-slate-800 tracking-widest">+91 {selectedUser.phoneNumber || '99999 00000'}</p>
-                </div>
-             </div>
-
-             <div className="p-6 bg-slate-900 text-white rounded-[2rem] relative overflow-hidden">
-                <div className="absolute top-0 right-0 p-6 opacity-10">
-                   <i className={`fas ${getRoleIcon(selectedUser.role)} text-7xl`}></i>
-                </div>
-                <h4 className="text-[10px] font-black uppercase tracking-widest text-white/40 mb-4">Protocol Specific Information</h4>
-                <div className="space-y-4">
-                   {selectedUser.role === UserRole.PARENT && (
-                      <div className="flex justify-between items-center">
-                         <div>
-                            <p className="text-[9px] font-black text-success uppercase tracking-widest">Child Linked (Academic)</p>
-                            <p className="text-lg font-black">{getChildName(selectedUser.admissionNumber)}</p>
+             {selectedUser.role === UserRole.PARENT ? (
+               <div className="space-y-6">
+                  <div className="flex items-center justify-between px-2">
+                     <h4 className="text-[11px] font-black text-slate-800 uppercase tracking-widest">Child Manifest</h4>
+                     <span className="text-[9px] font-black text-primary uppercase">Unified Ledger</span>
+                  </div>
+                  <div className="grid grid-cols-1 gap-4">
+                     {getParentStudents(selectedUser).map(s => {
+                       const billing = getBillingStatus(s.id);
+                       return (
+                         <div key={s.id} className="p-6 bg-white border border-slate-100 rounded-3xl shadow-premium flex items-center justify-between group hover:border-primary/20 transition-all">
+                            <div className="flex items-center gap-5">
+                               <div className="w-12 h-12 bg-primary/5 rounded-2xl flex items-center justify-center text-primary/40 font-black group-hover:bg-primary group-hover:text-white transition-all">
+                                  {s.full_name.charAt(0)}
+                               </div>
+                               <div>
+                                  <p className="font-black text-slate-800 tracking-tight">{s.full_name}</p>
+                                  <p className="text-[9px] text-slate-400 font-black uppercase tracking-widest">{s.class_name}-{s.section} • {s.admission_number}</p>
+                               </div>
+                            </div>
+                            <div className="text-right space-y-2">
+                               <span className={`px-3 py-1 rounded-full text-[8px] font-black uppercase tracking-widest border ${billing.color}`}>
+                                  {billing.label}
+                               </span>
+                               <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">₹{s.base_fee} Base</p>
+                            </div>
                          </div>
-                         <div className="text-right">
-                            <p className="text-[9px] font-black text-white/30 uppercase tracking-widest">Adm. ID</p>
-                            <p className="font-bold text-white/60">{selectedUser.admissionNumber}</p>
-                         </div>
-                      </div>
-                   )}
-                   {selectedUser.role === UserRole.TEACHER && (
-                      <div className="flex justify-between items-center">
-                         <div>
-                            <p className="text-[9px] font-black text-primary-light uppercase tracking-widest">Staff Credential ID</p>
-                            <p className="text-lg font-black">{selectedUser.staffId || 'T-2024-OFFICIAL'}</p>
-                         </div>
-                      </div>
-                   )}
-                   {selectedUser.role === UserRole.DRIVER && (
-                      <div className="flex justify-between items-center">
-                         <div>
-                            <p className="text-[9px] font-black text-orange-400 uppercase tracking-widest">Commercial License</p>
-                            <p className="text-lg font-black">{selectedUser.licenseNo || 'DL-TEMP-VALID'}</p>
-                         </div>
-                      </div>
-                   )}
-                   { (selectedUser.role === UserRole.ADMIN || selectedUser.role === UserRole.SUPER_ADMIN) && (
-                      <div>
-                         <p className="text-[9px] font-black text-white/30 uppercase tracking-widest">Security Level</p>
-                         <p className="text-lg font-black">Level 5 (Full Core Access)</p>
-                      </div>
-                   )}
-                </div>
-             </div>
-
-             <div className="space-y-3">
-                <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1 flex items-center gap-2">
-                   <i className="fas fa-map-marker-alt text-primary"></i>
-                   Geographic Fingerprint
-                </p>
-                <div className="p-5 bg-slate-50 border border-slate-100 rounded-2xl">
-                   <p className="text-[10px] font-bold text-slate-600 italic">
-                      "Last authenticated from authorized device in {selectedUser.role === UserRole.PARENT ? 'Residential Sector' : 'Campus Perimeter'}. IP: 192.168.1.{Math.floor(Math.random()*254)}"
-                   </p>
-                </div>
-             </div>
-
-             <div className="pt-4 flex gap-3">
-                <button onClick={() => setIsModalOpen(false)} className="flex-1 py-4 bg-slate-100 text-slate-600 font-black uppercase text-[10px] tracking-widest rounded-2xl hover:bg-slate-200 transition-all active:scale-95">Dismiss Audit</button>
-                <button className="flex-1 py-4 bg-primary text-white font-black uppercase text-[10px] tracking-widest rounded-2xl shadow-xl shadow-primary/20 hover:bg-blue-800 transition-all active:scale-95">Message User</button>
-             </div>
+                       );
+                     })}
+                  </div>
+               </div>
+             ) : (
+               <div className="p-10 bg-slate-900 rounded-[2.5rem] text-white">
+                  <p className="text-[10px] font-black uppercase tracking-widest text-white/40 mb-2">Staff Identity</p>
+                  <p className="text-sm font-bold opacity-60 italic">This profile is registered as an Administrative Access Node and does not have a family manifest.</p>
+               </div>
+             )}
           </div>
         )}
       </Modal>

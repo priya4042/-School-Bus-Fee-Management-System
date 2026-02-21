@@ -1,10 +1,11 @@
-
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { User, MonthlyDue, PaymentStatus, Student } from '../types';
 import { MOCK_STUDENTS, MOCK_DUES, MONTHS } from '../constants';
 import { usePayments } from '../hooks/usePayments';
 import PaymentPortal from '../components/PaymentPortal';
 import api from '../lib/api';
+import { useTracking } from '../hooks/useTracking';
+import { isMonthPayable } from '../utils/feeCalculator';
 
 declare const L: any;
 
@@ -15,6 +16,9 @@ const ParentDashboard: React.FC<{ user: User }> = ({ user }) => {
   const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
   const [trackingActive, setTrackingActive] = useState(false);
   const [map, setMap] = useState<any>(null);
+  const markerRef = useRef<any>(null);
+  
+  const { location, hasArrived } = useTracking('b1');
 
   useEffect(() => {
     const loadInitialData = async () => {
@@ -35,12 +39,21 @@ const ParentDashboard: React.FC<{ user: User }> = ({ user }) => {
       }
     };
     loadInitialData();
-  }, [user]);
+  }, [user, paymentState.step]);
+
+  // Update marker position on location change
+  useEffect(() => {
+    if (map && location && markerRef.current) {
+        markerRef.current.setLatLng([location.lat, location.lng]);
+        if (trackingActive) map.panTo([location.lat, location.lng]);
+    }
+  }, [location, map, trackingActive]);
 
   useEffect(() => {
     if (trackingActive && !map) {
       setTimeout(() => {
-        const parentMap = L.map('parent-map').setView([28.6139, 77.2090], 15);
+        const initialPos = location ? [location.lat, location.lng] : [32.0900, 76.2600];
+        const parentMap = L.map('parent-map').setView(initialPos, 15);
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(parentMap);
         
         const busIcon = L.divIcon({
@@ -49,7 +62,8 @@ const ParentDashboard: React.FC<{ user: User }> = ({ user }) => {
           iconSize: [48, 48]
         });
 
-        L.marker([28.6139, 77.2090], { icon: busIcon }).addTo(parentMap);
+        const m = L.marker(initialPos, { icon: busIcon }).addTo(parentMap).bindPopup('<b>School Bus B101</b>');
+        markerRef.current = m;
         setMap(parentMap);
       }, 100);
     }
@@ -61,13 +75,13 @@ const ParentDashboard: React.FC<{ user: User }> = ({ user }) => {
      </div>
   );
 
-  const currentDues = dues.filter(d => String(d.student_id) === String(selectedStudent.id));
+  const studentDues = dues.filter(d => String(d.student_id) === String(selectedStudent.id))
+                         .sort((a, b) => (a.year * 12 + a.month) - (b.year * 12 + b.month));
+                         
   const totalFamilyDue = familyStudents.reduce((acc, s) => {
-    const studentDues = dues.filter(d => String(d.student_id) === String(s.id) && d.status !== PaymentStatus.PAID);
-    return acc + studentDues.reduce((sum, d) => sum + d.total_due, 0);
+    const studentDuesAll = dues.filter(d => String(d.student_id) === String(s.id) && d.status !== PaymentStatus.PAID);
+    return acc + studentDuesAll.reduce((sum, d) => sum + d.total_due, 0);
   }, 0);
-
-  const earliestUnpaid = currentDues.find(d => d.status !== PaymentStatus.PAID);
 
   return (
     <div className="space-y-6">
@@ -89,12 +103,12 @@ const ParentDashboard: React.FC<{ user: User }> = ({ user }) => {
           <div>
             <h2 className="text-2xl md:text-4xl font-black text-slate-800 tracking-tighter uppercase leading-none">Family Hub</h2>
             <p className="text-slate-500 font-bold uppercase text-[9px] md:text-[10px] tracking-widest mt-2">
-               {familyStudents.length} Students Active
+               {familyStudents.length} Students Registered
             </p>
           </div>
         </div>
         <div className="text-center md:text-right relative z-10 w-full sm:w-auto">
-          <p className="text-[9px] md:text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Outstanding</p>
+          <p className="text-[9px] md:text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Consolidated Dues</p>
           <p className={`text-3xl md:text-5xl font-black tracking-tighter ${totalFamilyDue > 0 ? 'text-danger' : 'text-success'}`}>
              ₹{totalFamilyDue.toLocaleString()}
           </p>
@@ -137,7 +151,7 @@ const ParentDashboard: React.FC<{ user: User }> = ({ user }) => {
                        onClick={() => setTrackingActive(true)}
                        className="bg-primary text-white px-8 md:px-12 py-3 md:py-5 rounded-xl md:rounded-2xl font-black uppercase text-[9px] md:text-[11px] tracking-widest shadow-2xl hover:scale-105 transition-all shadow-primary/20 active:scale-95"
                     >
-                       Connect
+                       Establish Uplink
                     </button>
                  </div>
               )}
@@ -145,8 +159,10 @@ const ParentDashboard: React.FC<{ user: User }> = ({ user }) => {
               {trackingActive && (
                  <div className="absolute top-4 left-4 z-20 flex flex-col sm:flex-row gap-2">
                     <div className="bg-black/80 backdrop-blur-xl px-4 py-3 rounded-xl border border-white/10 text-white flex items-center gap-3">
-                       <div className="w-2 h-2 bg-success rounded-full animate-pulse"></div>
-                       <span className="text-[9px] font-black uppercase tracking-widest leading-none">Bus B101 • Live</span>
+                       <div className={`w-2 h-2 rounded-full animate-pulse ${hasArrived ? 'bg-blue-500' : 'bg-success'}`}></div>
+                       <span className="text-[9px] font-black uppercase tracking-widest leading-none">
+                        {hasArrived ? 'Bus at Campus • Final Stop' : 'Bus KNG-01-A • Live Telemetry'}
+                       </span>
                     </div>
                     <button 
                        onClick={() => setTrackingActive(false)}
@@ -162,7 +178,7 @@ const ParentDashboard: React.FC<{ user: User }> = ({ user }) => {
         <div className="bg-white rounded-3xl md:rounded-[3rem] border border-slate-200 shadow-premium overflow-hidden">
           <div className="p-6 md:p-10 bg-slate-50 border-b border-slate-100 flex items-center justify-between">
              <div>
-                <h3 className="font-black text-[9px] md:text-[11px] uppercase tracking-widest text-slate-400 mb-1">Fee Schedule</h3>
+                <h3 className="font-black text-[9px] md:text-[11px] uppercase tracking-widest text-slate-400 mb-1">Fee Manifest</h3>
                 <p className="text-[10px] md:text-xs font-black text-slate-800 uppercase">{selectedStudent.full_name}</p>
              </div>
              <div className="w-10 h-10 bg-primary/10 text-primary rounded-xl flex items-center justify-center">
@@ -170,31 +186,44 @@ const ParentDashboard: React.FC<{ user: User }> = ({ user }) => {
              </div>
           </div>
           <div className="divide-y divide-slate-50">
-            {currentDues.map(due => {
-              const isLocked = earliestUnpaid && earliestUnpaid.id !== due.id;
+            {studentDues.map(due => {
+              const isPaid = due.status === PaymentStatus.PAID;
+              const isLocked = !isPaid && !isMonthPayable(due, studentDues);
+              const isOverdue = !isPaid && new Date() > new Date(due.due_date);
+
               return (
-                <div key={due.id} className={`p-6 md:p-8 flex items-center justify-between group transition-all ${isLocked ? 'opacity-30 grayscale pointer-events-none' : 'hover:bg-slate-50'}`}>
+                <div key={due.id} className={`p-6 md:p-8 flex items-center justify-between group transition-all ${isLocked ? 'opacity-30 grayscale' : 'hover:bg-slate-50'}`}>
                   <div>
                     <p className="font-black text-slate-800 text-xs md:text-sm uppercase tracking-tight">{MONTHS[due.month-1]} {due.year}</p>
-                    <span className={`text-[8px] font-black px-2 py-0.5 rounded-full uppercase tracking-widest border mt-1 inline-block ${due.status === PaymentStatus.PAID ? 'bg-success/10 text-success border-success/10' : 'bg-danger/10 text-danger border-danger/10'}`}>
-                       {due.status}
-                    </span>
+                    <div className="flex flex-col gap-0.5 mt-1">
+                      <span className={`text-[7px] font-black px-1.5 py-0.5 rounded-full uppercase tracking-widest border w-max ${isPaid ? 'bg-success/10 text-success border-success/10' : isLocked ? 'bg-slate-100 text-slate-400' : isOverdue ? 'bg-danger/10 text-danger border-danger/10' : 'bg-blue-50 text-primary border-blue-100'}`}>
+                         {isLocked ? 'Locked' : due.status}
+                      </span>
+                      {!isPaid && <p className="text-[7px] text-slate-400 font-bold uppercase mt-1">Fine cutoff: {due.last_date}</p>}
+                    </div>
                   </div>
                   <div className="text-right">
                      <p className="text-sm md:text-lg font-black text-slate-800 tracking-tighter mb-2">₹{due.total_due.toLocaleString()}</p>
-                     {due.status !== PaymentStatus.PAID && (
+                     {isPaid ? (
+                        <i className="fas fa-check-circle text-success text-lg"></i>
+                     ) : (
                        <button 
                          disabled={isLocked}
                          onClick={() => openPortal(due.id, due.total_due, selectedStudent.full_name)}
-                         className="px-4 md:px-6 py-2 bg-primary text-white text-[8px] md:text-[9px] font-black uppercase tracking-widest rounded-lg md:rounded-xl hover:bg-blue-800 shadow-xl shadow-primary/20 transition-all"
+                         className={`px-4 md:px-6 py-2 text-[8px] md:text-[9px] font-black uppercase tracking-widest rounded-lg md:rounded-xl transition-all ${isLocked ? 'bg-slate-100 text-slate-400 cursor-not-allowed' : 'bg-primary text-white hover:bg-blue-800 shadow-xl shadow-primary/20'}`}
                        >
-                         Pay Now
+                         {isLocked ? 'Wait: Clear Prior' : 'Pay Now'}
                        </button>
                      )}
                   </div>
                 </div>
               );
             })}
+            {studentDues.length === 0 && (
+              <div className="p-20 text-center">
+                 <p className="text-[9px] font-black text-slate-300 uppercase tracking-widest">No fee records found</p>
+              </div>
+            )}
           </div>
         </div>
       </div>

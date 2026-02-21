@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { User } from '../types';
 import api from '../lib/api';
@@ -10,11 +9,11 @@ const Notifications: React.FC<{ user: User }> = ({ user }) => {
   useEffect(() => {
     const fetchNotifications = async () => {
       try {
-        // Mocking for now
+        // Mocking with 2025 cycle dates
         setNotifications([
-          { id: 1, title: 'Fee Payment Successful', message: 'Transaction for March 2024 has been verified. Download your receipt in the Receipts tab.', type: 'SUCCESS', date: '2 hours ago' },
+          { id: 1, title: 'Fee Payment Successful', message: 'Transaction for March 2025 has been verified. Download your receipt in the Receipts tab.', type: 'SUCCESS', date: '2 hours ago' },
           { id: 2, title: 'Bus Delayed', message: 'Bus 102 on North Zone route is running 15 minutes late due to city traffic.', type: 'WARNING', date: '5 hours ago' },
-          { id: 3, title: 'Monthly Bill Generated', message: 'April 2024 invoice for Alice Doe (1001) has been generated.', type: 'INFO', date: 'Yesterday' },
+          { id: 3, title: 'Monthly Bill Generated', message: 'April 2025 invoice for Alice Doe (1001) has been generated.', type: 'INFO', date: 'Yesterday' },
         ]);
       } catch (err) {
         console.error(err);

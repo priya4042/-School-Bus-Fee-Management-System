@@ -1,8 +1,9 @@
 {
-  "name": "Copy of School Bus Fee Management System",
-  "description": "A comprehensive production-ready platform for managing school bus routes, students, and monthly fee payments with late fee automation and sequential payment logic.",
+  "name": "BusWay Pro Enterprise",
+  "description": "Production-ready school bus management platform with real-time Supabase tracking.",
   "requestFramePermissions": [
     "camera",
-    "geolocation"
+    "geolocation",
+    "microphone"
   ]
 }

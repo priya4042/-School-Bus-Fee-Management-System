@@ -1,8 +1,9 @@
-
 import React, { useState } from 'react';
 import { User, UserRole } from '../types';
 import { APP_NAME, MOCK_STUDENTS } from '../constants';
-import { showAlert } from '../lib/swal';
+import { showToast } from '../lib/swal';
+import { saveDBUser, getDBUsers } from '../lib/api';
+import Modal from '../components/Modal';
 
 interface RegisterProps {
   onRegister: (user: User) => void;
@@ -11,252 +12,242 @@ interface RegisterProps {
 }
 
 const Register: React.FC<RegisterProps> = ({ onRegister, onBackToLogin, initialRole }) => {
-  const isAdminPath = initialRole === UserRole.ADMIN;
-  const [role, setRole] = useState<UserRole>(initialRole || UserRole.PARENT);
+  const [role, setRole] = useState<UserRole>(initialRole === UserRole.ADMIN ? UserRole.ADMIN : UserRole.PARENT);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   
+  const [regStep, setRegStep] = useState<'form' | 'verification' | 'success'>('form');
+  const [verificationCode, setVerificationCode] = useState('');
+  const [verificationCodeSecondary, setVerificationCodeSecondary] = useState('');
+  const [pendingUser, setPendingUser] = useState<any>(null);
+
   const [formData, setFormData] = useState({
     fullName: '',
     email: '',
     phone: '',
+    secondaryPhone: '', // For owner multi-phone support
     password: '',
     admissionNo: '',
-    staffId: '',
-    licenseNo: '',
     adminKey: ''
   });
 
-  const handleRegister = (e: React.FormEvent) => {
+  const handleInitialSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError('');
 
+    const normalizedEmail = formData.email.trim().toLowerCase();
+
     setTimeout(() => {
       try {
-        if (formData.fullName.split(' ').length < 2) throw new Error("Full Legal Name is required (First & Last).");
-        if (formData.password.length < 6) throw new Error("Security Requirement: Password must be 6+ characters.");
+        if (formData.password.length < 6) throw new Error("Password must be 6+ characters.");
 
         if (role === UserRole.PARENT) {
-          const student = MOCK_STUDENTS.find(s => s.admission_number === formData.admissionNo);
-          if (!student) throw new Error("Admission ID Verification Failed: Student not found in academic database.");
+          const dbStudents = JSON.parse(localStorage.getItem('db_students') || '[]');
+          const allStudents = [...MOCK_STUDENTS, ...dbStudents];
+          const student = allStudents.find(s => s.admission_number === formData.admissionNo);
+          if (!student) throw new Error("Admission ID not found in school manifest.");
+        } else if (role === UserRole.ADMIN) {
+          if (formData.adminKey !== 'SUPER-SECRET-2025') {
+            throw new Error("Invalid Fleet Security Token.");
+          }
+          if (!formData.secondaryPhone || formData.secondaryPhone.length < 10) {
+            throw new Error("Secondary mobile number required for Owner accounts.");
+          }
+          if (formData.phone === formData.secondaryPhone) {
+            throw new Error("Primary and Secondary numbers must be different.");
+          }
         }
 
-        if (role === UserRole.TEACHER && !formData.staffId) {
-          throw new Error("Staff ID is required for Teacher registration.");
-        }
-
-        if (role === UserRole.DRIVER && !formData.licenseNo) {
-          throw new Error("Commercial License Number is required for Driver registration.");
-        }
-
-        if (role === UserRole.ADMIN && formData.adminKey !== 'SUPER-SECRET-2024') {
-          throw new Error("Invalid Administrative Protocol: Secret Key is incorrect.");
+        const existingUsers = getDBUsers();
+        if (existingUsers.some((u: any) => u.email?.toLowerCase() === normalizedEmail)) {
+           throw new Error("Email already registered.");
         }
 
         const newUser: any = {
-          id: 'user-' + Math.random().toString(36).substr(2, 9),
+          id: 'u-' + Math.random().toString(36).substr(2, 5),
           fullName: formData.fullName,
-          email: formData.email,
+          email: normalizedEmail,
           phoneNumber: formData.phone,
+          secondaryPhoneNumber: role === UserRole.ADMIN ? formData.secondaryPhone : undefined,
           password: formData.password,
           role: role,
           admissionNumber: role === UserRole.PARENT ? formData.admissionNo : undefined,
-          staffId: [UserRole.TEACHER, UserRole.ADMIN].includes(role) ? formData.staffId : undefined,
-          licenseNo: role === UserRole.DRIVER ? formData.licenseNo : undefined
+          verified: false,
+          created_at: new Date().toISOString()
         };
 
-        const existingUsers = JSON.parse(localStorage.getItem('registered_users') || '[]');
+        setPendingUser(newUser);
+        setRegStep('verification');
         
-        if (existingUsers.some((u: any) => u.email === newUser.email)) {
-           throw new Error("Duplicate Account: This email is already registered.");
+        if (role === UserRole.ADMIN) {
+          showToast(`Dual-OTPs sent to both ${formData.phone} and ${formData.secondaryPhone}`, 'info');
+        } else {
+          showToast(`Verification code sent`, 'info');
         }
-        
-        if (newUser.phoneNumber && existingUsers.some((u: any) => u.phoneNumber === newUser.phoneNumber)) {
-           throw new Error("Duplicate Account: This mobile number is already registered.");
-        }
-
-        existingUsers.push(newUser);
-        localStorage.setItem('registered_users', JSON.stringify(existingUsers));
-
-        showAlert('Profile Activated', `Welcome to ${APP_NAME}. Your authorized ${role.toLowerCase()} profile is now active.`, 'success');
-        onRegister(newUser);
       } catch (err: any) {
         setError(err.message);
       } finally {
         setLoading(false);
       }
-    }, 1200);
+    }, 600);
   };
 
+  const verifyOtp = () => {
+    const isOwner = role === UserRole.ADMIN;
+    
+    if (verificationCode === '123456' && (!isOwner || verificationCodeSecondary === '123456')) {
+      setLoading(true);
+      setTimeout(() => {
+        saveDBUser({ ...pendingUser, verified: true });
+        setRegStep('success');
+        setLoading(false);
+      }, 800);
+    } else {
+      const msg = isOwner 
+        ? 'Verification failed. Both codes must be correct (123456).' 
+        : 'Incorrect code. Use 123456';
+      showToast(msg, 'error');
+    }
+  };
+
+  const toggleRole = () => {
+     setRole(role === UserRole.PARENT ? UserRole.ADMIN : UserRole.PARENT);
+     setError('');
+     setFormData({ ...formData, adminKey: '', secondaryPhone: '', fullName: '', email: '', phone: '', password: '', admissionNo: '' });
+  };
+
+  if (regStep === 'success') {
+    return (
+      <div className="min-h-screen bg-slate-900 flex items-center justify-center p-6 text-center">
+        <div className="max-w-md w-full bg-white rounded-[3rem] p-12 shadow-2xl animate-in zoom-in">
+          <div className="w-20 h-20 bg-success text-white rounded-3xl flex items-center justify-center text-4xl mx-auto mb-8 shadow-xl">
+            <i className="fas fa-check"></i>
+          </div>
+          <h2 className="text-2xl font-black text-slate-800 uppercase tracking-tighter mb-4">Account Initialized</h2>
+          <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-10 leading-loose">
+            Authentication successfully verified for `{pendingUser?.email}`.
+          </p>
+          <button onClick={onBackToLogin} className="w-full py-5 bg-primary text-white font-black uppercase text-[10px] tracking-widest rounded-2xl">Enter Hub</button>
+        </div>
+      </div>
+    );
+  }
+
+  const inputClass = "w-full px-5 py-4 rounded-xl bg-primary/5 border border-primary/20 outline-none font-bold text-sm transition-all focus:ring-4 focus:ring-primary/10 focus:border-primary text-slate-800 placeholder-slate-400";
+  const ownerInputClass = "w-full px-5 py-4 rounded-xl bg-slate-50 border border-slate-200 outline-none font-bold text-sm transition-all focus:ring-4 focus:ring-primary/10 focus:border-primary text-slate-800 placeholder-slate-400";
+
   return (
-    <div className="min-h-screen bg-slate-900 flex items-center justify-center p-6 bg-[radial-gradient(circle_at_bottom_right,_var(--tw-gradient-stops))] from-slate-800 via-slate-900 to-black font-sans">
-      <div className="max-w-5xl w-full bg-white rounded-[3rem] shadow-2xl overflow-hidden flex flex-col md:flex-row animate-in fade-in zoom-in duration-700">
-        <div className={`md:w-96 p-12 text-white flex flex-col justify-between relative overflow-hidden transition-colors ${role === UserRole.ADMIN ? 'bg-slate-800' : 'bg-primary'}`}>
-           <div className="absolute inset-0 opacity-10">
-              <div className="w-80 h-80 rounded-full border-[40px] border-white absolute -top-20 -left-20"></div>
-           </div>
-           <div className="relative z-10">
-              <div className="w-16 h-16 bg-white/20 backdrop-blur-xl rounded-2xl flex items-center justify-center mb-8 border border-white/30 shadow-2xl">
-                 <i className={`fas ${role === UserRole.ADMIN ? 'fa-shield-halved' : 'fa-user-plus'} text-2xl`}></i>
+    <div className="min-h-screen bg-slate-900 flex items-center justify-center p-6 bg-[radial-gradient(circle_at_bottom_right,_var(--tw-gradient-stops))] from-slate-800 via-slate-900 to-black overflow-y-auto">
+      <div className="max-w-4xl w-full bg-white rounded-[3rem] shadow-2xl overflow-hidden flex flex-col md:flex-row animate-in fade-in zoom-in duration-500">
+        <div className={`md:w-80 p-12 text-white flex flex-col justify-between transition-colors ${role === UserRole.ADMIN ? 'bg-slate-950' : 'bg-primary'}`}>
+           <div>
+              <div className="w-14 h-14 bg-white/20 rounded-2xl flex items-center justify-center mb-8 border border-white/20">
+                 <i className={`fas ${role === UserRole.ADMIN ? 'fa-shield-halved' : 'fa-user-plus'} text-xl`}></i>
               </div>
-              <h1 className="text-4xl font-black tracking-tighter leading-none mb-6">Join {APP_NAME}</h1>
-              <p className="text-white/70 text-sm font-bold leading-relaxed opacity-80">
-                 {role === UserRole.ADMIN 
-                  ? "Elevated administrative core provisioning."
-                  : "Seamless enterprise fleet management for authorized staff and families."}
+              <h1 className="text-3xl font-black tracking-tighter leading-none mb-4 uppercase">Enrollment Hub</h1>
+              <p className="text-white/60 text-[10px] font-bold uppercase tracking-widest leading-relaxed">
+                {role === UserRole.ADMIN ? 'Setup multi-device owner authentication.' : 'Connect your family to the transport core.'}
               </p>
-           </div>
-           <div className="relative z-10 mt-12 space-y-6">
-              <div className="flex items-center gap-4">
-                 <div className="w-10 h-10 rounded-full bg-success/20 flex items-center justify-center text-success border border-success/30">
-                    <i className="fas fa-check text-xs"></i>
-                 </div>
-                 <span className="text-[10px] font-black uppercase tracking-widest">Biometric Readiness</span>
-              </div>
            </div>
         </div>
 
-        <div className="flex-1 p-12 md:p-16">
+        <div className="flex-1 p-8 md:p-12">
            <div className="flex items-center justify-between mb-10">
-              <h2 className="text-3xl font-black text-slate-800 tracking-tight">
-                {isAdminPath ? "Admin Core Provisioning" : "Enlist Profile"}
-              </h2>
-              <button onClick={onBackToLogin} className="text-[10px] font-black text-primary uppercase tracking-widest hover:underline underline-offset-4 transition-all">
-                 Return to Terminal
+              <h2 className="text-2xl font-black text-slate-800 tracking-tight uppercase">Registration</h2>
+              <button onClick={onBackToLogin} className="text-[9px] font-black text-primary uppercase tracking-widest hover:underline">
+                 <i className="fas fa-arrow-left mr-2"></i> Exit
               </button>
            </div>
 
-           {!isAdminPath && (
-             <div className="flex gap-2 p-1.5 bg-slate-100 rounded-[1.25rem] mb-10 overflow-x-auto scrollbar-hide">
-                <button onClick={() => {setRole(UserRole.PARENT); setError('');}} className={`min-w-[100px] flex-1 py-3 text-[9px] font-black uppercase tracking-widest rounded-xl transition-all ${role === UserRole.PARENT ? 'bg-white shadow-lg text-primary' : 'text-slate-400 hover:text-slate-600'}`}>Parent</button>
-                <button onClick={() => {setRole(UserRole.TEACHER); setError('');}} className={`min-w-[100px] flex-1 py-3 text-[9px] font-black uppercase tracking-widest rounded-xl transition-all ${role === UserRole.TEACHER ? 'bg-white shadow-lg text-primary' : 'text-slate-400 hover:text-slate-600'}`}>Teacher</button>
-                <button onClick={() => {setRole(UserRole.DRIVER); setError('');}} className={`min-w-[100px] flex-1 py-3 text-[9px] font-black uppercase tracking-widest rounded-xl transition-all ${role === UserRole.DRIVER ? 'bg-white shadow-lg text-primary' : 'text-slate-400 hover:text-slate-600'}`}>Driver</button>
-             </div>
-           )}
+           {error && <div className="bg-red-50 text-red-600 p-4 rounded-xl text-[9px] font-black uppercase mb-8 border border-red-100">{error}</div>}
 
-           {error && (
-             <div className="bg-red-50 border border-red-100 p-4 rounded-2xl text-red-600 text-[10px] font-black uppercase text-center mb-8 animate-bounce">
-                {error}
-             </div>
-           )}
-
-           <form onSubmit={handleRegister} className="space-y-6">
+           <form onSubmit={handleInitialSubmit} className="space-y-6">
               {role === UserRole.ADMIN && (
-                <div className="p-8 bg-slate-900 rounded-3xl border border-white/10 mb-8">
-                   <label className="block text-[10px] font-black text-white/50 uppercase tracking-widest mb-3 ml-1">Admin Protocol Secret Key</label>
-                   <input 
-                     required
-                     type="password" 
-                     value={formData.adminKey}
-                     onChange={(e) => setFormData({...formData, adminKey: e.target.value})}
-                     className="w-full px-6 py-5 rounded-[1.5rem] bg-white/5 border border-white/10 outline-none font-black text-xl text-white tracking-widest"
-                     placeholder="••••••••••••"
-                   />
+                <div className="p-6 bg-slate-50 rounded-2xl border border-slate-100 mb-6">
+                   <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Fleet Security Token</label>
+                   <input required type="password" value={formData.adminKey} onChange={(e) => setFormData({...formData, adminKey: e.target.value})} className={ownerInputClass.replace('text-sm', 'text-base font-black')} placeholder="••••••••" />
                 </div>
               )}
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                  {role === UserRole.PARENT && (
                    <div className="space-y-1">
-                      <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Student Admission ID</label>
-                      <input 
-                        required
-                        type="text" 
-                        value={formData.admissionNo}
-                        onChange={(e) => setFormData({...formData, admissionNo: e.target.value})}
-                        className="w-full px-6 py-4 rounded-2xl bg-slate-50 border border-slate-100 focus:border-primary outline-none font-bold"
-                        placeholder="e.g. 1001"
-                      />
+                      <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">Admission ID</label>
+                      <input required type="text" value={formData.admissionNo} onChange={(e) => setFormData({...formData, admissionNo: e.target.value})} className={inputClass} placeholder="1001" />
                    </div>
                  )}
-                 {role === UserRole.TEACHER && (
-                    <div className="space-y-1">
-                       <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Official Staff ID</label>
-                       <input 
-                         required
-                         type="text" 
-                         value={formData.staffId}
-                         onChange={(e) => setFormData({...formData, staffId: e.target.value})}
-                         className="w-full px-6 py-4 rounded-2xl bg-slate-50 border border-slate-100 focus:border-primary outline-none font-bold"
-                         placeholder="T-0000X"
-                       />
-                    </div>
-                 )}
-                 {role === UserRole.DRIVER && (
-                    <div className="space-y-1">
-                       <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Commercial License No.</label>
-                       <input 
-                         required
-                         type="text" 
-                         value={formData.licenseNo}
-                         onChange={(e) => setFormData({...formData, licenseNo: e.target.value})}
-                         className="w-full px-6 py-4 rounded-2xl bg-slate-50 border border-slate-100 focus:border-primary outline-none font-bold"
-                         placeholder="DL-XXXXXXXXX"
-                       />
-                    </div>
-                 )}
                  <div className="space-y-1">
-                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Full Legal Name</label>
-                    <input 
-                      required
-                      type="text" 
-                      value={formData.fullName}
-                      onChange={(e) => setFormData({...formData, fullName: e.target.value})}
-                      className="w-full px-6 py-4 rounded-2xl bg-slate-50 border border-slate-100 focus:border-primary outline-none font-bold"
-                      placeholder="John Smith"
-                    />
+                    <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">Full Identity Name</label>
+                    <input required type="text" value={formData.fullName} onChange={(e) => setFormData({...formData, fullName: e.target.value})} className={role === UserRole.PARENT ? inputClass : ownerInputClass} placeholder="e.g. John Smith" />
                  </div>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                  <div className="space-y-1">
-                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Primary Email</label>
-                    <input 
-                      required
-                      type="email" 
-                      value={formData.email}
-                      onChange={(e) => setFormData({...formData, email: e.target.value})}
-                      className="w-full px-6 py-4 rounded-2xl bg-slate-50 border border-slate-100 focus:border-primary outline-none font-bold"
-                      placeholder="name@portal.com"
-                    />
+                    <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">Email</label>
+                    <input required type="email" value={formData.email} onChange={(e) => setFormData({...formData, email: e.target.value})} className={role === UserRole.PARENT ? inputClass : ownerInputClass} placeholder="owner@fleet.com" />
                  </div>
                  <div className="space-y-1">
-                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Mobile Contact</label>
-                    <input 
-                      required
-                      type="tel" 
-                      value={formData.phone}
-                      onChange={(e) => setFormData({...formData, phone: e.target.value.replace(/\D/g, '').slice(0, 10)})}
-                      className="w-full px-6 py-4 rounded-2xl bg-slate-50 border border-slate-100 focus:border-primary outline-none font-bold"
-                      placeholder="98765 43210"
-                    />
+                    <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">Primary Mobile</label>
+                    <input required type="tel" value={formData.phone} onChange={(e) => setFormData({...formData, phone: e.target.value.replace(/\D/g, '').slice(0, 10)})} className={role === UserRole.PARENT ? inputClass : ownerInputClass} placeholder="9876543210" />
                  </div>
               </div>
 
+              {role === UserRole.ADMIN && (
+                <div className="space-y-1">
+                  <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">Secondary Mobile (Backup Auth)</label>
+                  <input required type="tel" value={formData.secondaryPhone} onChange={(e) => setFormData({...formData, secondaryPhone: e.target.value.replace(/\D/g, '').slice(0, 10)})} className={ownerInputClass} placeholder="Alternate Number" />
+                </div>
+              )}
+
               <div className="space-y-1">
-                 <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Account Password</label>
-                 <input 
-                   required
-                   type="password" 
-                   value={formData.password}
-                   onChange={(e) => setFormData({...formData, password: e.target.value})}
-                   className="w-full px-6 py-4 rounded-2xl bg-slate-50 border border-slate-100 focus:border-primary outline-none font-bold"
-                   placeholder="••••••••"
-                 />
+                 <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">Account Password</label>
+                 <input required type="password" value={formData.password} onChange={(e) => setFormData({...formData, password: e.target.value})} className={role === UserRole.PARENT ? inputClass : ownerInputClass} placeholder="••••••••" />
               </div>
 
-              <button 
-                type="submit"
-                disabled={loading}
-                className={`w-full py-5 rounded-[1.5rem] text-white font-black uppercase tracking-widest transition-all shadow-xl flex items-center justify-center gap-3 mt-6 active:scale-[0.98] ${role === UserRole.ADMIN ? 'bg-slate-800 hover:bg-slate-900 shadow-slate-900/20' : 'bg-primary hover:bg-blue-800 shadow-primary/20'}`}
-              >
-                {loading ? <i className="fas fa-circle-notch fa-spin"></i> : <i className={`fas ${role === UserRole.ADMIN ? 'fa-shield-halved' : 'fa-user-plus'}`}></i>}
-                {role === UserRole.ADMIN ? 'Authorize Admin Core' : 'Activate Profile'}
+              <button type="submit" disabled={loading} className={`w-full py-5 rounded-2xl text-white font-black uppercase text-[10px] tracking-widest transition-all shadow-xl active:scale-[0.98] ${role === UserRole.ADMIN ? 'bg-slate-900 shadow-slate-900/20' : 'bg-primary shadow-primary/20'}`}>
+                {loading ? <i className="fas fa-circle-notch fa-spin"></i> : 'Initialize Hub Access'}
               </button>
            </form>
+
+           <div className="mt-8 text-center pt-6 border-t border-slate-50">
+              <button onClick={toggleRole} className="text-slate-400 font-black text-[10px] uppercase tracking-widest hover:text-primary transition-colors">
+                {role === UserRole.PARENT ? 'Apply for Owner Status' : 'Return to Parent Onboarding'}
+              </button>
+           </div>
         </div>
       </div>
+
+      <Modal isOpen={regStep === 'verification'} onClose={() => setRegStep('form')} title="Dual-Device Security Check">
+        <div className="space-y-6 py-4 text-center">
+            {role === UserRole.ADMIN ? (
+              <div className="space-y-8">
+                <div className="space-y-3">
+                  <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Code sent to Primary: {formData.phone}</p>
+                  <input type="text" autoFocus value={verificationCode} onChange={(e) => setVerificationCode(e.target.value.replace(/\D/g, '').slice(0, 6))} className="w-full py-4 rounded-2xl border-2 border-primary text-center text-xl font-black tracking-[0.4em] text-primary focus:ring-4 focus:ring-primary/10 outline-none transition-all" placeholder="••••••" />
+                </div>
+                <div className="space-y-3">
+                  <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Code sent to Secondary: {formData.secondaryPhone}</p>
+                  <input type="text" value={verificationCodeSecondary} onChange={(e) => setVerificationCodeSecondary(e.target.value.replace(/\D/g, '').slice(0, 6))} className="w-full py-4 rounded-2xl border-2 border-slate-900 text-center text-xl font-black tracking-[0.4em] text-slate-900 focus:ring-4 focus:ring-primary/10 outline-none transition-all" placeholder="••••••" />
+                </div>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Enter the 6-digit code sent to your mobile (Demo: 123456)</p>
+                <input type="text" autoFocus value={verificationCode} onChange={(e) => setVerificationCode(e.target.value.replace(/\D/g, '').slice(0, 6))} className="w-full py-5 rounded-2xl border-2 border-primary text-center text-2xl font-black tracking-[0.5em] text-primary focus:ring-4 focus:ring-primary/10 outline-none transition-all" placeholder="••••••" />
+              </div>
+            )}
+            
+            <button 
+              onClick={verifyOtp} 
+              disabled={loading || verificationCode.length !== 6 || (role === UserRole.ADMIN && verificationCodeSecondary.length !== 6)} 
+              className="w-full py-5 bg-primary text-white font-black uppercase text-[10px] tracking-widest rounded-2xl"
+            >
+              Verify All Channels
+            </button>
+        </div>
+      </Modal>
     </div>
   );
 };

@@ -15,8 +15,6 @@ interface SidebarProps {
 const Sidebar: React.FC<SidebarProps> = ({ user, onLogout, activeTab, setActiveTab, isOpen, onClose }) => {
   const isSuperAdmin = user.role === UserRole.SUPER_ADMIN;
   const isAdmin = user.role === UserRole.ADMIN || isSuperAdmin;
-  const isTeacher = user.role === UserRole.TEACHER;
-  const isDriver = user.role === UserRole.DRIVER;
   const isParent = user.role === UserRole.PARENT;
 
   const adminLinks = [
@@ -42,21 +40,7 @@ const Sidebar: React.FC<SidebarProps> = ({ user, onLogout, activeTab, setActiveT
     { name: 'Profile', icon: 'fa-user' },
   ];
 
-  const teacherLinks = [
-    { name: 'Dashboard', icon: 'fa-chalkboard-teacher' },
-    { name: 'Attendance', icon: 'fa-clipboard-check' },
-    { name: 'Profile', icon: 'fa-user' },
-  ];
-
-  const driverLinks = [
-    { name: 'Dashboard', icon: 'fa-id-card' },
-    { name: 'Attendance', icon: 'fa-clipboard-check' },
-    { name: 'Profile', icon: 'fa-user' },
-  ];
-
-  const links = isAdmin ? adminLinks : 
-                isTeacher ? teacherLinks : 
-                isDriver ? driverLinks : parentLinks;
+  const links = isAdmin ? adminLinks : parentLinks;
 
   const sidebarClasses = `
     fixed inset-y-0 left-0 z-[60] w-72 bg-slate-950 text-white flex flex-col transition-transform duration-300 lg:static lg:translate-x-0
@@ -70,13 +54,7 @@ const Sidebar: React.FC<SidebarProps> = ({ user, onLogout, activeTab, setActiveT
 
   return (
     <>
-      {/* Mobile Overlay */}
-      {isOpen && (
-        <div 
-          className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[55] lg:hidden"
-          onClick={onClose}
-        ></div>
-      )}
+      {isOpen && <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[55] lg:hidden" onClick={onClose}></div>}
 
       <div className={sidebarClasses}>
         <div className="p-8 flex items-center gap-4">
@@ -108,10 +86,7 @@ const Sidebar: React.FC<SidebarProps> = ({ user, onLogout, activeTab, setActiveT
         </nav>
 
         <div className="p-6 mt-auto border-t border-white/5 bg-slate-900/20">
-          <button
-            onClick={onLogout}
-            className="w-full flex items-center gap-4 px-5 py-4 text-slate-500 hover:bg-danger/10 hover:text-danger rounded-2xl transition-all group"
-          >
+          <button onClick={onLogout} className="w-full flex items-center gap-4 px-5 py-4 text-slate-500 hover:bg-danger/10 hover:text-danger rounded-2xl transition-all group">
             <i className="fas fa-power-off w-6 text-lg transition-transform group-hover:rotate-12"></i>
             <span className="font-bold text-xs uppercase tracking-widest">Logout</span>
           </button>
