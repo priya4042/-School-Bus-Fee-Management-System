@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Scanner } from '@zxing/library';
+import { createPortal } from 'react-dom';
 import BarcodeScannerComponent from 'react-qr-barcode-scanner';
 import { X, Camera, Keyboard } from 'lucide-react';
 
@@ -18,8 +18,8 @@ const BarcodeScanner: React.FC<BarcodeScannerProps> = ({ onScan, onClose }) => {
     }
   };
 
-  return (
-    <div className="fixed inset-0 z-[100] bg-black flex flex-col">
+  return createPortal(
+    <div className="fixed inset-0 z-[10000] bg-black flex flex-col">
       <div className="p-4 flex justify-between items-center bg-slate-900 text-white">
         <h2 className="text-lg font-bold">Scan Fee Barcode</h2>
         <button onClick={onClose} className="p-2 hover:bg-slate-800 rounded-full">
@@ -30,12 +30,13 @@ const BarcodeScanner: React.FC<BarcodeScannerProps> = ({ onScan, onClose }) => {
       <div className="flex-1 relative flex items-center justify-center overflow-hidden">
         {!showManual ? (
           <>
-            <BarcodeScannerComponent
-              width="100%"
-              height="100%"
-              onUpdate={handleScan}
-              className="object-cover"
-            />
+            <div className="w-full h-full">
+              <BarcodeScannerComponent
+                width="100%"
+                height="100%"
+                onUpdate={handleScan}
+              />
+            </div>
             <div className="absolute inset-0 pointer-events-none flex flex-col items-center justify-center">
               <div className="w-64 h-40 border-2 border-primary-light rounded-lg shadow-[0_0_0_1000px_rgba(0,0,0,0.5)]"></div>
               <p className="mt-8 text-white font-medium bg-black/50 px-4 py-2 rounded-full">
@@ -75,7 +76,8 @@ const BarcodeScanner: React.FC<BarcodeScannerProps> = ({ onScan, onClose }) => {
           {showManual ? 'Switch to Camera' : 'Manual Entry'}
         </button>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 };
 

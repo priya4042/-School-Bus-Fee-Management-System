@@ -62,7 +62,7 @@ const Topbar: React.FC<TopbarProps> = ({ user, onMenuClick }) => {
   };
 
   return (
-    <header className="h-20 bg-white/80 backdrop-blur-md border-b border-slate-100 px-6 md:px-10 flex items-center justify-between sticky top-0 z-50">
+    <header className="h-20 bg-white/80 backdrop-blur-md border-b border-slate-100 px-6 md:px-10 flex items-center justify-between sticky top-0 z-[1001]">
       <div className="flex items-center gap-6">
         <button onClick={onMenuClick} className="p-2 text-slate-600 hover:bg-slate-100 rounded-xl lg:hidden transition-colors">
           <i className="fas fa-bars"></i>

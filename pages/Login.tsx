@@ -27,6 +27,18 @@ const Login: React.FC<LoginProps> = ({ onLogin, onGoToRegister }) => {
 
   const [generatedOtp, setGeneratedOtp] = useState('');
 
+  const validateEmail = (email: string) => {
+    return String(email)
+      .toLowerCase()
+      .match(
+        /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/
+      );
+  };
+
+  const validatePhone = (phone: string) => {
+    return phone.length === 10;
+  };
+
   const handleLoginSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
@@ -40,6 +52,11 @@ const Login: React.FC<LoginProps> = ({ onLogin, onGoToRegister }) => {
 
       if (loginRole === UserRole.PARENT) {
         if (method === 'phone') {
+          if (!validatePhone(phone)) {
+            setError('Please enter a valid 10-digit mobile number.');
+            setLoading(false);
+            return;
+          }
           foundUser = users.find(u => u.phoneNumber === phone && u.role === UserRole.PARENT);
           if (!foundUser) {
             setError(`Mobile ${phone} is not registered.`);
@@ -61,10 +78,32 @@ const Login: React.FC<LoginProps> = ({ onLogin, onGoToRegister }) => {
         } else if (method === 'admission') {
           foundUser = users.find(u => u.admissionNumber === parentAdm && u.password === parentPass && u.role === UserRole.PARENT);
         } else {
+          if (!validateEmail(normalizedEmail)) {
+            setError('Please enter a valid email address.');
+            setLoading(false);
+            return;
+          }
           foundUser = users.find(u => u.email?.toLowerCase() === normalizedEmail && u.password === password && u.role === UserRole.PARENT);
+          if (foundUser && !otpSent) {
+            const newOtp = Math.floor(100000 + Math.random() * 900000).toString();
+            setGeneratedOtp(newOtp);
+            setOtpSent(true);
+            showToast(`Verification code sent to email: ${newOtp}`, 'info');
+            setLoading(false);
+            return;
+          } else if (otpSent && otp !== generatedOtp) {
+            setError('Invalid verification code.');
+            setLoading(false);
+            return;
+          }
         }
       } else {
         if (method === 'phone') {
+          if (!validatePhone(phone)) {
+            setError('Please enter a valid 10-digit mobile number.');
+            setLoading(false);
+            return;
+          }
           foundUser = users.find(u => (u.phoneNumber === phone || u.secondaryPhoneNumber === phone) && (u.role === UserRole.ADMIN || u.role === UserRole.SUPER_ADMIN));
           if (!foundUser) {
             setError(`Number ${phone} is not linked to an owner account.`);
@@ -84,7 +123,24 @@ const Login: React.FC<LoginProps> = ({ onLogin, onGoToRegister }) => {
             return;
           }
         } else {
+          if (!validateEmail(normalizedEmail)) {
+            setError('Please enter a valid email address.');
+            setLoading(false);
+            return;
+          }
           foundUser = users.find(u => u.email?.toLowerCase() === normalizedEmail && u.password === password && (u.role === UserRole.ADMIN || u.role === UserRole.SUPER_ADMIN));
+          if (foundUser && !otpSent) {
+            const newOtp = Math.floor(100000 + Math.random() * 900000).toString();
+            setGeneratedOtp(newOtp);
+            setOtpSent(true);
+            showToast(`Admin verification code sent: ${newOtp}`, 'info');
+            setLoading(false);
+            return;
+          } else if (otpSent && otp !== generatedOtp) {
+            setError('Invalid verification code.');
+            setLoading(false);
+            return;
+          }
         }
       }
 

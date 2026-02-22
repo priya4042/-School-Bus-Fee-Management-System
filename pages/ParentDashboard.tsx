@@ -6,6 +6,7 @@ import PaymentPortal from '../components/PaymentPortal';
 import api from '../lib/api';
 import { useTracking } from '../hooks/useTracking';
 import { isMonthPayable } from '../utils/feeCalculator';
+import BusCameraModal from '../components/BusCameraModal';
 
 declare const L: any;
 
@@ -15,6 +16,7 @@ const ParentDashboard: React.FC<{ user: User }> = ({ user }) => {
   const [dues, setDues] = useState<MonthlyDue[]>([]);
   const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
   const [trackingActive, setTrackingActive] = useState(false);
+  const [isCameraOpen, setIsCameraOpen] = useState(false);
   const [map, setMap] = useState<any>(null);
   const markerRef = useRef<any>(null);
   
@@ -133,7 +135,7 @@ const ParentDashboard: React.FC<{ user: User }> = ({ user }) => {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2">
-           <div className="bg-slate-950 rounded-3xl md:rounded-[3.5rem] shadow-2xl overflow-hidden border-8 md:border-[12px] border-white/5 relative h-[400px] md:h-[600px] group">
+           <div className="bg-slate-950 rounded-3xl md:rounded-[3.5rem] shadow-2xl overflow-hidden border-8 md:border-[12px] border-white/5 relative h-[400px] md:h-[600px] group z-0">
               <div id="parent-map" className={`absolute inset-0 transition-opacity duration-1000 ${trackingActive ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}></div>
               
               {!trackingActive && (
@@ -165,6 +167,13 @@ const ParentDashboard: React.FC<{ user: User }> = ({ user }) => {
                        </span>
                     </div>
                     <button 
+                       onClick={() => setIsCameraOpen(true)}
+                       className="bg-slate-900/80 backdrop-blur-md text-white px-4 py-3 rounded-xl border border-white/10 font-black text-[9px] uppercase tracking-widest hover:bg-black transition-all flex items-center gap-2"
+                    >
+                       <i className="fas fa-video"></i>
+                       Live Cam
+                    </button>
+                    <button 
                        onClick={() => setTrackingActive(false)}
                        className="bg-white/10 backdrop-blur-md text-white px-4 py-3 rounded-xl border border-white/10 font-black text-[9px] uppercase tracking-widest hover:bg-white/20 transition-all"
                     >
@@ -174,6 +183,8 @@ const ParentDashboard: React.FC<{ user: User }> = ({ user }) => {
               )}
            </div>
         </div>
+
+        <BusCameraModal isOpen={isCameraOpen} onClose={() => setIsCameraOpen(false)} />
 
         <div className="bg-white rounded-3xl md:rounded-[3rem] border border-slate-200 shadow-premium overflow-hidden">
           <div className="p-6 md:p-10 bg-slate-50 border-b border-slate-100 flex items-center justify-between">

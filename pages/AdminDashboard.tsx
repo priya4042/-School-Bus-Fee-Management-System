@@ -139,7 +139,7 @@ const AdminDashboard: React.FC = () => {
           </div>
         </div>
       ) : (
-        <div className="h-[600px] bg-white rounded-[3rem] border border-slate-200 shadow-premium overflow-hidden relative">
+        <div className="h-[600px] bg-white rounded-[3rem] border border-slate-200 shadow-premium overflow-hidden relative z-0">
           <div id="map"></div>
           {location && (
             <div className="absolute bottom-10 left-10 z-[1000] bg-slate-900/90 backdrop-blur-xl p-6 rounded-3xl border border-white/10 text-white min-w-[200px] animate-in slide-in-from-left-4">

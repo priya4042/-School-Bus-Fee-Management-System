@@ -1,5 +1,6 @@
 
 import React from 'react';
+import { createPortal } from 'react-dom';
 // @ts-ignore
 import { motion, AnimatePresence } from 'framer-motion';
 import { useLoadingStore } from '../../store/loadingStore';
@@ -11,14 +12,14 @@ import { useLoadingStore } from '../../store/loadingStore';
 const GlobalLoader: React.FC = () => {
   const { globalLoading, loadingMessage } = useLoadingStore();
 
-  return (
+  return createPortal(
     <AnimatePresence>
       {globalLoading && (
         <motion.div 
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          className="fixed inset-0 z-[100] bg-slate-950/80 backdrop-blur-xl flex items-center justify-center"
+          className="fixed inset-0 z-[10000] bg-slate-950/80 backdrop-blur-xl flex items-center justify-center"
         >
           <div className="flex flex-col items-center gap-8">
             <motion.div 
@@ -45,7 +46,8 @@ const GlobalLoader: React.FC = () => {
           </div>
         </motion.div>
       )}
-    </AnimatePresence>
+    </AnimatePresence>,
+    document.body
   );
 };
 

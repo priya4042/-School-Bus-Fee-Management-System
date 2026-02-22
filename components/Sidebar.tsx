@@ -75,7 +75,7 @@ const Sidebar: React.FC<SidebarProps> = ({ user, onLogout, activeTab, setActiveT
   const links = getLinks();
 
   const sidebarClasses = `
-    fixed inset-y-0 left-0 z-[60] w-72 bg-slate-950 text-white flex flex-col transition-transform duration-300 lg:static lg:translate-x-0
+    fixed inset-y-0 left-0 z-[2000] w-72 bg-slate-950 text-white flex flex-col transition-transform duration-300 lg:relative lg:translate-x-0
     ${isOpen ? 'translate-x-0' : '-translate-x-full'}
   `;
 
@@ -86,7 +86,7 @@ const Sidebar: React.FC<SidebarProps> = ({ user, onLogout, activeTab, setActiveT
 
   return (
     <>
-      {isOpen && <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[55] lg:hidden" onClick={onClose}></div>}
+      {isOpen && <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[1999] lg:hidden" onClick={onClose}></div>}
 
       <div className={sidebarClasses}>
         <div className="p-8 flex items-center gap-4">

@@ -1,10 +1,13 @@
 import React, { useState, useEffect } from 'react';
-import { MapContainer, TileLayer, Marker, useMapEvents, useMap } from 'react-leaflet';
+import { createPortal } from 'react-dom';
+import { MapContainer, TileLayer, Marker, useMapEvents } from 'react-leaflet';
 import { MapPin, Search, Navigation, Save, X } from 'lucide-react';
 import L from 'leaflet';
 
 // Fix Leaflet icon issue
+// @ts-ignore
 import icon from 'leaflet/dist/images/marker-icon.png';
+// @ts-ignore
 import iconShadow from 'leaflet/dist/images/marker-shadow.png';
 
 let DefaultIcon = L.icon({
@@ -14,6 +17,7 @@ let DefaultIcon = L.icon({
     iconAnchor: [12, 41]
 });
 
+// @ts-ignore
 L.Marker.prototype.options.icon = DefaultIcon;
 
 interface BoardingLocationPickerProps {
@@ -31,13 +35,18 @@ const LocationMarker = ({ position, setPosition }: { position: [number, number],
   });
 
   return position === null ? null : (
-    <Marker position={position} draggable={true} eventHandlers={{
-      dragend: (e) => {
-        const marker = e.target;
-        const pos = marker.getLatLng();
-        setPosition([pos.lat, pos.lng]);
-      }
-    }} />
+    <Marker 
+      position={position} 
+      // @ts-ignore
+      draggable={true} 
+      eventHandlers={{
+        dragend: (e) => {
+          const marker = e.target;
+          const pos = marker.getLatLng();
+          setPosition([pos.lat, pos.lng]);
+        }
+      }} 
+    />
   );
 };
 
@@ -68,12 +77,15 @@ const BoardingLocationPicker: React.FC<BoardingLocationPickerProps> = ({ onSave,
     });
   };
 
-  return (
-    <div className="fixed inset-0 z-[100] bg-white flex flex-col md:flex-row">
+  return createPortal(
+    <div className="fixed inset-0 z-[10000] bg-white flex flex-col md:flex-row">
       <div className="flex-1 relative h-[50vh] md:h-full">
+        {/* @ts-ignore */}
         <MapContainer center={position} zoom={15} style={{ height: '100%', width: '100%' }}>
           <TileLayer
+            // @ts-ignore
             url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+            // @ts-ignore
             attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
           />
           <LocationMarker position={position} setPosition={setPosition} />
@@ -171,7 +183,8 @@ const BoardingLocationPicker: React.FC<BoardingLocationPickerProps> = ({ onSave,
           </div>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 };
 
