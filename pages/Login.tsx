@@ -25,6 +25,8 @@ const Login: React.FC<LoginProps> = ({ onLogin, onGoToRegister }) => {
   const [otpSent, setOtpSent] = useState(false);
   const [otp, setOtp] = useState('');
 
+  const [generatedOtp, setGeneratedOtp] = useState('');
+
   const handleLoginSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
@@ -45,11 +47,13 @@ const Login: React.FC<LoginProps> = ({ onLogin, onGoToRegister }) => {
             return;
           }
           if (!otpSent) {
+            const newOtp = Math.floor(100000 + Math.random() * 900000).toString();
+            setGeneratedOtp(newOtp);
             setOtpSent(true);
-            showToast(`Code sent to ${phone} (123456)`, 'info');
+            showToast(`Code sent to ${phone}: ${newOtp}`, 'info');
             setLoading(false);
             return;
-          } else if (otp !== '123456') { 
+          } else if (otp !== generatedOtp) { 
               setError('Invalid verification code.');
               setLoading(false);
               return;
@@ -68,11 +72,13 @@ const Login: React.FC<LoginProps> = ({ onLogin, onGoToRegister }) => {
             return;
           }
           if (!otpSent) {
+            const newOtp = Math.floor(100000 + Math.random() * 900000).toString();
+            setGeneratedOtp(newOtp);
             setOtpSent(true);
-            showToast(`Owner OTP sent to ${phone} (123456)`, 'info');
+            showToast(`Owner OTP sent to ${phone}: ${newOtp}`, 'info');
             setLoading(false);
             return;
-          } else if (otp !== '123456') {
+          } else if (otp !== generatedOtp) {
             setError('Invalid owner verification code.');
             setLoading(false);
             return;

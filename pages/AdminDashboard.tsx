@@ -4,6 +4,7 @@ import DashboardCard from '../components/DashboardCard';
 import AIInsights from '../components/Dashboard/AIInsights';
 import api from '../lib/api';
 import { useTracking } from '../hooks/useTracking';
+import BusCameraModal from '../components/BusCameraModal';
 
 declare const L: any;
 
@@ -12,6 +13,7 @@ const AdminDashboard: React.FC = () => {
   const [stats, setStats] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [map, setMap] = useState<any>(null);
+  const [isCameraOpen, setIsCameraOpen] = useState(false);
   const markerRef = useRef<any>(null);
   const { location } = useTracking('b1');
 
@@ -91,11 +93,21 @@ const AdminDashboard: React.FC = () => {
           <h2 className="text-3xl font-black text-slate-800 tracking-tighter uppercase">Operations Hub</h2>
           <p className="text-slate-500 font-bold uppercase text-[10px] tracking-widest mt-1">Global Fleet Intelligence</p>
         </div>
-        <div className="flex bg-white p-1 rounded-2xl border border-slate-200">
+        <div className="flex items-center gap-3 bg-white p-1 rounded-2xl border border-slate-200">
+          <button 
+            onClick={() => setIsCameraOpen(true)}
+            className="px-4 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all bg-slate-900 text-white shadow-lg flex items-center gap-2"
+          >
+            <i className="fas fa-video"></i>
+            Live Cam
+          </button>
+          <div className="w-px h-6 bg-slate-100"></div>
           <button onClick={() => setView('stats')} className={`px-6 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${view === 'stats' ? 'bg-primary text-white shadow-lg shadow-primary/20' : 'text-slate-400'}`}>Analytics</button>
           <button onClick={() => setView('monitor')} className={`px-6 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${view === 'monitor' ? 'bg-primary text-white shadow-lg shadow-primary/20' : 'text-slate-400'}`}>Live Monitor</button>
         </div>
       </div>
+
+      <BusCameraModal isOpen={isCameraOpen} onClose={() => setIsCameraOpen(false)} />
 
       {view === 'stats' ? (
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">

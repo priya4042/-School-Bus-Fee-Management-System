@@ -31,6 +31,21 @@ const Register: React.FC<RegisterProps> = ({ onRegister, onBackToLogin, initialR
     adminKey: ''
   });
 
+  const [generatedOtp, setGeneratedOtp] = useState('');
+  const [generatedOtpSecondary, setGeneratedOtpSecondary] = useState('');
+
+  const validateEmail = (email: string) => {
+    return String(email)
+      .toLowerCase()
+      .match(
+        /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/
+      );
+  };
+
+  const validatePhone = (phone: string) => {
+    return phone.length === 10;
+  };
+
   const handleInitialSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
@@ -40,6 +55,8 @@ const Register: React.FC<RegisterProps> = ({ onRegister, onBackToLogin, initialR
 
     setTimeout(() => {
       try {
+        if (!validateEmail(normalizedEmail)) throw new Error("Please enter a valid email address.");
+        if (!validatePhone(formData.phone)) throw new Error("Primary mobile must be 10 digits.");
         if (formData.password.length < 6) throw new Error("Password must be 6+ characters.");
 
         if (role === UserRole.PARENT) {
@@ -51,8 +68,8 @@ const Register: React.FC<RegisterProps> = ({ onRegister, onBackToLogin, initialR
           if (formData.adminKey !== 'SUPER-SECRET-2025') {
             throw new Error("Invalid Fleet Security Token.");
           }
-          if (!formData.secondaryPhone || formData.secondaryPhone.length < 10) {
-            throw new Error("Secondary mobile number required for Owner accounts.");
+          if (!formData.secondaryPhone || !validatePhone(formData.secondaryPhone)) {
+            throw new Error("Valid 10-digit secondary mobile required for Owner accounts.");
           }
           if (formData.phone === formData.secondaryPhone) {
             throw new Error("Primary and Secondary numbers must be different.");
@@ -77,13 +94,18 @@ const Register: React.FC<RegisterProps> = ({ onRegister, onBackToLogin, initialR
           created_at: new Date().toISOString()
         };
 
+        const otp1 = Math.floor(100000 + Math.random() * 900000).toString();
+        setGeneratedOtp(otp1);
+
         setPendingUser(newUser);
         setRegStep('verification');
         
         if (role === UserRole.ADMIN) {
-          showToast(`Dual-OTPs sent to both ${formData.phone} and ${formData.secondaryPhone}`, 'info');
+          const otp2 = Math.floor(100000 + Math.random() * 900000).toString();
+          setGeneratedOtpSecondary(otp2);
+          showToast(`Codes sent: Primary: ${otp1}, Secondary: ${otp2}`, 'info');
         } else {
-          showToast(`Verification code sent`, 'info');
+          showToast(`Verification code sent: ${otp1}`, 'info');
         }
       } catch (err: any) {
         setError(err.message);
@@ -96,7 +118,7 @@ const Register: React.FC<RegisterProps> = ({ onRegister, onBackToLogin, initialR
   const verifyOtp = () => {
     const isOwner = role === UserRole.ADMIN;
     
-    if (verificationCode === '123456' && (!isOwner || verificationCodeSecondary === '123456')) {
+    if (verificationCode === generatedOtp && (!isOwner || verificationCodeSecondary === generatedOtpSecondary)) {
       setLoading(true);
       setTimeout(() => {
         saveDBUser({ ...pendingUser, verified: true });
@@ -105,8 +127,8 @@ const Register: React.FC<RegisterProps> = ({ onRegister, onBackToLogin, initialR
       }, 800);
     } else {
       const msg = isOwner 
-        ? 'Verification failed. Both codes must be correct (123456).' 
-        : 'Incorrect code. Use 123456';
+        ? 'Verification failed. Both codes must match the generated values.' 
+        : 'Incorrect code. Please check your messages.';
       showToast(msg, 'error');
     }
   };
