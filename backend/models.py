@@ -8,10 +8,7 @@ import enum
 class UserRole(str, enum.Enum):
     SUPER_ADMIN = 'SUPER_ADMIN'
     ADMIN = 'ADMIN'
-    ACCOUNTANT = 'ACCOUNTANT'
     PARENT = 'PARENT'
-    TEACHER = 'TEACHER'
-    DRIVER = 'DRIVER'
 
 class PaymentStatus(str, enum.Enum):
     PAID = 'PAID'

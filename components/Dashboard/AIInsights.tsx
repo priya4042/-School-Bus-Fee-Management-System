@@ -5,18 +5,22 @@ import { AIInsight } from '../../types';
 const AIInsights: React.FC = () => {
   const insights: AIInsight[] = [
     {
+      id: '1',
       type: 'PAYMENT_RISK',
       title: 'High Default Risk Detected',
       description: '3 parents in North Zone show an 85% probability of late payment this month based on historical data.',
       priority: 'HIGH',
-      actionLabel: 'Send Preventive Reminders'
+      actionLabel: 'Send Preventive Reminders',
+      impact: 'High'
     },
     {
+      id: '2',
       type: 'FLEET_EFFICIENCY',
       title: 'Route Optimization',
       description: 'Kangra Main Express is running at 40% capacity. Suggest merging with North Link to save ₹12k/month.',
       priority: 'MEDIUM',
-      actionLabel: 'View Route Suggestion'
+      actionLabel: 'View Route Suggestion',
+      impact: 'Medium'
     }
   ];
 

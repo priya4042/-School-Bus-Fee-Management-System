@@ -2,18 +2,24 @@ import React, { useState, useEffect, useRef } from 'react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell, PieChart, Pie } from 'recharts';
 import DashboardCard from '../components/DashboardCard';
 import AIInsights from '../components/Dashboard/AIInsights';
+import Modal from '../components/Modal';
 import api from '../lib/api';
+import { supabase } from '../lib/supabase';
+import { showToast } from '../lib/swal';
 import { useTracking } from '../hooks/useTracking';
 import BusCameraModal from '../components/BusCameraModal';
 
 declare const L: any;
 
 const AdminDashboard: React.FC = () => {
-  const [view, setView] = useState<'stats' | 'monitor'>('stats');
+  const [view, setView] = useState<'stats' | 'monitor' | 'geofences'>('stats');
   const [stats, setStats] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [map, setMap] = useState<any>(null);
   const [isCameraOpen, setIsCameraOpen] = useState(false);
+  const [geofences, setGeofences] = useState<any[]>([]);
+  const [isGfModalOpen, setIsGfModalOpen] = useState(false);
+  const [gfForm, setGfForm] = useState({ name: '', latitude: '', longitude: '', radius_meters: 100, type: 'SCHOOL' });
   const markerRef = useRef<any>(null);
   const { location } = useTracking('b1');
 
@@ -47,7 +53,36 @@ const AdminDashboard: React.FC = () => {
       }
     };
     fetchStats();
+    fetchGeofences();
   }, []);
+
+  const fetchGeofences = async () => {
+    const { data } = await supabase.from('geofences').select('*');
+    if (data) setGeofences(data);
+  };
+
+  const handleCreateGeofence = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const { error } = await supabase.from('geofences').insert({
+      ...gfForm,
+      latitude: parseFloat(gfForm.latitude),
+      longitude: parseFloat(gfForm.longitude)
+    });
+    if (!error) {
+      setIsGfModalOpen(false);
+      setGfForm({ name: '', latitude: '', longitude: '', radius_meters: 100, type: 'SCHOOL' });
+      fetchGeofences();
+      showToast('Geofence Created', 'success');
+    }
+  };
+
+  const handleDeleteGeofence = async (id: string) => {
+    const { error } = await supabase.from('geofences').delete().eq('id', id);
+    if (!error) {
+      fetchGeofences();
+      showToast('Geofence Removed', 'success');
+    }
+  };
 
   // Update marker position on location change
   useEffect(() => {
@@ -104,6 +139,7 @@ const AdminDashboard: React.FC = () => {
           <div className="w-px h-6 bg-slate-100"></div>
           <button onClick={() => setView('stats')} className={`px-6 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${view === 'stats' ? 'bg-primary text-white shadow-lg shadow-primary/20' : 'text-slate-400'}`}>Analytics</button>
           <button onClick={() => setView('monitor')} className={`px-6 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${view === 'monitor' ? 'bg-primary text-white shadow-lg shadow-primary/20' : 'text-slate-400'}`}>Live Monitor</button>
+          <button onClick={() => setView('geofences')} className={`px-6 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${view === 'geofences' ? 'bg-primary text-white shadow-lg shadow-primary/20' : 'text-slate-400'}`}>Geofences</button>
         </div>
       </div>
 
@@ -138,7 +174,7 @@ const AdminDashboard: React.FC = () => {
             <AIInsights />
           </div>
         </div>
-      ) : (
+      ) : view === 'monitor' ? (
         <div className="h-[600px] bg-white rounded-[3rem] border border-slate-200 shadow-premium overflow-hidden relative z-0">
           <div id="map"></div>
           {location && (
@@ -160,6 +196,93 @@ const AdminDashboard: React.FC = () => {
                 </div>
             </div>
           )}
+        </div>
+      ) : (
+        <div className="space-y-6">
+          <div className="flex justify-between items-center">
+             <h3 className="text-xl font-black text-slate-800 tracking-tight">Geofence Registry</h3>
+             <button 
+               onClick={() => setIsGfModalOpen(true)}
+               className="bg-primary text-white px-6 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest shadow-lg shadow-primary/20 hover:scale-105 transition-all"
+             >
+               + Define New Fence
+             </button>
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+             {geofences.map(gf => (
+               <div key={gf.id} className="bg-white p-6 rounded-[2rem] border border-slate-200 shadow-sm relative group overflow-hidden">
+                  <div className="absolute top-0 right-0 p-6 opacity-5 group-hover:scale-110 transition-transform">
+                     <i className="fas fa-bullseye text-6xl"></i>
+                  </div>
+                  <div className="flex items-center gap-4 mb-6">
+                     <div className={`w-12 h-12 rounded-2xl flex items-center justify-center text-white ${gf.type === 'SCHOOL' ? 'bg-primary' : 'bg-success'}`}>
+                        <i className={`fas ${gf.type === 'SCHOOL' ? 'fa-school' : 'fa-map-marker-alt'}`}></i>
+                     </div>
+                     <div>
+                        <h4 className="font-black text-slate-800 uppercase tracking-tight">{gf.name}</h4>
+                        <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">{gf.type} • {gf.radius_meters}m Radius</p>
+                     </div>
+                  </div>
+                  <div className="space-y-2 mb-6">
+                     <p className="text-[10px] font-bold text-slate-500 flex justify-between">
+                        <span>Latitude:</span>
+                        <span className="text-slate-800">{gf.latitude.toFixed(4)}</span>
+                     </p>
+                     <p className="text-[10px] font-bold text-slate-500 flex justify-between">
+                        <span>Longitude:</span>
+                        <span className="text-slate-800">{gf.longitude.toFixed(4)}</span>
+                     </p>
+                  </div>
+                  <button 
+                    onClick={() => handleDeleteGeofence(gf.id)}
+                    className="w-full py-3 bg-slate-50 text-danger font-black uppercase text-[9px] tracking-widest rounded-xl hover:bg-red-50 transition-all"
+                  >
+                    Remove Fence
+                  </button>
+               </div>
+             ))}
+             {geofences.length === 0 && (
+               <div className="col-span-full py-20 text-center bg-slate-50 rounded-[3rem] border-2 border-dashed border-slate-200">
+                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">No geofences defined for this fleet</p>
+               </div>
+             )}
+          </div>
+
+          <Modal isOpen={isGfModalOpen} onClose={() => setIsGfModalOpen(false)} title="Define Geofence">
+             <form onSubmit={handleCreateGeofence} className="space-y-5">
+                <div className="grid grid-cols-2 gap-4">
+                   <div className="col-span-2">
+                      <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Fence Name</label>
+                      <input type="text" required className="w-full px-5 py-4 rounded-2xl bg-slate-50 border border-slate-200 outline-none font-bold" placeholder="e.g. Main Campus" value={gfForm.name} onChange={e => setGfForm({...gfForm, name: e.target.value})} />
+                   </div>
+                   <div>
+                      <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Latitude</label>
+                      <input type="number" step="any" required className="w-full px-5 py-4 rounded-2xl bg-slate-50 border border-slate-200 outline-none font-bold" placeholder="32.1024" value={gfForm.latitude} onChange={e => setGfForm({...gfForm, latitude: e.target.value})} />
+                   </div>
+                   <div>
+                      <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Longitude</label>
+                      <input type="number" step="any" required className="w-full px-5 py-4 rounded-2xl bg-slate-50 border border-slate-200 outline-none font-bold" placeholder="76.2734" value={gfForm.longitude} onChange={e => setGfForm({...gfForm, longitude: e.target.value})} />
+                   </div>
+                   <div>
+                      <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Radius (m)</label>
+                      <input type="number" required className="w-full px-5 py-4 rounded-2xl bg-slate-50 border border-slate-200 outline-none font-bold" value={gfForm.radius_meters} onChange={e => setGfForm({...gfForm, radius_meters: parseInt(e.target.value)})} />
+                   </div>
+                   <div>
+                      <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Fence Type</label>
+                      <select className="w-full px-5 py-4 rounded-2xl bg-slate-50 border border-slate-200 outline-none font-bold" value={gfForm.type} onChange={e => setGfForm({...gfForm, type: e.target.value})}>
+                         <option value="SCHOOL">School Campus</option>
+                         <option value="STOP">Bus Stop</option>
+                         <option value="LANDMARK">Landmark</option>
+                      </select>
+                   </div>
+                </div>
+                <div className="pt-6 flex gap-3">
+                   <button type="button" onClick={() => setIsGfModalOpen(false)} className="flex-1 py-4 bg-slate-100 text-slate-600 font-black uppercase text-[10px] tracking-widest rounded-2xl">Cancel</button>
+                   <button type="submit" className="flex-1 py-4 bg-primary text-white font-black uppercase text-[10px] tracking-widest rounded-2xl shadow-xl shadow-primary/20">Create Fence</button>
+                </div>
+             </form>
+          </Modal>
         </div>
       )}
     </div>

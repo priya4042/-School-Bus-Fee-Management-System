@@ -13,36 +13,41 @@ const Receipts: React.FC<{ user: User }> = ({ user }) => {
     const fetchPayments = async () => {
       setLoading(true);
       try {
-        // 1. Get dynamically generated receipts from local storage
-        const localReceiptsRaw = localStorage.getItem('db_receipts');
-        const localReceipts = localReceiptsRaw ? JSON.parse(localReceiptsRaw) : [];
+        // 1. Fetch receipts from Supabase via API interceptor
+        const { data: supabaseReceipts } = await api.get('receipts');
+        
+        // 2. Map Supabase receipts to the format expected by the UI
+        const mappedReceipts = (supabaseReceipts || []).map((r: any) => ({
+          id: r.id,
+          transaction_id: r.transaction_id,
+          amount: r.amount,
+          studentName: r.student_name,
+          monthYear: r.month_year,
+          date: r.payment_date,
+          method: r.method,
+          status: r.status
+        }));
 
-        // 2. Fetch mock historical data or API data
+        // 3. Fetch historical data from dues if needed (optional, but keeping for completeness)
         let historicalReceipts = [];
         try {
-            const { data } = await api.get('/fees/dues');
-            historicalReceipts = data
+            const { data: dues } = await api.get('fees/dues');
+            historicalReceipts = (dues || [])
                 .filter((d: any) => d.status === 'PAID')
                 .map((d: any) => ({
                     id: d.transaction_id || `HIST-${d.id}`,
                     transaction_id: d.transaction_id || `HIST-${d.id}`,
                     monthYear: `${MONTHS[d.month - 1]} ${d.year}`,
-                    total_due: d.total_due,
-                    amount: d.total_due,
-                    payment_date: d.payment_date || d.due_date,
+                    amount: d.total_due || d.amount,
                     date: d.payment_date || d.due_date,
                     method: 'Online'
                 }));
         } catch (e) {
-            // Updated to 2025 for historical demo consistency
-            historicalReceipts = [
-              { id: 'TXN-001', transaction_id: 'TXN-99821', monthYear: 'January 2025', amount: 1500, date: '2025-01-05', method: 'CARD' },
-              { id: 'TXN-002', transaction_id: 'TXN-99854', monthYear: 'February 2025', amount: 1500, date: '2025-02-08', method: 'UPI' },
-            ];
+            console.error("Historical dues fetch error:", e);
         }
 
         // Combine and filter duplicates by transaction ID
-        const combined = [...localReceipts, ...historicalReceipts];
+        const combined = [...mappedReceipts, ...historicalReceipts];
         const unique = combined.filter((v, i, a) => a.findIndex(t => t.transaction_id === v.transaction_id) === i);
         
         setPayments(unique);

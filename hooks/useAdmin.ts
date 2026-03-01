@@ -13,13 +13,12 @@ export const useAdmin = () => {
       // Mocking for demo
       const mockAdmins = [
         { id: 1, fullName: 'Super Admin', email: 'super@school.com', role: UserRole.SUPER_ADMIN, is_active: true },
-        { id: 2, fullName: 'Finance Officer', email: 'finance@school.com', role: UserRole.ACCOUNTANT, is_active: true },
         { id: 3, fullName: 'Standard Admin', email: 'admin@school.com', role: UserRole.ADMIN, is_active: true },
       ];
       setAdmins(mockAdmins);
       
       // In prod: 
-      // const { data } = await api.get('/users?role_types=ADMIN,SUPER_ADMIN,ACCOUNTANT');
+      // const { data } = await api.get('/users?role_types=ADMIN,SUPER_ADMIN');
       // setAdmins(data);
     } catch (err) {
       console.error(err);

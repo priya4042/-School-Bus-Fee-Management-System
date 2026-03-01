@@ -29,6 +29,17 @@ export const useBuses = () => {
     }
   };
 
+  const updateBus = async (id: string, busData: any) => {
+    try {
+      const { data } = await api.put(`/buses/${id}`, busData);
+      setBuses(prev => prev.map(b => b.id === id ? data : b));
+      return true;
+    } catch (err) {
+      console.error('Failed to update bus', err);
+      return false;
+    }
+  };
+
   const deleteBus = async (id: string) => {
     try {
       await api.delete(`/buses/${id}`);
@@ -43,5 +54,5 @@ export const useBuses = () => {
     fetchBuses();
   }, []);
 
-  return { buses, loading, registerBus, deleteBus, fetchBuses };
+  return { buses, loading, registerBus, updateBus, deleteBus, fetchBuses };
 };

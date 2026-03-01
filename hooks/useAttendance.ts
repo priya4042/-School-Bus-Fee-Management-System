@@ -5,16 +5,30 @@ import api from '../lib/api';
 export const useAttendance = () => {
   const [loading, setLoading] = useState(false);
 
+  const fetchAttendance = async (date: string, type: 'PICKUP' | 'DROP') => {
+    setLoading(true);
+    try {
+      const { data } = await api.get('attendance', {
+        params: { date, type }
+      });
+      return data;
+    } catch (err) {
+      console.error("Failed to fetch attendance", err);
+      return [];
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const markAttendance = async (studentId: string | number, type: 'PICKUP' | 'DROP', status: boolean, userId: string) => {
     setLoading(true);
     try {
-      await api.post('/attendance/mark', null, {
-        params: {
-          student_id: studentId,
-          type,
-          status,
-          marked_by: userId
-        }
+      await api.post('attendance', {
+        student_id: studentId,
+        type,
+        status,
+        marked_by: userId,
+        timestamp: new Date().toISOString()
       });
       return true;
     } catch (err) {
@@ -25,5 +39,5 @@ export const useAttendance = () => {
     }
   };
 
-  return { markAttendance, loading };
+  return { markAttendance, fetchAttendance, loading };
 };

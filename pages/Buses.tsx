@@ -1,28 +1,57 @@
 import React, { useState } from 'react';
 import { useBuses } from '../hooks/useBuses';
+import { useRoutes } from '../hooks/useRoutes';
 import Modal from '../components/Modal';
 import { showConfirm, showToast, showLoading, closeSwal } from '../lib/swal';
 
 const Buses: React.FC = () => {
-  const { buses, loading, registerBus, deleteBus } = useBuses();
+  const { buses, loading, registerBus, updateBus, deleteBus } = useBuses();
+  const { routes } = useRoutes();
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  
   const [formData, setFormData] = useState({
     plate: '',
     model: '',
     capacity: 40,
-    status: 'Idle'
+    status: 'IDLE' as any,
+    route_id: ''
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    showLoading('Registering Asset...');
-    const success = await registerBus(formData);
+    showLoading('Syncing Records...');
+    
+    let success = false;
+    if (editingId) {
+      success = await updateBus(editingId, formData);
+    } else {
+      success = await registerBus(formData);
+    }
+    
     closeSwal();
     if (success) {
       setIsModalOpen(false);
-      setFormData({ plate: '', model: '', capacity: 40, status: 'Idle' });
-      showToast('Vehicle registered to fleet', 'success');
+      resetForm();
+      showToast(editingId ? 'Vehicle updated' : 'Vehicle registered', 'success');
     }
+  };
+
+  const resetForm = () => {
+    setFormData({ plate: '', model: '', capacity: 40, status: 'IDLE', route_id: '' });
+    setEditingId(null);
+  };
+
+  const handleEdit = (bus: any) => {
+    setFormData({
+      plate: bus.plate,
+      model: bus.model,
+      capacity: bus.capacity,
+      status: bus.status,
+      route_id: bus.route_id || ''
+    });
+    setEditingId(bus.id);
+    setIsModalOpen(true);
   };
 
   const handleDelete = async (id: string, plate: string) => {
@@ -50,7 +79,7 @@ const Buses: React.FC = () => {
           <p className="text-slate-500 font-bold uppercase text-[10px] tracking-widest">Active vehicle inventory and monitoring</p>
         </div>
         <button 
-          onClick={() => setIsModalOpen(true)}
+          onClick={() => { resetForm(); setIsModalOpen(true); }}
           className="bg-primary text-white px-8 py-3 rounded-2xl font-black text-[10px] uppercase tracking-widest flex items-center gap-3 hover:bg-blue-700 transition-all shadow-xl shadow-primary/20"
         >
           <i className="fas fa-bus-alt"></i>
@@ -70,8 +99,9 @@ const Buses: React.FC = () => {
               <thead>
                 <tr className="bg-slate-50/50 text-slate-400 text-[9px] font-black uppercase tracking-[0.2em] border-b border-slate-100">
                   <th className="px-8 py-5">Vehicle Identity</th>
-                  <th className="px-8 py-5">Capacity Manifest</th>
-                  <th className="px-8 py-5 text-center">Operational Status</th>
+                  <th className="px-8 py-5">Assigned Route</th>
+                  <th className="px-8 py-5">Capacity</th>
+                  <th className="px-8 py-5 text-center">Status</th>
                   <th className="px-8 py-5 text-right">Actions</th>
                 </tr>
               </thead>
@@ -90,22 +120,25 @@ const Buses: React.FC = () => {
                       </div>
                     </td>
                     <td className="px-8 py-5">
+                      <p className="text-xs font-black text-slate-600 uppercase tracking-tight">{bus.routes?.name || 'Unassigned'}</p>
+                    </td>
+                    <td className="px-8 py-5">
                       <div className="flex items-center gap-2">
                          <i className="fas fa-users text-slate-300"></i>
-                         <span className="text-xs font-bold text-slate-600">{bus.capacity} Authorized Seats</span>
+                         <span className="text-xs font-bold text-slate-600">{bus.capacity} Seats</span>
                       </div>
                     </td>
                     <td className="px-8 py-5 text-center">
                       <span className={`px-4 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest border ${
-                        bus.status === 'On Route' ? 'bg-success/10 text-success border-success/10' :
-                        bus.status === 'Maintenance' ? 'bg-danger/10 text-danger border-danger/10' : 'bg-slate-100 text-slate-500 border-slate-200'
+                        bus.status === 'ON_ROUTE' ? 'bg-success/10 text-success border-success/10' :
+                        bus.status === 'MAINTENANCE' ? 'bg-danger/10 text-danger border-danger/10' : 'bg-slate-100 text-slate-500 border-slate-200'
                       }`}>
                         {bus.status}
                       </span>
                     </td>
                     <td className="px-8 py-5 text-right">
                       <div className="flex justify-end gap-2">
-                        <button className="w-9 h-9 bg-slate-50 hover:bg-slate-100 rounded-xl transition-all text-slate-400 flex items-center justify-center">
+                        <button onClick={() => handleEdit(bus)} className="w-9 h-9 bg-slate-50 hover:bg-slate-100 rounded-xl transition-all text-slate-400 flex items-center justify-center">
                           <i className="fas fa-edit text-xs"></i>
                         </button>
                         <button 
@@ -119,7 +152,7 @@ const Buses: React.FC = () => {
                   </tr>
                 )) : (
                   <tr>
-                    <td colSpan={4} className="p-32 text-center">
+                    <td colSpan={5} className="p-32 text-center">
                        <i className="fas fa-truck-monster text-5xl text-slate-100 mb-6 block"></i>
                        <p className="text-[11px] font-black text-slate-300 uppercase tracking-[0.4em]">Zero assets logged in fleet</p>
                     </td>
@@ -131,7 +164,7 @@ const Buses: React.FC = () => {
         </div>
       </div>
 
-      <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title="Register Fleet Asset">
+      <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title={editingId ? "Edit Fleet Asset" : "Register Fleet Asset"}>
         <form onSubmit={handleSubmit} className="space-y-5">
           <div>
             <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Registration Plate</label>
@@ -167,17 +200,28 @@ const Buses: React.FC = () => {
               />
             </div>
             <div>
-              <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Initial Status</label>
+              <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Assigned Route</label>
               <select 
                 className={selectClass}
-                value={formData.status}
-                onChange={(e) => setFormData({...formData, status: e.target.value})}
+                value={formData.route_id}
+                onChange={(e) => setFormData({...formData, route_id: e.target.value})}
               >
-                <option value="Idle">Idle</option>
-                <option value="On Route">On Route</option>
-                <option value="Maintenance">Maintenance</option>
+                <option value="">Select Route...</option>
+                {routes.map(r => <option key={r.id} value={r.id}>{r.name}</option>)}
               </select>
             </div>
+          </div>
+          <div>
+            <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Operational Status</label>
+            <select 
+              className={selectClass}
+              value={formData.status}
+              onChange={(e) => setFormData({...formData, status: e.target.value})}
+            >
+              <option value="IDLE">Idle</option>
+              <option value="ON_ROUTE">On Route</option>
+              <option value="MAINTENANCE">Maintenance</option>
+            </select>
           </div>
           <div className="pt-6 flex gap-3">
             <button 
@@ -191,7 +235,7 @@ const Buses: React.FC = () => {
               type="submit" 
               className="flex-1 py-4 bg-primary text-white font-black uppercase text-[10px] tracking-widest rounded-2xl shadow-xl shadow-primary/20 transition-all hover:bg-blue-800 active:scale-95"
             >
-              Register Asset
+              {editingId ? 'Update Asset' : 'Register Asset'}
             </button>
           </div>
         </form>

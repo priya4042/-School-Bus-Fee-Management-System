@@ -1,19 +1,42 @@
 
-import React, { useState } from 'react';
-import { MOCK_STUDENTS } from '../constants';
+import React, { useState, useEffect } from 'react';
 import { useAttendance } from '../hooks/useAttendance';
 import { useAuthStore } from '../store/authStore';
+import { useStudents } from '../hooks/useStudents';
+import { useRoutes } from '../hooks/useRoutes';
 import { showAlert } from '../lib/swal';
 
 const Attendance: React.FC = () => {
   const { user } = useAuthStore();
-  const { markAttendance, loading: syncLoading } = useAttendance();
-  const [selectedRoute, setSelectedRoute] = useState('North Zone');
+  const { markAttendance, fetchAttendance, loading: syncLoading } = useAttendance();
+  const { students } = useStudents();
+  const { routes } = useRoutes();
+  const [selectedRoute, setSelectedRoute] = useState('');
   const [selectedShift, setSelectedShift] = useState<'MORNING' | 'AFTERNOON'>('MORNING');
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
   const [attendance, setAttendance] = useState<Record<string, boolean>>({});
 
-  const routeStudents = MOCK_STUDENTS.filter(s => s.route_name === selectedRoute);
+  useEffect(() => {
+    if (routes.length > 0 && !selectedRoute) {
+      setSelectedRoute(routes[0].id);
+    }
+  }, [routes]);
+
+  useEffect(() => {
+    const loadAttendance = async () => {
+      const type = selectedShift === 'MORNING' ? 'PICKUP' : 'DROP';
+      const records = await fetchAttendance(selectedDate, type);
+      const attendanceMap: Record<string, boolean> = {};
+      
+      records.forEach((r: any) => {
+        attendanceMap[r.student_id] = r.status;
+      });
+      setAttendance(attendanceMap);
+    };
+    loadAttendance();
+  }, [selectedDate, selectedShift, selectedRoute]);
+
+  const routeStudents = students.filter(s => s.route_id === selectedRoute);
 
   const toggleStatus = async (studentId: string) => {
     const currentStatus = attendance[studentId] || false;
@@ -69,17 +92,17 @@ const Attendance: React.FC = () => {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-        {['North Zone', 'South Zone', 'East Zone', 'West Link'].map(route => (
+        {routes.map(route => (
           <button 
-            key={route}
-            onClick={() => setSelectedRoute(route)}
+            key={route.id}
+            onClick={() => setSelectedRoute(route.id)}
             className={`px-6 py-4 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all border ${
-              selectedRoute === route 
+              selectedRoute === route.id 
                 ? 'bg-slate-900 text-white border-slate-900 shadow-xl' 
                 : 'bg-white text-slate-400 border-slate-100 hover:border-slate-300'
             }`}
           >
-            {route}
+            {route.name}
           </button>
         ))}
       </div>
@@ -91,7 +114,9 @@ const Attendance: React.FC = () => {
                 <i className={`fas ${selectedShift === 'MORNING' ? 'fa-sun' : 'fa-moon'}`}></i>
               </div>
               <div>
-                <h3 className="font-black text-slate-800 uppercase text-xs tracking-widest">{selectedRoute}</h3>
+                <h3 className="font-black text-slate-800 uppercase text-xs tracking-widest">
+                  {routes.find(r => r.id === selectedRoute)?.name || 'Select Route'}
+                </h3>
                 <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{selectedShift} SHIFT ACTIVE</p>
               </div>
            </div>

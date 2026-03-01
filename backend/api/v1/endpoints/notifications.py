@@ -20,8 +20,6 @@ def broadcast_notification(payload: dict, db: Session = Depends(get_db)):
     query = db.query(models.User).filter(models.User.is_active == True)
     if target == "parents":
         query = query.filter(models.User.role == models.UserRole.PARENT)
-    elif target == "drivers":
-        query = query.filter(models.User.role == models.UserRole.DRIVER)
     
     users = query.all()
     user_ids = [u.id for u in users]

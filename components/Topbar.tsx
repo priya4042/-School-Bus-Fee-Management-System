@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { User, UserRole, Notification } from '../types';
 import { useAuthStore } from '../store/authStore';
-import { ARRIVAL_EVENT } from '../lib/api';
+import { ARRIVAL_EVENT, PAYMENT_EVENT } from '../lib/api';
 import { showToast } from '../lib/swal';
 
 interface TopbarProps {
@@ -11,7 +11,6 @@ interface TopbarProps {
 
 const Topbar: React.FC<TopbarProps> = ({ user, onMenuClick }) => {
   const [showNotifications, setShowNotifications] = useState(false);
-  const { updateActivity } = useAuthStore();
   const [notifications, setNotifications] = useState<Notification[]>([]);
 
   const fetchNotes = () => {
@@ -45,16 +44,21 @@ const Topbar: React.FC<TopbarProps> = ({ user, onMenuClick }) => {
     };
 
     window.addEventListener(ARRIVAL_EVENT, handleArrival);
-    return () => window.removeEventListener(ARRIVAL_EVENT, handleArrival);
-  }, []);
+    
+    const handlePayment = (e: any) => {
+        const { studentName, amount } = e.detail;
+        showToast(`Fee Received: ₹${amount.toLocaleString()} for ${studentName}`, 'success');
+        fetchNotes();
+    };
+    window.addEventListener(PAYMENT_EVENT, handlePayment);
+
+    return () => {
+        window.removeEventListener(ARRIVAL_EVENT, handleArrival);
+        window.removeEventListener(PAYMENT_EVENT, handlePayment);
+    };
+}, []);
 
   const unreadCount = notifications.filter(n => !n.read).length;
-
-  useEffect(() => {
-    const handleGlobalClick = () => updateActivity();
-    window.addEventListener('click', handleGlobalClick);
-    return () => window.removeEventListener('click', handleGlobalClick);
-  }, [updateActivity]);
 
   const getDisplayName = () => {
     if (!user) return 'User';

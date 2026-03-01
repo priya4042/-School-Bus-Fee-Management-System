@@ -30,6 +30,16 @@ export const useRoutes = () => {
     }
   };
 
+  const updateRoute = async (id: string, routeData: any) => {
+    try {
+      const { data } = await api.put(`routes/${id}`, routeData);
+      setRoutes(prev => prev.map(r => r.id === id ? data : r));
+      return { success: true };
+    } catch (err: any) {
+      return { success: false, error: "Update Failed" };
+    }
+  };
+
   const deleteRoute = async (id: string) => {
     try {
       await api.delete(`routes/${id}`);
@@ -44,5 +54,5 @@ export const useRoutes = () => {
     fetchRoutes();
   }, []);
 
-  return { routes, loading, addRoute, deleteRoute, fetchRoutes };
+  return { routes, loading, addRoute, updateRoute, deleteRoute, fetchRoutes };
 };

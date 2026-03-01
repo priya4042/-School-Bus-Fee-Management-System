@@ -7,16 +7,21 @@ import api from '../lib/api';
 import { useTracking } from '../hooks/useTracking';
 import { isMonthPayable } from '../utils/feeCalculator';
 import BusCameraModal from '../components/BusCameraModal';
+import BoardingLocationPicker from '../components/Location/BoardingLocationPicker';
+import { useReceipts } from '../hooks/useReceipts';
+import { showToast } from '../lib/swal';
 
 declare const L: any;
 
 const ParentDashboard: React.FC<{ user: User }> = ({ user }) => {
-  const { paymentState, openPortal, closePortal, selectMethod, processPayment } = usePayments();
+  const { paymentState, openPortal, closePortal, initiateRazorpay } = usePayments();
+  const { downloadReceipt } = useReceipts();
   const [familyStudents, setFamilyStudents] = useState<Student[]>([]);
   const [dues, setDues] = useState<MonthlyDue[]>([]);
   const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
   const [trackingActive, setTrackingActive] = useState(false);
   const [isCameraOpen, setIsCameraOpen] = useState(false);
+  const [isPickerOpen, setIsPickerOpen] = useState(false);
   const [map, setMap] = useState<any>(null);
   const markerRef = useRef<any>(null);
   
@@ -26,18 +31,15 @@ const ParentDashboard: React.FC<{ user: User }> = ({ user }) => {
     const loadInitialData = async () => {
       try {
         const { data: studentsData } = await api.get('students');
-        const family = studentsData.filter((s: any) => s.admission_number === user.admissionNumber || s.parent_id === user.id);
+        // In real app, filter by parent_id or admission_number
+        const family = (studentsData || []).filter((s: any) => s.admission_number === user.admissionNumber || s.parent_id === user.id);
         setFamilyStudents(family);
         if (family.length > 0) setSelectedStudent(family[0]);
 
-        const savedDues = localStorage.getItem('fee_dues');
-        setDues(savedDues ? JSON.parse(savedDues) : MOCK_DUES as any);
+        const { data: duesData } = await api.get('dues');
+        setDues(duesData || []);
       } catch (err) {
-        const family = MOCK_STUDENTS.filter(s => s.admission_number === user.admissionNumber);
-        setFamilyStudents(family);
-        if (family.length > 0) setSelectedStudent(family[0]);
-        const savedDues = localStorage.getItem('fee_dues');
-        setDues(savedDues ? JSON.parse(savedDues) : MOCK_DUES as any);
+        console.error("Failed to load dashboard data", err);
       }
     };
     loadInitialData();
@@ -85,14 +87,26 @@ const ParentDashboard: React.FC<{ user: User }> = ({ user }) => {
     return acc + studentDuesAll.reduce((sum, d) => sum + d.total_due, 0);
   }, 0);
 
+  const handleLocationSave = (data: any) => {
+    console.log('Boarding point saved:', data);
+    showToast('Boarding point updated successfully', 'success');
+    setIsPickerOpen(false);
+  };
+
   return (
     <div className="space-y-6">
       <PaymentPortal 
         state={paymentState} 
         onClose={closePortal} 
-        onSelectMethod={selectMethod} 
-        onConfirm={processPayment} 
+        onInitiateRazorpay={initiateRazorpay}
       />
+
+      {isPickerOpen && (
+        <BoardingLocationPicker 
+          onClose={() => setIsPickerOpen(false)} 
+          onSave={handleLocationSave} 
+        />
+      )}
 
       <div className="bg-white p-6 md:p-10 rounded-3xl md:rounded-[3rem] border border-slate-200 shadow-premium flex flex-col md:flex-row items-center justify-between gap-6 relative overflow-hidden group">
         <div className="absolute -right-10 md:-right-20 -top-10 md:-top-20 opacity-5 transition-transform duration-1000 group-hover:rotate-12">
@@ -104,9 +118,17 @@ const ParentDashboard: React.FC<{ user: User }> = ({ user }) => {
           </div>
           <div>
             <h2 className="text-2xl md:text-4xl font-black text-slate-800 tracking-tighter uppercase leading-none">Family Hub</h2>
-            <p className="text-slate-500 font-bold uppercase text-[9px] md:text-[10px] tracking-widest mt-2">
-               {familyStudents.length} Students Registered
-            </p>
+            <div className="flex items-center gap-3 mt-2">
+              <p className="text-slate-500 font-bold uppercase text-[9px] md:text-[10px] tracking-widest">
+                 {familyStudents.length} Students Registered
+              </p>
+              <button 
+                onClick={() => showToast('Child registration feature coming soon or use Admin portal', 'info')}
+                className="text-primary font-black text-[9px] uppercase tracking-widest hover:underline"
+              >
+                + Register New
+              </button>
+            </div>
           </div>
         </div>
         <div className="text-center md:text-right relative z-10 w-full sm:w-auto">
@@ -167,6 +189,13 @@ const ParentDashboard: React.FC<{ user: User }> = ({ user }) => {
                        </span>
                     </div>
                     <button 
+                       onClick={() => setIsPickerOpen(true)}
+                       className="bg-white text-slate-900 px-4 py-3 rounded-xl border border-slate-200 font-black text-[9px] uppercase tracking-widest hover:bg-slate-50 transition-all flex items-center gap-2"
+                    >
+                       <i className="fas fa-map-marker-alt"></i>
+                       Set Boarding
+                    </button>
+                    <button 
                        onClick={() => setIsCameraOpen(true)}
                        className="bg-slate-900/80 backdrop-blur-md text-white px-4 py-3 rounded-xl border border-white/10 font-black text-[9px] uppercase tracking-widest hover:bg-black transition-all flex items-center gap-2"
                     >
@@ -216,11 +245,24 @@ const ParentDashboard: React.FC<{ user: User }> = ({ user }) => {
                   <div className="text-right">
                      <p className="text-sm md:text-lg font-black text-slate-800 tracking-tighter mb-2">₹{due.total_due.toLocaleString()}</p>
                      {isPaid ? (
-                        <i className="fas fa-check-circle text-success text-lg"></i>
+                        <div className="flex flex-col items-end gap-2">
+                           <i className="fas fa-check-circle text-success text-lg"></i>
+                           <button 
+                             onClick={() => downloadReceipt(due.id, due.id)}
+                             className="text-[7px] font-black text-primary uppercase tracking-widest hover:underline flex items-center gap-1"
+                           >
+                             <i className="fas fa-download"></i>
+                             Receipt
+                           </button>
+                        </div>
                      ) : (
                        <button 
                          disabled={isLocked}
-                         onClick={() => openPortal(due.id, due.total_due, selectedStudent.full_name)}
+                         onClick={() => {
+                         const childIndex = familyStudents.findIndex(s => s.id === selectedStudent.id) + 1;
+                         const ordinal = childIndex === 1 ? '1st' : childIndex === 2 ? '2nd' : childIndex === 3 ? '3rd' : `${childIndex}th`;
+                         openPortal(due.id, due.total_due, `${selectedStudent.full_name} (${ordinal} Child)`);
+                       }}
                          className={`px-4 md:px-6 py-2 text-[8px] md:text-[9px] font-black uppercase tracking-widest rounded-lg md:rounded-xl transition-all ${isLocked ? 'bg-slate-100 text-slate-400 cursor-not-allowed' : 'bg-primary text-white hover:bg-blue-800 shadow-xl shadow-primary/20'}`}
                        >
                          {isLocked ? 'Wait: Clear Prior' : 'Pay Now'}

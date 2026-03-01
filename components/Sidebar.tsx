@@ -16,9 +16,6 @@ const Sidebar: React.FC<SidebarProps> = ({ user, onLogout, activeTab, setActiveT
   const isSuperAdmin = user.role === UserRole.SUPER_ADMIN;
   const isAdmin = user.role === UserRole.ADMIN || isSuperAdmin;
   const isParent = user.role === UserRole.PARENT;
-  const isAccountant = user.role === UserRole.ACCOUNTANT;
-  const isTeacher = user.role === UserRole.TEACHER;
-  const isDriver = user.role === UserRole.DRIVER;
 
   const adminLinks = [
     { name: 'Dashboard', icon: 'fa-chart-pie' },
@@ -43,32 +40,9 @@ const Sidebar: React.FC<SidebarProps> = ({ user, onLogout, activeTab, setActiveT
     { name: 'Profile', icon: 'fa-user' },
   ];
 
-  const accountantLinks = [
-    { name: 'Dashboard', icon: 'fa-chart-pie' },
-    { name: 'Fees', icon: 'fa-file-invoice-dollar' },
-    { name: 'Reports', icon: 'fa-file-alt' },
-    { name: 'Profile', icon: 'fa-user' },
-  ];
-
-  const teacherLinks = [
-    { name: 'Dashboard', icon: 'fa-home' },
-    { name: 'Attendance', icon: 'fa-clipboard-check' },
-    { name: 'Students', icon: 'fa-user-graduate' },
-    { name: 'Profile', icon: 'fa-user' },
-  ];
-
-  const driverLinks = [
-    { name: 'Dashboard', icon: 'fa-bus' },
-    { name: 'Attendance', icon: 'fa-clipboard-check' },
-    { name: 'Profile', icon: 'fa-user' },
-  ];
-
   const getLinks = () => {
     if (isAdmin) return adminLinks;
     if (isParent) return parentLinks;
-    if (isAccountant) return accountantLinks;
-    if (isTeacher) return teacherLinks;
-    if (isDriver) return driverLinks;
     return [];
   };
 

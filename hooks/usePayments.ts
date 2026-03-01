@@ -1,20 +1,18 @@
-
 import { useState } from 'react';
-import { showToast } from '../lib/swal';
-import { PaymentStatus, MonthlyDue } from '../types';
-import { MONTHS } from '../constants';
+import { showToast, showAlert } from '../lib/swal';
+import api from '../lib/api';
 
-export type PaymentMethod = 'CARD' | 'UPI' | 'GPAY' | 'PAYTM';
+declare const Razorpay: any;
+
+export type PaymentMethod = 'RAZORPAY';
 
 interface PaymentState {
   isOpen: boolean;
-  dueId: string | number | null;
+  dueId: string | null;
   amount: number;
   studentName: string;
-  method: PaymentMethod | null;
-  step: 'SELECT' | 'DETAILS' | 'PROCESSING' | 'SUCCESS';
+  step: 'SELECT' | 'PROCESSING' | 'SUCCESS';
   transactionId: string | null;
-  monthYear: string | null;
 }
 
 export const usePayments = () => {
@@ -23,31 +21,18 @@ export const usePayments = () => {
     dueId: null,
     amount: 0,
     studentName: '',
-    method: null,
     step: 'SELECT',
-    transactionId: null,
-    monthYear: null
+    transactionId: null
   });
 
-  const openPortal = (dueId: string | number, amount: number, studentName: string) => {
-    // Find due details for the receipt
-    const savedDues = localStorage.getItem('fee_dues');
-    let monthYear = "N/A";
-    if (savedDues) {
-        const dues = JSON.parse(savedDues);
-        const due = dues.find((d: any) => String(d.id) === String(dueId));
-        if (due) monthYear = `${MONTHS[due.month-1]} ${due.year}`;
-    }
-
+  const openPortal = (dueId: string, amount: number, studentName: string) => {
     setPaymentState({
       isOpen: true,
       dueId,
       amount,
       studentName,
-      method: null,
       step: 'SELECT',
-      transactionId: null,
-      monthYear
+      transactionId: null
     });
   };
 
@@ -55,63 +40,72 @@ export const usePayments = () => {
     setPaymentState(prev => ({ ...prev, isOpen: false }));
   };
 
-  const selectMethod = (method: PaymentMethod) => {
-    if (method === 'GPAY' || method === 'PAYTM') {
-      setPaymentState(prev => ({ ...prev, method, step: 'PROCESSING' }));
-      processPayment(method);
-    } else {
-      setPaymentState(prev => ({ ...prev, method, step: 'DETAILS' }));
-    }
-  };
+  const initiateRazorpay = async () => {
+    setPaymentState(prev => ({ ...prev, step: 'PROCESSING' }));
+    try {
+      // 1. Create order on backend
+      const { data: order } = await api.post('/payments/create-order', {
+        amount: paymentState.amount,
+        dueId: paymentState.dueId
+      });
 
-  const processPayment = (method: PaymentMethod, details?: any) => {
-    setPaymentState(prev => ({ ...prev, method, step: 'PROCESSING' }));
-    
-    setTimeout(() => {
-      const txnId = 'TXN-' + Math.random().toString(36).substr(2, 9).toUpperCase();
-      const paymentDate = new Date().toISOString().split('T')[0];
+      // 2. Open Razorpay Checkout
+      const options = {
+        key: import.meta.env.VITE_RAZORPAY_KEY_ID,
+        amount: order.amount,
+        currency: order.currency,
+        name: "BusWay Pro",
+        description: `Fee Payment for ${paymentState.studentName}`,
+        order_id: order.id,
+        handler: async (response: any) => {
+          // 3. Verify payment on backend
+          try {
+            const { data: verifyData } = await api.post('/payments/verify', {
+              ...response,
+              dueId: paymentState.dueId
+            });
 
-      // 1. Update Due Status
-      const savedDues = localStorage.getItem('fee_dues');
-      if (savedDues) {
-        const dues = JSON.parse(savedDues);
-        const updatedDues = dues.map((d: any) => 
-          String(d.id) === String(paymentState.dueId) ? { ...d, status: PaymentStatus.PAID } : d
-        );
-        localStorage.setItem('fee_dues', JSON.stringify(updatedDues));
-      }
-
-      // 2. Create Receipt Entry
-      const savedReceipts = localStorage.getItem('db_receipts');
-      const receipts = savedReceipts ? JSON.parse(savedReceipts) : [];
-      const newReceipt = {
-          id: txnId,
-          transaction_id: txnId,
-          amount: paymentState.amount,
-          studentName: paymentState.studentName,
-          monthYear: paymentState.monthYear,
-          date: paymentDate,
-          method: method,
-          status: 'SUCCESS'
+            if (verifyData.success) {
+              setPaymentState(prev => ({
+                ...prev,
+                step: 'SUCCESS',
+                transactionId: response.razorpay_payment_id
+              }));
+              showToast('Payment Successful', 'success');
+            } else {
+              throw new Error('Verification failed');
+            }
+          } catch (err: any) {
+            showAlert('Payment Error', err.message || 'Failed to verify payment', 'error');
+            setPaymentState(prev => ({ ...prev, step: 'SELECT' }));
+          }
+        },
+        prefill: {
+          name: paymentState.studentName,
+        },
+        theme: {
+          color: "#1e40af"
+        }
       };
-      receipts.unshift(newReceipt);
-      localStorage.setItem('db_receipts', JSON.stringify(receipts));
 
-      setPaymentState(prev => ({ 
-          ...prev, 
-          step: 'SUCCESS',
-          transactionId: txnId
-      }));
-      
-      showToast('Transaction Settled', 'success');
-    }, 2500);
+      const rzp = new Razorpay(options);
+      rzp.on('payment.failed', function (response: any) {
+        showAlert('Payment Failed', response.error.description, 'error');
+        setPaymentState(prev => ({ ...prev, step: 'SELECT' }));
+      });
+      rzp.open();
+
+    } catch (err: any) {
+      console.error("Razorpay initialization failed", err);
+      showToast(err.message || 'Failed to initiate payment', 'error');
+      setPaymentState(prev => ({ ...prev, step: 'SELECT' }));
+    }
   };
 
   return { 
     paymentState, 
     openPortal, 
     closePortal, 
-    selectMethod, 
-    processPayment 
+    initiateRazorpay
   };
 };

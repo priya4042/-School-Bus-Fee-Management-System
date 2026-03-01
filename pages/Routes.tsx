@@ -1,12 +1,12 @@
 import React, { useState } from 'react';
 import Modal from '../components/Modal';
 import { useRoutes } from '../hooks/useRoutes';
-import { showToast, showLoading, closeSwal, showAlert } from '../lib/swal';
+import { showToast, showLoading, closeSwal, showAlert, showConfirm } from '../lib/swal';
 
 const Routes: React.FC = () => {
-  const { routes, loading, addRoute } = useRoutes();
+  const { routes, loading, addRoute, updateRoute, deleteRoute } = useRoutes();
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
   const [formData, setFormData] = useState({
     name: '',
     code: '',
@@ -14,34 +14,58 @@ const Routes: React.FC = () => {
     base_fee: 0
   });
 
-  const handleCreateRoute = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (isSubmitting) return;
-
-    if (!formData.name.trim() || !formData.code.trim()) {
-      showAlert('Required Fields', 'Please provide both a Name and a Route Code.', 'warning');
-      return;
-    }
 
     if (formData.distance_km <= 0 || formData.base_fee <= 0) {
       showAlert('Invalid Input', 'Distance and Base Fee must be greater than zero.', 'warning');
       return;
     }
 
-    setIsSubmitting(true);
-    showLoading('Provisioning Fleet Route...');
+    showLoading('Syncing Route...');
     
-    const result = await addRoute(formData);
+    let result;
+    if (editingId) {
+      result = await updateRoute(editingId, formData);
+    } else {
+      result = await addRoute(formData);
+    }
     
     closeSwal();
-    setIsSubmitting(false);
 
     if (result.success) {
       setIsModalOpen(false);
-      setFormData({ name: '', code: '', distance_km: 0, base_fee: 0 });
-      showToast('Route activated successfully', 'success');
+      resetForm();
+      showToast(editingId ? 'Route updated' : 'Route activated', 'success');
     } else {
-      showAlert('Provisioning Failed', result.error || 'System error. Try again.', 'error');
+      showAlert('Failed', result.error || 'System error. Try again.', 'error');
+    }
+  };
+
+  const resetForm = () => {
+    setFormData({ name: '', code: '', distance_km: 0, base_fee: 0 });
+    setEditingId(null);
+  };
+
+  const handleEdit = (route: any) => {
+    setFormData({
+      name: route.name,
+      code: route.code,
+      distance_km: route.distance_km,
+      base_fee: route.base_fee
+    });
+    setEditingId(route.id);
+    setIsModalOpen(true);
+  };
+
+  const handleDelete = async (id: string, name: string) => {
+    const confirmed = await showConfirm('Remove Route?', `Archive ${name}?`, 'Delete');
+    if (confirmed) {
+      showLoading('Deleting...');
+      const success = await deleteRoute(id);
+      closeSwal();
+      if (success) showToast('Route removed', 'info');
+      else showAlert('Error', 'Failed to remove route', 'error');
     }
   };
 
@@ -55,7 +79,7 @@ const Routes: React.FC = () => {
           <p className="text-slate-500 font-bold uppercase text-[10px] tracking-widest">Configuration of zones and transport pricing</p>
         </div>
         <button 
-          onClick={() => setIsModalOpen(true)}
+          onClick={() => { resetForm(); setIsModalOpen(true); }}
           className="bg-primary text-white px-8 py-3 rounded-2xl font-black text-[10px] uppercase tracking-widest flex items-center gap-3 hover:bg-blue-700 transition-all shadow-xl shadow-primary/20"
         >
           <i className="fas fa-plus"></i>
@@ -77,9 +101,13 @@ const Routes: React.FC = () => {
               <div className="p-4 bg-primary/10 text-primary rounded-2xl border border-primary/10 group-hover:bg-primary group-hover:text-white transition-colors">
                 <i className="fas fa-route text-2xl"></i>
               </div>
-              <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest bg-slate-100 px-3 py-1 rounded-full">{route.code}</span>
+              <div className="flex gap-2">
+                <button onClick={() => handleEdit(route)} className="w-8 h-8 flex items-center justify-center bg-white border border-slate-100 text-slate-400 hover:text-primary rounded-lg transition-all"><i className="fas fa-edit text-[10px]"></i></button>
+                <button onClick={() => handleDelete(route.id, route.name)} className="w-8 h-8 flex items-center justify-center bg-white border border-slate-100 text-slate-400 hover:text-danger rounded-lg transition-all"><i className="fas fa-trash-alt text-[10px]"></i></button>
+              </div>
             </div>
             <h3 className="text-xl font-black text-slate-800 tracking-tight">{route.name}</h3>
+            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-1">{route.code}</p>
             <div className="mt-8 space-y-4">
               <div className="flex justify-between items-center p-3 bg-slate-50 rounded-xl border border-slate-100">
                 <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Distance</span>
@@ -99,8 +127,8 @@ const Routes: React.FC = () => {
         )}
       </div>
 
-      <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title="Provision New Route">
-        <form onSubmit={handleCreateRoute} className="space-y-5">
+      <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title={editingId ? "Edit Route" : "Provision New Route"}>
+        <form onSubmit={handleSubmit} className="space-y-5">
           <div>
             <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Route Identifier (Name)</label>
             <input 
@@ -159,7 +187,7 @@ const Routes: React.FC = () => {
               type="submit" 
               className="flex-1 py-4 bg-primary text-white font-black uppercase text-[10px] tracking-widest rounded-2xl shadow-xl shadow-primary/20 transition-all hover:bg-blue-800 active:scale-95"
             >
-              Provision Route
+              {editingId ? 'Update Route' : 'Provision Route'}
             </button>
           </div>
         </form>

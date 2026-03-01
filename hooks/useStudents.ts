@@ -32,9 +32,31 @@ export const useStudents = () => {
     }
   };
 
+  const updateStudent = async (id: string, studentData: any) => {
+    try {
+      const { data } = await api.put(`students/${id}`, studentData);
+      setStudents(prev => prev.map(s => s.id === id ? data : s));
+      return true;
+    } catch (err) {
+      console.error("Student update failed:", err);
+      return false;
+    }
+  };
+
+  const deleteStudent = async (id: string) => {
+    try {
+      await api.delete(`students/${id}`);
+      setStudents(prev => prev.filter(s => s.id !== id));
+      return true;
+    } catch (err) {
+      console.error("Student deletion failed:", err);
+      return false;
+    }
+  };
+
   useEffect(() => {
     fetchStudents();
   }, []);
 
-  return { students, loading, fetchStudents, addStudent };
+  return { students, loading, fetchStudents, addStudent, updateStudent, deleteStudent };
 };

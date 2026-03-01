@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { User, UserRole, MonthlyDue, PaymentStatus, Student } from '../types.ts';
 import { MOCK_STUDENTS } from '../constants.ts';
+import { supabase } from '../lib/supabase';
 import Modal from '../components/Modal.tsx';
 import { useFees } from '../hooks/useFees';
 
@@ -14,10 +15,38 @@ const UserDirectory: React.FC = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   useEffect(() => {
-    const userData = localStorage.getItem('db_users');
-    const studentData = localStorage.getItem('db_students');
-    if (userData) setUsers(JSON.parse(userData));
-    if (studentData) setStudents(JSON.parse(studentData));
+    const fetchData = async () => {
+      const { data: userData, error: userError } = await supabase.from('profiles').select('*');
+      const { data: studentData, error: studentError } = await supabase.from('students').select('*');
+      
+      if (userData) setUsers(userData.map(u => ({
+        id: u.id,
+        email: u.email,
+        fullName: u.full_name,
+        role: u.role as UserRole,
+        admissionNumber: u.admission_number,
+        phoneNumber: u.phone_number,
+        secondaryPhoneNumber: u.secondary_phone_number,
+        fleetSecurityToken: u.fleet_security_token,
+        location: u.location,
+        preferences: u.preferences
+      })));
+      
+      if (studentData) setStudents(studentData.map(s => ({
+        id: s.id,
+        admission_number: s.admission_number,
+        full_name: s.full_name,
+        class_name: s.class_name,
+        section: s.section,
+        route_id: s.route_id,
+        base_fee: s.base_fee,
+        monthly_fee: s.monthly_fee || s.base_fee,
+        status: s.status,
+        risk_score: s.risk_score,
+        parent_id: s.parent_id
+      })));
+    };
+    fetchData();
   }, []);
 
   const filteredUsers = users.filter(u => {

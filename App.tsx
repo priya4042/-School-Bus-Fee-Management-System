@@ -20,12 +20,12 @@ import Notifications from './pages/Notifications.tsx';
 import AuditLogs from './pages/AuditLogs.tsx';
 import AdminManagement from './pages/AdminManagement.tsx';
 import UserDirectory from './pages/UserDirectory.tsx';
-import AccountantDashboard from './pages/AccountantDashboard.tsx';
-import TeacherDashboard from './pages/TeacherDashboard.tsx';
-import DriverDashboard from './pages/DriverDashboard.tsx';
 import Sidebar from './components/Sidebar.tsx';
 import Topbar from './components/Topbar.tsx';
 import { useAuthStore } from './store/authStore.ts';
+
+import Privacy from './pages/Privacy.tsx';
+import Terms from './pages/Terms.tsx';
 
 const App: React.FC = () => {
   const { user, init, logout, loading, initialized } = useAuthStore();
@@ -33,6 +33,11 @@ const App: React.FC = () => {
   const [isRegistering, setIsRegistering] = useState(false);
   const [registerRole, setRegisterRole] = useState<UserRole | undefined>();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+
+  // Handle URL routes for Privacy/Terms
+  const path = window.location.pathname;
+  if (path === '/privacy') return <Privacy />;
+  if (path === '/terms') return <Terms />;
 
   useEffect(() => {
     init();
@@ -84,35 +89,6 @@ const App: React.FC = () => {
         case 'Notifications': return <Notifications user={user} />;
         case 'Profile': return <Profile user={user} />;
         default: return <ParentDashboard user={user} />;
-      }
-    }
-
-    if (role === UserRole.ACCOUNTANT) {
-      switch (activeTab) {
-        case 'Dashboard': return <AccountantDashboard />;
-        case 'Fees': return <Fees />;
-        case 'Reports': return <Reports />;
-        case 'Profile': return <Profile user={user} />;
-        default: return <AccountantDashboard />;
-      }
-    }
-
-    if (role === UserRole.TEACHER) {
-      switch (activeTab) {
-        case 'Dashboard': return <TeacherDashboard user={user} />;
-        case 'Attendance': return <Attendance />;
-        case 'Students': return <Students />;
-        case 'Profile': return <Profile user={user} />;
-        default: return <TeacherDashboard user={user} />;
-      }
-    }
-
-    if (role === UserRole.DRIVER) {
-      switch (activeTab) {
-        case 'Dashboard': return <DriverDashboard user={user} />;
-        case 'Attendance': return <Attendance />;
-        case 'Profile': return <Profile user={user} />;
-        default: return <DriverDashboard user={user} />;
       }
     }
 

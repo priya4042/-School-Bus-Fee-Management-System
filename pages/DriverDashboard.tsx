@@ -2,48 +2,74 @@ import React, { useState, useEffect, useRef } from 'react';
 import { User } from '../types';
 import { MOCK_STUDENTS } from '../constants';
 import api, { BusTelemetry } from '../lib/api';
+import { supabase } from '../lib/supabase';
 import { showToast, showAlert, showLoading, closeSwal } from '../lib/swal';
+
+import { Geolocation } from '@capacitor/geolocation';
+import { requestLocationPermission } from '../lib/permissions';
 
 const DriverDashboard: React.FC<{ user: User }> = ({ user }) => {
   const [isTripActive, setIsTripActive] = useState(false);
-  const [tripData, setTripData] = useState<any>(null);
   const [currentCoords, setCurrentCoords] = useState<{ lat: number; lng: number } | null>(null);
   const [boardingStatus, setBoardingStatus] = useState<Record<string, boolean>>({});
-  const watchId = useRef<number | null>(null);
-  const simulationInterval = useRef<number | null>(null);
+  const watchId = useRef<string | null>(null);
+  const [busId, setBusId] = useState<string>('b1');
+  const [geofences, setGeofences] = useState<any[]>([]);
 
-  // Kangra School Destination (approx)
-  const SCHOOL_LAT = 32.1024;
-  const SCHOOL_LNG = 76.2734;
+  useEffect(() => {
+    const fetchGeofences = async () => {
+      const { data } = await supabase.from('geofences').select('*');
+      if (data) setGeofences(data);
+    };
+    fetchGeofences();
+  }, []);
+
+  const calculateDistance = (lat1: number, lon1: number, lat2: number, lon2: number) => {
+    const R = 6371e3; // metres
+    const φ1 = lat1 * Math.PI/180;
+    const φ2 = lat2 * Math.PI/180;
+    const Δφ = (lat2-lat1) * Math.PI/180;
+    const Δλ = (lon2-lon1) * Math.PI/180;
+
+    const a = Math.sin(Δφ/2) * Math.sin(Δφ/2) +
+              Math.cos(φ1) * Math.cos(φ2) *
+              Math.sin(Δλ/2) * Math.sin(Δλ/2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+
+    return R * c; // in metres
+  };
 
   const startTrip = async () => {
+    const hasPermission = await requestLocationPermission();
+    if (!hasPermission) return;
+
     showLoading('Initializing Fleet GPS...');
     try {
       setIsTripActive(true);
       
-      // 1. Real GPS Hook
-      if ("geolocation" in navigator) {
-        watchId.current = navigator.geolocation.watchPosition(
-          (position) => {
+      // Capacitor Geolocation Watch
+      watchId.current = await Geolocation.watchPosition(
+        { enableHighAccuracy: true, timeout: 10000 },
+        (position, err) => {
+          if (err) {
+            console.error("GPS Error:", err);
+            return;
+          }
+          if (position) {
             const { latitude, longitude, speed } = position.coords;
             setCurrentCoords({ lat: latitude, lng: longitude });
-            BusTelemetry.broadcastLocation('b1', latitude, longitude, speed || 0);
-          },
-          (error) => console.error("GPS Error:", error),
-          { enableHighAccuracy: true, maximumAge: 2000, timeout: 5000 }
-        );
-      }
+            BusTelemetry.broadcastLocation(busId, latitude, longitude, speed || 0);
 
-      // 2. Simulated Movement (Fall-back or demo)
-      let currentLat = 32.0900;
-      let currentLng = 76.2600;
-      simulationInterval.current = window.setInterval(() => {
-          // Slowly move towards school
-          currentLat += (SCHOOL_LAT - currentLat) * 0.05;
-          currentLng += (SCHOOL_LNG - currentLng) * 0.05;
-          const mockSpeed = 35 + Math.random() * 10;
-          BusTelemetry.broadcastLocation('b1', currentLat, currentLng, mockSpeed);
-      }, 3000);
+            // Geofence Check: Auto-notify arrival for any geofence of type 'SCHOOL'
+            geofences.forEach(gf => {
+              const dist = calculateDistance(latitude, longitude, gf.latitude, gf.longitude);
+              if (dist < gf.radius_meters && gf.type === 'SCHOOL' && isTripActive) {
+                 endTrip();
+              }
+            });
+          }
+        }
+      );
 
       closeSwal();
       showToast('Morning Trip Started', 'success');
@@ -56,19 +82,18 @@ const DriverDashboard: React.FC<{ user: User }> = ({ user }) => {
   const endTrip = async () => {
     showLoading('Broadcasting Arrival to Parents...');
     
-    // Broadcast arrival notification globally
-    BusTelemetry.notifyArrival('b1', 'KNG-01-A');
+    // Broadcast arrival notification
+    BusTelemetry.notifyArrival(busId, 'KNG-01-A');
 
-    setTimeout(() => {
-        if (watchId.current !== null) navigator.geolocation.clearWatch(watchId.current);
-        if (simulationInterval.current !== null) clearInterval(simulationInterval.current);
-        
-        setIsTripActive(false);
-        setTripData(null);
-        setCurrentCoords(null);
-        closeSwal();
-        showAlert('Arrived at School', 'Arrival notification has been sent to all parents on this manifest.', 'success');
-    }, 1500);
+    if (watchId.current) {
+      await Geolocation.clearWatch({ id: watchId.current });
+      watchId.current = null;
+    }
+    
+    setIsTripActive(false);
+    setCurrentCoords(null);
+    closeSwal();
+    showAlert('Arrived at School', 'Arrival notification has been sent to all parents on this manifest.', 'success');
   };
 
   const toggleStudentStatus = async (studentId: string) => {

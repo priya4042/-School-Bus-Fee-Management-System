@@ -115,7 +115,6 @@ const AdminManagement: React.FC = () => {
             <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Role Level</label>
             <select className={selectClass} value={formData.role} onChange={(e) => setFormData({...formData, role: e.target.value as UserRole})}>
               <option value={UserRole.ADMIN}>Standard Admin</option>
-              <option value={UserRole.ACCOUNTANT}>Accountant</option>
               <option value={UserRole.SUPER_ADMIN}>Super Administrator</option>
             </select>
           </div>

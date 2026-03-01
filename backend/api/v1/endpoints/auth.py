@@ -26,7 +26,7 @@ def register_with_admission(payload: dict, db: Session = Depends(get_db)):
 def login_staff(payload: dict, db: Session = Depends(get_db)):
     user = db.query(models.User).filter(models.User.email == payload['email']).first()
     
-    if not user or user.role not in [models.UserRole.DRIVER, models.UserRole.TEACHER, models.UserRole.ADMIN, models.UserRole.SUPER_ADMIN]:
+    if not user or user.role not in [models.UserRole.ADMIN, models.UserRole.SUPER_ADMIN]:
          raise HTTPException(status_code=401, detail="Unauthorized staff member")
     
     if not security.verify_password(payload['password'], user.password_hash):

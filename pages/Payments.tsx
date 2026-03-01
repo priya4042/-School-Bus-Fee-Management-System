@@ -1,51 +1,107 @@
 import React, { useState, useEffect } from 'react';
 import { User, PaymentStatus, MonthlyDue } from '../types';
-import { MOCK_STUDENTS, MOCK_DUES, MONTHS } from '../constants';
+import { MONTHS } from '../constants';
 import { usePayments } from '../hooks/usePayments';
 import PaymentPortal from '../components/PaymentPortal';
 import { calculateCurrentLedger, isMonthPayable } from '../utils/feeCalculator';
+import { useReceipts } from '../hooks/useReceipts';
+import api from '../lib/api';
+import axios from 'axios';
+import { showToast } from '../lib/swal';
 
 const Payments: React.FC<{ user: User }> = ({ user }) => {
-  const { paymentState, openPortal, closePortal, selectMethod, processPayment } = usePayments();
+  const { paymentState, openPortal, closePortal, initiateRazorpay } = usePayments();
+  const { downloadReceipt, downloading } = useReceipts();
   const [dues, setDues] = useState<MonthlyDue[]>([]);
-  
-  const student = MOCK_STUDENTS.find(s => s.admission_number === user.admissionNumber) || MOCK_STUDENTS[0];
+  const [loading, setLoading] = useState(false);
+  const [student, setStudent] = useState<any>(null);
 
-  const fetchUpdatedDues = () => {
-    const savedDues = localStorage.getItem('fee_dues');
-    let studentDues: MonthlyDue[] = [];
-    if (savedDues) {
-      const parsed = JSON.parse(savedDues);
-      studentDues = parsed.filter((d: any) => String(d.student_id) === String(student.id));
-    } else {
-      studentDues = MOCK_DUES.filter(d => d.student_id === student.id);
-      localStorage.setItem('fee_dues', JSON.stringify(MOCK_DUES));
+  const fetchUpdatedDues = async (studentId: string) => {
+    setLoading(true);
+    try {
+      const { data: allDues } = await api.get('dues');
+      const studentDues = (allDues || []).filter((d: any) => String(d.student_id) === String(studentId));
+      
+      // Apply dynamic calculations
+      const calculated = studentDues.map((d: any) => {
+        const ledger = calculateCurrentLedger(d);
+        return { ...d, late_fine: ledger.lateFee, total_due: ledger.total };
+      });
+
+      setDues(calculated.sort((a: any, b: any) => (a.year * 12 + a.month) - (b.year * 12 + b.month)));
+    } catch (err) {
+      console.error("Failed to fetch dues", err);
+    } finally {
+      setLoading(false);
     }
-    
-    // Apply dynamic calculations
-    const calculated = studentDues.map(d => {
-      const ledger = calculateCurrentLedger(d);
-      return { ...d, late_fee: ledger.lateFee, total_due: ledger.total };
-    });
-
-    setDues(calculated.sort((a, b) => (a.year * 12 + a.month) - (b.year * 12 + b.month)));
   };
 
   useEffect(() => {
-    fetchUpdatedDues();
-    // Listen for payment success from portal
-    if (paymentState.step === 'SUCCESS') {
-      fetchUpdatedDues();
+    const loadStudent = async () => {
+      try {
+        const { data: students } = await api.get('students');
+        const found = (students || []).find((s: any) => s.admission_number === user.admissionNumber || s.admission_number === user.admission_number);
+        if (found) {
+          setStudent(found);
+          fetchUpdatedDues(found.id);
+        }
+      } catch (err) {
+        console.error("Failed to load student", err);
+      }
+    };
+    loadStudent();
+  }, [user.admissionNumber, user.admission_number]);
+
+  useEffect(() => {
+    // Handle Stripe Success Callback
+    const urlParams = new URLSearchParams(window.location.search);
+    const sessionId = urlParams.get('session_id');
+    const dueId = urlParams.get('due_id');
+
+    if (sessionId && dueId) {
+      const verifyPayment = async () => {
+        try {
+          // Production: Verify the session on the server
+          const { data } = await axios.get(`/api/v1/verify-session?session_id=${sessionId}`);
+          
+          if (data.status === 'complete') {
+            showToast('Stripe Payment Successful!', 'success');
+            // Clear URL params
+            window.history.replaceState({}, document.title, window.location.pathname);
+            if (student) fetchUpdatedDues(student.id);
+          } else {
+            showToast('Payment verification pending...', 'info');
+          }
+        } catch (err) {
+          console.error("Stripe verification failed", err);
+          showToast('Verification failed. Our team will update your records shortly.', 'warning');
+        }
+      };
+      verifyPayment();
     }
-  }, [student.id, paymentState.step]);
+  }, [student]);
+
+  useEffect(() => {
+    if (student) fetchUpdatedDues(student.id);
+    // Listen for payment success from portal
+    if (paymentState.step === 'SUCCESS' && student) {
+      fetchUpdatedDues(student.id);
+    }
+  }, [student?.id, paymentState.step]);
+
+  if (!student) return (
+    <div className="p-20 text-center">
+       <i className="fas fa-circle-notch fa-spin text-primary text-2xl"></i>
+       <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-4">Identifying Student Profile...</p>
+    </div>
+  );
 
   return (
     <div className="space-y-6">
       <PaymentPortal 
         state={paymentState} 
         onClose={closePortal} 
-        onSelectMethod={selectMethod} 
-        onConfirm={processPayment} 
+        onInitiateRazorpay={initiateRazorpay}
       />
 
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -100,27 +156,33 @@ const Payments: React.FC<{ user: User }> = ({ user }) => {
                           </p>
                           <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex justify-between">
                             <span>Last Date:</span> 
-                            <span className={isFineApplied ? 'text-danger' : 'text-slate-600'}>{due.last_date}</span>
+                            <span className={isFineApplied ? 'text-danger' : 'text-slate-600'}>{due.last_date || due.due_date}</span>
                           </p>
                        </div>
                     </td>
                     <td className="px-8 py-6 text-right">
-                       <p className="text-xs font-bold text-slate-500">₹{due.base_fee}</p>
-                       {due.late_fee > 0 && (
+                       <p className="text-xs font-bold text-slate-500">₹{due.amount || due.base_fee}</p>
+                       {(due.late_fine || due.late_fee || 0) > 0 && (
                          <p className="text-[10px] font-black text-danger uppercase tracking-tighter mt-1">
-                           +{isFineApplied ? 'Fixed Fine' : 'Late Fee'} ₹{due.late_fee}
+                           +{isFineApplied ? 'Fixed Fine' : 'Late Fee'} ₹{due.late_fine || due.late_fee}
                          </p>
                        )}
                     </td>
                     <td className="px-8 py-6 text-right">
-                       <p className="font-black text-slate-800 text-xl tracking-tighter">₹{due.total_due.toLocaleString()}</p>
+                       <p className="font-black text-slate-800 text-xl tracking-tighter">₹{(due.total_due || due.amount).toLocaleString()}</p>
                        {isFineApplied && !isPaid && <span className="text-[7px] font-black bg-danger text-white px-1.5 py-0.5 rounded-sm uppercase tracking-widest">Fine Applied</span>}
                     </td>
                     <td className="px-8 py-6 text-center">
                        {isPaid ? (
-                         <div className="flex flex-col items-center">
-                            <i className="fas fa-check-circle text-success text-xl mb-1"></i>
-                            <span className="text-[8px] font-black text-slate-400 uppercase">Paid Oct 12</span>
+                         <div className="flex flex-col items-center gap-2">
+                            <i className="fas fa-check-circle text-success text-xl"></i>
+                            <button 
+                              onClick={() => downloadReceipt(due.id, due.id)}
+                              className="text-[8px] font-black text-primary uppercase tracking-widest hover:underline flex items-center gap-1"
+                            >
+                              <i className="fas fa-download"></i>
+                              Receipt
+                            </button>
                          </div>
                        ) : isLocked ? (
                          <div className="flex flex-col items-center justify-center text-slate-400 gap-1">
@@ -129,7 +191,7 @@ const Payments: React.FC<{ user: User }> = ({ user }) => {
                          </div>
                        ) : (
                          <button 
-                           onClick={() => openPortal(due.id, due.total_due, student.full_name)}
+                           onClick={() => openPortal(due.id, due.total_due || due.amount, student.full_name)}
                            className="bg-primary text-white font-black uppercase tracking-widest px-8 py-4 rounded-2xl text-[10px] hover:bg-blue-800 transition-all shadow-xl shadow-primary/20 flex items-center justify-center gap-3 active:scale-95 group-hover:scale-105"
                          >
                            <i className="fas fa-credit-card"></i>
