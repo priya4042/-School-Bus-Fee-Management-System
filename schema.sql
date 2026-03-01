@@ -1,104 +1,138 @@
+-- BusWay Pro Enterprise Production Schema
+-- Optimized for PostgreSQL (Supabase)
 
--- BUSWAY PRO - ENTERPRISE SCHEMA (SUPABASE/POSTGRES)
+-- Enable UUID extension
+CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
--- 1. ENUMS
-CREATE TYPE user_role AS ENUM ('SUPER_ADMIN', 'ADMIN', 'ACCOUNTANT', 'PARENT', 'TEACHER', 'DRIVER');
-CREATE TYPE payment_status AS ENUM ('PAID', 'UNPAID', 'OVERDUE', 'PARTIAL');
-CREATE TYPE bus_status AS ENUM ('ON_ROUTE', 'IDLE', 'MAINTENANCE');
-
--- 2. TABLES
-CREATE TABLE public.profiles (
-  id UUID REFERENCES auth.users ON DELETE CASCADE PRIMARY KEY,
-  email TEXT UNIQUE,
-  full_name TEXT,
-  role user_role DEFAULT 'PARENT',
-  phone_number TEXT,
-  admission_number TEXT, -- For Parents
-  staff_id TEXT,         -- For Staff
-  license_no TEXT,       -- For Drivers
-  avatar_url TEXT,
-  created_at TIMESTAMPTZ DEFAULT NOW(),
-  updated_at TIMESTAMPTZ DEFAULT NOW()
+-- 1. Users Table (Unified for Admin, Parent, Driver)
+CREATE TABLE users (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    phone_number TEXT UNIQUE,
+    email TEXT UNIQUE,
+    password_hash TEXT,
+    full_name TEXT NOT NULL,
+    role TEXT NOT NULL CHECK (role IN ('admin', 'parent', 'driver')),
+    admission_number TEXT UNIQUE, -- Used for Parent Login/Registration
+    is_verified BOOLEAN DEFAULT false,
+    refresh_token TEXT,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    deleted_at TIMESTAMP WITH TIME ZONE -- Soft delete support
 );
 
-CREATE TABLE public.routes (
-  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-  name TEXT NOT NULL,
-  code TEXT UNIQUE NOT NULL,
-  base_fee NUMERIC(10,2) NOT NULL,
-  distance_km NUMERIC(5,2),
-  is_active BOOLEAN DEFAULT TRUE,
-  created_at TIMESTAMPTZ DEFAULT NOW()
+-- 2. Buses Table
+CREATE TABLE buses (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    bus_number TEXT NOT NULL UNIQUE,
+    plate_number TEXT NOT NULL UNIQUE,
+    capacity INTEGER NOT NULL,
+    driver_id UUID REFERENCES users(id),
+    camera_url TEXT, -- RTSP/HLS Stream URL
+    status TEXT DEFAULT 'idle' CHECK (status IN ('idle', 'active', 'maintenance')),
+    last_latitude DECIMAL(9,6),
+    last_longitude DECIMAL(9,6),
+    last_updated TIMESTAMP WITH TIME ZONE,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    deleted_at TIMESTAMP WITH TIME ZONE
 );
 
-CREATE TABLE public.buses (
-  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-  plate TEXT UNIQUE NOT NULL,
-  model TEXT,
-  capacity INTEGER DEFAULT 40,
-  driver_id UUID REFERENCES public.profiles(id),
-  route_id UUID REFERENCES public.routes(id),
-  status bus_status DEFAULT 'IDLE',
-  created_at TIMESTAMPTZ DEFAULT NOW()
+-- 3. Routes Table
+CREATE TABLE routes (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    route_name TEXT NOT NULL,
+    start_point TEXT,
+    end_point TEXT,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    deleted_at TIMESTAMP WITH TIME ZONE
 );
 
-CREATE TABLE public.students (
-  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-  admission_number TEXT UNIQUE NOT NULL,
-  full_name TEXT NOT NULL,
-  class_name TEXT,
-  section TEXT,
-  parent_id UUID REFERENCES public.profiles(id),
-  route_id UUID REFERENCES public.routes(id),
-  status TEXT DEFAULT 'active',
-  created_at TIMESTAMPTZ DEFAULT NOW()
+-- 4. Stops Table
+CREATE TABLE stops (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    route_id UUID REFERENCES routes(id) ON DELETE CASCADE,
+    stop_name TEXT NOT NULL,
+    latitude DECIMAL(9,6) NOT NULL,
+    longitude DECIMAL(9,6) NOT NULL,
+    pickup_time TIME,
+    drop_time TIME,
+    sequence_order INTEGER NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE TABLE public.fee_transactions (
-  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-  student_id UUID REFERENCES public.students(id),
-  month INTEGER NOT NULL,
-  year INTEGER NOT NULL,
-  base_fee NUMERIC(10,2),
-  late_fee NUMERIC(10,2) DEFAULT 0,
-  discount NUMERIC(10,2) DEFAULT 0,
-  total_paid NUMERIC(10,2) DEFAULT 0,
-  status payment_status DEFAULT 'UNPAID',
-  transaction_id TEXT,
-  payment_method TEXT,
-  paid_at TIMESTAMPTZ,
-  created_at TIMESTAMPTZ DEFAULT NOW(),
-  UNIQUE(student_id, month, year)
+-- 5. Students Table
+CREATE TABLE students (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    admission_number TEXT NOT NULL UNIQUE,
+    full_name TEXT NOT NULL,
+    grade TEXT,
+    section TEXT,
+    parent_id UUID REFERENCES users(id),
+    bus_id UUID REFERENCES buses(id),
+    route_id UUID REFERENCES routes(id),
+    monthly_fee DECIMAL(10,2) DEFAULT 0.00,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    deleted_at TIMESTAMP WITH TIME ZONE
 );
 
-CREATE TABLE public.bus_locations (
-  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-  bus_id UUID REFERENCES public.buses(id) ON DELETE CASCADE,
-  latitude DOUBLE PRECISION,
-  longitude DOUBLE PRECISION,
-  speed NUMERIC(5,2),
-  updated_at TIMESTAMPTZ DEFAULT NOW()
+-- 6. Payments Table (Razorpay Integrated)
+CREATE TABLE payments (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    student_id UUID REFERENCES students(id),
+    parent_id UUID REFERENCES users(id),
+    amount DECIMAL(10,2) NOT NULL,
+    billing_month TEXT NOT NULL, -- Format: YYYY-MM
+    razorpay_order_id TEXT UNIQUE,
+    razorpay_payment_id TEXT UNIQUE,
+    razorpay_signature TEXT,
+    status TEXT DEFAULT 'pending' CHECK (status IN ('pending', 'captured', 'failed', 'refunded')),
+    idempotency_key TEXT UNIQUE,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
--- 3. REALTIME CONFIG
-ALTER PUBLICATION supabase_realtime ADD TABLE public.bus_locations;
+-- 7. Notifications Table
+CREATE TABLE notifications (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    user_id UUID REFERENCES users(id),
+    title TEXT NOT NULL,
+    message TEXT NOT NULL,
+    type TEXT CHECK (type IN ('alert', 'payment', 'general')),
+    is_read BOOLEAN DEFAULT false,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
 
--- 4. ROW LEVEL SECURITY (RLS)
-ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.students ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.fee_transactions ENABLE ROW LEVEL SECURITY;
+-- 8. GPS Logs (High Frequency Data)
+CREATE TABLE gps_logs (
+    id BIGSERIAL PRIMARY KEY,
+    bus_id UUID REFERENCES buses(id),
+    latitude DECIMAL(9,6) NOT NULL,
+    longitude DECIMAL(9,6) NOT NULL,
+    speed DECIMAL(5,2),
+    timestamp TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
 
--- Admins see all
-CREATE POLICY "Admins have full access" ON public.profiles FOR ALL TO authenticated USING (auth.jwt()->>'role' = 'ADMIN' OR auth.jwt()->>'role' = 'SUPER_ADMIN');
+-- 9. OTP Logs
+CREATE TABLE otp_logs (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    user_id UUID REFERENCES users(id) ON DELETE CASCADE,
+    phone_number TEXT NOT NULL,
+    otp_hash TEXT NOT NULL,
+    expires_at TIMESTAMP WITH TIME ZONE NOT NULL,
+    attempts INTEGER DEFAULT 0,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
 
--- Parents see only their children
-CREATE POLICY "Parents see their children" ON public.students FOR SELECT TO authenticated USING (parent_id = auth.uid());
-CREATE POLICY "Parents see their children's fees" ON public.fee_transactions FOR SELECT TO authenticated 
-USING (student_id IN (SELECT id FROM public.students WHERE parent_id = auth.uid()));
+-- Indexes for Performance
+CREATE INDEX idx_users_phone ON users(phone_number);
+CREATE INDEX idx_users_admission ON users(admission_number);
+CREATE INDEX idx_students_admission ON students(admission_number);
+CREATE INDEX idx_gps_logs_bus_time ON gps_logs(bus_id, timestamp DESC);
+CREATE INDEX idx_payments_student_month ON payments(student_id, billing_month);
 
--- Drivers see their own location
-CREATE POLICY "Drivers update own location" ON public.bus_locations FOR ALL TO authenticated USING (bus_id IN (SELECT id FROM public.buses WHERE driver_id = auth.uid()));
+-- RLS Policies (Basic Example)
+ALTER TABLE users ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Users can view their own profile" ON users FOR SELECT USING (auth.uid() = id);
 
--- 5. SEED DATA
--- Insert initial route
-INSERT INTO public.routes (name, code, base_fee, distance_km) VALUES ('Kangra Main Express', 'KNG-01', 1800.00, 15.0);
+ALTER TABLE students ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Parents can view their students" ON students FOR SELECT USING (parent_id = auth.uid());

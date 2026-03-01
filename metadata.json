@@ -1,9 +1,8 @@
 {
   "name": "BusWay Pro Enterprise",
-  "description": "Production-ready school bus management platform with real-time Supabase tracking.",
+  "description": "Enterprise-grade school bus tracking and management system with real-time GPS, camera streaming, and Razorpay payments.",
   "requestFramePermissions": [
     "camera",
-    "geolocation",
-    "microphone"
+    "geolocation"
   ]
 }

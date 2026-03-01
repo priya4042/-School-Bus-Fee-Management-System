@@ -1,25 +1,20 @@
+<div align="center">
+<img width="1200" height="475" alt="GHBanner" src="https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6" />
+</div>
 
-# 🚌 BusWay Pro: Deployment Fix
+# Run and deploy your AI Studio app
 
-If Vercel is not showing a deployment, check these **Project Settings** in your Vercel Dashboard:
+This contains everything you need to run your app locally.
 
-## 🛠️ Vercel Dashboard Checklist
-1.  **Framework Preset**: Ensure "Vite" is selected.
-2.  **Root Directory**: Should be `./` (the default).
-3.  **Build Command**: `npm run build`
-4.  **Output Directory**: `dist`
-5.  **Environment Variables**:
-    *   `VITE_API_URL` = Your Render Backend URL (e.g., `https://busway-api.onrender.com/api/v1`)
+View your app in AI Studio: https://ai.studio/apps/dbc63b07-57b8-4c00-80b2-b78c2d5e88ed
 
-## 🚀 To Trigger a New Build
-1.  Commit the new `vercel.json` file.
-2.  Push to GitHub.
-3.  Vercel will automatically detect the new file and start a fresh deployment.
+## Run Locally
 
-## 🔗 Live URLs (Examples)
-- **Frontend**: `https://your-project.vercel.app`
-- **Backend**: `https://your-api.onrender.com`
+**Prerequisites:**  Node.js
 
-## 🔐 Credentials
-- **Login**: `admin@school.com`
-- **Password**: `admin123`
+
+1. Install dependencies:
+   `npm install`
+2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
+3. Run the app:
+   `npm run dev`
