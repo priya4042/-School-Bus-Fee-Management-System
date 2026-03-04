@@ -1,8 +1,9 @@
 {
-  "name": "BusWay Pro Enterprise",
-  "description": "Enterprise-grade school bus tracking and management system with real-time GPS, camera streaming, and Razorpay payments.",
+  "name": "School Bus WayPro",
+  "description": "Enterprise school bus management platform with real-time tracking and fee management.",
   "requestFramePermissions": [
     "camera",
-    "geolocation"
+    "geolocation",
+    "microphone"
   ]
 }
