@@ -20,7 +20,9 @@ const Register: React.FC<RegisterProps> = ({ onRegister, onBackToLogin, initialR
   const [isOtpSent, setIsOtpSent] = useState(false);
   const [otp, setOtp] = useState('');
   const [timer, setTimer] = useState(0);
-
+  const [showPassword, setShowPassword] = useState(false);
+  const [showAdminKey, setShowAdminKey] = useState(false);
+  
   const [formData, setFormData] = useState({
     fullName: '',
     email: '',
@@ -224,7 +226,23 @@ const Register: React.FC<RegisterProps> = ({ onRegister, onBackToLogin, initialR
                 {role === UserRole.ADMIN && (
                   <div className="p-6 bg-slate-50 rounded-2xl border border-slate-100 mb-6">
                      <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Master Admin Secret</label>
-                     <input required type="password" value={formData.adminKey} onChange={(e) => setFormData({...formData, adminKey: e.target.value})} className={adminInputClass.replace('text-sm', 'text-base font-black')} placeholder="••••••••" />
+                     <div className="relative">
+                       <input 
+                         required 
+                         type={showAdminKey ? "text" : "password"} 
+                         value={formData.adminKey} 
+                         onChange={(e) => setFormData({...formData, adminKey: e.target.value})} 
+                         className={adminInputClass.replace('text-sm', 'text-base font-black')} 
+                         placeholder="••••••••" 
+                       />
+                       <button
+                         type="button"
+                         onClick={() => setShowAdminKey(!showAdminKey)}
+                         className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-primary transition-colors"
+                       >
+                         <i className={`fas ${showAdminKey ? 'fa-eye-slash' : 'fa-eye'}`}></i>
+                       </button>
+                     </div>
                   </div>
                 )}
 
@@ -254,7 +272,23 @@ const Register: React.FC<RegisterProps> = ({ onRegister, onBackToLogin, initialR
 
                 <div className="space-y-1">
                    <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">Account Password</label>
-                   <input required type="password" value={formData.password} onChange={(e) => setFormData({...formData, password: e.target.value})} className={role === UserRole.PARENT ? inputClass : adminInputClass} placeholder="••••••••" />
+                   <div className="relative">
+                     <input 
+                       required 
+                       type={showPassword ? "text" : "password"} 
+                       value={formData.password} 
+                       onChange={(e) => setFormData({...formData, password: e.target.value})} 
+                       className={role === UserRole.PARENT ? inputClass : adminInputClass} 
+                       placeholder="••••••••" 
+                     />
+                     <button
+                       type="button"
+                       onClick={() => setShowPassword(!showPassword)}
+                       className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-primary transition-colors"
+                     >
+                       <i className={`fas ${showPassword ? 'fa-eye-slash' : 'fa-eye'}`}></i>
+                     </button>
+                   </div>
                 </div>
 
                 <button type="submit" disabled={loading} className={`w-full py-5 rounded-2xl text-white font-black uppercase text-[10px] tracking-widest transition-all shadow-xl active:scale-[0.98] ${role === UserRole.ADMIN ? 'bg-slate-900 shadow-slate-900/20' : 'bg-primary shadow-primary/20'}`}>

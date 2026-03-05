@@ -1,18 +1,23 @@
-
 import { createClient } from '@supabase/supabase-js';
 
 const supabaseUrl = (import.meta.env as any).VITE_SUPABASE_URL;
 const supabaseAnonKey = (import.meta.env as any).VITE_SUPABASE_ANON_KEY;
 
-if (!supabaseUrl || !supabaseAnonKey) {
-  console.warn('Supabase credentials missing. Please check your environment variables.');
+// Configuration check
+export const isSupabaseConfigured = !!supabaseUrl && !!supabaseAnonKey && !supabaseUrl.includes('placeholder');
+
+if (!isSupabaseConfigured) {
+  console.error(
+    'CRITICAL: Supabase environment variables are missing or invalid.\n' +
+    'Please ensure VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY are set in your .env file or Vercel dashboard.\n' +
+    'The application will not be able to connect to the database.'
+  );
 }
 
-const isPlaceholder = !supabaseUrl || !supabaseAnonKey || supabaseUrl.includes('placeholder');
-
+// Create client only if configured, otherwise use a safe fallback that won't throw on initialization
 export const supabase = createClient(
-  supabaseUrl || 'https://placeholder.supabase.co',
-  supabaseAnonKey || 'placeholder'
+  supabaseUrl || 'https://placeholder-url-missing.supabase.co',
+  supabaseAnonKey || 'placeholder-key-missing'
 );
 
 /**
@@ -20,6 +25,8 @@ export const supabase = createClient(
  * Logs administrative and critical actions to the Supabase audit_logs table.
  */
 export const logAuditAction = async (action: string, entityType: string, entityId: string, changes?: any) => {
+  if (!isSupabaseConfigured) return;
+  
   try {
     const { data: { user } } = await supabase.auth.getUser();
     

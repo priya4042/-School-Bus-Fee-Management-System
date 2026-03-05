@@ -5,6 +5,7 @@ import crypto from "crypto";
 import dotenv from "dotenv";
 import jwt from "jsonwebtoken";
 import twilio from "twilio";
+import axios from "axios";
 import bcrypt from "bcryptjs";
 import cookieParser from "cookie-parser";
 import helmet from "helmet";
@@ -21,8 +22,11 @@ const JWT_SECRET = process.env.JWT_SECRET || "super-secret-key-change-this";
 const JWT_REFRESH_SECRET = process.env.JWT_REFRESH_SECRET || "super-refresh-secret-key";
 
 // --- INITIALIZATION ---
-const SUPABASE_URL = process.env.VITE_SUPABASE_URL || "";
-const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.VITE_SUPABASE_ANON_KEY || "";
+const SUPABASE_URL = process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL || "";
+const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.VITE_SUPABASE_ANON_KEY || process.env.SUPABASE_ANON_KEY || "";
+
+// In-memory OTP store (fallback if DB table not ready)
+const otpStore = new Map<string, { otp: string, expiresAt: number }>();
 
 if (!SUPABASE_URL || !SUPABASE_KEY) {
   console.error("CRITICAL: Supabase URL or Key is missing from environment variables!");
@@ -38,7 +42,7 @@ const supabase = createClient(SUPABASE_URL, SUPABASE_KEY, {
 let razorpay: any = null;
 function getRazorpay() {
   if (!razorpay) {
-    const key_id = process.env.RAZORPAY_KEY_ID;
+    const key_id = process.env.VITE_RAZORPAY_KEY_ID || process.env.RAZORPAY_KEY_ID;
     const key_secret = process.env.RAZORPAY_KEY_SECRET;
     if (!key_id || !key_secret) {
       throw new Error("Razorpay keys are missing");
@@ -51,8 +55,8 @@ function getRazorpay() {
 let twilioClient: any = null;
 function getTwilio() {
   if (!twilioClient) {
-    const sid = process.env.TWILIO_ACCOUNT_SID;
-    const token = process.env.TWILIO_AUTH_TOKEN;
+    const sid = process.env.TWILIO_ACCOUNT_SID || process.env.VITE_TWILIO_ACCOUNT_SID;
+    const token = process.env.TWILIO_AUTH_TOKEN || process.env.VITE_TWILIO_AUTH_TOKEN;
     if (!sid || !token) {
       throw new Error("Twilio keys are missing");
     }
@@ -90,6 +94,111 @@ async function startServer() {
     validate: { xForwardedForHeader: false },
     handler: (req, res) => {
       res.status(429).json({ error: "Too many login attempts, please try again later" });
+    }
+  });
+
+  // --- OTP ROUTES ---
+
+  // 1. Send OTP
+  app.post("/api/v1/auth/send-otp", async (req, res) => {
+    const { phone } = req.body;
+    if (!phone || phone.length < 10) {
+      return res.status(400).json({ error: "Invalid phone number" });
+    }
+
+    try {
+      // Generate 6-digit OTP
+      const otp = Math.floor(100000 + Math.random() * 900000).toString();
+      const expiresAt = new Date(Date.now() + 5 * 60 * 1000).toISOString(); // 5 minutes
+
+      // Save to DB (optional, if table exists)
+      try {
+        await supabase.from("otps").insert({
+          phone,
+          otp,
+          expires_at: expiresAt
+        });
+      } catch (e) {
+        console.warn("Could not save OTP to DB, using in-memory only.");
+      }
+
+      // Save to in-memory store
+      otpStore.set(phone, { otp, expiresAt: Date.now() + 5 * 60 * 1000 });
+
+      // Send via Twilio
+      const client = getTwilio();
+      const from = process.env.TWILIO_PHONE_NUMBER || process.env.VITE_TWILIO_PHONE_NUMBER;
+      
+      if (!from) {
+        throw new Error("TWILIO_PHONE_NUMBER is not configured in environment variables.");
+      }
+
+      // Format phone number for Twilio (India +91)
+      let formattedPhone = phone.replace(/\D/g, '');
+      if (formattedPhone.length === 10) {
+        formattedPhone = `+91${formattedPhone}`;
+      } else if (!formattedPhone.startsWith('+')) {
+        formattedPhone = `+${formattedPhone}`;
+      }
+
+      console.log(`Attempting to send OTP to ${formattedPhone} using Twilio from ${from}...`);
+
+      try {
+        const message = await client.messages.create({
+          body: `Your School Bus WayPro verification code is: ${otp}`,
+          from: from,
+          to: formattedPhone
+        });
+
+        console.log(`OTP ${otp} sent successfully to ${formattedPhone}. SID: ${message.sid}`);
+        res.json({ success: true, message: "OTP sent successfully" });
+      } catch (twilioError: any) {
+        console.error("Twilio API Error:", twilioError.message);
+        throw new Error(`Twilio Error: ${twilioError.message}`);
+      }
+    } catch (error: any) {
+      console.error("OTP Send Error:", error);
+      res.status(500).json({ error: error.message || "OTP could not be sent. Please try again." });
+    }
+  });
+
+  // 2. Verify OTP
+  app.post("/api/v1/auth/verify-otp", async (req, res) => {
+    const { phone, otp } = req.body;
+    if (!phone || !otp) {
+      return res.status(400).json({ error: "Phone and OTP are required" });
+    }
+
+    try {
+      // 1. Check in-memory store first
+      const memOtp = otpStore.get(phone);
+      if (memOtp && memOtp.otp === otp && memOtp.expiresAt > Date.now()) {
+        otpStore.delete(phone);
+        return res.json({ success: true, message: "OTP verified successfully" });
+      }
+
+      // 2. Fallback to DB if not in memory
+      const { data: otpRecord, error } = await supabase
+        .from("otps")
+        .select("*")
+        .eq("phone", phone)
+        .eq("otp", otp)
+        .gt("expires_at", new Date().toISOString())
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .single();
+
+      if (error || !otpRecord) {
+        return res.status(400).json({ error: "Invalid or expired OTP" });
+      }
+
+      // Delete OTP after verification to prevent reuse
+      await supabase.from("otps").delete().eq("id", otpRecord.id);
+
+      res.json({ success: true, message: "OTP verified successfully" });
+    } catch (error: any) {
+      console.error("OTP Verification Error:", error);
+      res.status(500).json({ error: "Verification failed" });
     }
   });
 
@@ -156,11 +265,14 @@ async function startServer() {
 
       console.log(`Auth user created: ${authData.user.id}. Creating profile...`);
 
+      const hashedPassword = await bcrypt.hash(password, 10);
+
       const { error: profileError } = await supabase.from("profiles").insert({
         id: authData.user.id,
         full_name: fullName,
         email: authEmail, // Store the auth email (even if placeholder)
         phone_number: phoneNumber,
+        password: hashedPassword,
         role: 'ADMIN'
       });
 
@@ -216,39 +328,24 @@ async function startServer() {
     const { admissionNumber, fullName, email, phone, password } = req.body;
 
     try {
-      // Check if admission number exists and is not already claimed
-      let { data: student, error: studentError } = await supabase
+      // 1. Search student in database
+      const { data: student, error: studentError } = await supabase
         .from("students")
         .select("id, parent_id")
         .eq("admission_number", admissionNumber)
         .single();
 
+      // 2. IF student NOT found
       if (studentError || !student) {
-        // For testing purposes, if student not found, create a mock student
-        const { data: newStudent, error: createError } = await supabase
-          .from("students")
-          .insert({
-            admission_number: admissionNumber,
-            full_name: `Student of ${fullName}`,
-            grade: '1st',
-            section: 'A',
-            base_fee: 1000,
-            status: 'active'
-          })
-          .select("id, parent_id")
-          .single();
-          
-        if (createError) {
-          return res.status(404).json({ error: "Admission number not found and could not create mock student." });
-        }
-        student = newStudent;
+        return res.status(404).json({ error: "Student not found. Please contact school admin." });
       }
 
+      // 3. IF student found, check if student already has parent_id
       if (student.parent_id) {
-        return res.status(400).json({ error: "This admission number is already registered." });
+        return res.status(400).json({ error: "Parent account already registered. Please login." });
       }
 
-      // Generate email if missing (parent_<admission>@buswaypro.local)
+      // 4. Create a new parent profile
       const authEmail = email || `parent_${admissionNumber}@buswaypro.local`;
 
       let authData, authError;
@@ -279,20 +376,28 @@ async function startServer() {
       if (authError) throw authError;
       if (!authData.user) throw new Error("User creation failed");
 
-      // Create profile
+      const hashedPassword = await bcrypt.hash(password, 10);
+
+      // Create profile record
       const { error: profileError } = await supabase.from("profiles").insert({
         id: authData.user.id,
         full_name: fullName,
         email: authEmail,
         phone_number: phone,
+        password: hashedPassword,
         role: 'PARENT',
         admission_number: admissionNumber
       });
 
       if (profileError && profileError.code !== '23505') throw profileError;
 
-      // Link student to parent
-      await supabase.from("students").update({ parent_id: authData.user.id }).eq("id", student.id);
+      // 5. Link parent with student
+      const { error: updateError } = await supabase
+        .from("students")
+        .update({ parent_id: authData.user.id })
+        .eq("admission_number", admissionNumber);
+
+      if (updateError) throw updateError;
 
       // Auto-login after registration
       const accessToken = jwt.sign({ id: authData.user.id, role: 'PARENT' }, JWT_SECRET, { expiresIn: "1h" });
@@ -306,11 +411,7 @@ async function startServer() {
       });
 
       const { data: profile } = await supabase.from("profiles").select("*").eq("id", authData.user.id).single();
-
-      // Add verified flag to response
-      const userResponse = { ...profile, verified: true };
-
-      res.json({ success: true, user: userResponse, accessToken });
+      res.json({ success: true, user: profile, accessToken });
     } catch (error: any) {
       console.error("Parent registration error:", error);
       res.status(500).json({ error: error.message || "Parent registration failed" });
@@ -328,15 +429,31 @@ async function startServer() {
 
       // If logging in via Admission Number
       if (type === 'ADMISSION') {
+        // 1. Find student by admission_number
+        const { data: student, error: studentError } = await supabase
+          .from("students")
+          .select("parent_id")
+          .eq("admission_number", identifier)
+          .single();
+
+        if (studentError || !student) {
+          return res.status(401).json({ error: "Admission number not found. Please contact school admin." });
+        }
+
+        // 2. If parent_id is NULL
+        if (!student.parent_id) {
+          return res.status(401).json({ error: "Parent account not registered." });
+        }
+
+        // 3. Fetch parent profile from profiles table
         const { data: p, error: pe } = await supabase
           .from("profiles")
           .select("*")
-          .eq("admission_number", identifier)
+          .eq("id", student.parent_id)
           .single();
           
         if (pe || !p) {
-          console.error("Admission lookup failed:", pe);
-          return res.status(401).json({ error: "Admission number not found. Please register first." });
+          return res.status(401).json({ error: "Parent profile not found." });
         }
         profile = p;
         email = p.email;
@@ -372,56 +489,12 @@ async function startServer() {
         }
       }
 
-      // Attempt Supabase Auth Sign-in
-      const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
-        email,
-        password
-      });
+      // Attempt Password Verification
+      const isValid = await bcrypt.compare(password, profile.password);
 
-      if (authError) {
-        console.error("Supabase Auth error:", authError.message);
-        let errorMessage = authError.message;
-        if (errorMessage === "Invalid login credentials") {
-          errorMessage = "Incorrect password.";
-        }
-        return res.status(401).json({ error: errorMessage });
-      }
-
-      const authUser = authData.user;
-      if (!authUser) throw new Error("User object missing after successful auth");
-
-      // If we don't have the profile yet (EMAIL login), fetch it by ID
-      if (!profile) {
-        const { data: p, error: pe } = await supabase
-          .from("profiles")
-          .select("*")
-          .eq("id", authUser.id)
-          .single();
-        profile = p;
-      }
-
-      // CRITICAL: If profile is missing in DB but user exists in Auth, create it on the fly
-      if (!profile) {
-        console.log(`Profile missing for ${email} (ID: ${authUser.id}), creating from metadata...`);
-        const fullName = authUser.user_metadata?.full_name || email.split('@')[0];
-        const role = authUser.user_metadata?.role || 'PARENT';
-        
-        const { data: newProfile, error: createError } = await supabase
-          .from("profiles")
-          .insert({
-            id: authUser.id,
-            email: authUser.email,
-            full_name: fullName,
-            role: role
-          })
-          .select()
-          .single();
-
-        if (createError) {
-          console.error("Failed to create missing profile during login:", createError);
-          return res.status(500).json({ error: "Authentication successful, but your user profile could not be initialized. Please contact support." });
-        }
-        profile = newProfile;
+      if (!isValid) {
+        console.error("Password mismatch for:", email);
+        return res.status(401).json({ error: "Incorrect password." });
       }
 
       console.log(`Login successful for: ${profile.email} (Role: ${profile.role})`);
@@ -439,78 +512,6 @@ async function startServer() {
     } catch (error: any) {
       console.error("Unexpected login error:", error);
       res.status(500).json({ error: "Internal server error during login" });
-    }
-  });
-
-  // 3.1 Get Phone for OTP
-  app.post("/api/v1/auth/get-phone", async (req, res) => {
-    const { identifier, type } = req.body;
-    try {
-      let profile = null;
-      if (type === 'ADMISSION') {
-        const { data, error } = await supabase
-          .from("profiles")
-          .select("phone_number")
-          .eq("admission_number", identifier)
-          .single();
-        if (error || !data) return res.status(404).json({ error: "Admission number not found" });
-        profile = data;
-      } else if (type === 'PHONE') {
-        const { data, error } = await supabase
-          .from("profiles")
-          .select("phone_number")
-          .eq("phone_number", identifier)
-          .single();
-        if (error || !data) return res.status(404).json({ error: "Phone number not found" });
-        profile = data;
-      }
-      
-      if (!profile || !profile.phone_number) {
-        return res.status(404).json({ error: "Phone number not registered for this account" });
-      }
-      
-      res.json({ phone: profile.phone_number });
-    } catch (error: any) {
-      res.status(500).json({ error: "Failed to fetch phone number" });
-    }
-  });
-
-  // 3.2 Send OTP
-  app.post("/api/v1/auth/send-otp", async (req, res) => {
-    const { phone } = req.body;
-    if (!phone) return res.status(400).json({ error: "Phone number is required" });
-
-    try {
-      // If Twilio is configured, use it
-      if (process.env.TWILIO_ACCOUNT_SID && process.env.TWILIO_AUTH_TOKEN && process.env.TWILIO_PHONE_NUMBER) {
-        const client = getTwilio();
-        await client.messages.create({
-          body: `Your School Bus WayPro verification code is: 123456`, // In production, generate random OTP
-          from: process.env.TWILIO_PHONE_NUMBER,
-          to: phone
-        });
-        // In a real app, store OTP in DB/Redis with expiry
-        console.log(`OTP sent to ${phone} via Twilio`);
-      } else {
-        console.log(`Simulating OTP for ${phone}: 123456`);
-      }
-      
-      res.json({ success: true, message: "OTP sent successfully" });
-    } catch (error: any) {
-      console.error("OTP Send Error:", error);
-      res.status(500).json({ error: "Failed to send OTP" });
-    }
-  });
-
-  // 3.3 Verify OTP
-  app.post("/api/v1/auth/verify-otp", async (req, res) => {
-    const { phone, otp } = req.body;
-    
-    // In a real app, verify against stored OTP
-    if (otp === "123456") {
-      res.json({ success: true, message: "OTP verified" });
-    } else {
-      res.status(400).json({ success: false, error: "Invalid OTP" });
     }
   });
 
@@ -558,14 +559,84 @@ async function startServer() {
   });
 
   // 4. Forgot Password
-  app.post("/api/v1/auth/forgot-password", async (req, res) => {
-    const { email } = req.body;
+  app.post("/api/v1/auth/forgot-password-send-otp", async (req, res) => {
+    const { identifier, type } = req.body;
     try {
-      const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `${process.env.APP_URL}/reset-password`,
+      let phone = '';
+      let profileId = '';
+
+      if (type === 'ADMIN') {
+        const { data: profile, error } = await supabase
+          .from("profiles")
+          .select("id, phone_number")
+          .eq("role", "ADMIN")
+          .eq("phone_number", identifier)
+          .single();
+        if (error || !profile) return res.status(404).json({ error: "Account not found." });
+        phone = profile.phone_number;
+        profileId = profile.id;
+      } else if (type === 'PARENT') {
+        const { data: student, error } = await supabase
+          .from("students")
+          .select("parent_id")
+          .eq("admission_number", identifier)
+          .single();
+        if (error || !student || !student.parent_id) return res.status(404).json({ error: "Account not found." });
+        
+        const { data: profile, error: pError } = await supabase
+          .from("profiles")
+          .select("id, phone_number")
+          .eq("id", student.parent_id)
+          .single();
+        if (pError || !profile) return res.status(404).json({ error: "Account not found." });
+        phone = profile.phone_number;
+        profileId = profile.id;
+      }
+
+      // Generate OTP
+      const otp = Math.floor(100000 + Math.random() * 900000).toString();
+      const expiresAt = new Date(Date.now() + 5 * 60 * 1000).toISOString();
+      otpStore.set(phone, { otp, expiresAt: Date.now() + 5 * 60 * 1000 });
+
+      // Send OTP via Twilio
+      const client = getTwilio();
+      const from = process.env.TWILIO_PHONE_NUMBER || process.env.VITE_TWILIO_PHONE_NUMBER;
+      let formattedPhone = phone.replace(/\D/g, '');
+      if (formattedPhone.length === 10) formattedPhone = `+91${formattedPhone}`;
+      else if (!formattedPhone.startsWith('+')) formattedPhone = `+${formattedPhone}`;
+
+      await client.messages.create({
+        body: `Your School Bus WayPro verification code is: ${otp}`,
+        from: from,
+        to: formattedPhone
       });
+
+      res.json({ success: true, message: "OTP sent successfully", profileId, phone });
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  app.post("/api/v1/auth/forgot-password-verify-otp", async (req, res) => {
+    const { phone, otp } = req.body;
+    const memOtp = otpStore.get(phone);
+    if (memOtp && memOtp.otp === otp && memOtp.expiresAt > Date.now()) {
+      otpStore.delete(phone);
+      return res.json({ success: true });
+    }
+    res.status(400).json({ error: "Invalid or expired OTP" });
+  });
+
+  app.post("/api/v1/auth/reset-password", async (req, res) => {
+    const { profileId, newPassword } = req.body;
+    try {
+      const hashedPassword = await bcrypt.hash(newPassword, 10);
+      const { error } = await supabase
+        .from("profiles")
+        .update({ password: hashedPassword })
+        .eq("id", profileId);
       if (error) throw error;
-      res.json({ message: "Password reset link sent to your email" });
+      res.json({ success: true, message: "Password updated successfully" });
     } catch (error: any) {
       res.status(500).json({ error: error.message });
     }

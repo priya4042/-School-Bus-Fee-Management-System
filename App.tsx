@@ -23,9 +23,11 @@ import UserDirectory from './pages/UserDirectory.tsx';
 import Sidebar from './components/Sidebar.tsx';
 import Topbar from './components/Topbar.tsx';
 import { useAuthStore } from './store/authStore.ts';
+import { isSupabaseConfigured } from './lib/supabase.ts';
 
 import Privacy from './pages/Privacy.tsx';
 import Terms from './pages/Terms.tsx';
+import ForgotPassword from './pages/ForgotPassword.tsx';
 
 const App: React.FC = () => {
   const { user, init, logout, loading, initialized } = useAuthStore();
@@ -34,14 +36,42 @@ const App: React.FC = () => {
   const [registerRole, setRegisterRole] = useState<UserRole | undefined>();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
-  // Handle URL routes for Privacy/Terms
+  // Handle URL routes for Privacy/Terms/ForgotPassword
   const path = window.location.pathname;
   if (path === '/privacy') return <Privacy />;
   if (path === '/terms') return <Terms />;
+  if (path === '/forgot-password') return <ForgotPassword />;
 
   useEffect(() => {
-    init();
+    if (isSupabaseConfigured) {
+      init();
+    }
   }, [init]);
+
+  if (!isSupabaseConfigured) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-slate-950 p-6">
+        <div className="max-w-md w-full bg-slate-900 border border-slate-800 rounded-[2.5rem] p-10 text-center shadow-2xl">
+          <div className="w-20 h-20 bg-danger/10 text-danger rounded-3xl flex items-center justify-center text-3xl mx-auto mb-6">
+            <i className="fas fa-exclamation-triangle"></i>
+          </div>
+          <h1 className="text-2xl font-black text-white tracking-tight uppercase mb-4">Configuration Required</h1>
+          <p className="text-slate-400 font-bold text-xs uppercase tracking-widest leading-relaxed mb-8">
+            Supabase environment variables are missing. Please configure <code className="text-primary">VITE_SUPABASE_URL</code> and <code className="text-primary">VITE_SUPABASE_ANON_KEY</code> in your environment.
+          </p>
+          <div className="bg-black/40 rounded-2xl p-4 text-left border border-white/5">
+            <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2">Instructions:</p>
+            <ul className="text-[10px] text-slate-400 space-y-2 font-bold uppercase tracking-tight">
+              <li>1. Open Vercel Dashboard</li>
+              <li>2. Go to Project Settings &gt; Environment Variables</li>
+              <li>3. Add the required keys</li>
+              <li>4. Redeploy the application</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   if (!initialized) {
     return (

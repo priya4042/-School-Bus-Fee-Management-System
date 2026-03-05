@@ -54,6 +54,7 @@ CREATE TABLE public.profiles (
   role user_role DEFAULT 'PARENT',
   phone_number TEXT UNIQUE,
   admission_number TEXT UNIQUE, -- For Parents to link their account
+  password TEXT, -- Added as per user request (should be hashed)
   avatar_url TEXT,
   preferences JSONB DEFAULT '{"sms": true, "email": true, "push": true}',
   created_at TIMESTAMPTZ DEFAULT NOW(),
@@ -172,6 +173,14 @@ CREATE TABLE public.waiver_requests (
   reason TEXT NOT NULL,
   status TEXT DEFAULT 'PENDING', -- PENDING, APPROVED, REJECTED
   admin_notes TEXT,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE TABLE public.otps (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  phone TEXT NOT NULL,
+  otp TEXT NOT NULL,
+  expires_at TIMESTAMPTZ NOT NULL,
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 

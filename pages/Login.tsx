@@ -15,6 +15,7 @@ const Login: React.FC<LoginProps> = ({ onLogin, onGoToRegister }) => {
   const [error, setError] = useState('');
   const [identifier, setIdentifier] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   
   const { loginWithCredentials } = useAuthStore();
 
@@ -100,14 +101,26 @@ const Login: React.FC<LoginProps> = ({ onLogin, onGoToRegister }) => {
                 <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">
                   Password
                 </label>
-                <input 
-                  required 
-                  type="password"
-                  value={password} 
-                  onChange={(e) => setPassword(e.target.value)} 
-                  className={loginRole === UserRole.ADMIN ? adminInputClass : inputBaseClass} 
-                  placeholder="Enter Password" 
-                />
+                <div className="relative">
+                  <input 
+                    required 
+                    type={showPassword ? "text" : "password"}
+                    value={password} 
+                    onChange={(e) => setPassword(e.target.value)} 
+                    className={loginRole === UserRole.ADMIN ? adminInputClass : inputBaseClass} 
+                    placeholder="Enter Password" 
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-primary transition-colors"
+                  >
+                    <i className={`fas ${showPassword ? 'fa-eye-slash' : 'fa-eye'}`}></i>
+                  </button>
+                </div>
+                <div className="text-right">
+                  <a href="/forgot-password" className="text-[10px] font-black text-primary uppercase tracking-widest hover:underline">Forgot Password?</a>
+                </div>
               </div>
 
               <button type="submit" disabled={loading} className={`w-full py-5 rounded-2xl text-white font-black uppercase tracking-widest transition-all shadow-xl active:scale-[0.98] ${loginRole === UserRole.ADMIN ? 'bg-slate-900 shadow-slate-900/20' : 'bg-primary shadow-primary/20'}`}>
