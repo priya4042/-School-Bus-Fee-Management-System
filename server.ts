@@ -767,6 +767,15 @@ async function startServer() {
     }
   });
 
+  app.post("/api/razorpay-webhook", async (req, res) => {
+    console.log("Razorpay webhook received:", JSON.stringify(req.body, null, 2));
+    
+    // In a real implementation, you would verify the signature here
+    // using RAZORPAY_WEBHOOK_SECRET
+    
+    res.status(200).json({ status: "ok" });
+  });
+
   app.post("/api/v1/payments/verify", authenticateToken, async (req, res) => {
     const { 
       razorpay_order_id, 
