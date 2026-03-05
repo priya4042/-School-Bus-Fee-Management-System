@@ -18,7 +18,6 @@ export const ENV = {
 export const checkEnvWarnings = () => {
   const missing = [];
   if (!ENV.SUPABASE_URL) missing.push('SUPABASE_URL');
-  if (!ENV.MSG91_AUTH_KEY) missing.push('MSG91_AUTH_KEY');
   if (!ENV.RAZORPAY_KEY_ID) missing.push('RAZORPAY_KEY_ID');
   if (!ENV.GOOGLE_MAPS_API_KEY) missing.push('GOOGLE_MAPS_API_KEY');
   

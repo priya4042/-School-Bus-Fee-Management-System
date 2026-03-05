@@ -29,7 +29,14 @@ export const useAuthStore = create<AuthState>((set) => ({
   initialized: false,
 
   setUser: (user) => set({ user }),
-  setAccessToken: (token) => set({ accessToken: token }),
+  setAccessToken: (token) => {
+    if (token) {
+      localStorage.setItem('schoolBusToken', token);
+    } else {
+      localStorage.removeItem('schoolBusToken');
+    }
+    set({ accessToken: token });
+  },
 
   init: async () => {
     // Only show loading if we don't already have a user
@@ -41,6 +48,7 @@ export const useAuthStore = create<AuthState>((set) => ({
     try {
       const response = await axios.post(`${API_BASE}/auth/refresh`, {}, { withCredentials: true });
       if (response.data.user && response.data.accessToken) {
+        localStorage.setItem('schoolBusToken', response.data.accessToken);
         set({ 
           user: response.data.user, 
           accessToken: response.data.accessToken,
@@ -48,16 +56,19 @@ export const useAuthStore = create<AuthState>((set) => ({
           loading: false 
         });
       } else {
+        localStorage.removeItem('schoolBusToken');
         set({ user: null, initialized: true, loading: false });
       }
     } catch (err) {
       // If refresh fails, only clear user if we weren't already logged in
+      localStorage.removeItem('schoolBusToken');
       set({ initialized: true, loading: false });
       if (!currentState.user) {
         set({ user: null });
       }
     }
   },
+
 
   getPhoneForOtp: async (identifier: string, type: 'PHONE' | 'ADMISSION') => {
     try {
@@ -91,13 +102,15 @@ export const useAuthStore = create<AuthState>((set) => ({
     try {
       const response = await axios.post(`${API_BASE}/auth/login`, { identifier, password, type }, { withCredentials: true });
       console.log('Login response received:', response.data);
+      const { user, accessToken } = response.data;
+      const authStore = useAuthStore.getState();
+      authStore.setAccessToken(accessToken);
       set({ 
-        user: response.data.user, 
-        accessToken: response.data.accessToken,
+        user, 
         loading: false,
         initialized: true
       });
-      return response.data.user;
+      return user;
     } catch (err: any) {
       console.error('Login error details:', err.response || err);
       set({ loading: false });
@@ -111,9 +124,10 @@ export const useAuthStore = create<AuthState>((set) => ({
     try {
       const response = await axios.post(`${API_BASE}/auth/register-admin`, data);
       if (response.data.user && response.data.accessToken) {
+        const authStore = useAuthStore.getState();
+        authStore.setAccessToken(response.data.accessToken);
         set({ 
           user: response.data.user, 
-          accessToken: response.data.accessToken,
           loading: false,
           initialized: true
         });
@@ -132,9 +146,10 @@ export const useAuthStore = create<AuthState>((set) => ({
     try {
       const response = await axios.post(`${API_BASE}/auth/register-parent`, data);
       if (response.data.user && response.data.accessToken) {
+        const authStore = useAuthStore.getState();
+        authStore.setAccessToken(response.data.accessToken);
         set({ 
           user: response.data.user, 
-          accessToken: response.data.accessToken,
           loading: false,
           initialized: true
         });

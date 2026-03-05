@@ -26,14 +26,15 @@ const PaymentPortal: React.FC<PaymentPortalProps> = ({ state, onClose, onInitiat
             
             <button 
               onClick={onInitiateRazorpay}
-              className="group w-full flex items-center justify-between p-6 bg-slate-900 border border-slate-800 rounded-2xl hover:bg-black transition-all active:scale-[0.98] text-white shadow-xl shadow-slate-900/20"
+              disabled={state.loading}
+              className="group w-full flex items-center justify-between p-6 bg-slate-900 border border-slate-800 rounded-2xl hover:bg-black transition-all active:scale-[0.98] text-white shadow-xl shadow-slate-900/20 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <div className="flex items-center gap-4">
                 <div className="w-12 h-12 bg-white/10 rounded-xl flex items-center justify-center text-white shadow-sm border border-white/10 group-hover:scale-110 transition-transform">
-                  <i className="fas fa-shield-alt text-xl"></i>
+                  {state.loading ? <i className="fas fa-circle-notch fa-spin"></i> : <i className="fas fa-shield-alt text-xl"></i>}
                 </div>
                 <div className="text-left">
-                  <p className="font-black text-white text-sm">Pay with Razorpay</p>
+                  <p className="font-black text-white text-sm">{state.loading ? "Starting Payment..." : "Pay with Razorpay"}</p>
                   <p className="text-[9px] font-bold text-white/40 uppercase tracking-tighter">Cards, UPI, Netbanking, Wallets</p>
                 </div>
               </div>

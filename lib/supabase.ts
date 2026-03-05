@@ -1,17 +1,12 @@
 import { createClient } from '@supabase/supabase-js';
 
-const supabaseUrl = (import.meta.env as any).VITE_SUPABASE_URL;
-const supabaseAnonKey = (import.meta.env as any).VITE_SUPABASE_ANON_KEY;
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
-// Configuration check
-export const isSupabaseConfigured = !!supabaseUrl && !!supabaseAnonKey && !supabaseUrl.includes('placeholder');
+export const isSupabaseConfigured = !!supabaseUrl && !!supabaseAnonKey;
 
 if (!isSupabaseConfigured) {
-  console.error(
-    'CRITICAL: Supabase environment variables are missing or invalid.\n' +
-    'Please ensure VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY are set in your .env file or Vercel dashboard.\n' +
-    'The application will not be able to connect to the database.'
-  );
+  console.error("Supabase environment variables are missing. Please configure VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY.");
 }
 
 // Create client only if configured, otherwise use a safe fallback that won't throw on initialization

@@ -21,6 +21,15 @@ const ParentDashboard: React.FC<{ user: User }> = ({ user }) => {
   const [trackingActive, setTrackingActive] = useState(false);
   const [isCameraOpen, setIsCameraOpen] = useState(false);
   const [isPickerOpen, setIsPickerOpen] = useState(false);
+  const [isRegisterModalOpen, setIsRegisterModalOpen] = useState(false);
+  const [newChild, setNewChild] = useState({
+    full_name: '',
+    admission_number: '',
+    grade: '',
+    section: '',
+    phone_number: '',
+    boarding_point: ''
+  });
   const [loading, setLoading] = useState(true);
   
   const { location, hasArrived } = useTracking(selectedStudent?.bus_id || undefined);
@@ -84,11 +93,32 @@ const ParentDashboard: React.FC<{ user: User }> = ({ user }) => {
         onInitiateRazorpay={initiateRazorpay}
       />
 
-      {isPickerOpen && (
-        <BoardingLocationPicker 
-          onClose={() => setIsPickerOpen(false)} 
-          onSave={handleLocationSave} 
-        />
+      {isRegisterModalOpen && (
+        <div className="fixed inset-0 bg-black/50 z-[2000] flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl p-8 max-w-md w-full">
+            <h2 className="text-xl font-black text-slate-800 mb-6 uppercase tracking-widest">Register New Child</h2>
+            <div className="space-y-4">
+              <input type="text" placeholder="Student Name" value={newChild.full_name} onChange={(e) => setNewChild({...newChild, full_name: e.target.value})} className="w-full px-5 py-4 rounded-2xl bg-slate-50 border border-slate-200" />
+              <input type="text" placeholder="Admission Number" value={newChild.admission_number} onChange={(e) => setNewChild({...newChild, admission_number: e.target.value})} className="w-full px-5 py-4 rounded-2xl bg-slate-50 border border-slate-200" />
+              <input type="text" placeholder="Grade" value={newChild.grade} onChange={(e) => setNewChild({...newChild, grade: e.target.value})} className="w-full px-5 py-4 rounded-2xl bg-slate-50 border border-slate-200" />
+              <input type="text" placeholder="Section" value={newChild.section} onChange={(e) => setNewChild({...newChild, section: e.target.value})} className="w-full px-5 py-4 rounded-2xl bg-slate-50 border border-slate-200" />
+              <input type="text" placeholder="Phone Number" value={newChild.phone_number} onChange={(e) => setNewChild({...newChild, phone_number: e.target.value})} className="w-full px-5 py-4 rounded-2xl bg-slate-50 border border-slate-200" />
+              <input type="text" placeholder="Boarding Point" value={newChild.boarding_point} onChange={(e) => setNewChild({...newChild, boarding_point: e.target.value})} className="w-full px-5 py-4 rounded-2xl bg-slate-50 border border-slate-200" />
+              <div className="flex gap-4 mt-6">
+                <button onClick={() => setIsRegisterModalOpen(false)} className="flex-1 py-4 bg-slate-100 text-slate-600 rounded-2xl font-black uppercase tracking-widest">Cancel</button>
+                <button onClick={async () => {
+                  try {
+                    await api.post('/students/register', { ...newChild, parent_id: user.id });
+                    showToast('Registration request submitted', 'success');
+                    setIsRegisterModalOpen(false);
+                  } catch (err: any) {
+                    showToast(err.response?.data?.error || 'Failed to submit', 'error');
+                  }
+                }} className="flex-1 py-4 bg-primary text-white rounded-2xl font-black uppercase tracking-widest">Submit</button>
+              </div>
+            </div>
+          </div>
+        </div>
       )}
 
       <div className="bg-white p-6 md:p-10 rounded-3xl md:rounded-[3rem] border border-slate-200 shadow-premium flex flex-col md:flex-row items-center justify-between gap-6 relative overflow-hidden group">
@@ -106,7 +136,7 @@ const ParentDashboard: React.FC<{ user: User }> = ({ user }) => {
                  {familyStudents.length} Students Registered
               </p>
               <button 
-                onClick={() => showToast('Child registration feature coming soon or use Admin portal', 'info')}
+                onClick={() => setIsRegisterModalOpen(true)}
                 className="text-primary font-black text-[9px] uppercase tracking-widest hover:underline"
               >
                 + Register New

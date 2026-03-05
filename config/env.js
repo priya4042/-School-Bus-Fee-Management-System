@@ -13,7 +13,6 @@ export const ENV = {
 
 const missingKeys = [];
 if (!ENV.SUPABASE_URL) missingKeys.push("SUPABASE_URL");
-if (!ENV.MSG91_AUTH_KEY) missingKeys.push("MSG91_AUTH_KEY");
 if (!ENV.RAZORPAY_KEY_ID) missingKeys.push("RAZORPAY_KEY_ID");
 if (!ENV.GOOGLE_MAPS_API_KEY) missingKeys.push("GOOGLE_MAPS_API_KEY");
 

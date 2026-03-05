@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { User, UserRole, Notification } from '../types';
 import { useAuthStore } from '../store/authStore';
 import { ARRIVAL_EVENT, PAYMENT_EVENT } from '../lib/api';
@@ -12,6 +12,20 @@ interface TopbarProps {
 const Topbar: React.FC<TopbarProps> = ({ user, onMenuClick }) => {
   const [showNotifications, setShowNotifications] = useState(false);
   const [notifications, setNotifications] = useState<Notification[]>([]);
+  const modalRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (modalRef.current && !modalRef.current.contains(event.target as Node)) {
+        setShowNotifications(false);
+      }
+    }
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
 
   const fetchNotes = () => {
     const saved = localStorage.getItem('db_global_notifications');
@@ -92,7 +106,7 @@ const Topbar: React.FC<TopbarProps> = ({ user, onMenuClick }) => {
           </button>
           
           {showNotifications && (
-            <div className="absolute right-0 mt-4 w-96 bg-white border border-slate-100 rounded-3xl shadow-2xl z-50 animate-in fade-in slide-in-from-top-4 overflow-hidden">
+            <div ref={modalRef} className="absolute right-0 mt-4 w-96 bg-white border border-slate-100 rounded-3xl shadow-2xl z-50 animate-in fade-in slide-in-from-top-4 overflow-hidden">
               <div className="p-6 border-b border-slate-50 flex justify-between items-center bg-slate-50/50">
                 <span className="text-[10px] font-black text-slate-800 uppercase tracking-widest">Alert Center</span>
                 <button onClick={() => {

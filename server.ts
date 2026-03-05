@@ -43,7 +43,8 @@ let razorpay: any = null;
 function getRazorpay() {
   if (!razorpay) {
     const key_id = process.env.VITE_RAZORPAY_KEY_ID || process.env.RAZORPAY_KEY_ID;
-    const key_secret = process.env.RAZORPAY_KEY_SECRET;
+    const key_secret = process.env.RAZORPAY_KEY_SECRET || process.env.RAZORPAY_SECRET;
+    console.log("Razorpay init - Key ID present:", !!key_id, "Key Secret present:", !!key_secret, "Key Secret length:", key_secret?.length);
     if (!key_id || !key_secret) {
       throw new Error("Razorpay keys are missing");
     }
@@ -418,6 +419,41 @@ async function startServer() {
     }
   });
 
+  app.post('/api/v1/students/register', authenticateToken, async (req, res) => {
+    const { full_name, admission_number, grade, section, phone_number, boarding_point, parent_id } = req.body;
+    try {
+      // Check if student already exists
+      const { data: existingStudent } = await supabase
+        .from('students')
+        .select('id')
+        .eq('admission_number', admission_number)
+        .single();
+      
+      if (existingStudent) {
+        return res.status(400).json({ error: "Student already exists. Contact admin." });
+      }
+
+      const { data, error } = await supabase
+        .from('students')
+        .insert({
+          full_name,
+          admission_number,
+          grade,
+          section,
+          parent_id,
+          boarding_point,
+          status: 'pending'
+        })
+        .select()
+        .single();
+      
+      if (error) throw error;
+      res.status(201).json(data);
+    } catch (err: any) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
   // 3. Login (Universal)
   app.post("/api/v1/auth/login", authLimiter, async (req, res) => {
     const { identifier, password, type } = req.body;
@@ -711,25 +747,38 @@ async function startServer() {
   app.post("/api/v1/payments/create-order", authenticateToken, async (req, res) => {
     try {
       const { amount, dueId } = req.body;
-      const options = {
-        amount: Math.round(amount * 100), // amount in the smallest currency unit
+      console.log("Creating Razorpay order for amount:", amount, "dueId:", dueId);
+      
+      const orderOptions = {
+        amount: Math.round(amount * 100), // in paise
         currency: "INR",
-        receipt: `receipt_${dueId}`,
+        receipt: dueId,
+        payment_capture: 1
       };
+      
       const rzp = getRazorpay();
-      const order = await rzp.orders.create(options);
+      const order = await rzp.orders.create(orderOptions);
+      console.log("Order created:", order);
+
       res.json(order);
     } catch (error: any) {
-      res.status(500).json({ error: error.message });
+      console.error("Order creation failed:", error);
+      res.status(error.statusCode || 500).json({ error: error.error || error.message || "Failed to create Razorpay order" });
     }
   });
 
   app.post("/api/v1/payments/verify", authenticateToken, async (req, res) => {
-    const { razorpay_order_id, razorpay_payment_id, razorpay_signature, dueId } = req.body;
+    const { 
+      razorpay_order_id, 
+      razorpay_payment_id, 
+      razorpay_signature, 
+      dueId 
+    } = req.body;
     const user = (req as any).user;
 
     const body = razorpay_order_id + "|" + razorpay_payment_id;
     const key_secret = process.env.RAZORPAY_KEY_SECRET || "";
+    
     const expectedSignature = crypto
       .createHmac("sha256", key_secret)
       .update(body.toString())
@@ -747,30 +796,43 @@ async function startServer() {
 
         if (dueError) throw dueError;
 
+        // Update payment status
+        await supabase
+          .from('payments')
+          .insert({
+            due_id: dueId,
+            transaction_id: razorpay_payment_id,
+            status: 'captured',
+            paid_at: new Date().toISOString(),
+            parent_id: user.id,
+            amount: due.amount + (due.late_fee || 0)
+          });
+        
         // Generate receipt
-        const receiptNo = `REC-${Date.now()}`;
         await supabase.from("receipts").insert({
           transaction_id: razorpay_payment_id,
-          amount: due.amount + due.late_fee,
+          amount: due.amount + (due.late_fee || 0),
           student_name: due.student_name,
           month_year: `${due.month}/${due.year}`,
-          method: 'ONLINE'
+          method: 'ONLINE',
+          parent_id: user.id
         });
 
         // Notify parent
         await supabase.from("notifications").insert({
           user_id: user.id,
           title: "Payment Successful",
-          message: `Your payment of ₹${due.amount + due.late_fee} for ${due.month}/${due.year} has been received.`,
+          message: `Your payment of ₹${due.amount + (due.late_fee || 0)} for ${due.month}/${due.year} has been received.`,
           type: 'SUCCESS'
         });
-
-        res.json({ success: true, receiptNo });
+        
+        res.json({ success: true });
       } catch (error: any) {
+        console.error("Payment verification failed:", error);
         res.status(500).json({ error: "Failed to update payment status" });
       }
     } else {
-      res.status(400).json({ error: "Invalid signature" });
+      res.status(400).json({ success: false, error: "Invalid signature" });
     }
   });
 
@@ -1104,12 +1166,17 @@ async function startServer() {
   // --- MIDDLEWARE ---
   function authenticateToken(req: express.Request, res: express.Response, next: express.NextFunction) {
     const authHeader = req.headers["authorization"];
+    console.log("Auth header:", authHeader);
     const token = authHeader && authHeader.split(" ")[1];
+    console.log("Token:", token);
 
     if (!token) return res.sendStatus(401);
 
     jwt.verify(token, JWT_SECRET, (err: any, user: any) => {
-      if (err) return res.sendStatus(403);
+      if (err) {
+        console.error("JWT verification error:", err);
+        return res.sendStatus(403);
+      }
       (req as any).user = user;
       next();
     });

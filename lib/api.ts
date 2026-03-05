@@ -104,6 +104,10 @@ const api = axios.create({ baseURL: '/api/v1/' });
 
 api.interceptors.request.use(async (config) => {
   const url = (config.url || '').replace(/^\/+/, '');
+  const token = localStorage.getItem('schoolBusToken');
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
   
   await new Promise(res => setTimeout(res, 100));
 
