@@ -13,6 +13,38 @@
   },
   "rewrites": [
     {
+      "source": "/api/v1/auth/login",
+      "destination": "/api/v1/auth/login"
+    },
+    {
+      "source": "/api/v1/auth/refresh",
+      "destination": "/api/v1/auth/refresh"
+    },
+    {
+      "source": "/api/send-otp",
+      "destination": "/api/v1/otp/send"
+    },
+    {
+      "source": "/api/verify-otp",
+      "destination": "/api/v1/otp/verify"
+    },
+    {
+      "source": "/api/create-razorpay-order",
+      "destination": "/api/v1/payments/create-order"
+    },
+    {
+      "source": "/api/verify-razorpay-payment",
+      "destination": "/api/v1/payments/verify-payment"
+    },
+    {
+      "source": "/api/razorpay-webhook",
+      "destination": "/api/v1/payments/webhook"
+    },
+    {
+      "source": "/api/delete-account",
+      "destination": "/api/v1/users/delete"
+    },
+    {
       "source": "/api/(.*)",
       "destination": "/api/$1"
     },
