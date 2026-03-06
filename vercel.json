@@ -8,6 +8,10 @@
   "trailingSlash": false,
   "rewrites": [
     {
+      "source": "/refresh",
+      "destination": "/api/v1/auth/refresh"
+    },
+    {
       "source": "/api/send-otp",
       "destination": "/api/v1/otp/send"
     },

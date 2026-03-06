@@ -4,7 +4,7 @@
   "version": "1.0.0",
   "type": "module",
   "engines": {
-    "node": ">=18.0.0"
+    "node": "18.x"
   },
   "scripts": {
     "dev": "vite",
@@ -27,7 +27,6 @@
     "axios": "^1.7.9",
     "framer-motion": "^12.34.3",
     "jsbarcode": "^3.12.3",
-    "jsonwebtoken": "^9.0.3",
     "jspdf": "^4.2.0",
     "leaflet": "^1.9.4",
     "lucide-react": "^0.475.0",
@@ -46,7 +45,6 @@
   },
   "devDependencies": {
     "@capacitor/cli": "^8.1.0",
-    "@types/jsonwebtoken": "^9.0.10",
     "@types/node": "^25.3.0",
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",
