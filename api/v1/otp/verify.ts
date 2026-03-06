@@ -30,6 +30,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(400).json({ error: 'Missing required fields' });
   }
 
+  let formattedPhone = phone.trim();
+  if (!formattedPhone.startsWith('+')) {
+    formattedPhone = `+91${formattedPhone.replace(/\D/g, '')}`;
+  } else {
+    formattedPhone = `+${formattedPhone.replace(/\D/g, '')}`;
+  }
+
   try {
     const { data: profile, error: profileError } = await supabase
       .from('profiles')
@@ -44,9 +51,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
 
     const prefs = profile.preferences as any;
-    if (!prefs || prefs.otp !== otp) {
-      console.warn(`[OTP Verify] Invalid OTP for ${phone}`);
-      return res.status(400).json({ error: 'Invalid OTP' });
+    if (!prefs || prefs.otp !== otp || prefs.temp_phone !== formattedPhone) {
+      console.warn(`[OTP Verify] Invalid OTP or phone mismatch for ${formattedPhone}`);
+      return res.status(400).json({ error: 'Invalid OTP or phone number' });
     }
 
     if (Date.now() > prefs.otp_expiry) {

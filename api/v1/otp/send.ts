@@ -48,16 +48,32 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
     console.log(`[OTP Send] Generated OTP for ${phone}`);
 
+    let formattedPhone = phone.trim();
+    if (!formattedPhone.startsWith('+')) {
+      // Assuming India code if no country code provided
+      formattedPhone = `+91${formattedPhone.replace(/\D/g, '')}`;
+    } else {
+      formattedPhone = `+${formattedPhone.replace(/\D/g, '')}`;
+    }
+
+    console.log(`[OTP Send] Formatted phone number: ${formattedPhone}`);
+
     const client = twilio(
       process.env.TWILIO_ACCOUNT_SID,
       process.env.TWILIO_AUTH_TOKEN
     );
 
-    await client.messages.create({
-      body: `Your School Bus WayPro verification code is: ${otp}`,
-      from: process.env.TWILIO_PHONE_NUMBER,
-      to: phone.startsWith('+') ? phone : `+91${phone}`
-    });
+    try {
+      await client.messages.create({
+        body: `Your School Bus WayPro verification code is: ${otp}`,
+        from: process.env.TWILIO_PHONE_NUMBER,
+        to: formattedPhone
+      });
+      console.log(`[OTP Send] Twilio message sent successfully to ${formattedPhone}`);
+    } catch (twilioError: any) {
+      console.error(`[OTP Send] Twilio Error:`, twilioError);
+      return res.status(500).json({ error: 'Failed to send SMS via Twilio. Please check phone number format.' });
+    }
 
     const { error: updateError } = await supabase
       .from('profiles')
@@ -65,17 +81,20 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         preferences: { 
           otp, 
           otp_expiry: Date.now() + 5 * 60 * 1000,
-          temp_phone: phone
+          temp_phone: formattedPhone
         }
       })
       .eq('admission_number', admissionNumber.trim());
 
-    if (updateError) throw updateError;
+    if (updateError) {
+      console.error(`[OTP Send] Supabase Update Error:`, updateError);
+      throw updateError;
+    }
 
-    console.log(`[OTP Send] Success for ${phone}`);
+    console.log(`[OTP Send] Success for ${formattedPhone}`);
     res.status(200).json({ success: true, message: 'OTP sent successfully' });
   } catch (error: any) {
-    console.error('[OTP Send] Error:', error);
-    res.status(500).json({ error: error.message || 'Failed to send OTP' });
+    console.error('[OTP Send] Unexpected Error:', error);
+    res.status(500).json({ error: error.message || 'Failed to process OTP request' });
   }
 }

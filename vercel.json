@@ -6,20 +6,7 @@
   "outputDirectory": "dist",
   "cleanUrls": true,
   "trailingSlash": false,
-  "functions": {
-    "api/**/*.ts": {
-      "runtime": "@vercel/node"
-    }
-  },
   "rewrites": [
-    {
-      "source": "/api/v1/auth/login",
-      "destination": "/api/v1/auth/login"
-    },
-    {
-      "source": "/api/v1/auth/refresh",
-      "destination": "/api/v1/auth/refresh"
-    },
     {
       "source": "/api/send-otp",
       "destination": "/api/v1/otp/send"
@@ -30,11 +17,11 @@
     },
     {
       "source": "/api/create-razorpay-order",
-      "destination": "/api/v1/payments/create-order"
+      "destination": "/api/v1/payments/createOrder"
     },
     {
       "source": "/api/verify-razorpay-payment",
-      "destination": "/api/v1/payments/verify-payment"
+      "destination": "/api/v1/payments/verifyPayment"
     },
     {
       "source": "/api/razorpay-webhook",
@@ -45,8 +32,12 @@
       "destination": "/api/v1/users/delete"
     },
     {
-      "source": "/api/(.*)",
-      "destination": "/api/$1"
+      "source": "/api/payments/create-order",
+      "destination": "/api/v1/payments/createOrder"
+    },
+    {
+      "source": "/api/v1/payments/verify",
+      "destination": "/api/v1/payments/verifyPayment"
     },
     {
       "source": "/((?!api/).*)",
