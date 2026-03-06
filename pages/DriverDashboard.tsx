@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { User } from '../types';
 import { MOCK_STUDENTS } from '../constants';
-import api, { BusTelemetry } from '../lib/api';
+import { BusTelemetry } from '../lib/telemetry';
 import { supabase } from '../lib/supabase';
 import { showToast, showAlert, showLoading, closeSwal } from '../lib/swal';
 

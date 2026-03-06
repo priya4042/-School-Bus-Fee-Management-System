@@ -6,7 +6,6 @@ import PaymentPortal from '../components/PaymentPortal';
 import { calculateCurrentLedger, isMonthPayable } from '../utils/feeCalculator';
 import { useReceipts } from '../hooks/useReceipts';
 import api from '../lib/api';
-import axios from 'axios';
 import { showToast } from '../lib/swal';
 
 const Payments: React.FC<{ user: User }> = ({ user }) => {
@@ -51,35 +50,6 @@ const Payments: React.FC<{ user: User }> = ({ user }) => {
     };
     loadStudent();
   }, [user.admissionNumber, user.admission_number]);
-
-  useEffect(() => {
-    // Handle Stripe Success Callback
-    const urlParams = new URLSearchParams(window.location.search);
-    const sessionId = urlParams.get('session_id');
-    const dueId = urlParams.get('due_id');
-
-    if (sessionId && dueId) {
-      const verifyPayment = async () => {
-        try {
-          // Production: Verify the session on the server
-          const { data } = await axios.get(`/api/v1/verify-session?session_id=${sessionId}`);
-          
-          if (data.status === 'complete') {
-            showToast('Stripe Payment Successful!', 'success');
-            // Clear URL params
-            window.history.replaceState({}, document.title, window.location.pathname);
-            if (student) fetchUpdatedDues(student.id);
-          } else {
-            showToast('Payment verification pending...', 'info');
-          }
-        } catch (err) {
-          console.error("Stripe verification failed", err);
-          showToast('Verification failed. Our team will update your records shortly.', 'warning');
-        }
-      };
-      verifyPayment();
-    }
-  }, [student]);
 
   useEffect(() => {
     if (student) fetchUpdatedDues(student.id);

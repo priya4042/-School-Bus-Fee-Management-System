@@ -1,10 +1,11 @@
 import { ENV } from '../config/env';
 import axios from 'axios';
+import { supabase } from '../lib/supabase';
 
 export const otpService = {
-  sendOTP: async (phone: string) => {
+  sendOTP: async (phone: string, admissionNumber?: string) => {
     try {
-      const response = await axios.post('/api/v1/auth/send-otp', { phone });
+      const response = await axios.post('/api/send-otp', { phone, admissionNumber });
       return response.data;
     } catch (error: any) {
       console.error('Failed to send OTP:', error);
@@ -12,9 +13,9 @@ export const otpService = {
     }
   },
 
-  verifyOTP: async (phone: string, otp: string) => {
+  verifyOTP: async (phone: string, otp: string, admissionNumber?: string) => {
     try {
-      const response = await axios.post('/api/v1/auth/verify-otp', { phone, otp });
+      const response = await axios.post('/api/verify-otp', { phone, otp, admissionNumber });
       return response.data;
     } catch (error: any) {
       console.error('Failed to verify OTP:', error);
@@ -24,7 +25,10 @@ export const otpService = {
 
   sendForgotPasswordOTP: async (identifier: string, type: 'ADMIN' | 'PARENT') => {
     try {
-      const response = await axios.post('/api/v1/auth/forgot-password-send-otp', { identifier, type });
+      // For forgot password, we can use Supabase's built-in reset password flow
+      // but if the user wants OTP specifically, we'd need a serverless function for it.
+      // For now, let's use the send-otp serverless function if it's a parent.
+      const response = await axios.post('/api/send-otp', { phone: identifier, type });
       return response.data;
     } catch (error: any) {
       throw new Error(error.response?.data?.error || 'Failed to send OTP');
@@ -33,7 +37,7 @@ export const otpService = {
 
   verifyForgotPasswordOTP: async (phone: string, otp: string) => {
     try {
-      const response = await axios.post('/api/v1/auth/forgot-password-verify-otp', { phone, otp });
+      const response = await axios.post('/api/verify-otp', { phone, otp });
       return response.data;
     } catch (error: any) {
       throw new Error(error.response?.data?.error || 'Invalid OTP');
@@ -42,10 +46,12 @@ export const otpService = {
 
   resetPassword: async (profileId: string, newPassword: string) => {
     try {
-      const response = await axios.post('/api/v1/auth/reset-password', { profileId, newPassword });
-      return response.data;
+      // Use Supabase Auth to update password
+      const { error } = await supabase.auth.updateUser({ password: newPassword });
+      if (error) throw error;
+      return { success: true };
     } catch (error: any) {
-      throw new Error(error.response?.data?.error || 'Failed to reset password');
+      throw new Error(error.message || 'Failed to reset password');
     }
   }
 };

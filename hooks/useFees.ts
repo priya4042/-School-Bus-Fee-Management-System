@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
-import api, { PaymentTelemetry } from '../lib/api';
+import { PaymentTelemetry } from '../lib/telemetry';
 import { MonthlyDue, Defaulter, PaymentStatus } from '../types';
+import api from '../lib/api';
 
 export const useFees = () => {
   const [dues, setDues] = useState<MonthlyDue[]>([]);

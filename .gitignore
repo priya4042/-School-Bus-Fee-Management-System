@@ -33,8 +33,3 @@ Thumbs.db
 
 # Build
 build/
-
-.env
-.env.*
-.env.local
-.env.production

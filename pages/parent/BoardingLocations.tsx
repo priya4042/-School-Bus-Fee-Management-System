@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { MapPin, Plus, Trash2, Star, CheckCircle2, AlertCircle, Navigation } from 'lucide-react';
 import BoardingLocationPicker from '../../components/Location/BoardingLocationPicker';
-import axios from 'axios';
+import { getParentStudents, getStudentBoardingPoints, createBoardingPoint, deleteBoardingPoint } from '../../lib/supabaseService';
 import { User } from '../../types';
 
 interface BoardingLocation {
@@ -24,15 +24,16 @@ const BoardingLocations: React.FC<{ user: User }> = ({ user }) => {
 
   useEffect(() => {
     fetchData();
-  }, []);
+  }, [user]);
 
   const fetchData = async () => {
+    if (!user) return;
     try {
-      const studentRes = await axios.get('/api/v1/students/parent');
-      setStudents(studentRes.data);
-      if (studentRes.data.length > 0) {
-        setSelectedStudent(studentRes.data[0].id);
-        fetchLocations(studentRes.data[0].id);
+      const studentData = await getParentStudents(user.id);
+      setStudents(studentData);
+      if (studentData.length > 0) {
+        setSelectedStudent(studentData[0].id);
+        fetchLocations(studentData[0].id);
       }
     } catch (err) {
       console.error(err);
@@ -43,8 +44,8 @@ const BoardingLocations: React.FC<{ user: User }> = ({ user }) => {
 
   const fetchLocations = async (studentId: string) => {
     try {
-      const res = await axios.get(`/api/v1/students/${studentId}/boarding`);
-      setLocations(res.data);
+      const data = await getStudentBoardingPoints(studentId);
+      setLocations(data);
     } catch (err) {
       console.error(err);
     }
@@ -52,7 +53,7 @@ const BoardingLocations: React.FC<{ user: User }> = ({ user }) => {
 
   const handleSaveLocation = async (data: any) => {
     try {
-      await axios.post(`/api/v1/students/${selectedStudent}/boarding`, data);
+      await createBoardingPoint({ ...data, student_id: selectedStudent });
       fetchLocations(selectedStudent);
       setIsAdding(false);
     } catch (err) {
@@ -62,7 +63,7 @@ const BoardingLocations: React.FC<{ user: User }> = ({ user }) => {
 
   const handleDelete = async (id: string) => {
     try {
-      await axios.delete(`/api/v1/boarding/${id}`);
+      await deleteBoardingPoint(id);
       fetchLocations(selectedStudent);
     } catch (err) {
       console.error(err);

@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { User, UserRole } from '../types';
-import axios from 'axios';
+import { supabase } from '../lib/supabase';
 
 interface AuthState {
   user: User | null;
@@ -10,17 +10,12 @@ interface AuthState {
   setUser: (user: User | null) => void;
   setAccessToken: (token: string | null) => void;
   init: () => Promise<void>;
-  getPhoneForOtp: (identifier: string, type: 'PHONE' | 'ADMISSION') => Promise<string>;
-  loginWithOtp: (identifier: string, type: 'PHONE' | 'ADMISSION') => Promise<any>;
   loginWithCredentials: (identifier: string, password?: string, type?: 'EMAIL' | 'ADMISSION' | 'PHONE' | 'ADMIN') => Promise<void>;
   registerAdmin: (data: any) => Promise<void>;
   registerParent: (data: any) => Promise<void>;
   forgotPassword: (email: string) => Promise<void>;
   logout: () => Promise<void>;
 }
-
-// Production API Base URL
-const API_BASE = '/api/v1';
 
 export const useAuthStore = create<AuthState>((set) => ({
   user: null,
@@ -29,155 +24,190 @@ export const useAuthStore = create<AuthState>((set) => ({
   initialized: false,
 
   setUser: (user) => set({ user }),
-  setAccessToken: (token) => {
-    if (token) {
-      localStorage.setItem('schoolBusToken', token);
-    } else {
-      localStorage.removeItem('schoolBusToken');
-    }
-    set({ accessToken: token });
-  },
+  setAccessToken: (token) => set({ accessToken: token }),
 
   init: async () => {
-    // Only show loading if we don't already have a user
-    const currentState = useAuthStore.getState();
-    if (!currentState.user) {
-      set({ loading: true });
-    }
-    
+    set({ loading: true });
     try {
-      const response = await axios.post(`${API_BASE}/auth/refresh`, {}, { withCredentials: true });
-      if (response.data.user && response.data.accessToken) {
-        localStorage.setItem('schoolBusToken', response.data.accessToken);
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session) {
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', session.user.id)
+          .single();
+        
         set({ 
-          user: response.data.user, 
-          accessToken: response.data.accessToken,
+          user: profile, 
+          accessToken: session.access_token,
           initialized: true, 
           loading: false 
         });
       } else {
-        localStorage.removeItem('schoolBusToken');
         set({ user: null, initialized: true, loading: false });
       }
     } catch (err) {
-      // If refresh fails, only clear user if we weren't already logged in
-      localStorage.removeItem('schoolBusToken');
-      set({ initialized: true, loading: false });
-      if (!currentState.user) {
-        set({ user: null });
-      }
-    }
-  },
-
-
-  getPhoneForOtp: async (identifier: string, type: 'PHONE' | 'ADMISSION') => {
-    try {
-      const response = await axios.post(`${API_BASE}/auth/get-phone`, { identifier, type });
-      return response.data.phone;
-    } catch (err: any) {
-      throw new Error(err.response?.data?.error || 'Failed to fetch phone number');
-    }
-  },
-
-  loginWithOtp: async (identifier: string, type: 'PHONE' | 'ADMISSION') => {
-    set({ loading: true });
-    try {
-      const response = await axios.post(`${API_BASE}/auth/login-otp`, { identifier, type }, { withCredentials: true });
-      set({ 
-        user: response.data.user, 
-        accessToken: response.data.accessToken,
-        loading: false,
-        initialized: true
-      });
-      return response.data.user;
-    } catch (err: any) {
-      set({ loading: false });
-      throw new Error(err.response?.data?.error || 'Login failed');
+      console.error('Init error:', err);
+      set({ initialized: true, loading: false, user: null });
     }
   },
 
   loginWithCredentials: async (identifier: string, password?: string, type?: 'EMAIL' | 'ADMISSION' | 'PHONE' | 'ADMIN') => {
     set({ loading: true });
-    console.log(`Attempting login for ${identifier} via ${type}...`);
     try {
-      const response = await axios.post(`${API_BASE}/auth/login`, { identifier, password, type }, { withCredentials: true });
-      console.log('Login response received:', response.data);
-      const { user, accessToken } = response.data;
-      const authStore = useAuthStore.getState();
-      authStore.setAccessToken(accessToken);
+      let email = identifier;
+      if (type === 'ADMISSION') {
+        const admission = identifier.trim();
+        console.log("Searching admission:", admission);
+        
+        const { data: profile, error: profileError } = await supabase
+          .from('profiles')
+          .select('email, admission_number')
+          .eq('admission_number', admission)
+          .maybeSingle();
+        
+        console.log("Supabase response:", profile);
+        
+        if (profileError) {
+          console.error("Supabase query error:", profileError);
+          throw new Error('Database error during login');
+        }
+        
+        if (!profile) {
+          throw new Error('Admission number not found');
+        }
+        
+        if (!profile.email) {
+          throw new Error('Please register first');
+        }
+        
+        email = profile.email;
+      }
+
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password: password || '',
+      });
+
+      if (error) throw error;
+
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', data.user.id)
+        .single();
+
       set({ 
-        user, 
+        user: profile, 
+        accessToken: data.session.access_token,
         loading: false,
         initialized: true
       });
-      return user;
     } catch (err: any) {
-      console.error('Login error details:', err.response || err);
       set({ loading: false });
-      const errorMessage = err.response?.data?.error || err.message || 'Login failed';
-      throw new Error(errorMessage);
+      throw new Error(err.message || 'Login failed');
     }
   },
 
   registerAdmin: async (data: any) => {
     set({ loading: true });
     try {
-      const response = await axios.post(`${API_BASE}/auth/register-admin`, data);
-      if (response.data.user && response.data.accessToken) {
-        const authStore = useAuthStore.getState();
-        authStore.setAccessToken(response.data.accessToken);
-        set({ 
-          user: response.data.user, 
-          loading: false,
-          initialized: true
+      const { data: authData, error: authError } = await supabase.auth.signUp({
+        email: data.email,
+        password: data.password,
+      });
+      if (authError) throw authError;
+
+      const { error: profileError } = await supabase
+        .from('profiles')
+        .insert({
+          id: authData.user!.id,
+          email: data.email,
+          role: UserRole.ADMIN,
+          full_name: data.full_name,
         });
-        return response.data.user;
-      } else {
-        set({ loading: false });
-      }
+      if (profileError) throw profileError;
+
+      set({ loading: false });
     } catch (err: any) {
       set({ loading: false });
-      throw new Error(err.response?.data?.error || 'Admin registration failed');
+      throw new Error(err.message || 'Admin registration failed');
     }
   },
 
   registerParent: async (data: any) => {
     set({ loading: true });
     try {
-      const response = await axios.post(`${API_BASE}/auth/register-parent`, data);
-      if (response.data.user && response.data.accessToken) {
-        const authStore = useAuthStore.getState();
-        authStore.setAccessToken(response.data.accessToken);
-        set({ 
-          user: response.data.user, 
-          loading: false,
-          initialized: true
-        });
-        return response.data.user;
-      } else {
-        set({ loading: false });
+      const admission = data.admissionNumber.trim();
+
+      // 1. Check if admission_number exists in profiles table with role='PARENT'
+      const { data: profile, error: profileError } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('admission_number', admission)
+        .eq('role', UserRole.PARENT)
+        .maybeSingle();
+
+      if (profileError) throw profileError;
+      if (!profile) throw new Error("Invalid admission number. Please contact school admin.");
+
+      // 2. Create Supabase Auth user
+      const { data: authData, error: authError } = await supabase.auth.signUp({
+        email: data.email,
+        password: data.password,
+      });
+      if (authError) throw authError;
+      if (!authData.user) throw new Error("Failed to create authentication account.");
+
+      // 3. Link the auth user to the existing profile
+      // We'll update the existing profile record with the new auth ID
+      // If the ID is the primary key, we might need to delete and re-insert or just update if allowed
+      // Most Supabase setups use UUID as PK. We'll try to update the ID first.
+      const { error: updateError } = await supabase
+        .from('profiles')
+        .update({
+          id: authData.user.id,
+          email: data.email,
+          full_name: data.fullName || profile.full_name,
+          phone_number: data.phone,
+          updated_at: new Date().toISOString()
+        })
+        .eq('admission_number', admission);
+      
+      if (updateError) {
+        console.error("Profile link error:", updateError);
+        // Fallback: If update ID fails, try to insert a new profile and delete old one
+        const { error: insertError } = await supabase
+          .from('profiles')
+          .insert({
+            id: authData.user.id,
+            email: data.email,
+            full_name: data.fullName || profile.full_name,
+            phone_number: data.phone,
+            role: UserRole.PARENT,
+            admission_number: admission
+          });
+        
+        if (insertError) throw insertError;
+        
+        // Delete the old placeholder profile
+        await supabase.from('profiles').delete().eq('admission_number', admission).neq('id', authData.user.id);
       }
+
+      set({ loading: false });
     } catch (err: any) {
       set({ loading: false });
-      throw new Error(err.response?.data?.error || 'Parent registration failed');
+      throw new Error(err.message || 'Parent registration failed');
     }
   },
 
   forgotPassword: async (email: string) => {
-    try {
-      await axios.post(`${API_BASE}/auth/forgot-password`, { email });
-    } catch (err: any) {
-      throw new Error(err.response?.data?.error || 'Failed to send reset link');
-    }
+    const { error } = await supabase.auth.resetPasswordForEmail(email);
+    if (error) throw error;
   },
 
   logout: async () => {
-    try {
-      await axios.post(`${API_BASE}/auth/logout`, {}, { withCredentials: true });
-    } catch (err) {
-      console.error('Logout error:', err);
-    } finally {
-      set({ user: null, accessToken: null, loading: false, initialized: true });
-    }
+    await supabase.auth.signOut();
+    set({ user: null, accessToken: null, loading: false, initialized: true });
   }
 }));

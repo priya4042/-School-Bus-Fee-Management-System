@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from 'react';
-import api from '../lib/api';
+import { getStudents, createStudent, updateStudent, deleteStudent } from '../lib/supabaseService';
 import { Student } from '../types';
 
 export const useStudents = () => {
@@ -10,11 +10,10 @@ export const useStudents = () => {
   const fetchStudents = async () => {
     setLoading(true);
     try {
-      const { data } = await api.get('students');
-      // Ensure data is always an array
+      const data = await getStudents();
       setStudents(Array.isArray(data) ? data : []);
     } catch (err) {
-      console.error("Failed to fetch students from virtual DB:", err);
+      console.error("Failed to fetch students:", err);
       setStudents([]);
     } finally {
       setLoading(false);
@@ -23,34 +22,34 @@ export const useStudents = () => {
 
   const addStudent = async (studentData: any) => {
     try {
-      await api.post('students', studentData);
+      await createStudent(studentData);
       await fetchStudents();
       return { success: true };
     } catch (err: any) {
-      console.error("Student registration failed in virtual DB:", err);
-      return { success: false, error: err.response?.data?.error || err.message };
+      console.error("Student registration failed:", err);
+      return { success: false, error: err.message };
     }
   };
 
-  const updateStudent = async (id: string, studentData: any) => {
+  const updateStudentById = async (id: string, studentData: any) => {
     try {
-      await api.put(`students/${id}`, studentData);
+      await updateStudent(id, studentData);
       await fetchStudents();
       return { success: true };
     } catch (err: any) {
       console.error("Student update failed:", err);
-      return { success: false, error: err.response?.data?.error || err.message };
+      return { success: false, error: err.message };
     }
   };
 
-  const deleteStudent = async (id: string) => {
+  const deleteStudentById = async (id: string) => {
     try {
-      await api.delete(`students/${id}`);
+      await deleteStudent(id);
       await fetchStudents();
       return { success: true };
     } catch (err: any) {
       console.error("Student deletion failed:", err);
-      return { success: false, error: err.response?.data?.error || err.message };
+      return { success: false, error: err.message };
     }
   };
 
@@ -58,5 +57,5 @@ export const useStudents = () => {
     fetchStudents();
   }, []);
 
-  return { students, loading, fetchStudents, addStudent, updateStudent, deleteStudent };
+  return { students, loading, fetchStudents, addStudent, updateStudent: updateStudentById, deleteStudent: deleteStudentById };
 };

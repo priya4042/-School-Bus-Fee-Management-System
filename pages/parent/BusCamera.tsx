@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Camera, MapPin, Clock, Zap, AlertCircle, ShieldCheck } from 'lucide-react';
 import CameraFeed from '../../components/Camera/CameraFeed';
-import axios from 'axios';
+import { getParentStudents, getBusCameras } from '../../lib/supabaseService';
 import { User } from '../../types';
 
 const BusCamera: React.FC<{ user: User }> = ({ user }) => {
@@ -12,14 +12,24 @@ const BusCamera: React.FC<{ user: User }> = ({ user }) => {
 
   useEffect(() => {
     fetchCameraData();
-  }, []);
+  }, [user]);
 
   const fetchCameraData = async () => {
+    if (!user) return;
     try {
-      // In a real app, we'd find the bus the child is currently on
-      const res = await axios.get('/api/v1/tracking/parent/bus-cameras');
-      setCameras(res.data.cameras || []);
-      setBusInfo(res.data.bus || null);
+      // 1. Get parent's students to find their bus
+      const students = await getParentStudents(user.id);
+      if (students.length > 0 && students[0].buses) {
+        const bus = students[0].buses;
+        setBusInfo(bus);
+        
+        // 2. Get cameras for this bus
+        const cameraData = await getBusCameras(bus.id);
+        setCameras(cameraData);
+        if (cameraData.length > 0) {
+          setSelectedCamera(cameraData[0]);
+        }
+      }
     } catch (err) {
       console.error(err);
     } finally {

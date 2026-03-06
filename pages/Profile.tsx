@@ -111,8 +111,10 @@ const Profile: React.FC<{ user: User }> = ({ user }) => {
 
     setUpdating(true);
     try {
-      await axios.delete(`/api/v1/auth/delete-account`, { withCredentials: true });
+      // Use serverless function for account deletion
+      await axios.delete(`/api/delete-account`);
       showToast('Account deleted successfully', 'success');
+      await useAuthStore.getState().logout();
       window.location.href = '/';
     } catch (err: any) {
       showToast(err.response?.data?.error || 'Failed to delete account', 'error');
