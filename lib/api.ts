@@ -38,8 +38,8 @@ axiosInstance.interceptors.response.use(
 export const apiPost = async (module: string, action: string, body: any = {}, method: string = 'POST') => {
   try {
     if (!ENV.SUPABASE_FUNCTIONS_URL) {
-      console.error('[API] SUPABASE_FUNCTIONS_URL is not configured in environment variables.');
-      throw new Error('API configuration error: Missing SUPABASE_FUNCTIONS_URL');
+      console.error('[API] VITE_SUPABASE_FUNCTIONS_URL is not configured in environment variables.');
+      throw new Error('API configuration error: Missing VITE_SUPABASE_FUNCTIONS_URL');
     }
     const url = `${ENV.SUPABASE_FUNCTIONS_URL}/api/${module}/${action}`;
     const response = await fetch(url, {
