@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { User, UserRole } from '../types';
 import { supabase } from '../lib/supabase';
+import { apiPost } from '../lib/api';
 
 interface AuthState {
   user: User | null;
@@ -55,41 +56,15 @@ export const useAuthStore = create<AuthState>((set) => ({
   loginWithCredentials: async (identifier: string, password?: string, type?: 'EMAIL' | 'ADMISSION' | 'PHONE' | 'ADMIN') => {
     set({ loading: true });
     try {
-      let email = identifier;
-      if (type === 'ADMISSION') {
-        const admission = identifier.trim();
-        console.log("Searching admission:", admission);
-        
-        const { data: profile, error: profileError } = await supabase
-          .from('profiles')
-          .select('email, admission_number')
-          .eq('admission_number', admission)
-          .maybeSingle();
-        
-        console.log("Supabase response:", profile);
-        
-        if (profileError) {
-          console.error("Supabase query error:", profileError);
-          throw new Error('Database error during login');
-        }
-        
-        if (!profile) {
-          throw new Error('Admission number not found');
-        }
-        
-        if (!profile.email) {
-          throw new Error('Please register first');
-        }
-        
-        email = profile.email;
-      }
+      // Updated to use apiPost
+      const data = await apiPost('auth', 'login', { identifier, password, type });
 
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email,
-        password: password || '',
+      // The Edge Function returns the Supabase auth data (session and user)
+      // We need to set the session in the local Supabase client
+      await supabase.auth.setSession({
+        access_token: data.session.access_token,
+        refresh_token: data.session.refresh_token
       });
-
-      if (error) throw error;
 
       const { data: profile } = await supabase
         .from('profiles')
@@ -112,22 +87,13 @@ export const useAuthStore = create<AuthState>((set) => ({
   registerAdmin: async (data: any) => {
     set({ loading: true });
     try {
-      const { data: authData, error: authError } = await supabase.auth.signUp({
+      // Updated to use apiPost
+      await apiPost('auth', 'register', {
         email: data.email,
         password: data.password,
+        full_name: data.full_name,
+        role: UserRole.ADMIN
       });
-      if (authError) throw authError;
-
-      const { error: profileError } = await supabase
-        .from('profiles')
-        .insert({
-          id: authData.user!.id,
-          email: data.email,
-          role: UserRole.ADMIN,
-          full_name: data.full_name,
-        });
-      if (profileError) throw profileError;
-
       set({ loading: false });
     } catch (err: any) {
       set({ loading: false });
@@ -138,62 +104,14 @@ export const useAuthStore = create<AuthState>((set) => ({
   registerParent: async (data: any) => {
     set({ loading: true });
     try {
-      const admission = data.admissionNumber.trim();
-
-      // 1. Check if admission_number exists in profiles table with role='PARENT'
-      const { data: profile, error: profileError } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('admission_number', admission)
-        .eq('role', UserRole.PARENT)
-        .maybeSingle();
-
-      if (profileError) throw profileError;
-      if (!profile) throw new Error("Invalid admission number. Please contact school admin.");
-
-      // 2. Create Supabase Auth user
-      const { data: authData, error: authError } = await supabase.auth.signUp({
+      // Updated to use apiPost
+      await apiPost('auth', 'register', {
         email: data.email,
         password: data.password,
+        full_name: data.fullName,
+        role: UserRole.PARENT,
+        admission_number: data.admissionNumber
       });
-      if (authError) throw authError;
-      if (!authData.user) throw new Error("Failed to create authentication account.");
-
-      // 3. Link the auth user to the existing profile
-      // We'll update the existing profile record with the new auth ID
-      // If the ID is the primary key, we might need to delete and re-insert or just update if allowed
-      // Most Supabase setups use UUID as PK. We'll try to update the ID first.
-      const { error: updateError } = await supabase
-        .from('profiles')
-        .update({
-          id: authData.user.id,
-          email: data.email,
-          full_name: data.fullName || profile.full_name,
-          phone_number: data.phone,
-          updated_at: new Date().toISOString()
-        })
-        .eq('admission_number', admission);
-      
-      if (updateError) {
-        console.error("Profile link error:", updateError);
-        // Fallback: If update ID fails, try to insert a new profile and delete old one
-        const { error: insertError } = await supabase
-          .from('profiles')
-          .insert({
-            id: authData.user.id,
-            email: data.email,
-            full_name: data.fullName || profile.full_name,
-            phone_number: data.phone,
-            role: UserRole.PARENT,
-            admission_number: admission
-          });
-        
-        if (insertError) throw insertError;
-        
-        // Delete the old placeholder profile
-        await supabase.from('profiles').delete().eq('admission_number', admission).neq('id', authData.user.id);
-      }
-
       set({ loading: false });
     } catch (err: any) {
       set({ loading: false });

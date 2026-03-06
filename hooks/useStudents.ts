@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from 'react';
-import { getStudents, createStudent, updateStudent, deleteStudent } from '../lib/supabaseService';
+import { apiPost } from '../lib/api';
 import { Student } from '../types';
 
 export const useStudents = () => {
@@ -10,7 +10,8 @@ export const useStudents = () => {
   const fetchStudents = async () => {
     setLoading(true);
     try {
-      const data = await getStudents();
+      // Updated to use apiPost with GET method
+      const data = await apiPost('students', '', {}, 'GET');
       setStudents(Array.isArray(data) ? data : []);
     } catch (err) {
       console.error("Failed to fetch students:", err);
@@ -22,7 +23,8 @@ export const useStudents = () => {
 
   const addStudent = async (studentData: any) => {
     try {
-      await createStudent(studentData);
+      // Updated to use apiPost
+      await apiPost('students', '', studentData, 'POST');
       await fetchStudents();
       return { success: true };
     } catch (err: any) {
@@ -33,7 +35,8 @@ export const useStudents = () => {
 
   const updateStudentById = async (id: string, studentData: any) => {
     try {
-      await updateStudent(id, studentData);
+      // Updated to use apiPost with PUT method
+      await apiPost('students', id, studentData, 'PUT');
       await fetchStudents();
       return { success: true };
     } catch (err: any) {
@@ -44,7 +47,8 @@ export const useStudents = () => {
 
   const deleteStudentById = async (id: string) => {
     try {
-      await deleteStudent(id);
+      // Updated to use apiPost with DELETE method
+      await apiPost('students', id, {}, 'DELETE');
       await fetchStudents();
       return { success: true };
     } catch (err: any) {

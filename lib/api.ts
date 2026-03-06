@@ -1,14 +1,8 @@
 import axios from 'axios';
-import { 
-  getStudents, createStudent, updateStudent, deleteStudent,
-  getRoutes, createRoute, updateRoute, deleteRoute,
-  getBuses, createBus, updateBus, deleteBus,
-  getAttendance, createAttendance,
-  getDues, getStats
-} from './supabaseService';
+import { ENV } from '../config/env';
 
 const axiosInstance = axios.create({
-  baseURL: '/api',
+  baseURL: ENV.SUPABASE_FUNCTIONS_URL,
   headers: {
     'Content-Type': 'application/json',
   },
@@ -27,41 +21,85 @@ axiosInstance.interceptors.request.use(async (config) => {
   return config;
 });
 
+// Add interceptor to handle empty responses
+axiosInstance.interceptors.response.use(
+  (response) => {
+    if (response.data === null || response.data === undefined || response.data === '') {
+      return { ...response, data: {} };
+    }
+    return response;
+  },
+  (error) => {
+    console.error('API Error:', error);
+    return Promise.reject(error);
+  }
+);
+
+export const apiPost = async (module: string, action: string, body: any = {}, method: string = 'POST') => {
+  try {
+    if (!ENV.SUPABASE_FUNCTIONS_URL) {
+      console.error('[API] SUPABASE_FUNCTIONS_URL is not configured in environment variables.');
+      throw new Error('API configuration error: Missing SUPABASE_FUNCTIONS_URL');
+    }
+    const url = `${ENV.SUPABASE_FUNCTIONS_URL}/api/${module}/${action}`;
+    const response = await fetch(url, {
+      method: method,
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${(await (await import('./supabase')).supabase.auth.getSession()).data.session?.access_token || ''}`
+      },
+      body: method !== 'GET' ? JSON.stringify(body) : undefined,
+    });
+
+    console.log(`[API] Response status: ${response.status} for ${url}`);
+
+    let data;
+    try {
+      data = await response.json();
+    } catch (e) {
+      console.error(`[API] Error parsing JSON for ${url}:`, e);
+      throw new Error('Server returned an invalid JSON response');
+    }
+
+    if (!response.ok) {
+      throw new Error(data.message || data.code || `API request failed with status ${response.status}`);
+    }
+
+    return data;
+  } catch (error) {
+    console.error(`API Error [${module}/${action}]:`, error);
+    throw error;
+  }
+};
+
+
 export const api = {
   get: async (url: string, config?: any) => {
-    if (url === 'students') return { data: await getStudents() };
-    if (url === 'routes') return { data: await getRoutes() };
-    if (url === 'buses') return { data: await getBuses() };
-    if (url === 'attendance') return { data: await getAttendance() };
-    if (url === 'dues') return { data: await getDues() };
-    if (url === 'stats') return { data: await getStats() };
-    return axiosInstance.get(url, config);
+    let targetUrl = url.startsWith('/') ? url : `/${url}`;
+    
+    if (targetUrl === '/reports/defaulters') targetUrl = '/fees/defaulters';
+    if (targetUrl === '/dues') targetUrl = '/fees/dues';
+    if (targetUrl === '/stats') targetUrl = '/dashboard/stats';
+    
+    return axiosInstance.get(`/api${targetUrl}`, config);
   },
   post: async (url: string, data?: any, config?: any) => {
-    if (url === 'students') return { data: await createStudent(data) };
-    if (url === 'routes') return { data: await createRoute(data) };
-    if (url === 'buses') return { data: await createBus(data) };
-    if (url === 'attendance') return { data: await createAttendance(data) };
-    
     // Handle both /payments/create-order and payments/create-order
-    const targetUrl = url.startsWith('/') ? url : `/${url}`;
-    return axiosInstance.post(targetUrl, data, config);
+    let targetUrl = url.startsWith('/') ? url : `/${url}`;
+    
+    // Map old Vercel routes to new Supabase Edge Function routes
+    if (targetUrl === '/payments/create-order') targetUrl = '/payments/createOrder';
+    if (targetUrl === '/v1/payments/verify') targetUrl = '/payments/verifyPayment';
+    
+    return axiosInstance.post(`/api${targetUrl}`, data, config);
   },
   put: async (url: string, data?: any, config?: any) => {
-    if (url.startsWith('students/')) return { data: await updateStudent(url.split('/')[1], data) };
-    if (url.startsWith('routes/')) return { data: await updateRoute(url.split('/')[1], data) };
-    if (url.startsWith('buses/')) return { data: await updateBus(url.split('/')[1], data) };
-    
     const targetUrl = url.startsWith('/') ? url : `/${url}`;
-    return axiosInstance.put(targetUrl, data, config);
+    return axiosInstance.put(`/api${targetUrl}`, data, config);
   },
   delete: async (url: string, config?: any) => {
-    if (url.startsWith('students/')) return { data: await deleteStudent(url.split('/')[1]) };
-    if (url.startsWith('routes/')) return { data: await deleteRoute(url.split('/')[1]) };
-    if (url.startsWith('buses/')) return { data: await deleteBus(url.split('/')[1]) };
-    
     const targetUrl = url.startsWith('/') ? url : `/${url}`;
-    return axiosInstance.delete(targetUrl, config);
+    return axiosInstance.delete(`/api${targetUrl}`, config);
   }
 };
 

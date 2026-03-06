@@ -8,43 +8,7 @@
   "trailingSlash": false,
   "rewrites": [
     {
-      "source": "/refresh",
-      "destination": "/api/v1/auth/refresh"
-    },
-    {
-      "source": "/api/send-otp",
-      "destination": "/api/v1/otp/send"
-    },
-    {
-      "source": "/api/verify-otp",
-      "destination": "/api/v1/otp/verify"
-    },
-    {
-      "source": "/api/create-razorpay-order",
-      "destination": "/api/v1/payments/createOrder"
-    },
-    {
-      "source": "/api/verify-razorpay-payment",
-      "destination": "/api/v1/payments/verifyPayment"
-    },
-    {
-      "source": "/api/razorpay-webhook",
-      "destination": "/api/v1/payments/webhook"
-    },
-    {
-      "source": "/api/delete-account",
-      "destination": "/api/v1/users/delete"
-    },
-    {
-      "source": "/api/payments/create-order",
-      "destination": "/api/v1/payments/createOrder"
-    },
-    {
-      "source": "/api/v1/payments/verify",
-      "destination": "/api/v1/payments/verifyPayment"
-    },
-    {
-      "source": "/((?!api/).*)",
+      "source": "/(.*)",
       "destination": "/index.html"
     }
   ]

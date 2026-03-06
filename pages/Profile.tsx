@@ -4,7 +4,8 @@ import { User } from '../types';
 import { supabase } from '../lib/supabase';
 import { useAuthStore } from '../store/authStore';
 import { showToast } from '../lib/swal';
-import axios from 'axios';
+import api from '../lib/api';
+import { ENV } from '../config/env';
 
 const Profile: React.FC<{ user: User }> = ({ user }) => {
   const { setUser } = useAuthStore();
@@ -112,11 +113,12 @@ const Profile: React.FC<{ user: User }> = ({ user }) => {
     setUpdating(true);
     try {
       // Use serverless function for account deletion
-      await axios.delete(`/api/delete-account`);
+      await api.delete('/users/delete', { data: { userId: user.id, action: 'delete-user' } });
       showToast('Account deleted successfully', 'success');
       await useAuthStore.getState().logout();
       window.location.href = '/';
     } catch (err: any) {
+      console.error(err);
       showToast(err.response?.data?.error || 'Failed to delete account', 'error');
     } finally {
       setUpdating(false);

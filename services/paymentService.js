@@ -24,7 +24,7 @@ export const paymentService = {
 
     try {
       // In a real app, this calls your backend to create a Razorpay order securely
-      const response = await axios.post('/api/create-razorpay-order', {
+      const response = await axios.post(`${ENV.SUPABASE_FUNCTIONS_URL}/api/payments/createOrder`, {
         amount,
         studentId,
         month
@@ -32,7 +32,7 @@ export const paymentService = {
 
       return { 
         success: true, 
-        orderId: response.data.orderId, 
+        orderId: response.data.id, 
         amount: response.data.amount,
         currency: response.data.currency || 'INR'
       };
@@ -53,7 +53,7 @@ export const paymentService = {
 
     try {
       // In a real app, this calls your backend to verify the Razorpay signature
-      const response = await axios.post('/api/verify-razorpay-payment', paymentData);
+      const response = await axios.post(`${ENV.SUPABASE_FUNCTIONS_URL}/api/payments/verifyPayment`, paymentData);
       
       return { success: true, message: 'Payment verified successfully', data: response.data };
     } catch (error) {
