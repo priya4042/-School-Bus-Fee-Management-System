@@ -24,7 +24,7 @@ const Reports: React.FC = () => {
         const statsRes = await api.get('/dashboard/stats');
         setRevenueData(statsRes.data.revenueTrend || []);
         
-        const defRes = await api.get('/api/fees/defaulters');
+        const defRes = await api.get('/reports/defaulters');
         setDefaulterData(defRes.data || []);
       } catch (err) {
         // Mock fallback

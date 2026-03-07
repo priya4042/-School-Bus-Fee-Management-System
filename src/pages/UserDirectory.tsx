@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { User, UserRole, MonthlyDue, PaymentStatus, Student } from '../types';
-import { MOCK_STUDENTS } from '../constants';
+import { User, UserRole, MonthlyDue, PaymentStatus, Student } from '../types.ts';
+import { MOCK_STUDENTS } from '../constants.ts';
 import { supabase } from '../lib/supabase';
-import Modal from '../components/Modal';
+import Modal from '../components/Modal.tsx';
 import { useFees } from '../hooks/useFees';
 
 const UserDirectory: React.FC = () => {

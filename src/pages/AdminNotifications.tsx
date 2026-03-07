@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import api from '../lib/api';
+import api from '../lib/api.ts';
 import { showToast, showAlert, showLoading, closeSwal } from '../lib/swal';
 
 const AdminNotifications: React.FC = () => {

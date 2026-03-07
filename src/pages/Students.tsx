@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import Modal from '../components/Modal';
-import { useStudents } from '../hooks/useStudents';
-import { useRoutes } from '../hooks/useRoutes';
-import { useBuses } from '../hooks/useBuses';
-import { showConfirm, showToast, showAlert, showLoading, closeSwal } from '../lib/swal';
+import Modal from '../components/Modal.tsx';
+import { useStudents } from '../hooks/useStudents.ts';
+import { useRoutes } from '../hooks/useRoutes.ts';
+import { useBuses } from '../hooks/useBuses.ts';
+import { showConfirm, showToast, showAlert, showLoading, closeSwal } from '../lib/swal.ts';
 
 const Students: React.FC = () => {
   const { students, loading, addStudent, updateStudent, deleteStudent } = useStudents();
@@ -88,7 +88,7 @@ const Students: React.FC = () => {
       route_id: student.route_id || '',
       bus_id: student.bus_id || '',
       parent_name: student.profiles?.full_name || '',
-      parent_phone: student.parent?.phone_number || '',
+      parent_phone: student.profiles?.phone_number || '',
       boarding_point: student.boarding_point || '',
       monthly_fee: student.monthly_fee || student.base_fee || 0,
       status: student.status || 'active'
