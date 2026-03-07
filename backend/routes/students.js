@@ -6,15 +6,14 @@ const supabaseAdmin = require('../config/supabase');
 router.get('/', async (req, res) => {
   try {
     const { data, error } = await supabaseAdmin
-      .from('students')
-      .select(`
-        *,
-        parent:profiles!students_parent_id_fkey(
-          id,
-          full_name,
-          phone_number
-        )
-      `);
+  .from('students')
+  .select(`
+    *,
+    profiles (
+      full_name,
+      phone_number
+    )
+  `);
 
     if (error) throw error;
 
@@ -25,21 +24,36 @@ router.get('/', async (req, res) => {
 });
 
 // Create a student
+// Create a student
 router.post('/', async (req, res) => {
   try {
     const { admission_number } = req.body;
 
-    // Check if parent already registered with same admission number
+    // Check duplicate admission number
+    const { data: existingStudent } = await supabaseAdmin
+      .from('students')
+      .select('id')
+      .eq('admission_number', admission_number)
+      .maybeSingle();
+
+    if (existingStudent) {
+      return res.status(400).json({
+        error: 'Duplicate admission number not allowed'
+      });
+    }
+
+    // Find parent with same admission number
     const { data: parent } = await supabaseAdmin
       .from('profiles')
-      .select('id')
+      .select('id, full_name, phone_number')
       .eq('admission_number', admission_number)
       .eq('role', 'PARENT')
       .maybeSingle();
 
     const studentData = {
       ...req.body,
-      parent_id: parent ? parent.id : null
+      parent_id: parent ? parent.id : null,
+      parent_phone: parent ? parent.phone_number : null
     };
 
     const { data, error } = await supabaseAdmin
