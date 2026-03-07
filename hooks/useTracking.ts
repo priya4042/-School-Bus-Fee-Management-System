@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
-import { TELEMETRY_EVENT, ARRIVAL_EVENT } from '../lib/api';
+import { TELEMETRY_EVENT, ARRIVAL_EVENT } from '../lib/telemetry';
 
 export const useTracking = (busId?: string) => {
   const [location, setLocation] = useState<{ lat: number; lng: number; speed: number } | null>(null);

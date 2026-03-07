@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { MapPin, Plus, Trash2, Star, CheckCircle2, AlertCircle, Navigation } from 'lucide-react';
 import BoardingLocationPicker from '../../components/Location/BoardingLocationPicker';
-import axios from 'axios';
+import { apiPost } from '../../lib/api';
 import { User } from '../../types';
 
 interface BoardingLocation {
@@ -24,15 +24,17 @@ const BoardingLocations: React.FC<{ user: User }> = ({ user }) => {
 
   useEffect(() => {
     fetchData();
-  }, []);
+  }, [user]);
 
   const fetchData = async () => {
+    if (!user) return;
     try {
-      const studentRes = await axios.get('/api/v1/students/parent');
-      setStudents(studentRes.data);
-      if (studentRes.data.length > 0) {
-        setSelectedStudent(studentRes.data[0].id);
-        fetchLocations(studentRes.data[0].id);
+      // Updated to use apiPost with GET method
+      const studentData = await apiPost('parent-students', user.id, {}, 'GET');
+      setStudents(studentData || []);
+      if (studentData && studentData.length > 0) {
+        setSelectedStudent(studentData[0].id);
+        fetchLocations(studentData[0].id);
       }
     } catch (err) {
       console.error(err);
@@ -43,8 +45,9 @@ const BoardingLocations: React.FC<{ user: User }> = ({ user }) => {
 
   const fetchLocations = async (studentId: string) => {
     try {
-      const res = await axios.get(`/api/v1/students/${studentId}/boarding`);
-      setLocations(res.data);
+      // Updated to use apiPost with GET method
+      const data = await apiPost('boarding-points', studentId, {}, 'GET');
+      setLocations(data || []);
     } catch (err) {
       console.error(err);
     }
@@ -52,22 +55,27 @@ const BoardingLocations: React.FC<{ user: User }> = ({ user }) => {
 
   const handleSaveLocation = async (data: any) => {
     try {
-      await axios.post(`/api/v1/students/${selectedStudent}/boarding`, data);
+      // Updated to use apiPost with POST method and empty action
+      await apiPost('boarding-points', '', { ...data, student_id: selectedStudent }, 'POST');
       fetchLocations(selectedStudent);
       setIsAdding(false);
-    } catch (err) {
+    } catch (err: any) {
       console.error(err);
+      alert(err.message || 'Failed to save location. Please try again.');
     }
   };
 
   const handleDelete = async (id: string) => {
     try {
-      await axios.delete(`/api/v1/boarding/${id}`);
+      // Updated to use apiPost with DELETE method
+      await apiPost('boarding-points', id, {}, 'DELETE');
       fetchLocations(selectedStudent);
-    } catch (err) {
+    } catch (err: any) {
       console.error(err);
+      alert(err.message || 'Failed to delete location. Please try again.');
     }
   };
+
 
   return (
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">

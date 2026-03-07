@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { User, UserRole, Notification } from '../types';
 import { useAuthStore } from '../store/authStore';
-import { ARRIVAL_EVENT, PAYMENT_EVENT } from '../lib/api';
+import { ARRIVAL_EVENT, PAYMENT_EVENT } from '../lib/telemetry';
 import { showToast } from '../lib/swal';
 
 interface TopbarProps {

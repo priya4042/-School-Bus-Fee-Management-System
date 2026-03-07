@@ -1,51 +1,57 @@
-import { ENV } from '../config/env';
-import axios from 'axios';
+import { apiPost } from '../lib/api';
+import { supabase } from '../lib/supabase';
 
 export const otpService = {
-  sendOTP: async (phone: string) => {
+  sendOTP: async (phone: string, admissionNumber?: string) => {
     try {
-      const response = await axios.post('/api/v1/auth/send-otp', { phone });
-      return response.data;
+      // Updated to use apiPost
+      const data = await apiPost('otp', 'send', { phone, admissionNumber });
+      return data;
     } catch (error: any) {
       console.error('Failed to send OTP:', error);
-      return { success: false, error: error.response?.data?.error || error.message };
+      return { success: false, error: error.message };
     }
   },
 
-  verifyOTP: async (phone: string, otp: string) => {
+  verifyOTP: async (phone: string, otp: string, admissionNumber?: string) => {
     try {
-      const response = await axios.post('/api/v1/auth/verify-otp', { phone, otp });
-      return response.data;
+      // Updated to use apiPost
+      const data = await apiPost('otp', 'verify', { phone, otp, admissionNumber });
+      return data;
     } catch (error: any) {
       console.error('Failed to verify OTP:', error);
-      return { success: false, error: error.response?.data?.error || error.message };
+      return { success: false, error: error.message };
     }
   },
 
   sendForgotPasswordOTP: async (identifier: string, type: 'ADMIN' | 'PARENT') => {
     try {
-      const response = await axios.post('/api/v1/auth/forgot-password-send-otp', { identifier, type });
-      return response.data;
+      // Updated to use apiPost
+      const data = await apiPost('otp', 'send', { phone: identifier, type });
+      return data;
     } catch (error: any) {
-      throw new Error(error.response?.data?.error || 'Failed to send OTP');
+      throw new Error(error.message || 'Failed to send OTP');
     }
   },
 
   verifyForgotPasswordOTP: async (phone: string, otp: string) => {
     try {
-      const response = await axios.post('/api/v1/auth/forgot-password-verify-otp', { phone, otp });
-      return response.data;
+      // Updated to use apiPost
+      const data = await apiPost('otp', 'verify', { phone, otp });
+      return data;
     } catch (error: any) {
-      throw new Error(error.response?.data?.error || 'Invalid OTP');
+      throw new Error(error.message || 'Invalid OTP');
     }
   },
 
   resetPassword: async (profileId: string, newPassword: string) => {
     try {
-      const response = await axios.post('/api/v1/auth/reset-password', { profileId, newPassword });
-      return response.data;
+      // Use Supabase Auth to update password
+      const { error } = await supabase.auth.updateUser({ password: newPassword });
+      if (error) throw error;
+      return { success: true };
     } catch (error: any) {
-      throw new Error(error.response?.data?.error || 'Failed to reset password');
+      throw new Error(error.message || 'Failed to reset password');
     }
   }
 };

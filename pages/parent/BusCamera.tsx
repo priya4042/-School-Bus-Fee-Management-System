@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Camera, MapPin, Clock, Zap, AlertCircle, ShieldCheck } from 'lucide-react';
 import CameraFeed from '../../components/Camera/CameraFeed';
-import axios from 'axios';
+import { apiPost } from '../../lib/api';
 import { User } from '../../types';
 
 const BusCamera: React.FC<{ user: User }> = ({ user }) => {
@@ -12,20 +12,34 @@ const BusCamera: React.FC<{ user: User }> = ({ user }) => {
 
   useEffect(() => {
     fetchCameraData();
-  }, []);
+  }, [user]);
 
   const fetchCameraData = async () => {
+    if (!user) return;
     try {
-      // In a real app, we'd find the bus the child is currently on
-      const res = await axios.get('/api/v1/tracking/parent/bus-cameras');
-      setCameras(res.data.cameras || []);
-      setBusInfo(res.data.bus || null);
-    } catch (err) {
+      // 1. Get parent's students to find their bus
+      // Updated to use apiPost with GET method
+      const students = await apiPost('parent-students', user.id, {}, 'GET');
+      if (students && students.length > 0 && students[0].buses) {
+        const bus = students[0].buses;
+        setBusInfo(bus);
+        
+        // 2. Get cameras for this bus
+        // Updated to use apiPost with GET method
+        const cameraData = await apiPost('bus-cameras', bus.id, {}, 'GET');
+        setCameras(cameraData || []);
+        if (cameraData && cameraData.length > 0) {
+          setSelectedCamera(cameraData[0]);
+        }
+      }
+    } catch (err: any) {
       console.error(err);
+      alert(err.message || 'Failed to fetch camera data. Please try again.');
     } finally {
       setLoading(false);
     }
   };
+
 
   return (
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">

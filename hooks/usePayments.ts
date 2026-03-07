@@ -97,7 +97,7 @@
             // Verify payment on backend
             try {
               setPaymentState(prev => ({ ...prev, step: 'PROCESSING' }));
-              const { data: verifyData } = await api.post('/payments/verify', {
+              const { data: verifyData } = await api.post('/v1/payments/verify', {
                 ...paymentResult,
                 dueId: paymentState.dueId
               }, {
