@@ -1,19 +1,6 @@
 const twilio = require('twilio');
 
-let client;
-if (process.env.TWILIO_ACCOUNT_SID && process.env.TWILIO_AUTH_TOKEN) {
-  client = twilio(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUTH_TOKEN);
-} else {
-  console.warn('Missing Twilio credentials. SMS will not be sent.');
-  client = {
-    messages: {
-      create: async (msg) => {
-        console.log('MOCKED SMS:', msg);
-        return { sid: 'mock-sid' };
-      }
-    }
-  };
-}
+const client = twilio(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUTH_TOKEN);
 
 const sendSMS = async (to, body) => {
   try {
