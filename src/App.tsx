@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { UserRole, User } from './types';
 import Login from './pages/Login';
 import Register from './pages/Register';
-import AdminDashboard from './pages/AdminDashboardPage';
+import AdminDashboard from './pages/AdminDashboard';
 import ParentDashboard from './pages/ParentDashboard';
 import Students from './pages/Students';
 import Fees from './pages/Fees';
