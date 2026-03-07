@@ -8,7 +8,7 @@
   },
   "scripts": {
     "dev": "tsx server.ts",
-    "start": "tsx server.ts",
+    "start": "npx tsx server.ts",
     "build": "vite build",
     "lint": "tsc --noEmit",
     "preview": "vite preview",
@@ -18,6 +18,7 @@
     "android:build": "npm run build && npx cap sync && npx cap open android"
   },
   "dependencies": {
+    "tsx": "^4.21.0",
     "@capacitor/android": "^8.1.0",
     "@capacitor/camera": "^8.0.1",
     "@capacitor/core": "^8.1.0",
@@ -62,7 +63,6 @@
     "autoprefixer": "^10.4.20",
     "postcss": "^8.4.49",
     "tailwindcss": "^3.4.16",
-    "tsx": "^4.21.0",
     "typescript": "^5.7.2",
     "vite": "^6.0.3"
   }

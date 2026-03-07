@@ -1,13 +1,11 @@
 export const ENV = {
   SUPABASE_URL: import.meta.env.VITE_SUPABASE_URL || 'https://pjovjynubnrvhwpnfnlw.supabase.co',
   SUPABASE_ANON_KEY: import.meta.env.VITE_SUPABASE_ANON_KEY || '',
-  // Force empty string to use relative paths (same origin) since we are running a unified server on port 3000
-  API_BASE_URL: '',
+  // Use the environment variable as requested, fallback to Render URL
+  API_BASE_URL: import.meta.env.VITE_API_BASE_URL || 'https://busway-backend-9maw.onrender.com',
   
-  OTP_PROVIDER: import.meta.env.VITE_OTP_PROVIDER || 'MSG91',
-  MSG91_AUTH_KEY: import.meta.env.VITE_MSG91_AUTH_KEY || '',
-  MSG91_TEMPLATE_ID: import.meta.env.VITE_MSG91_TEMPLATE_ID || '',
-  MSG91_SENDER_ID: import.meta.env.VITE_MSG91_SENDER_ID || '',
+  OTP_PROVIDER: import.meta.env.VITE_OTP_PROVIDER || 'TWILIO',
+  // MSG91 keys removed as requested
 
   RAZORPAY_KEY_ID: import.meta.env.VITE_RAZORPAY_KEY_ID || '',
   RAZORPAY_KEY_SECRET: import.meta.env.VITE_RAZORPAY_KEY_SECRET || '',

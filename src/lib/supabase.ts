@@ -17,7 +17,7 @@ export const supabase = createClient(
 
 /**
  * Enterprise Audit Logger
- * Logs administrative and critical actions to the backend API.
+ * Logs administrative and critical actions to the Supabase audit_logs table.
  */
 export const logAuditAction = async (action: string, entityType: string, entityId: string, changes?: any) => {
   if (!isSupabaseConfigured) return;
@@ -25,25 +25,13 @@ export const logAuditAction = async (action: string, entityType: string, entityI
   try {
     const { data: { user } } = await supabase.auth.getUser();
     
-    // Use the backend API for audit logs to ensure consistency and bypass client-side RLS if needed
-    const response = await fetch(`${import.meta.env.VITE_API_BASE_URL || ''}/api/audit-logs`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${(await supabase.auth.getSession()).data.session?.access_token || ''}`
-      },
-      body: JSON.stringify({
-        user_id: user?.id,
-        action,
-        entity_type: entityType,
-        entity_id: entityId,
-        new_values: changes
-      })
+    return await supabase.from('audit_logs').insert({
+      user_id: user?.id,
+      action,
+      entity_type: entityType,
+      entity_id: entityId,
+      new_values: changes ? JSON.stringify(changes) : null
     });
-
-    if (!response.ok) {
-      console.warn('Audit Log API Failure:', await response.text());
-    }
   } catch (err) {
     console.error('Audit Log Sync Failure:', err);
   }
