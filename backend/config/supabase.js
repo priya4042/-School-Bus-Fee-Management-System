@@ -9,21 +9,30 @@ let supabaseAdmin;
 if (!supabaseUrl || !supabaseServiceKey) {
   console.warn('Missing Supabase environment variables. Using placeholder client.');
   // Create a dummy client that logs warnings
+  const placeholder = (method) => async () => {
+    console.warn(`Supabase ${method} called but Supabase is not configured.`);
+    return { data: null, error: { message: 'Supabase not configured' } };
+  };
+
+  const chainable = () => ({
+    select: chainable,
+    eq: chainable,
+    lt: chainable,
+    gt: chainable,
+    insert: placeholder('insert'),
+    update: placeholder('update'),
+    delete: placeholder('delete'),
+    maybeSingle: placeholder('maybeSingle'),
+    single: placeholder('single'),
+  });
+
   supabaseAdmin = {
-    from: () => ({
-      select: () => ({
-        eq: () => ({
-          maybeSingle: async () => ({ data: null, error: { message: 'Supabase not configured' } }),
-          single: async () => ({ data: null, error: { message: 'Supabase not configured' } }),
-        }),
-        insert: async () => ({ error: { message: 'Supabase not configured' } }),
-        update: async () => ({ eq: async () => ({ error: { message: 'Supabase not configured' } }) }),
-      }),
-    }),
+    from: () => chainable(),
     auth: {
-      signInWithPassword: async () => ({ data: null, error: { message: 'Supabase not configured' } }),
-      signUp: async () => ({ data: null, error: { message: 'Supabase not configured' } }),
-      refreshSession: async () => ({ data: null, error: { message: 'Supabase not configured' } }),
+      signInWithPassword: placeholder('signInWithPassword'),
+      signUp: placeholder('signUp'),
+      refreshSession: placeholder('refreshSession'),
+      getUser: placeholder('getUser'),
     }
   };
 } else {

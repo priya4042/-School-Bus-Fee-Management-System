@@ -94,7 +94,8 @@ export const apiPost = async (module: string, action: string, body: any = {}, me
     console.error(`API Error [${module}/${action}]:`, error);
     // If it's a network error (Failed to fetch), provide a clearer message
     if (error.message === 'Failed to fetch') {
-      throw new Error('Unable to connect to the server. Please check your internet connection or try again later.');
+      // Retry logic could go here, but for now just throw a clearer error
+      throw new Error('Unable to connect to the server. The backend might be sleeping (Render free tier) or CORS is blocking the request. Please try again in a few seconds.');
     }
     throw error;
   }

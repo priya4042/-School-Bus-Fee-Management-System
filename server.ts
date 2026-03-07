@@ -76,8 +76,8 @@ async function startServer() {
     const paymentRoutes = require('./backend/routes/payments');
     app.use('/api/payments', paymentRoutes);
 
-    // const notificationRoutes = require('./backend/routes/notifications'); 
-    // app.use('/api/notifications', notificationRoutes); 
+    const notificationRoutes = require('./backend/routes/notifications'); 
+    app.use('/api/notifications', notificationRoutes); 
 
     const attendanceRoutes = require('./backend/routes/attendance');
     app.use('/api/attendance', attendanceRoutes);
