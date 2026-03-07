@@ -15,18 +15,37 @@ router.post('/login', async (req, res) => {
 
   try {
     let finalEmail = loginIdentifier;
-    if (type === 'ADMISSION') {
-      const { data: profile } = await supabaseAdmin
-        .from('profiles')
-        .select('email')
-        .eq('admission_number', loginIdentifier.trim())
-        .maybeSingle();
+  if (type === 'ADMISSION') {
 
-      if (!profile?.email) {
-        return res.status(404).json({ error: 'Admission number not found or not registered' });
-      }
-      finalEmail = profile.email;
-    }
+  // 1️⃣ Check student exists
+  const { data: student } = await supabaseAdmin
+    .from('students')
+    .select('parent_id')
+    .eq('admission_number', loginIdentifier.trim())
+    .maybeSingle();
+
+  if (!student) {
+    return res.status(404).json({ error: 'Admission number not found' });
+  }
+
+  if (!student.parent_id) {
+    return res.status(404).json({ error: 'Parent not registered for this admission number' });
+  }
+
+  // 2️⃣ Get parent email
+  const { data: profile } = await supabaseAdmin
+    .from('profiles')
+.select('email')
+.eq('id', student.parent_id)
+.eq('role', 'PARENT')
+.maybeSingle();
+
+  if (!profile?.email) {
+    return res.status(404).json({ error: 'Parent profile not found' });
+  }
+
+  finalEmail = profile.email;
+}
 
     const { data, error } = await supabaseAdmin.auth.signInWithPassword({
       email: finalEmail,
@@ -64,15 +83,24 @@ router.post('/register', async (req, res) => {
       return res.status(400).json({ error: authError.message });
     }
 
-    const { error: profileError } = await supabaseAdmin.from('profiles').insert({
-      id: authData.user.id,
-      email,
-      full_name,
-      role,
-      admission_number,
-    });
+const { error: profileError } = await supabaseAdmin
+  .from('profiles')
+  .insert({
+    id: authData.user.id,
+    email,
+    full_name,
+    role,
+    admission_number,
+  });
 
-    if (profileError) throw profileError;
+if (profileError) throw profileError;
+
+if (role === 'PARENT' && admission_number) {
+  await supabaseAdmin
+    .from('students')
+    .update({ parent_id: authData.user.id })
+    .eq('admission_number', admission_number);
+}
 
     // Send welcome SMS for parents
     if (role === 'PARENT' && req.body.phone) {
