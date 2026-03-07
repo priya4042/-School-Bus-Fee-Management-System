@@ -63,9 +63,18 @@ export interface Student {
   base_fee?: number; // Deprecated
   status: 'active' | 'inactive' | 'graduated';
   risk_score?: number;
+
   routes?: { route_name: string };
   buses?: { plate: string };
-  profiles?: { full_name: string; phone_number: string };
+
+  parent?: {
+    id: string;
+    full_name: string;
+    phone_number: string;
+  };
+
+  profiles?: { full_name: string; phone_number: string }; // optional fallback
+
   created_at?: string;
 }
 
