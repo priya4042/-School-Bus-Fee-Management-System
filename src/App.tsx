@@ -1,36 +1,36 @@
 
 import React, { useState, useEffect } from 'react';
-import { UserRole, User } from './types.ts';
-import Login from './pages/Login.tsx';
-import Register from './pages/Register.tsx';
-import AdminDashboard from './pages/AdminDashboard.tsx';
-import ParentDashboard from './pages/ParentDashboard.tsx';
-import Students from './pages/Students.tsx';
-import Fees from './pages/Fees.tsx';
-import Reports from './pages/Reports.tsx';
-import Routes from './pages/Routes.tsx';
-import Buses from './pages/Buses.tsx';
-import Settings from './pages/Settings.tsx';
-import Receipts from './pages/Receipts.tsx';
-import Profile from './pages/Profile.tsx';
-import Attendance from './pages/Attendance.tsx';
-import Payments from './pages/Payments.tsx';
-import AdminNotifications from './pages/AdminNotifications.tsx';
-import Notifications from './pages/Notifications.tsx';
-import AuditLogs from './pages/AuditLogs.tsx';
-import AdminManagement from './pages/AdminManagement.tsx';
-import UserDirectory from './pages/UserDirectory.tsx';
-import Sidebar from './components/Sidebar.tsx';
-import Topbar from './components/Topbar.tsx';
-import { useAuthStore } from './store/authStore.ts';
-import { isSupabaseConfigured } from './lib/supabase.ts';
+import { UserRole, User } from './types';
+import Login from './pages/Login';
+import Register from './pages/Register';
+import AdminDashboard from './pages/AdminDashboardPage';
+import ParentDashboard from './pages/ParentDashboard';
+import Students from './pages/Students';
+import Fees from './pages/Fees';
+import Reports from './pages/Reports';
+import Routes from './pages/Routes';
+import Buses from './pages/Buses';
+import Settings from './pages/Settings';
+import Receipts from './pages/Receipts';
+import Profile from './pages/Profile';
+import Attendance from './pages/Attendance';
+import Payments from './pages/Payments';
+import AdminNotifications from './pages/AdminNotifications';
+import Notifications from './pages/Notifications';
+import AuditLogs from './pages/AuditLogs';
+import AdminManagement from './pages/AdminManagement';
+import UserDirectory from './pages/UserDirectory';
+import Sidebar from './components/Sidebar';
+import Topbar from './components/Topbar';
+import { useAuthStore } from './store/authStore';
+import { isSupabaseConfigured } from './lib/supabase';
 
-import Privacy from './pages/Privacy.tsx';
-import Terms from './pages/Terms.tsx';
-import ForgotPassword from './pages/ForgotPassword.tsx';
+import Privacy from './pages/Privacy';
+import Terms from './pages/Terms';
+import ForgotPassword from './pages/ForgotPassword';
 
-import BoardingLocations from './pages/parent/BoardingLocations.tsx';
-import BusCamera from './pages/parent/BusCamera.tsx';
+import BoardingLocations from './pages/parent/BoardingLocations';
+import BusCamera from './pages/parent/BusCamera';
 
 const App: React.FC = () => {
   const { user, init, logout, loading, initialized } = useAuthStore();
