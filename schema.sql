@@ -207,12 +207,6 @@ CREATE POLICY "Admins have full access" ON public.profiles FOR ALL TO authentica
 CREATE POLICY "Admins manage students" ON public.students FOR ALL TO authenticated USING (auth.jwt()->>'role' = 'ADMIN' OR auth.jwt()->>'role' = 'SUPER_ADMIN');
 CREATE POLICY "Admins manage dues" ON public.monthly_dues FOR ALL TO authenticated USING (auth.jwt()->>'role' = 'ADMIN' OR auth.jwt()->>'role' = 'SUPER_ADMIN');
 
--- Allow anon to read admission_number and email for login purposes
-CREATE POLICY "Anon can read admission for login" ON public.profiles FOR SELECT TO anon USING (true);
-
--- Allow users to read their own profile
-CREATE POLICY "Users can read own profile" ON public.profiles FOR SELECT TO authenticated USING (id = auth.uid());
-
 -- Parents see only their children and related data
 CREATE POLICY "Parents see their children" ON public.students FOR SELECT TO authenticated USING (parent_id = auth.uid());
 CREATE POLICY "Parents see their children's dues" ON public.monthly_dues FOR SELECT TO authenticated 

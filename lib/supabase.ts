@@ -11,7 +11,7 @@ if (!isSupabaseConfigured) {
 
 // Create client only if configured, otherwise use a safe fallback that won't throw on initialization
 export const supabase = createClient(
-  supabaseUrl || 'https://pjovjynubnrvhwpnfnlw.supabase.co',
+  supabaseUrl || 'https://placeholder-url-missing.supabase.co',
   supabaseAnonKey || 'placeholder-key-missing'
 );
 

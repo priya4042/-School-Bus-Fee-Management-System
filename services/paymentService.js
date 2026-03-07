@@ -24,15 +24,15 @@ export const paymentService = {
 
     try {
       // In a real app, this calls your backend to create a Razorpay order securely
-      const response = await axios.post(`${ENV.SUPABASE_FUNCTIONS_URL}/api/payments/createOrder`, {
+      const response = await axios.post('/api/v1/payments/create-order', {
         amount,
         studentId,
         month
-      });
+      }, { withCredentials: true });
 
       return { 
         success: true, 
-        orderId: response.data.id, 
+        orderId: response.data.orderId, 
         amount: response.data.amount,
         currency: response.data.currency || 'INR'
       };
@@ -53,7 +53,7 @@ export const paymentService = {
 
     try {
       // In a real app, this calls your backend to verify the Razorpay signature
-      const response = await axios.post(`${ENV.SUPABASE_FUNCTIONS_URL}/api/payments/verifyPayment`, paymentData);
+      const response = await axios.post('/api/v1/payments/verify', paymentData, { withCredentials: true });
       
       return { success: true, message: 'Payment verified successfully', data: response.data };
     } catch (error) {
@@ -139,23 +139,18 @@ export const paymentService = {
    */
   markCashPayment: async (studentId, amount, month, adminNotes) => {
     try {
-      const { supabase } = await import('../lib/supabase');
-      const { error } = await supabase.from('payments').insert({
-        student_id: studentId,
-        amount: amount,
-        month: month,
-        notes: adminNotes,
-        status: 'SUCCESS',
-        method: 'CASH',
-        created_at: new Date().toISOString()
-      });
-
-      if (error) throw error;
+      // Call backend to record cash payment
+      const response = await axios.post('/api/v1/payments/cash', {
+        studentId,
+        amount,
+        month,
+        notes: adminNotes
+      }, { withCredentials: true });
       
-      return { success: true, message: 'Cash payment recorded successfully' };
+      return { success: true, message: 'Cash payment recorded successfully', data: response.data };
     } catch (error) {
       console.error('Failed to record cash payment:', error);
-      return { success: false, error: error.message };
+      return { success: false, error: error.response?.data?.error || error.message };
     }
   },
 
