@@ -1,7 +1,7 @@
 export const ENV = {
   SUPABASE_URL: import.meta.env.VITE_SUPABASE_URL || 'https://pjovjynubnrvhwpnfnlw.supabase.co',
   SUPABASE_ANON_KEY: import.meta.env.VITE_SUPABASE_ANON_KEY || '',
-  SUPABASE_FUNCTIONS_URL: import.meta.env.VITE_SUPABASE_FUNCTIONS_URL || (import.meta.env.VITE_SUPABASE_URL ? `${import.meta.env.VITE_SUPABASE_URL}/functions/v1` : 'https://pjovjynubnrvhwpnfnlw.supabase.co/functions/v1'),
+  SUPABASE_FUNCTIONS_URL: import.meta.env.VITE_SUPABASE_FUNCTIONS_URL || 'https://pjovjynubnrvhwpnfnlw.supabase.co/functions/v1',
   
   OTP_PROVIDER: import.meta.env.VITE_OTP_PROVIDER || 'MSG91',
   MSG91_AUTH_KEY: import.meta.env.VITE_MSG91_AUTH_KEY || '',
