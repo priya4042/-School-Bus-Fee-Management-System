@@ -55,31 +55,26 @@ const Login: React.FC<LoginProps> = ({ onLogin, onGoToRegister }) => {
   const adminInputClass = "w-full px-5 py-4 rounded-2xl bg-slate-50 border border-slate-200 outline-none font-bold transition-all focus:ring-4 focus:ring-primary/10 focus:border-primary text-slate-800 placeholder-slate-400";
 
   return (
-    <div className="min-h-screen bg-slate-950 flex items-center justify-center p-4 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-slate-900 via-slate-950 to-black overflow-y-auto relative">
-      <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20 pointer-events-none"></div>
-      <div className="max-w-md w-full py-8 space-y-8 animate-in fade-in zoom-in duration-700 relative z-10">
+    <div className="min-h-screen bg-slate-900 flex items-center justify-center p-4 bg-[radial-gradient(ellipse_at_top_left,_var(--tw-gradient-stops))] from-slate-800 via-slate-900 to-black overflow-y-auto">
+      <div className="max-w-md w-full py-8 space-y-8 animate-in fade-in zoom-in duration-500">
         <div className="text-center">
-           <div className="w-24 h-24 bg-gradient-to-br from-primary to-primary-dark rounded-[2rem] flex items-center justify-center mx-auto shadow-2xl shadow-primary/30 border-4 border-white/5 mb-8 transform hover:scale-105 transition-transform duration-500">
-              <i className="fas fa-bus-alt text-5xl text-white drop-shadow-lg"></i>
+           <div className="w-20 h-20 bg-primary rounded-3xl flex items-center justify-center mx-auto shadow-2xl border-2 border-white/10 mb-6">
+              <i className="fas fa-bus-alt text-4xl text-white"></i>
            </div>
-           <h1 className="text-5xl font-black text-white tracking-tighter uppercase drop-shadow-2xl">{APP_NAME}</h1>
-           <p className="text-slate-400 font-bold uppercase text-[10px] tracking-[0.3em] mt-2">Next Gen Fleet Management</p>
+           <h1 className="text-4xl font-black text-white tracking-tighter uppercase">{APP_NAME}</h1>
         </div>
 
-        <div className="bg-white/95 backdrop-blur-xl rounded-[3rem] shadow-2xl overflow-hidden border border-white/10 ring-1 ring-black/5">
-          <div className={`p-10 text-white transition-all duration-500 relative overflow-hidden ${loginRole === UserRole.PARENT ? 'bg-gradient-to-br from-primary to-blue-700' : 'bg-gradient-to-br from-slate-800 to-slate-950'}`}>
-            <div className="absolute top-0 right-0 -mt-10 -mr-10 w-40 h-40 bg-white/10 rounded-full blur-3xl"></div>
-            <div className="relative z-10">
-              <h2 className="text-3xl font-black tracking-tight mb-2">
-                  {loginRole === UserRole.PARENT ? 'Parent Portal' : 'Admin Console'}
-              </h2>
-              <p className="text-[11px] font-bold uppercase tracking-widest text-white/70">
-                {loginRole === UserRole.PARENT ? 'Secure Family Gateway' : 'Global Operations Hub'}
-              </p>
-            </div>
+        <div className="bg-white rounded-[2.5rem] shadow-2xl overflow-hidden">
+          <div className={`p-8 text-white transition-colors duration-500 ${loginRole === UserRole.PARENT ? 'bg-primary' : 'bg-slate-950'}`}>
+            <h2 className="text-2xl font-black tracking-tight">
+                {loginRole === UserRole.PARENT ? 'Parent Terminal' : 'Bus admin Terminal'}
+            </h2>
+            <p className="text-[10px] font-bold uppercase tracking-widest text-white/50 mt-1">
+              {loginRole === UserRole.PARENT ? 'Secure Family Gateway' : 'Global Operations Hub'}
+            </p>
           </div>
 
-          <div className="p-10">
+          <div className="p-8">
             {error && (
               <div className="mb-6 p-4 rounded-xl text-[10px] font-bold uppercase flex items-center gap-3 bg-red-50 text-red-600 border border-red-100">
                 <i className="fas fa-exclamation-triangle"></i>

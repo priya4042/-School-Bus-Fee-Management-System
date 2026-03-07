@@ -25,39 +25,30 @@ const AIInsights: React.FC = () => {
   ];
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center gap-3 mb-6 px-2">
-        <div className="w-10 h-10 bg-indigo-500/10 text-indigo-600 rounded-2xl flex items-center justify-center shadow-lg shadow-indigo-500/20">
-          <i className="fas fa-brain text-lg"></i>
+    <div className="space-y-4">
+      <div className="flex items-center gap-2 mb-4">
+        <div className="w-8 h-8 bg-indigo-500/10 text-indigo-600 rounded-lg flex items-center justify-center">
+          <i className="fas fa-brain text-xs"></i>
         </div>
-        <div>
-          <h3 className="text-xs font-black text-slate-800 uppercase tracking-widest leading-none">AI Strategic Insights</h3>
-          <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mt-1">Real-time Intelligence</p>
-        </div>
+        <h3 className="text-xs font-black text-slate-800 uppercase tracking-widest">AI Strategic Insights</h3>
       </div>
       
       {insights.map((insight, idx) => (
-        <div key={idx} className="bg-white p-6 rounded-[2rem] border border-slate-100 shadow-premium hover:shadow-2xl transition-all duration-500 group relative overflow-hidden">
-          <div className={`absolute top-0 right-0 w-20 h-20 bg-gradient-to-bl from-${insight.priority === 'HIGH' ? 'red' : 'blue'}-500/10 to-transparent rounded-bl-[100%] -mr-4 -mt-4 transition-transform group-hover:scale-150 duration-700`}></div>
-          
+        <div key={idx} className="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm hover:shadow-md transition-all group relative overflow-hidden">
           {insight.priority === 'HIGH' && (
-            <div className="absolute left-0 top-6 bottom-6 w-1 bg-red-500 rounded-r-full"></div>
+            <div className="absolute top-0 right-0 w-1 h-full bg-red-500"></div>
           )}
-          
-          <div className="flex justify-between items-start mb-4 relative z-10">
-            <span className={`text-[8px] font-black px-3 py-1 rounded-full uppercase tracking-widest border ${
-              insight.priority === 'HIGH' ? 'bg-red-50 text-red-600 border-red-100' : 'bg-blue-50 text-blue-600 border-blue-100'
+          <div className="flex justify-between items-start mb-2">
+            <span className={`text-[8px] font-black px-2 py-0.5 rounded-full uppercase tracking-widest ${
+              insight.priority === 'HIGH' ? 'bg-red-50 text-red-600' : 'bg-blue-50 text-blue-600'
             }`}>
               {insight.priority} Priority
             </span>
           </div>
-          
-          <h4 className="text-sm font-black text-slate-800 tracking-tight mb-2 relative z-10 group-hover:text-primary transition-colors">{insight.title}</h4>
-          <p className="text-[10px] text-slate-500 font-bold leading-relaxed mb-6 relative z-10">{insight.description}</p>
-          
-          <button className="w-full py-3 bg-slate-50 text-slate-600 text-[9px] font-black uppercase tracking-widest rounded-xl hover:bg-slate-900 hover:text-white transition-all shadow-sm hover:shadow-lg active:scale-95 relative z-10 flex items-center justify-center gap-2 group/btn">
+          <h4 className="text-sm font-black text-slate-800 tracking-tight mb-1">{insight.title}</h4>
+          <p className="text-[11px] text-slate-500 font-medium leading-relaxed mb-4">{insight.description}</p>
+          <button className="w-full py-2.5 bg-slate-50 text-slate-600 text-[9px] font-black uppercase tracking-widest rounded-xl hover:bg-primary hover:text-white transition-all">
             {insight.actionLabel}
-            <i className="fas fa-arrow-right opacity-0 group-hover/btn:opacity-100 -ml-2 group-hover/btn:ml-0 transition-all"></i>
           </button>
         </div>
       ))}

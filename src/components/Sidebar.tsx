@@ -34,8 +34,6 @@ const Sidebar: React.FC<SidebarProps> = ({ user, onLogout, activeTab, setActiveT
 
   const parentLinks = [
     { name: 'Dashboard', icon: 'fa-home' },
-    { name: 'Boarding Points', icon: 'fa-map-marker-alt' },
-    { name: 'Bus Camera', icon: 'fa-video' },
     { name: 'Payments', icon: 'fa-credit-card' },
     { name: 'Notifications', icon: 'fa-bell' },
     { name: 'Receipts', icon: 'fa-receipt' },

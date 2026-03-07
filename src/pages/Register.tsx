@@ -178,40 +178,25 @@ const Register: React.FC<RegisterProps> = ({ onRegister, onBackToLogin, initialR
     );
   }
 
-  const inputClass = "w-full px-6 py-5 rounded-2xl bg-slate-50 border border-slate-200 outline-none font-bold text-sm transition-all focus:ring-4 focus:ring-primary/10 focus:border-primary text-slate-800 placeholder-slate-400 hover:bg-white";
-  const adminInputClass = "w-full px-6 py-5 rounded-2xl bg-slate-50 border border-slate-200 outline-none font-bold text-sm transition-all focus:ring-4 focus:ring-primary/10 focus:border-primary text-slate-800 placeholder-slate-400 hover:bg-white";
+  const inputClass = "w-full px-5 py-4 rounded-xl bg-primary/5 border border-primary/20 outline-none font-bold text-sm transition-all focus:ring-4 focus:ring-primary/10 focus:border-primary text-slate-800 placeholder-slate-400";
+  const adminInputClass = "w-full px-5 py-4 rounded-xl bg-slate-50 border border-slate-200 outline-none font-bold text-sm transition-all focus:ring-4 focus:ring-primary/10 focus:border-primary text-slate-800 placeholder-slate-400";
 
   return (
-    <div className="min-h-screen bg-slate-950 flex items-center justify-center p-6 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-slate-900 via-slate-950 to-black overflow-y-auto relative">
-      <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20 pointer-events-none"></div>
-      <div className="max-w-5xl w-full bg-white rounded-[3.5rem] shadow-2xl overflow-hidden flex flex-col md:flex-row animate-in fade-in zoom-in duration-700 relative z-10 border border-white/10 ring-1 ring-black/5">
-        <div className={`md:w-96 p-14 text-white flex flex-col justify-between transition-all duration-500 relative overflow-hidden ${role === UserRole.ADMIN ? 'bg-slate-950' : 'bg-gradient-to-br from-primary to-blue-700'}`}>
-           <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-10 pointer-events-none"></div>
-           <div className="absolute top-0 right-0 -mt-20 -mr-20 w-64 h-64 bg-white/10 rounded-full blur-3xl"></div>
-           
-           <div className="relative z-10">
-              <div className="w-16 h-16 bg-white/10 backdrop-blur-md rounded-[1.5rem] flex items-center justify-center mb-10 border border-white/20 shadow-xl">
-                 <i className={`fas ${role === UserRole.ADMIN ? 'fa-shield-halved' : 'fa-user-plus'} text-2xl`}></i>
+    <div className="min-h-screen bg-slate-900 flex items-center justify-center p-6 bg-[radial-gradient(circle_at_bottom_right,_var(--tw-gradient-stops))] from-slate-800 via-slate-900 to-black overflow-y-auto">
+      <div className="max-w-4xl w-full bg-white rounded-[3rem] shadow-2xl overflow-hidden flex flex-col md:flex-row animate-in fade-in zoom-in duration-500">
+        <div className={`md:w-80 p-12 text-white flex flex-col justify-between transition-colors ${role === UserRole.ADMIN ? 'bg-slate-950' : 'bg-primary'}`}>
+           <div>
+              <div className="w-14 h-14 bg-white/20 rounded-2xl flex items-center justify-center mb-8 border border-white/20">
+                 <i className={`fas ${role === UserRole.ADMIN ? 'fa-shield-halved' : 'fa-user-plus'} text-xl`}></i>
               </div>
-              <h1 className="text-4xl font-black tracking-tighter leading-[0.9] mb-6 uppercase drop-shadow-lg">
-                {role === UserRole.ADMIN ? 'Command Center Access' : 'Family Enrollment'}
-              </h1>
-              <p className="text-white/70 text-[11px] font-bold uppercase tracking-widest leading-relaxed border-l-2 border-white/20 pl-4">
-                {role === UserRole.ADMIN ? 'Secure authentication for fleet administrators.' : 'Connect your family to the secure transport network.'}
+              <h1 className="text-3xl font-black tracking-tighter leading-none mb-4 uppercase">Enrollment Hub</h1>
+              <p className="text-white/60 text-[10px] font-bold uppercase tracking-widest leading-relaxed">
+                {role === UserRole.ADMIN ? 'Setup Bus admin authentication.' : 'Connect your family to the transport core.'}
               </p>
-           </div>
-           
-           <div className="relative z-10 mt-12">
-             <div className="flex gap-2 mb-2">
-               <div className="w-2 h-2 rounded-full bg-white animate-pulse"></div>
-               <div className="w-2 h-2 rounded-full bg-white/40"></div>
-               <div className="w-2 h-2 rounded-full bg-white/40"></div>
-             </div>
-             <p className="text-[10px] font-black uppercase tracking-widest opacity-50">Secure Registration v2.0</p>
            </div>
         </div>
 
-        <div className="flex-1 p-10 md:p-16 bg-white">
+        <div className="flex-1 p-8 md:p-12">
            <div className="flex items-center justify-between mb-10">
               <h2 className="text-2xl font-black text-slate-800 tracking-tight uppercase">Registration</h2>
               <button onClick={onBackToLogin} className="text-[9px] font-black text-primary uppercase tracking-widest hover:underline">

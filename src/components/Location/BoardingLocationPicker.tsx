@@ -78,26 +78,26 @@ const BoardingLocationPicker: React.FC<BoardingLocationPickerProps> = ({ onSave,
   };
 
   return createPortal(
-    <div className="fixed inset-0 z-[10000] bg-white flex flex-col md:flex-row animate-in fade-in duration-500">
-      <div className="flex-1 relative h-[50vh] md:h-full bg-slate-100">
+    <div className="fixed inset-0 z-[10000] bg-white flex flex-col md:flex-row">
+      <div className="flex-1 relative h-[50vh] md:h-full">
         {/* @ts-ignore */}
-        <MapContainer center={position} zoom={15} style={{ height: '100%', width: '100%' }} className="z-0">
+        <MapContainer center={position} zoom={15} style={{ height: '100%', width: '100%' }}>
           <TileLayer
             // @ts-ignore
-            url="https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png"
+            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
             // @ts-ignore
-            attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
+            attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
           />
           <LocationMarker position={position} setPosition={setPosition} />
         </MapContainer>
         
-        <div className="absolute top-6 left-6 right-6 z-[1000] flex gap-4">
-          <div className="flex-1 bg-white/90 backdrop-blur-xl rounded-2xl shadow-2xl flex items-center px-6 py-4 border border-white/20 ring-1 ring-black/5 transition-all focus-within:ring-primary/20 focus-within:scale-[1.02]">
-            <Search size={20} className="text-slate-400 mr-4" />
+        <div className="absolute top-4 left-4 right-4 z-[1000] flex gap-2">
+          <div className="flex-1 bg-white rounded-2xl shadow-premium flex items-center px-4 py-3 border border-slate-100">
+            <Search size={20} className="text-slate-400 mr-2" />
             <input 
               type="text" 
               placeholder="Search for your address..." 
-              className="flex-1 bg-transparent border-none focus:ring-0 text-sm font-bold text-slate-700 placeholder:text-slate-400"
+              className="flex-1 bg-transparent border-none focus:ring-0 text-sm"
               value={address}
               onChange={(e) => setAddress(e.target.value)}
             />
@@ -108,80 +108,74 @@ const BoardingLocationPicker: React.FC<BoardingLocationPickerProps> = ({ onSave,
                 setPosition([pos.coords.latitude, pos.coords.longitude]);
               });
             }}
-            className="bg-white/90 backdrop-blur-xl p-4 rounded-2xl shadow-2xl text-primary hover:bg-white hover:scale-110 transition-all border border-white/20 ring-1 ring-black/5 active:scale-95"
+            className="bg-white p-3 rounded-2xl shadow-premium text-primary hover:bg-slate-50 border border-slate-100"
           >
-            <Navigation size={20} fill="currentColor" className="opacity-20" />
-            <Navigation size={20} className="absolute inset-0 m-auto" />
+            <Navigation size={20} />
           </button>
         </div>
       </div>
 
-      <div className="w-full md:w-[450px] bg-white p-8 md:p-10 overflow-y-auto border-t md:border-t-0 md:border-l border-slate-100 shadow-2xl z-10 relative">
-        <div className="flex justify-between items-center mb-10">
-          <div>
-            <h2 className="text-3xl font-black text-slate-900 tracking-tighter uppercase">Boarding Point</h2>
-            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">Set Pickup Location</p>
-          </div>
-          <button onClick={onClose} className="w-12 h-12 rounded-2xl bg-slate-50 flex items-center justify-center text-slate-400 hover:bg-slate-100 hover:text-danger transition-all active:scale-90">
+      <div className="w-full md:w-[400px] bg-white p-6 md:p-8 overflow-y-auto border-t md:border-t-0 md:border-l border-slate-100">
+        <div className="flex justify-between items-center mb-8">
+          <h2 className="text-2xl font-black text-slate-900 tracking-tight">Boarding Point</h2>
+          <button onClick={onClose} className="p-2 hover:bg-slate-100 rounded-full text-slate-400">
             <X size={24} />
           </button>
         </div>
 
-        <div className="space-y-8">
-          <div className="group">
-            <label className="block text-[9px] font-black text-slate-400 uppercase tracking-[0.2em] mb-3 ml-1 group-focus-within:text-primary transition-colors">Location Label</label>
+        <div className="space-y-6">
+          <div>
+            <label className="block text-xs font-black text-slate-400 uppercase tracking-[0.2em] mb-2">Location Label</label>
             <input 
               type="text" 
               value={locationName}
               onChange={(e) => setLocationName(e.target.value)}
-              className="w-full bg-slate-50 border-2 border-transparent rounded-2xl p-5 text-sm font-bold text-slate-700 focus:bg-white focus:border-primary/10 focus:ring-4 focus:ring-primary/5 transition-all outline-none placeholder:text-slate-300"
+              className="w-full bg-slate-50 border-none rounded-2xl p-4 text-sm focus:ring-2 focus:ring-primary/20"
               placeholder="e.g. Home, Office, Grandma's"
             />
           </div>
 
-          <div className="group">
-            <label className="block text-[9px] font-black text-slate-400 uppercase tracking-[0.2em] mb-3 ml-1 group-focus-within:text-primary transition-colors">Full Address</label>
+          <div>
+            <label className="block text-xs font-black text-slate-400 uppercase tracking-[0.2em] mb-2">Full Address</label>
             <textarea 
               value={address}
               onChange={(e) => setAddress(e.target.value)}
-              className="w-full bg-slate-50 border-2 border-transparent rounded-2xl p-5 text-sm font-bold text-slate-700 focus:bg-white focus:border-primary/10 focus:ring-4 focus:ring-primary/5 transition-all outline-none placeholder:text-slate-300 h-28 resize-none"
+              className="w-full bg-slate-50 border-none rounded-2xl p-4 text-sm focus:ring-2 focus:ring-primary/20 h-24 resize-none"
               placeholder="Enter complete address..."
             />
           </div>
 
-          <div className="grid grid-cols-2 gap-6">
-            <div className="group">
-              <label className="block text-[9px] font-black text-slate-400 uppercase tracking-[0.2em] mb-3 ml-1 group-focus-within:text-primary transition-colors">Landmark</label>
-              <input 
-                type="text" 
-                value={landmark}
-                onChange={(e) => setLandmark(e.target.value)}
-                className="w-full bg-slate-50 border-2 border-transparent rounded-2xl p-5 text-sm font-bold text-slate-700 focus:bg-white focus:border-primary/10 focus:ring-4 focus:ring-primary/5 transition-all outline-none placeholder:text-slate-300"
-                placeholder="e.g. Near Park"
-              />
-            </div>
-            <div className="group">
-               <label className="block text-[9px] font-black text-slate-400 uppercase tracking-[0.2em] mb-3 ml-1 group-focus-within:text-primary transition-colors">Instructions</label>
-               <input 
-                 type="text" 
-                 value={instructions}
-                 onChange={(e) => setInstructions(e.target.value)}
-                 className="w-full bg-slate-50 border-2 border-transparent rounded-2xl p-5 text-sm font-bold text-slate-700 focus:bg-white focus:border-primary/10 focus:ring-4 focus:ring-primary/5 transition-all outline-none placeholder:text-slate-300"
-                 placeholder="e.g. Ring bell"
-               />
-            </div>
+          <div>
+            <label className="block text-xs font-black text-slate-400 uppercase tracking-[0.2em] mb-2">Nearby Landmark</label>
+            <input 
+              type="text" 
+              value={landmark}
+              onChange={(e) => setLandmark(e.target.value)}
+              className="w-full bg-slate-50 border-none rounded-2xl p-4 text-sm focus:ring-2 focus:ring-primary/20"
+              placeholder="e.g. Near City Park"
+            />
           </div>
 
-          <div className="pt-6 flex gap-4 border-t border-slate-50">
+          <div>
+            <label className="block text-xs font-black text-slate-400 uppercase tracking-[0.2em] mb-2">Special Instructions</label>
+            <textarea 
+              value={instructions}
+              onChange={(e) => setInstructions(e.target.value)}
+              className="w-full bg-slate-50 border-none rounded-2xl p-4 text-sm focus:ring-2 focus:ring-primary/20 h-24 resize-none"
+              placeholder="e.g. Ring doorbell twice, wait at the gate..."
+            />
+          </div>
+
+          <div className="pt-4 flex gap-4">
             <button 
               onClick={onClose}
-              className="flex-1 py-5 rounded-2xl text-slate-500 font-black uppercase text-[10px] tracking-widest hover:bg-slate-50 hover:text-slate-700 transition-all active:scale-95"
+              className="flex-1 py-4 rounded-2xl text-slate-500 font-bold text-sm hover:bg-slate-50 transition-colors"
             >
               Cancel
             </button>
             <button 
               onClick={handleSave}
-              className="flex-[2] bg-primary text-white py-5 rounded-2xl font-black uppercase text-[10px] tracking-widest shadow-xl shadow-primary/30 hover:bg-primary-dark hover:shadow-2xl hover:shadow-primary/40 hover:-translate-y-1 transition-all flex items-center justify-center gap-3 active:scale-95 active:translate-y-0"
+              className="flex-1 bg-primary text-white py-4 rounded-2xl font-bold text-sm shadow-lg shadow-primary/20 hover:bg-primary-dark transition-colors flex items-center justify-center gap-2"
             >
               <Save size={18} />
               Save Location

@@ -300,12 +300,6 @@ const ParentDashboard: React.FC<{ user: User }> = ({ user }) => {
           </div>
         </div>
       </div>
-      {isPickerOpen && (
-        <BoardingLocationPicker 
-          onSave={handleLocationSave}
-          onClose={() => setIsPickerOpen(false)}
-        />
-      )}
     </div>
   );
 };
