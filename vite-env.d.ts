@@ -9,10 +9,7 @@ interface ImportMetaEnv {
   readonly VITE_RAZORPAY_KEY_ID: string
   readonly VITE_SUPABASE_URL: string
   readonly VITE_SUPABASE_ANON_KEY: string
-  readonly VITE_OTP_PROVIDER: string
-  readonly VITE_MSG91_AUTH_KEY: string
-  readonly VITE_MSG91_TEMPLATE_ID: string
-  readonly VITE_MSG91_SENDER_ID: string
+  readonly VITE_API_BASE_URL: string
   readonly VITE_RAZORPAY_KEY_SECRET: string
   readonly VITE_CAMERA_STREAM_BASE_URL: string
   // more env variables...

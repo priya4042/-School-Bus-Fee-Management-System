@@ -1,0 +1,149 @@
+import { create } from 'zustand';
+import { User, UserRole } from '../types';
+import { supabase } from '../lib/supabase';
+import { apiPost } from '../lib/api';
+
+interface AuthState {
+  user: User | null;
+  accessToken: string | null;
+  loading: boolean;
+  initialized: boolean;
+  setUser: (user: User | null) => void;
+  setAccessToken: (token: string | null) => void;
+  init: () => Promise<void>;
+  loginWithCredentials: (identifier: string, password?: string, type?: 'EMAIL' | 'ADMISSION' | 'PHONE' | 'ADMIN') => Promise<void>;
+  registerAdmin: (data: any) => Promise<void>;
+  registerParent: (data: any) => Promise<void>;
+  forgotPassword: (email: string) => Promise<void>;
+  logout: () => Promise<void>;
+}
+
+export const useAuthStore = create<AuthState>((set) => ({
+  user: null,
+  accessToken: null,
+  loading: true,
+  initialized: false,
+
+  setUser: (user) => set({ user }),
+  setAccessToken: (token) => set({ accessToken: token }),
+
+  init: async () => {
+    set({ loading: true });
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session) {
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', session.user.id)
+          .single();
+        
+        set({ 
+          user: profile, 
+          accessToken: session.access_token,
+          initialized: true, 
+          loading: false 
+        });
+      } else {
+        set({ user: null, initialized: true, loading: false });
+      }
+    } catch (err) {
+      console.error('Init error:', err);
+      set({ initialized: true, loading: false, user: null });
+    }
+  },
+
+  loginWithCredentials: async (identifier: string, password?: string, type?: 'EMAIL' | 'ADMISSION' | 'PHONE' | 'ADMIN') => {
+    set({ loading: true });
+    try {
+      // Updated to use apiPost
+      const data = await apiPost('auth', 'login', { identifier, password, type });
+
+      if (!data || !data.session || !data.user) {
+        console.error('Invalid login response:', data);
+        throw new Error('Login failed: Invalid server response');
+      }
+
+      // The Express API returns the Supabase auth data (session and user)
+      // We need to set the session in the local Supabase client
+      const { error } = await supabase.auth.setSession({
+        access_token: data.session.access_token,
+        refresh_token: data.session.refresh_token
+      });
+
+      if (error) {
+        console.error('Supabase setSession error:', error);
+        throw new Error('Failed to establish session');
+      }
+
+      const { data: profile, error: profileError } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', data.user.id)
+        .single();
+        
+      if (profileError) {
+        console.warn('Profile fetch error (using auth user data as fallback):', profileError);
+      }
+
+      set({ 
+        user: profile || data.user, 
+        accessToken: data.session.access_token,
+        loading: false,
+        initialized: true
+      });
+    } catch (err: any) {
+      console.error('Login error:', err);
+      set({ loading: false });
+      throw new Error(err.message || 'Login failed');
+    }
+  },
+
+  registerAdmin: async (data: any) => {
+    set({ loading: true });
+    try {
+      // Updated to use apiPost
+      await apiPost('auth', 'register', {
+        email: data.email,
+        password: data.password,
+        full_name: data.fullName,
+        role: UserRole.ADMIN,
+        secret: data.secret,
+        phone: data.phoneNumber
+      });
+      set({ loading: false });
+    } catch (err: any) {
+      set({ loading: false });
+      throw new Error(err.message || 'Admin registration failed');
+    }
+  },
+
+  registerParent: async (data: any) => {
+    set({ loading: true });
+    try {
+      // Updated to use apiPost
+      await apiPost('auth', 'register', {
+        email: data.email,
+        password: data.password,
+        full_name: data.fullName,
+        role: UserRole.PARENT,
+        admission_number: data.admissionNumber,
+        phone: data.phone
+      });
+      set({ loading: false });
+    } catch (err: any) {
+      set({ loading: false });
+      throw new Error(err.message || 'Parent registration failed');
+    }
+  },
+
+  forgotPassword: async (email: string) => {
+    const { error } = await supabase.auth.resetPasswordForEmail(email);
+    if (error) throw error;
+  },
+
+  logout: async () => {
+    await supabase.auth.signOut();
+    set({ user: null, accessToken: null, loading: false, initialized: true });
+  }
+}));

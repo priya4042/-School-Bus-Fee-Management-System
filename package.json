@@ -4,10 +4,11 @@
   "version": "1.0.0",
   "type": "module",
   "engines": {
-    "node": ">=18.0.0"
+    "node": "24.x"
   },
   "scripts": {
     "dev": "tsx server.ts",
+    "start": "tsx server.ts",
     "build": "vite build",
     "lint": "tsc --noEmit",
     "preview": "vite preview",
@@ -23,15 +24,13 @@
     "@capacitor/geolocation": "^8.1.0",
     "@stripe/stripe-js": "^8.8.0",
     "@supabase/supabase-js": "^2.97.0",
+    "@vercel/node": "^5.6.10",
     "axios": "^1.7.9",
-    "bcryptjs": "^3.0.3",
-    "cookie-parser": "^1.4.7",
+    "bcrypt": "^6.0.0",
     "cors": "^2.8.6",
     "dotenv": "^17.3.1",
     "express": "^5.2.1",
-    "express-rate-limit": "^8.2.1",
     "framer-motion": "^12.34.3",
-    "helmet": "^8.1.0",
     "jsbarcode": "^3.12.3",
     "jsonwebtoken": "^9.0.3",
     "jspdf": "^4.2.0",
@@ -46,16 +45,14 @@
     "recharts": "^2.15.0",
     "stripe": "^20.4.0",
     "sweetalert2": "^11.26.21",
-    "tsx": "^4.21.0",
     "twilio": "^5.12.2",
     "video.js": "^8.23.7",
     "zustand": "^5.0.3"
   },
   "devDependencies": {
     "@capacitor/cli": "^8.1.0",
-    "@types/bcryptjs": "^2.4.6",
-    "@types/cookie-parser": "^1.4.10",
-    "@types/dotenv": "^6.1.1",
+    "@types/bcrypt": "^6.0.0",
+    "@types/cors": "^2.8.19",
     "@types/express": "^5.0.6",
     "@types/jsonwebtoken": "^9.0.10",
     "@types/node": "^25.3.0",
@@ -65,6 +62,7 @@
     "autoprefixer": "^10.4.20",
     "postcss": "^8.4.49",
     "tailwindcss": "^3.4.16",
+    "tsx": "^4.21.0",
     "typescript": "^5.7.2",
     "vite": "^6.0.3"
   }
