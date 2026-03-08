@@ -12,12 +12,17 @@ const client = twilio(
 // ================= SEND OTP =================
 router.post('/send', async (req, res) => {
 
+  console.log("OTP REQUEST BODY:", req.body);
+
   const phone =
     req.body.phone ||
+    req.body.mobile ||
     req.body.mobile_number ||
-    req.body.mobileNumber;
+    req.body.mobileNumber ||
+    req.body.phoneNumber;
 
   const admission =
+    req.body.admission ||
     req.body.admission_number ||
     req.body.admissionNumber;
 
