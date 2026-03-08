@@ -1,10 +1,8 @@
 const express = require('express');
 const router = express.Router();
 const supabaseAdmin = require('../config/supabase');
-const jwt = require('jsonwebtoken');
-const bcrypt = require('bcrypt');
 
-// Login
+// ================= LOGIN =================
 router.post('/login', async (req, res) => {
   const { email, identifier, password, type } = req.body;
   const loginIdentifier = identifier || email;
@@ -15,119 +13,164 @@ router.post('/login', async (req, res) => {
 
   try {
     let finalEmail = loginIdentifier;
-  if (type === 'ADMISSION') {
 
-  // 1️⃣ Check student exists
-  const { data: student } = await supabaseAdmin
-    .from('students')
-    .select('parent_id')
-    .eq('admission_number', loginIdentifier.trim())
-    .maybeSingle();
+    // Login using Admission Number
+    if (type === 'ADMISSION') {
 
-  if (!student) {
-    return res.status(404).json({ error: 'Admission number not found' });
-  }
+      // 1️⃣ Find student
+      const { data: student, error: studentError } = await supabaseAdmin
+        .from('students')
+        .select('parent_id')
+        .eq('admission_number', loginIdentifier.trim())
+        .maybeSingle();
 
-  if (!student.parent_id) {
-    return res.status(404).json({ error: 'Parent not registered for this admission number' });
-  }
+      if (studentError) throw studentError;
 
-  // 2️⃣ Get parent email
-  const { data: profile } = await supabaseAdmin
-    .from('profiles')
-.select('email')
-.eq('id', student.parent_id)
-.eq('role', 'PARENT')
-.maybeSingle();
+      if (!student) {
+        return res.status(404).json({ error: 'Admission number not found' });
+      }
 
-  if (!profile?.email) {
-    return res.status(404).json({ error: 'Parent profile not found' });
-  }
+      if (!student.parent_id) {
+        return res.status(404).json({ error: 'Parent not registered for this admission number' });
+      }
 
-  finalEmail = profile.email;
-}
+      // 2️⃣ Get parent email
+      const { data: profile, error: profileError } = await supabaseAdmin
+        .from('profiles')
+        .select('email')
+        .eq('id', student.parent_id)
+        .eq('role', 'PARENT')
+        .maybeSingle();
 
+      if (profileError) throw profileError;
+
+      if (!profile?.email) {
+        return res.status(404).json({ error: 'Parent profile not found' });
+      }
+
+      finalEmail = profile.email;
+    }
+
+    console.log("LOGIN EMAIL:", finalEmail);
+
+    // 3️⃣ Login via Supabase Auth
     const { data, error } = await supabaseAdmin.auth.signInWithPassword({
       email: finalEmail,
       password,
     });
 
     if (error) {
-      return res.status(error.status || 401).json({ error: error.message });
+      return res.status(401).json({ error: 'Invalid login credentials' });
     }
 
-    // Generate custom JWT if needed, or just return Supabase session
-    // For now, returning Supabase session data
-    res.status(200).json({ message: 'Login successful', ...data });
+    res.status(200).json({
+      message: 'Login successful',
+      session: data.session,
+      user: data.user
+    });
+
   } catch (err) {
     console.error('Login error:', err);
     res.status(500).json({ error: err.message });
   }
 });
 
-// Register
+
+// ================= REGISTER =================
 router.post('/register', async (req, res) => {
+
   const { email, password, full_name, role, admission_number } = req.body;
 
   if (!email || !password || !role) {
-    return res.status(400).json({ error: 'Email, password, and role are required' });
+    return res.status(400).json({
+      error: 'Email, password, and role are required'
+    });
   }
 
   try {
-    const { data: authData, error: authError } = await supabaseAdmin.auth.signUp({
-      email,
-      password,
-    });
+
+    // 1️⃣ Create auth user
+    const { data: authData, error: authError } =
+      await supabaseAdmin.auth.signUp({
+        email,
+        password,
+      });
 
     if (authError) {
       return res.status(400).json({ error: authError.message });
     }
 
-const { error: profileError } = await supabaseAdmin
-  .from('profiles')
-  .insert({
-    id: authData.user.id,
-    email,
-    full_name,
-    role,
-    admission_number,
-  });
+    const userId = authData.user.id;
 
-if (profileError) throw profileError;
+    // 2️⃣ Create profile
+    const { error: profileError } = await supabaseAdmin
+      .from('profiles')
+      .insert({
+        id: userId,
+        email,
+        full_name,
+        role,
+        admission_number,
+      });
 
-if (role === 'PARENT' && admission_number) {
-  await supabaseAdmin
-    .from('students')
-    .update({ parent_id: authData.user.id })
-    .eq('admission_number', admission_number);
-}
+    if (profileError) throw profileError;
 
-    // Send welcome SMS for parents
-    if (role === 'PARENT' && req.body.phone) {
-      const { sendSMS } = require('../utils/sms');
-      await sendSMS(req.body.phone, `Welcome to School Bus Management System! Your registration is successful. Admission Number: ${admission_number}`);
+    // 3️⃣ Link parent to student
+    if (role === 'PARENT' && admission_number) {
+
+      const { data: student } = await supabaseAdmin
+        .from('students')
+        .select('id')
+        .eq('admission_number', admission_number)
+        .maybeSingle();
+
+      if (!student) {
+        return res.status(404).json({
+          error: 'Student admission number not found'
+        });
+      }
+
+      await supabaseAdmin
+        .from('students')
+        .update({ parent_id: userId })
+        .eq('admission_number', admission_number);
     }
 
-    res.status(201).json({ message: 'User created', user: authData.user });
+    res.status(201).json({
+      message: 'User registered successfully',
+      user: authData.user
+    });
+
   } catch (err) {
     console.error('Register error:', err);
     res.status(500).json({ error: err.message });
   }
 });
 
-// Refresh Token
+
+// ================= REFRESH TOKEN =================
 router.post('/refresh', async (req, res) => {
+
   const { refresh_token } = req.body;
+
   if (!refresh_token) {
-    return res.status(400).json({ error: 'Refresh token is required' });
+    return res.status(400).json({
+      error: 'Refresh token is required'
+    });
   }
 
   try {
-    const { data, error } = await supabaseAdmin.auth.refreshSession({ refresh_token });
+
+    const { data, error } = await supabaseAdmin.auth.refreshSession({
+      refresh_token
+    });
+
     if (error) {
-      return res.status(error.status || 401).json({ error: error.message });
+      return res.status(401).json({ error: error.message });
     }
+
     res.status(200).json(data);
+
   } catch (err) {
     console.error('Refresh token error:', err);
     res.status(500).json({ error: err.message });
