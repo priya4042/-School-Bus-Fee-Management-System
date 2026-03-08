@@ -8,23 +8,40 @@ const client = twilio(
   process.env.TWILIO_AUTH_TOKEN
 );
 
+// ================= HELPERS =================
+function extractPhone(body) {
+  return (
+    body.phone ||
+    body.mobile ||
+    body.mobile_number ||
+    body.mobileNumber ||
+    body.phoneNumber ||
+    null
+  );
+}
+
+function extractAdmission(body) {
+  return (
+    body.admission ||
+    body.admission_number ||
+    body.admissionNumber ||
+    null
+  );
+}
+
+function formatPhone(phone) {
+  return '+91' + phone.replace(/\D/g, '').slice(-10);
+}
 
 // ================= SEND OTP =================
 router.post('/send', async (req, res) => {
-
   console.log("OTP REQUEST BODY:", req.body);
 
-  const phone =
-    req.body.phone ||
-    req.body.mobile ||
-    req.body.mobile_number ||
-    req.body.mobileNumber ||
-    req.body.phoneNumber;
+  const phone = extractPhone(req.body);
+  const admission = extractAdmission(req.body);
 
-  const admission =
-    req.body.admission ||
-    req.body.admission_number ||
-    req.body.admissionNumber;
+  console.log("Parsed Phone:", phone);
+  console.log("Parsed Admission:", admission);
 
   if (!phone || !admission) {
     return res.status(400).json({
@@ -33,15 +50,15 @@ router.post('/send', async (req, res) => {
   }
 
   try {
-
     // Find student
-    const { data: student, error } = await supabaseAdmin
-      .from('students')
-      .select('parent_id')
-      .eq('admission_number', admission.trim())
-      .maybeSingle();
+    const { data: student, error: studentError } =
+      await supabaseAdmin
+        .from('students')
+        .select('parent_id')
+        .eq('admission_number', admission.trim())
+        .maybeSingle();
 
-    if (error) throw error;
+    if (studentError) throw studentError;
 
     if (!student || !student.parent_id) {
       return res.status(404).json({
@@ -49,14 +66,27 @@ router.post('/send', async (req, res) => {
       });
     }
 
-    const formattedPhone =
-      '+91' + phone.replace(/\D/g, '').slice(-10);
+    const formattedPhone = formatPhone(phone);
 
     // Generate OTP
-    const otp =
-      Math.floor(100000 + Math.random() * 900000).toString();
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
 
-    // Send SMS
+    // Prevent OTP spam (check last OTP)
+    const { data: lastOtp } = await supabaseAdmin
+      .from('otp_logs')
+      .select('*')
+      .eq('phone_number', formattedPhone)
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    if (lastOtp && new Date(lastOtp.expires_at) > new Date()) {
+      return res.status(400).json({
+        error: 'OTP already sent. Please wait before requesting again.'
+      });
+    }
+
+    // Send SMS via Twilio
     await client.messages.create({
       body: `Your BusWay login OTP is: ${otp}`,
       from: process.env.TWILIO_PHONE_NUMBER,
@@ -79,25 +109,16 @@ router.post('/send', async (req, res) => {
     });
 
   } catch (err) {
-
     console.error('Send OTP error:', err);
-
     res.status(500).json({
       error: 'Failed to send OTP'
     });
   }
 });
 
-
-
 // ================= VERIFY OTP =================
 router.post('/verify', async (req, res) => {
-
-  const phone =
-    req.body.phone ||
-    req.body.mobile_number ||
-    req.body.mobileNumber;
-
+  const phone = extractPhone(req.body);
   const otp = req.body.otp;
 
   if (!phone || !otp) {
@@ -107,9 +128,7 @@ router.post('/verify', async (req, res) => {
   }
 
   try {
-
-    const formattedPhone =
-      '+91' + phone.replace(/\D/g, '').slice(-10);
+    const formattedPhone = formatPhone(phone);
 
     const { data: record, error } = await supabaseAdmin
       .from('otp_logs')
@@ -133,7 +152,7 @@ router.post('/verify', async (req, res) => {
       });
     }
 
-    // mark OTP verified
+    // Mark OTP verified
     await supabaseAdmin
       .from('otp_logs')
       .update({ is_verified: true })
@@ -145,14 +164,11 @@ router.post('/verify', async (req, res) => {
     });
 
   } catch (err) {
-
     console.error('Verify OTP error:', err);
-
     res.status(500).json({
       error: 'OTP verification failed'
     });
   }
 });
-
 
 module.exports = router;

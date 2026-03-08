@@ -1,362 +1,229 @@
+
 import React, { useState, useEffect } from 'react';
-import api from '../lib/api';
-import { showToast, showLoading, closeSwal, showAlert, showConfirm } from '../lib/swal';
+import { api } from '../lib/api';
+import { MonthlyDue, PaymentStatus } from '../types';
+import { 
+  Search, 
+  Filter, 
+  CreditCard, 
+  Download, 
+  AlertCircle, 
+  CheckCircle2, 
+  Clock,
+  IndianRupee,
+  Calendar,
+  ArrowRight,
+  Receipt,
+  Plus,
+  GraduationCap
+} from 'lucide-react';
+import { showToast, showConfirm } from '../lib/swal';
 import { MONTHS } from '../constants';
-import { useStudents } from '../hooks/useStudents';
-import { useFees } from '../hooks/useFees';
-import Modal from '../components/Modal';
 
 const Fees: React.FC = () => {
-  const { dues, loading: duesLoading, fetchDues, markAsPaid, sendNotification, createFee, updateFee } = useFees();
-  const { students } = useStudents();
+  const [dues, setDues] = useState<MonthlyDue[]>([]);
+  const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [editingDue, setEditingDue] = useState<any>(null);
-  const [formData, setFormData] = useState({
-    student_id: '',
-    month: new Date().getMonth() + 1,
-    year: new Date().getFullYear(),
-    amount: 0,
-    due_date: new Date().toISOString().split('T')[0],
-    last_date: new Date().toISOString().split('T')[0],
-    fine_after_days: 5,
-    fine_per_day: 50,
-    sendNotification: true
+  const [activeFilter, setActiveFilter] = useState<PaymentStatus | 'ALL'>('ALL');
+
+  useEffect(() => {
+    fetchDues();
+  }, []);
+
+  const fetchDues = async () => {
+    try {
+      const { data } = await api.get('fees/dues');
+      setDues(data || []);
+    } catch (err) {
+      console.error('Failed to fetch dues:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const filteredDues = dues.filter(d => {
+    const matchesSearch = d.student_name?.toLowerCase().includes(searchTerm.toLowerCase()) || 
+                         d.admission_number?.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesFilter = activeFilter === 'ALL' || d.status === activeFilter;
+    return matchesSearch && matchesFilter;
   });
 
-  const [statusFilter, setStatusFilter] = useState('ALL');
-
-  const handleEdit = (due: any) => {
-    setEditingDue(due);
-    setFormData({
-      student_id: due.student_id,
-      month: due.month,
-      year: due.year,
-      amount: due.amount,
-      due_date: due.due_date ? due.due_date.split('T')[0] : '',
-      last_date: due.last_date ? due.last_date.split('T')[0] : '',
-      fine_after_days: due.fine_after_days !== undefined ? due.fine_after_days : 5,
-      fine_per_day: due.fine_per_day !== undefined ? due.fine_per_day : 50,
-      sendNotification: false
-    });
-    setIsModalOpen(true);
-  };
-
-  const handleStudentChange = (studentId: string) => {
-    const student = students.find(s => s.id === studentId);
-    if (student) {
-      setFormData(prev => ({
-        ...prev,
-        student_id: studentId,
-        amount: student.monthly_fee || 0
-      }));
-    }
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!formData.student_id) {
-      showAlert('Error', 'Please select a student', 'error');
-      return;
-    }
-
-    showLoading(editingDue ? 'Updating Fee...' : 'Generating Fee...');
-    const success = editingDue 
-      ? await updateFee(editingDue.id, formData)
-      : await createFee(formData);
-    closeSwal();
-
-    if (success) {
-      showToast(editingDue ? 'Fee updated successfully' : 'Fee generated successfully', 'success');
-      setIsModalOpen(false);
-      setEditingDue(null);
-      fetchDues();
-    } else {
-      showAlert('Error', editingDue ? 'Failed to update fee' : 'Failed to generate fee', 'error');
-    }
-  };
-
-  const handleMarkPaid = async (id: string) => {
-    const confirmed = await showConfirm('Mark as Paid?', 'This will record the payment and update the status to PAID.', 'Confirm');
+  const handleMarkPaid = async (dueId: string) => {
+    const confirmed = await showConfirm('Mark as Paid?', 'This will record a manual cash payment.');
     if (confirmed) {
-      showLoading('Updating Status...');
-      const success = await markAsPaid(id);
-      closeSwal();
-      if (success) {
-        showToast('Status updated successfully', 'success');
-      } else {
-        showAlert('Error', 'Failed to update status', 'error');
+      try {
+        await api.post(`fees/mark-paid/${dueId}`);
+        showToast('Payment recorded successfully');
+        fetchDues();
+      } catch (err) {
+        showToast('Failed to record payment', 'error');
       }
     }
   };
 
-  const handleManualNotify = async (id: string) => {
-    showLoading('Sending Notification...');
-    const success = await sendNotification(id);
-    closeSwal();
-    if (success) {
-      showToast('Notification sent successfully', 'success');
-    } else {
-      showAlert('Error', 'Failed to send notification', 'error');
-    }
+  const stats = {
+    totalPending: dues.filter(d => d.status !== PaymentStatus.PAID).reduce((acc, d) => acc + (d.total_due || 0), 0),
+    collectedThisMonth: dues.filter(d => d.status === PaymentStatus.PAID).reduce((acc, d) => acc + (d.total_due || 0), 0),
+    overdueCount: dues.filter(d => d.status === PaymentStatus.OVERDUE).length
   };
 
-  const filteredDues = dues.filter(d => 
-    (d.student_name || d.students?.full_name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
-    (d.admission_number || d.students?.admission_number || '').toLowerCase().includes(searchTerm.toLowerCase())
-  );
-
-  const inputClass = "w-full px-4 py-2 rounded-xl border border-slate-200 focus:border-primary focus:ring-4 focus:ring-primary/10 outline-none transition-all font-bold text-sm";
-  const labelClass = "block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1 ml-1";
-
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+    <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
         <div>
-          <h2 className="text-2xl font-black text-slate-800 tracking-tight uppercase">Fee Management</h2>
-          <p className="text-slate-500 font-bold uppercase text-[10px] tracking-widest">Monitor collections and generate monthly dues</p>
+          <h1 className="text-4xl font-black text-slate-900 tracking-tight uppercase">Fee Management</h1>
+          <p className="text-slate-500 font-bold uppercase text-[10px] tracking-widest mt-1">Financial Operations & Collections</p>
         </div>
-        <button 
-          onClick={() => setIsModalOpen(true)}
-          className="bg-primary text-white px-8 py-3 rounded-2xl font-black text-[10px] uppercase tracking-widest flex items-center gap-3 hover:bg-blue-700 transition-all shadow-xl shadow-primary/20"
-        >
-          <i className="fas fa-magic"></i>
-          Generate Monthly Dues
-        </button>
-      </div>
-
-      <div className="bg-white rounded-[2.5rem] border border-slate-200 overflow-hidden shadow-premium">
-        <div className="p-6 bg-slate-50/50 border-b border-slate-100 flex flex-col md:flex-row gap-4 items-center justify-between">
-          <div className="relative w-full max-w-md">
-            <i className="fas fa-search absolute left-5 top-1/2 -translate-y-1/2 text-slate-400"></i>
-            <input 
-              type="text" 
-              placeholder="Search by student name or admission number..." 
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-12 pr-6 py-3 rounded-2xl border border-primary/20 bg-primary/5 focus:border-primary focus:ring-4 focus:ring-primary/10 outline-none transition-all font-bold text-sm"
-            />
-          </div>
-          <div className="flex items-center gap-2 w-full md:w-auto">
-            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest whitespace-nowrap">Filter Status:</label>
-            <select 
-              value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value)}
-              className="bg-white border border-slate-200 px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest outline-none focus:ring-4 focus:ring-primary/5"
-            >
-              <option value="ALL">All Dues</option>
-              <option value="PENDING">Pending</option>
-              <option value="PAID">Paid</option>
-              <option value="OVERDUE">Overdue Only</option>
-            </select>
-          </div>
-        </div>
-
-        <div className="responsive-table-container">
-          {duesLoading ? (
-            <div className="flex flex-col items-center justify-center h-80">
-              <i className="fas fa-circle-notch fa-spin text-primary text-3xl"></i>
-            </div>
-          ) : (
-            <table className="w-full text-left responsive-table">
-              <thead>
-                <tr className="bg-slate-50 text-slate-400 text-[9px] font-black uppercase tracking-widest border-b border-slate-100">
-                  <th className="px-8 py-5">Student</th>
-                  <th className="px-8 py-5">Month/Year</th>
-                  <th className="px-8 py-5">Amount</th>
-                  <th className="px-8 py-5">Status</th>
-                  <th className="px-8 py-5">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-50">
-                {filteredDues.filter(d => {
-                  if (statusFilter === 'ALL') return true;
-                  if (statusFilter === 'OVERDUE') return d.status === 'PENDING' && d.late_fee > 0;
-                  return d.status === statusFilter;
-                }).map((due) => (
-                  <tr key={due.id} className="hover:bg-slate-50/50 transition-colors">
-                    <td className="px-8 py-5">
-                      <p className="font-black text-slate-800 tracking-tight text-sm">{due.student_name || due.students?.full_name}</p>
-                      <p className="text-[10px] text-slate-400 font-black uppercase tracking-widest">Adm: {due.admission_number || due.students?.admission_number}</p>
-                    </td>
-                    <td className="px-8 py-5">
-                      <p className="text-xs font-bold text-slate-600 uppercase">{MONTHS[due.month-1]} {due.year}</p>
-                    </td>
-                    <td className="px-8 py-5">
-                      <div className="space-y-1">
-                        <p className="text-sm font-black text-slate-800">₹{due.total_due || (due.amount + (due.late_fee || 0))}</p>
-                        {due.late_fee > 0 && (
-                          <p className="text-[9px] font-black text-danger uppercase tracking-widest">Incl. ₹{due.late_fee} Late Fee</p>
-                        )}
-                      </div>
-                    </td>
-                    <td className="px-8 py-5">
-                      <span className={`px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest border ${
-                        due.status === 'PAID' ? 'bg-success/10 text-success border-success/10' : 'bg-danger/10 text-danger border-danger/10'
-                      }`}>
-                        {due.status}
-                      </span>
-                      {due.paid_at && (
-                        <p className="text-[9px] text-slate-400 mt-1 font-bold">{new Date(due.paid_at).toLocaleDateString()}</p>
-                      )}
-                    </td>
-                    <td className="px-8 py-5">
-                      <div className="flex items-center gap-2">
-                        {due.status !== 'PAID' && (
-                          <>
-                            <button 
-                              onClick={() => handleMarkPaid(due.id)}
-                              className="p-2 text-success hover:bg-success/10 rounded-lg transition-all"
-                              title="Mark as Paid"
-                            >
-                              <i className="fas fa-check-circle"></i>
-                            </button>
-                            <button 
-                              onClick={() => handleEdit(due)}
-                              className="p-2 text-amber-500 hover:bg-amber-50 rounded-lg transition-all"
-                              title="Edit Fee"
-                            >
-                              <i className="fas fa-edit"></i>
-                            </button>
-                            <button 
-                              onClick={() => handleManualNotify(due.id)}
-                              className="p-2 text-primary hover:bg-primary/10 rounded-lg transition-all"
-                              title="Send Notification"
-                            >
-                              <i className="fas fa-bell"></i>
-                            </button>
-                          </>
-                        )}
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          )}
+        <div className="flex gap-3">
+          <button className="bg-white px-8 py-4 rounded-2xl border border-slate-100 text-slate-500 font-black uppercase text-[10px] tracking-widest hover:bg-slate-50 transition-all flex items-center gap-3">
+            <Download size={18} />
+            Export Report
+          </button>
+          <button className="bg-primary text-white px-8 py-4 rounded-2xl font-black uppercase text-[10px] tracking-widest shadow-xl shadow-primary/30 hover:bg-primary-dark hover:shadow-2xl hover:-translate-y-1 transition-all flex items-center gap-3 active:scale-95 active:translate-y-0">
+            <Plus size={18} />
+            Generate Dues
+          </button>
         </div>
       </div>
 
-      <Modal isOpen={isModalOpen} onClose={() => { setIsModalOpen(false); setEditingDue(null); }} title={editingDue ? "Edit Fee Record" : "Generate Monthly Due"}>
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <label className={labelClass}>Select Student</label>
-            <select 
-              value={formData.student_id}
-              onChange={(e) => handleStudentChange(e.target.value)}
-              className={inputClass}
-              required
-              disabled={!!editingDue}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="bg-white p-8 rounded-[2.5rem] border border-slate-100 shadow-premium">
+          <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Pending Collections</p>
+          <h3 className="text-3xl font-black text-slate-800 tracking-tighter">₹{stats.totalPending.toLocaleString()}</h3>
+          <div className="mt-4 flex items-center gap-2 text-red-500">
+            <AlertCircle size={14} />
+            <span className="text-[9px] font-black uppercase tracking-widest">{stats.overdueCount} Overdue Accounts</span>
+          </div>
+        </div>
+        <div className="bg-white p-8 rounded-[2.5rem] border border-slate-100 shadow-premium">
+          <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Collected (MTD)</p>
+          <h3 className="text-3xl font-black text-slate-800 tracking-tighter text-emerald-600">₹{stats.collectedThisMonth.toLocaleString()}</h3>
+          <div className="mt-4 flex items-center gap-2 text-emerald-500">
+            <CheckCircle2 size={14} />
+            <span className="text-[9px] font-black uppercase tracking-widest">85% Collection Rate</span>
+          </div>
+        </div>
+        <div className="bg-slate-950 p-8 rounded-[2.5rem] text-white">
+          <p className="text-[10px] font-black text-white/40 uppercase tracking-widest mb-2">Next Billing Cycle</p>
+          <h3 className="text-3xl font-black tracking-tighter">01 {MONTHS[new Date().getMonth()]}</h3>
+          <div className="mt-4 flex items-center gap-2 text-white/30">
+            <Calendar size={14} />
+            <span className="text-[9px] font-black uppercase tracking-widest">Automated Generation</span>
+          </div>
+        </div>
+      </div>
+
+      <div className="flex flex-col md:flex-row gap-4">
+        <div className="flex-1 bg-white rounded-2xl shadow-sm border border-slate-100 flex items-center px-6 py-4 focus-within:ring-4 ring-primary/10 transition-all">
+          <Search size={20} className="text-slate-400 mr-4" />
+          <input 
+            type="text" 
+            placeholder="Search by student name or ID..." 
+            className="bg-transparent border-none focus:ring-0 text-sm font-bold text-slate-700 placeholder:text-slate-300 w-full"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+          />
+        </div>
+        <div className="flex gap-2 p-1.5 bg-white rounded-2xl border border-slate-100">
+          {(['ALL', PaymentStatus.UNPAID, PaymentStatus.PAID, PaymentStatus.OVERDUE] as const).map(filter => (
+            <button
+              key={filter}
+              onClick={() => setActiveFilter(filter)}
+              className={`px-6 py-3 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all ${
+                activeFilter === filter ? 'bg-primary text-white shadow-lg shadow-primary/20' : 'text-slate-400 hover:text-slate-600'
+              }`}
             >
-              <option value="">Choose a student...</option>
-              {students.map(s => (
-                <option key={s.id} value={s.id}>{s.full_name} ({s.admission_number})</option>
-              ))}
-            </select>
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className={labelClass}>Month</label>
-              <select 
-                value={formData.month}
-                onChange={(e) => setFormData({...formData, month: Number(e.target.value)})}
-                className={inputClass}
-              >
-                {MONTHS.map((m, i) => (
-                  <option key={m} value={i + 1}>{m}</option>
-                ))}
-              </select>
-            </div>
-            <div>
-              <label className={labelClass}>Year</label>
-              <input 
-                type="number" 
-                value={formData.year}
-                onChange={(e) => setFormData({...formData, year: Number(e.target.value)})}
-                className={inputClass}
-              />
-            </div>
-          </div>
-
-          <div>
-            <label className={labelClass}>Bus Fee Amount (₹)</label>
-            <input 
-              type="number" 
-              value={formData.amount}
-              onChange={(e) => setFormData({...formData, amount: Number(e.target.value)})}
-              className={inputClass}
-              required
-            />
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className={labelClass}>Due Date</label>
-              <input 
-                type="date" 
-                value={formData.due_date}
-                onChange={(e) => setFormData({...formData, due_date: e.target.value})}
-                className={inputClass}
-                required
-              />
-            </div>
-            <div>
-              <label className={labelClass}>Last Date (Before Fine)</label>
-              <input 
-                type="date" 
-                value={formData.last_date}
-                onChange={(e) => setFormData({...formData, last_date: e.target.value})}
-                className={inputClass}
-                required
-              />
-            </div>
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className={labelClass}>Fine After Days</label>
-              <input 
-                type="number" 
-                value={formData.fine_after_days}
-                onChange={(e) => setFormData({...formData, fine_after_days: Number(e.target.value)})}
-                className={inputClass}
-              />
-            </div>
-            <div>
-              <label className={labelClass}>Fine Per Day (₹)</label>
-              <input 
-                type="number" 
-                value={formData.fine_per_day}
-                onChange={(e) => setFormData({...formData, fine_per_day: Number(e.target.value)})}
-                className={inputClass}
-              />
-            </div>
-          </div>
-
-          <div className="flex items-center gap-2 pt-2">
-            <input 
-              type="checkbox" 
-              id="sendNotification"
-              checked={formData.sendNotification}
-              onChange={(e) => setFormData({...formData, sendNotification: e.target.checked})}
-              className="w-4 h-4 text-primary rounded border-slate-300 focus:ring-primary"
-            />
-            <label htmlFor="sendNotification" className="text-xs font-bold text-slate-600 uppercase tracking-widest cursor-pointer">
-              Send Notification to Parent
-            </label>
-          </div>
-
-          <div className="pt-4">
-            <button 
-              type="submit"
-              className="w-full bg-primary text-white py-4 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-blue-700 transition-all shadow-xl shadow-primary/20"
-            >
-              {editingDue ? "Update Fee Record" : "Generate Fee Record"}
+              {filter}
             </button>
+          ))}
+        </div>
+      </div>
+
+      <div className="bg-white rounded-[2.5rem] border border-slate-100 shadow-premium overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="w-full text-left border-collapse">
+            <thead>
+              <tr className="bg-slate-50/50 border-b border-slate-100">
+                <th className="px-8 py-6 text-[9px] font-black text-slate-400 uppercase tracking-widest">Student</th>
+                <th className="px-8 py-6 text-[9px] font-black text-slate-400 uppercase tracking-widest">Month</th>
+                <th className="px-8 py-6 text-[9px] font-black text-slate-400 uppercase tracking-widest">Amount</th>
+                <th className="px-8 py-6 text-[9px] font-black text-slate-400 uppercase tracking-widest">Due Date</th>
+                <th className="px-8 py-6 text-[9px] font-black text-slate-400 uppercase tracking-widest">Status</th>
+                <th className="px-8 py-6 text-[9px] font-black text-slate-400 uppercase tracking-widest text-right">Actions</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-50">
+              {loading ? (
+                [1, 2, 3, 4, 5].map(i => (
+                  <tr key={i} className="animate-pulse">
+                    <td colSpan={6} className="px-8 py-8 h-20 bg-slate-50/20"></td>
+                  </tr>
+                ))
+              ) : filteredDues.map(due => (
+                <tr key={due.id} className="hover:bg-slate-50/50 transition-colors group">
+                  <td className="px-8 py-6">
+                    <div className="flex items-center gap-4">
+                      <div className="w-10 h-10 bg-slate-100 rounded-xl flex items-center justify-center text-slate-400 group-hover:bg-primary/10 group-hover:text-primary transition-colors">
+                        <GraduationCap size={20} />
+                      </div>
+                      <div>
+                        <p className="text-sm font-black text-slate-800 tracking-tight">{due.student_name}</p>
+                        <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">{due.admission_number}</p>
+                      </div>
+                    </div>
+                  </td>
+                  <td className="px-8 py-6">
+                    <p className="text-xs font-bold text-slate-600 uppercase tracking-tight">{MONTHS[due.month-1]} {due.year}</p>
+                  </td>
+                  <td className="px-8 py-6">
+                    <p className="text-sm font-black text-slate-800">₹{(due.total_due || due.amount).toLocaleString()}</p>
+                  </td>
+                  <td className="px-8 py-6">
+                    <div className="flex items-center gap-2 text-slate-500">
+                      <Clock size={14} />
+                      <span className="text-xs font-bold">{new Date(due.due_date).toLocaleDateString()}</span>
+                    </div>
+                  </td>
+                  <td className="px-8 py-6">
+                    <span className={`text-[8px] font-black px-3 py-1 rounded-full uppercase tracking-widest border ${
+                      due.status === PaymentStatus.PAID ? 'bg-emerald-50 text-emerald-600 border-emerald-100' : 
+                      due.status === PaymentStatus.OVERDUE ? 'bg-red-50 text-red-600 border-red-100' : 
+                      'bg-orange-50 text-orange-600 border-orange-100'
+                    }`}>
+                      {due.status}
+                    </span>
+                  </td>
+                  <td className="px-8 py-6 text-right">
+                    <div className="flex items-center justify-end gap-2">
+                      {due.status !== PaymentStatus.PAID && (
+                        <button 
+                          onClick={() => handleMarkPaid(due.id)}
+                          className="p-3 bg-emerald-50 text-emerald-600 rounded-xl hover:bg-emerald-600 hover:text-white transition-all shadow-sm active:scale-95"
+                          title="Mark as Paid"
+                        >
+                          <CheckCircle2 size={16} />
+                        </button>
+                      )}
+                      <button className="p-3 bg-slate-50 text-slate-400 rounded-xl hover:bg-slate-900 hover:text-white transition-all shadow-sm active:scale-95">
+                        <Receipt size={16} />
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+        {filteredDues.length === 0 && !loading && (
+          <div className="py-20 text-center">
+            <div className="w-20 h-20 bg-slate-50 rounded-3xl flex items-center justify-center text-slate-300 mx-auto mb-6">
+              <IndianRupee size={40} />
+            </div>
+            <h3 className="text-xl font-black text-slate-900 tracking-tight mb-2">No Records Found</h3>
+            <p className="text-slate-500 text-sm">Try adjusting your search or filters.</p>
           </div>
-        </form>
-      </Modal>
+        )}
+      </div>
     </div>
   );
 };

@@ -1,223 +1,224 @@
 
 import React, { useState, useEffect } from 'react';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, Area, PieChart, Pie, Cell } from 'recharts';
-import api from '../lib/api';
-import { showToast, showAlert, showLoading, closeSwal } from '../lib/swal';
+import { api } from '../lib/api';
+import { 
+  BarChart, 
+  Bar, 
+  XAxis, 
+  YAxis, 
+  CartesianGrid, 
+  Tooltip, 
+  ResponsiveContainer,
+  PieChart,
+  Pie,
+  Cell,
+  LineChart,
+  Line
+} from 'recharts';
+import { 
+  Download, 
+  Filter, 
+  FileText, 
+  TrendingUp, 
+  Users, 
+  Bus, 
+  CreditCard,
+  Calendar,
+  ChevronRight,
+  Printer,
+  Share2
+} from 'lucide-react';
 
 const Reports: React.FC = () => {
-  const [activeReport, setActiveReport] = useState('revenue');
-  const [revenueData, setRevenueData] = useState<any[]>([]);
-  const [defaulterData, setDefaulterData] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-
-  const routeDistribution = [
-    { name: 'North Zone', value: 450000, color: '#1e40af' },
-    { name: 'South City', value: 320000, color: '#3b82f6' },
-    { name: 'East Highland', value: 280000, color: '#60a5fa' },
-    { name: 'West Link', value: 150000, color: '#93c5fd' },
-  ];
+  const [activeReport, setActiveReport] = useState('Financial');
 
   useEffect(() => {
-    const fetchReportData = async () => {
-      setLoading(true);
-      try {
-        const statsRes = await api.get('/dashboard/stats');
-        setRevenueData(statsRes.data.revenueTrend || []);
-        
-        const defRes = await api.get('/reports/defaulters');
-        setDefaulterData(defRes.data || []);
-      } catch (err) {
-        // Mock fallback
-        setRevenueData([
-          { month: 'Oct', revenue: 450000 },
-          { month: 'Nov', revenue: 520000 },
-          { month: 'Dec', revenue: 480000 },
-          { month: 'Jan', revenue: 610000 },
-          { month: 'Feb', revenue: 590000 },
-          { month: 'Mar', revenue: 650000 },
-        ]);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchReportData();
+    setTimeout(() => setLoading(false), 1000);
   }, []);
 
-  const handleExport = () => {
-    showLoading('Generating Archive...');
-    setTimeout(() => {
-      closeSwal();
-      showAlert('Export Complete', 'The collection audit archive (CSV) has been prepared and downloaded.', 'success');
-    }, 1500);
-  };
+  const financialData = [
+    { name: 'Jan', revenue: 45000, expenses: 32000 },
+    { name: 'Feb', revenue: 52000, expenses: 34000 },
+    { name: 'Mar', revenue: 48000, expenses: 31000 },
+    { name: 'Apr', revenue: 61000, expenses: 38000 },
+    { name: 'May', revenue: 55000, expenses: 35000 },
+    { name: 'Jun', revenue: 67000, expenses: 40000 },
+  ];
+
+  const routeEfficiency = [
+    { name: 'Route A', efficiency: 85 },
+    { name: 'Route B', efficiency: 72 },
+    { name: 'Route C', efficiency: 94 },
+    { name: 'Route D', efficiency: 68 },
+    { name: 'Route E', efficiency: 81 },
+  ];
+
+  const COLORS = ['#6366f1', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6'];
+
+  const reportTypes = [
+    { name: 'Financial', icon: CreditCard, description: 'Revenue, Dues & Expenses' },
+    { name: 'Attendance', icon: Users, description: 'Student Presence Trends' },
+    { name: 'Fleet', icon: Bus, description: 'Route & Fuel Efficiency' },
+    { name: 'Audit', icon: FileText, description: 'System Access & Changes' },
+  ];
 
   return (
-    <div className="space-y-8 pb-10">
+    <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
         <div>
-          <h2 className="text-3xl font-black text-slate-800 tracking-tight">Intelligence Engine</h2>
-          <p className="text-slate-500 font-bold uppercase text-[10px] tracking-widest mt-2">Comprehensive Performance Analytics</p>
+          <h1 className="text-4xl font-black text-slate-900 tracking-tight uppercase">Intelligence Hub</h1>
+          <p className="text-slate-500 font-bold uppercase text-[10px] tracking-widest mt-1">Data Analytics & Strategic Reporting</p>
         </div>
-        <div className="flex p-1.5 bg-white border border-slate-200 rounded-[1.5rem] shadow-sm">
-          {['revenue', 'routes', 'defaulters'].map(tab => (
-            <button 
-              key={tab}
-              onClick={() => setActiveReport(tab)}
-              className={`px-8 py-2.5 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all ${activeReport === tab ? 'bg-primary text-white shadow-lg' : 'text-slate-400 hover:text-slate-600'}`}
-            >
-              {tab.charAt(0).toUpperCase() + tab.slice(1)}
-            </button>
-          ))}
+        <div className="flex gap-3">
+          <button className="bg-white px-6 py-4 rounded-2xl border border-slate-100 text-slate-500 font-black uppercase text-[10px] tracking-widest hover:bg-slate-50 transition-all flex items-center gap-3">
+            <Share2 size={18} />
+            Share
+          </button>
+          <button className="bg-primary text-white px-8 py-4 rounded-2xl font-black uppercase text-[10px] tracking-widest shadow-xl shadow-primary/30 hover:bg-primary-dark hover:shadow-2xl hover:-translate-y-1 transition-all flex items-center gap-3 active:scale-95 active:translate-y-0">
+            <Printer size={18} />
+            Print Report
+          </button>
         </div>
       </div>
 
-      {loading ? (
-        <div className="p-20 text-center bg-white rounded-[3rem] border border-slate-200 shadow-premium">
-          <i className="fas fa-circle-notch fa-spin text-primary text-3xl"></i>
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
+        <div className="space-y-4">
+          <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-4 mb-2">Report Categories</p>
+          {reportTypes.map((type) => (
+            <button
+              key={type.name}
+              onClick={() => setActiveReport(type.name)}
+              className={`w-full p-6 rounded-[2rem] text-left transition-all group border ${
+                activeReport === type.name 
+                  ? 'bg-slate-950 text-white shadow-2xl shadow-slate-900/40 border-slate-900' 
+                  : 'bg-white text-slate-500 border-slate-100 hover:bg-slate-50'
+              }`}
+            >
+              <div className="flex items-center justify-between mb-4">
+                <div className={`w-12 h-12 rounded-2xl flex items-center justify-center transition-colors ${
+                  activeReport === type.name ? 'bg-primary text-white' : 'bg-slate-50 text-slate-400 group-hover:bg-primary/10 group-hover:text-primary'
+                }`}>
+                  <type.icon size={24} />
+                </div>
+                <ChevronRight size={18} className={activeReport === type.name ? 'text-white/20' : 'text-slate-200'} />
+              </div>
+              <h3 className="text-sm font-black uppercase tracking-tight mb-1">{type.name}</h3>
+              <p className={`text-[10px] font-bold uppercase tracking-widest ${activeReport === type.name ? 'text-white/40' : 'text-slate-400'}`}>
+                {type.description}
+              </p>
+            </button>
+          ))}
         </div>
-      ) : activeReport === 'revenue' ? (
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          <div className="lg:col-span-2 bg-white p-10 rounded-[2.5rem] border border-slate-200 shadow-premium relative overflow-hidden group">
-            <h3 className="font-black text-slate-800 uppercase tracking-widest text-[11px] mb-10">Monthly Growth Velocity</h3>
-            <div style={{ width: '100%', height: 400 }}>
+
+        <div className="lg:col-span-3 space-y-8">
+          <div className="bg-white p-10 rounded-[3rem] border border-slate-100 shadow-premium">
+            <div className="flex items-center justify-between mb-10">
+              <div>
+                <h3 className="text-xl font-black text-slate-800 uppercase tracking-tight">{activeReport} Analysis</h3>
+                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">Strategic Performance Visualization</p>
+              </div>
+              <div className="flex gap-4">
+                <div className="flex items-center gap-2">
+                  <div className="w-2 h-2 rounded-full bg-primary"></div>
+                  <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Revenue</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="w-2 h-2 rounded-full bg-slate-200"></div>
+                  <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Expenses</span>
+                </div>
+              </div>
+            </div>
+            
+            <div className="h-[400px] w-full">
               <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={revenueData}>
-                  <defs>
-                    <linearGradient id="colorRev" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#1e40af" stopOpacity={0.1}/>
-                      <stop offset="95%" stopColor="#1e40af" stopOpacity={0}/>
-                    </linearGradient>
-                  </defs>
+                <BarChart data={financialData}>
                   <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-                  <XAxis dataKey="month" axisLine={false} tickLine={false} tick={{ fontSize: 10, fontWeight: 700, fill: '#94a3b8' }} dy={10} />
-                  <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 10, fontWeight: 700, fill: '#94a3b8' }} />
-                  <Tooltip contentStyle={{ borderRadius: '20px', border: 'none', boxShadow: '0 25px 50px -12px rgb(0 0 0 / 0.15)', padding: '16px' }} />
-                  <Area type="monotone" dataKey="revenue" stroke="#1e40af" strokeWidth={5} fill="url(#colorRev)" />
-                </AreaChart>
+                  <XAxis 
+                    dataKey="name" 
+                    axisLine={false} 
+                    tickLine={false} 
+                    tick={{ fontSize: 10, fontWeight: 700, fill: '#94a3b8' }}
+                    dy={10}
+                  />
+                  <YAxis 
+                    axisLine={false} 
+                    tickLine={false} 
+                    tick={{ fontSize: 10, fontWeight: 700, fill: '#94a3b8' }}
+                  />
+                  <Tooltip 
+                    cursor={{ fill: '#f8fafc' }}
+                    contentStyle={{ borderRadius: '16px', border: 'none', boxShadow: '0 20px 25px -5px rgb(0 0 0 / 0.1)' }}
+                  />
+                  <Bar dataKey="revenue" fill="#6366f1" radius={[8, 8, 0, 0]} barSize={40} />
+                  <Bar dataKey="expenses" fill="#e2e8f0" radius={[8, 8, 0, 0]} barSize={40} />
+                </BarChart>
               </ResponsiveContainer>
             </div>
           </div>
-          <div className="space-y-6">
-             <div className="bg-slate-900 p-10 rounded-[2.5rem] text-white flex flex-col justify-between h-full relative overflow-hidden shadow-2xl">
-               <div className="absolute top-0 right-0 p-8 opacity-5">
-                  <i className="fas fa-file-export text-9xl"></i>
-               </div>
-               <div>
-                  <h3 className="font-black text-white/50 uppercase tracking-widest text-[11px] mb-4">Export Hub</h3>
-                  <p className="text-sm font-bold text-white/60 mb-10 leading-relaxed">Secure CSV extraction for fiscal audits and executive summaries.</p>
-               </div>
-               <button 
-                 onClick={handleExport}
-                 className="w-full py-5 bg-white text-slate-900 font-black uppercase text-[10px] tracking-widest rounded-2xl shadow-xl hover:bg-slate-50 transition-all active:scale-[0.98]"
-               >
-                 Export Archives
-               </button>
-             </div>
-          </div>
-        </div>
-      ) : activeReport === 'routes' ? (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-           <div className="bg-white p-10 rounded-[3rem] border border-slate-200 shadow-premium">
-              <h3 className="font-black text-slate-800 uppercase tracking-widest text-[11px] mb-8">Collection Distribution by Zone</h3>
-              <div style={{ width: '100%', height: 320 }}>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <div className="bg-white p-10 rounded-[3rem] border border-slate-100 shadow-premium">
+              <h3 className="text-lg font-black text-slate-800 uppercase tracking-tight mb-8">Route Efficiency</h3>
+              <div className="h-[250px] w-full">
                 <ResponsiveContainer width="100%" height="100%">
                   <PieChart>
-                    <Pie data={routeDistribution} cx="50%" cy="50%" innerRadius={80} outerRadius={120} paddingAngle={8} dataKey="value">
-                      {routeDistribution.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={entry.color} />
+                    <Pie
+                      data={routeEfficiency}
+                      cx="50%"
+                      cy="50%"
+                      innerRadius={60}
+                      outerRadius={80}
+                      paddingAngle={5}
+                      dataKey="efficiency"
+                    >
+                      {routeEfficiency.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                       ))}
                     </Pie>
                     <Tooltip />
                   </PieChart>
                 </ResponsiveContainer>
               </div>
-              <div className="grid grid-cols-2 gap-4 mt-8">
-                 {routeDistribution.map(item => (
-                   <div key={item.name} className="flex items-center gap-3 p-4 bg-slate-50 rounded-2xl">
-                      <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: item.color }}></div>
-                      <div>
-                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{item.name}</p>
-                        <p className="text-sm font-black text-slate-800">₹{(item.value/1000).toFixed(0)}K</p>
-                      </div>
-                   </div>
-                 ))}
+              <div className="grid grid-cols-2 gap-4 mt-6">
+                {routeEfficiency.map((route, idx) => (
+                  <div key={idx} className="flex items-center gap-3">
+                    <div className="w-2 h-2 rounded-full" style={{ backgroundColor: COLORS[idx % COLORS.length] }}></div>
+                    <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">{route.name}</span>
+                  </div>
+                ))}
               </div>
-           </div>
-           <div className="space-y-6">
-              <div className="bg-primary p-10 rounded-[3rem] text-white shadow-2xl relative overflow-hidden group">
-                 <div className="absolute top-0 right-0 p-8 opacity-10 group-hover:rotate-12 transition-transform">
-                    <i className="fas fa-route text-9xl"></i>
-                 </div>
-                 <h4 className="font-black text-[10px] uppercase tracking-widest mb-10 text-white/40">Efficiency Metrics</h4>
-                 <div className="space-y-8">
-                    <div className="flex justify-between items-end">
-                       <div>
-                          <p className="text-white/50 text-[10px] font-black uppercase mb-1">Top Performing Route</p>
-                          <p className="text-2xl font-black">North Zone</p>
-                       </div>
-                       <span className="text-success font-black text-xs uppercase tracking-widest">+18.4%</span>
-                    </div>
-                    <div className="h-px bg-white/10"></div>
-                    <div className="flex justify-between items-end">
-                       <div>
-                          <p className="text-white/50 text-[10px] font-black uppercase mb-1">Average Fee Recovery</p>
-                          <p className="text-2xl font-black">94.2%</p>
-                       </div>
-                       <span className="text-primary-light font-black text-xs uppercase tracking-widest">Healthy</span>
-                    </div>
-                 </div>
+            </div>
+
+            <div className="bg-slate-950 p-10 rounded-[3rem] text-white relative overflow-hidden">
+              <div className="absolute top-0 right-0 w-40 h-40 bg-primary/20 rounded-bl-full -mr-10 -mt-10 blur-3xl"></div>
+              <h3 className="text-lg font-black uppercase tracking-tight mb-8 relative z-10">Strategic Summary</h3>
+              <div className="space-y-8 relative z-10">
+                <div>
+                  <p className="text-[10px] font-black text-white/40 uppercase tracking-widest mb-2">Projected Growth</p>
+                  <div className="flex items-end gap-3">
+                    <h4 className="text-4xl font-black tracking-tighter text-primary">+24%</h4>
+                    <TrendingUp size={24} className="text-primary mb-1" />
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-6">
+                  <div>
+                    <p className="text-[9px] font-black text-white/40 uppercase tracking-widest mb-1">Active Users</p>
+                    <p className="text-xl font-black tracking-tight">1,240</p>
+                  </div>
+                  <div>
+                    <p className="text-[9px] font-black text-white/40 uppercase tracking-widest mb-1">Avg Efficiency</p>
+                    <p className="text-xl font-black tracking-tight">88.4%</p>
+                  </div>
+                </div>
+                <button className="w-full py-4 bg-white/5 hover:bg-white/10 rounded-2xl text-[9px] font-black uppercase tracking-widest transition-all border border-white/5">
+                  Download Full PDF
+                </button>
               </div>
-           </div>
-        </div>
-      ) : (
-        <div className="bg-white rounded-[3rem] border border-slate-200 overflow-hidden shadow-premium">
-          <div className="p-8 bg-slate-50 border-b border-slate-100 flex items-center justify-between">
-             <h3 className="font-black text-slate-800 uppercase tracking-widest text-[11px]">Fee Defaulter Ledger</h3>
-             <span className="px-4 py-1.5 bg-danger/10 text-danger rounded-full text-[9px] font-black uppercase tracking-widest">{defaulterData.length} Records Found</span>
+            </div>
           </div>
-          <table className="w-full text-left">
-            <thead>
-              <tr className="bg-slate-50/50 text-slate-400 text-[9px] font-black uppercase tracking-widest border-b border-slate-100">
-                <th className="px-10 py-5">Student Identity</th>
-                <th className="px-8 py-5">Assigned Route</th>
-                <th className="px-8 py-5">Billing Cycle</th>
-                <th className="px-8 py-5 text-right">Total Overdue</th>
-                <th className="px-10 py-5 text-right">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-50">
-              {defaulterData.length > 0 ? defaulterData.map((d, i) => (
-                <tr key={i} className="hover:bg-slate-50/50 transition-colors group">
-                  <td className="px-10 py-5">
-                     <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-lg bg-danger/10 text-danger flex items-center justify-center text-[10px] font-black">{d.full_name.charAt(0)}</div>
-                        <span className="font-black text-slate-800 tracking-tight">{d.full_name}</span>
-                     </div>
-                  </td>
-                  <td className="px-8 py-5 text-xs font-bold text-slate-500 uppercase tracking-widest">{d.route_name}</td>
-                  <td className="px-8 py-5 text-xs font-black text-slate-400 uppercase tracking-widest">Month {d.month} / {d.year}</td>
-                  <td className="px-8 py-5 text-right font-black text-danger text-lg">₹{Number(d.total_due || 0).toLocaleString()}</td>
-                  <td className="px-10 py-5 text-right">
-                    <button 
-                      onClick={() => showToast('Reminder Sent', 'success')}
-                      className="text-[10px] font-black text-primary uppercase tracking-widest hover:underline transition-all"
-                    >
-                      Send Notice
-                    </button>
-                  </td>
-                </tr>
-              )) : (
-                <tr>
-                  <td colSpan={5} className="p-24 text-center">
-                    <i className="fas fa-check-double text-5xl text-success/10 mb-6 block"></i>
-                    <p className="text-slate-300 font-black uppercase text-xs tracking-[0.4em]">Zero Default Records</p>
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
         </div>
-      )}
+      </div>
     </div>
   );
 };

@@ -3,7 +3,7 @@ import { User, MonthlyDue, PaymentStatus, Student } from '../types';
 import { MOCK_STUDENTS, MOCK_DUES, MONTHS } from '../constants';
 import { usePayments } from '../hooks/usePayments';
 import PaymentPortal from '../components/PaymentPortal';
-import api from '../lib/api';
+import { api } from '../lib/api';
 import { useTracking } from '../hooks/useTracking';
 import { isMonthPayable } from '../utils/feeCalculator';
 import BusCameraModal from '../components/BusCameraModal';
@@ -300,6 +300,12 @@ const ParentDashboard: React.FC<{ user: User }> = ({ user }) => {
           </div>
         </div>
       </div>
+      {isPickerOpen && (
+        <BoardingLocationPicker 
+          onSave={handleLocationSave}
+          onClose={() => setIsPickerOpen(false)}
+        />
+      )}
     </div>
   );
 };

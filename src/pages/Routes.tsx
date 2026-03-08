@@ -1,243 +1,171 @@
-import React, { useState } from 'react';
+
+import React, { useState, useEffect } from 'react';
+import { api } from '../lib/api';
+import { Route } from '../types';
+import { 
+  Search, 
+  Plus, 
+  MapPin, 
+  Navigation, 
+  MoreVertical, 
+  Route as RouteIcon,
+  Clock,
+  Users,
+  IndianRupee,
+  ChevronRight,
+  Trash2,
+  Edit2
+} from 'lucide-react';
 import Modal from '../components/Modal';
-import { useRoutes } from '../hooks/useRoutes';
-import { showToast, showLoading, closeSwal, showAlert, showConfirm } from '../lib/swal';
+import { showToast, showConfirm } from '../lib/swal';
 
 const Routes: React.FC = () => {
-  const { routes, loading, addRoute, updateRoute, deleteRoute } = useRoutes();
+  const [routes, setRoutes] = useState<Route[]>([]);
+  const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [editingId, setEditingId] = useState<string | null>(null);
-  const [formData, setFormData] = useState({
-    route_name: '',
-    code: '',
-    distance_km: 0,
-    base_fee: 0,
-    start_point: '',
-    end_point: ''
-  });
+  const [selectedRoute, setSelectedRoute] = useState<Route | null>(null);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  useEffect(() => {
+    fetchRoutes();
+  }, []);
 
-    if (formData.distance_km <= 0 || formData.base_fee <= 0) {
-      showAlert('Invalid Input', 'Distance and Base Fee must be greater than zero.', 'warning');
-      return;
-    }
-
-    setIsModalOpen(false);
-    showLoading('Syncing Route...');
-    
-    let result;
-    if (editingId) {
-      result = await updateRoute(editingId, formData);
-    } else {
-      result = await addRoute(formData);
-    }
-    
-    closeSwal();
-
-    if (result.success) {
-      resetForm();
-      showToast(editingId ? 'Route updated' : 'Route activated', 'success');
-    } else {
-      setIsModalOpen(true);
-      showAlert('Failed', result.error || 'System error. Try again.', 'error');
+  const fetchRoutes = async () => {
+    try {
+      const { data } = await api.get('routes');
+      setRoutes(data || []);
+    } catch (err) {
+      console.error('Failed to fetch routes:', err);
+    } finally {
+      setLoading(false);
     }
   };
 
-  const resetForm = () => {
-    setFormData({ route_name: '', code: '', distance_km: 0, base_fee: 0, start_point: '', end_point: '' });
-    setEditingId(null);
-  };
-
-  const handleEdit = (route: any) => {
-    setFormData({
-      route_name: route.route_name || '',
-      code: route.code || '',
-      distance_km: route.distance_km || 0,
-      base_fee: route.base_fee || 0,
-      start_point: route.start_point || '',
-      end_point: route.end_point || ''
-    });
-    setEditingId(route.id);
-    setIsModalOpen(true);
-  };
-
-  const handleDelete = async (id: string, route_name: string) => {
-    const confirmed = await showConfirm('Remove Route?', `Archive ${route_name}?`, 'Delete');
+  const handleDelete = async (id: string) => {
+    const confirmed = await showConfirm('Delete Route?', 'This will affect all students assigned to this route.');
     if (confirmed) {
-      showLoading('Deleting...');
-      const success = await deleteRoute(id);
-      closeSwal();
-      if (success) showToast('Route removed', 'info');
-      else showAlert('Error', 'Failed to remove route', 'error');
+      try {
+        await api.delete(`routes/${id}`);
+        showToast('Route deleted successfully');
+        fetchRoutes();
+      } catch (err) {
+        showToast('Failed to delete route', 'error');
+      }
     }
   };
-
-  const inputClass = "w-full px-5 py-4 rounded-2xl bg-primary/5 border border-primary/20 focus:border-primary focus:ring-4 focus:ring-primary/10 outline-none font-bold text-slate-800 placeholder-slate-300 transition-all";
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+    <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
         <div>
-          <h2 className="text-2xl font-black text-slate-800 tracking-tight uppercase">Fleet Intelligence</h2>
-          <p className="text-slate-500 font-bold uppercase text-[10px] tracking-widest">Configuration of zones and transport pricing</p>
+          <h1 className="text-4xl font-black text-slate-900 tracking-tight uppercase">Fleet Routes</h1>
+          <p className="text-slate-500 font-bold uppercase text-[10px] tracking-widest mt-1">Network Mapping & Logistics</p>
         </div>
         <button 
-          onClick={() => { resetForm(); setIsModalOpen(true); }}
-          className="bg-primary text-white px-8 py-3 rounded-2xl font-black text-[10px] uppercase tracking-widest flex items-center gap-3 hover:bg-blue-700 transition-all shadow-xl shadow-primary/20"
+          onClick={() => { setSelectedRoute(null); setIsModalOpen(true); }}
+          className="bg-primary text-white px-8 py-4 rounded-2xl font-black uppercase text-[10px] tracking-widest shadow-xl shadow-primary/30 hover:bg-primary-dark hover:shadow-2xl hover:-translate-y-1 transition-all flex items-center gap-3 active:scale-95 active:translate-y-0"
         >
-          <i className="fas fa-plus"></i>
-          Provision New Route
+          <Plus size={18} />
+          Create New Route
         </button>
       </div>
 
-      <div className="bg-white rounded-[3rem] border border-slate-200 overflow-hidden shadow-premium">
-        <div className="overflow-x-auto min-h-[300px]">
-          {loading ? (
-            <div className="p-20 text-center">
-               <i className="fas fa-circle-notch fa-spin text-primary text-2xl"></i>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+        {loading ? (
+          [1, 2, 3].map(i => (
+            <div key={i} className="bg-white p-10 rounded-[3rem] border border-slate-100 animate-pulse h-80"></div>
+          ))
+        ) : routes.length > 0 ? (
+          routes.map(route => (
+            <div key={route.id} className="bg-white p-10 rounded-[3rem] border border-slate-100 shadow-premium hover:shadow-2xl transition-all duration-500 group relative overflow-hidden">
+              <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-bl-full -mr-4 -mt-4 transition-transform group-hover:scale-150 duration-700"></div>
+              
+              <div className="flex justify-between items-start mb-8 relative z-10">
+                <div className="w-16 h-16 bg-slate-50 rounded-2xl flex items-center justify-center text-slate-300 group-hover:bg-primary/10 group-hover:text-primary transition-colors">
+                  <RouteIcon size={32} />
+                </div>
+                <div className="flex gap-2">
+                  <span className="bg-slate-950 text-white text-[8px] font-black px-3 py-1 rounded-full uppercase tracking-widest">
+                    {route.code}
+                  </span>
+                  <button className="p-2 text-slate-300 hover:text-primary transition-colors">
+                    <MoreVertical size={18} />
+                  </button>
+                </div>
+              </div>
+
+              <h3 className="text-2xl font-black text-slate-800 tracking-tight mb-2 group-hover:text-primary transition-colors">{route.route_name}</h3>
+              <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-8 flex items-center gap-2">
+                <Navigation size={12} className="text-primary" />
+                {route.distance_km} KM Total Distance
+              </p>
+
+              <div className="grid grid-cols-2 gap-6 mb-10">
+                <div className="space-y-1">
+                  <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Base Fee</p>
+                  <p className="text-lg font-black text-slate-800">₹{route.base_fee.toLocaleString()}</p>
+                </div>
+                <div className="space-y-1">
+                  <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Active Students</p>
+                  <p className="text-lg font-black text-slate-800">24</p>
+                </div>
+              </div>
+
+              <div className="flex gap-3 pt-8 border-t border-slate-50 relative z-10">
+                <button 
+                  onClick={() => { setSelectedRoute(route); setIsModalOpen(true); }}
+                  className="flex-1 py-4 bg-slate-50 text-slate-600 text-[9px] font-black uppercase tracking-widest rounded-2xl hover:bg-slate-900 hover:text-white transition-all shadow-sm hover:shadow-lg active:scale-95 flex items-center justify-center gap-2"
+                >
+                  <Edit2 size={14} />
+                  Edit Route
+                </button>
+                <button 
+                  onClick={() => handleDelete(route.id)}
+                  className="px-5 py-4 bg-red-50 text-red-600 rounded-2xl hover:bg-red-600 hover:text-white transition-all shadow-sm hover:shadow-lg active:scale-95"
+                >
+                  <Trash2 size={18} />
+                </button>
+              </div>
             </div>
-          ) : routes.length > 0 ? (
-            <table className="w-full text-left">
-              <thead>
-                <tr className="bg-slate-50/50 text-slate-400 text-[9px] font-black uppercase tracking-[0.2em] border-b border-slate-100">
-                  <th className="px-8 py-5">Route Name</th>
-                  <th className="px-8 py-5">Code</th>
-                  <th className="px-8 py-5">Start Point</th>
-                  <th className="px-8 py-5">End Point</th>
-                  <th className="px-8 py-5 text-right">Distance</th>
-                  <th className="px-8 py-5 text-right">Base Fee</th>
-                  <th className="px-8 py-5 text-right">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-50">
-                {routes.map((route) => (
-                  <tr key={route.id} className="hover:bg-slate-50/50 transition-colors group">
-                    <td className="px-8 py-5">
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary transition-all">
-                           <i className="fas fa-route"></i>
-                        </div>
-                        <span className="font-black text-slate-800 tracking-tight text-sm">{route.route_name}</span>
-                      </div>
-                    </td>
-                    <td className="px-8 py-5">
-                      <span className="text-[10px] font-black px-2 py-0.5 bg-slate-100 text-slate-400 rounded-full uppercase tracking-widest border border-slate-200">
-                        {route.code}
-                      </span>
-                    </td>
-                    <td className="px-8 py-5 text-xs font-bold text-slate-600">{route.start_point || '---'}</td>
-                    <td className="px-8 py-5 text-xs font-bold text-slate-600">{route.end_point || '---'}</td>
-                    <td className="px-8 py-5 text-right font-black text-slate-700">{route.distance_km} KM</td>
-                    <td className="px-8 py-5 text-right font-black text-primary">₹{Number(route.base_fee || 0).toLocaleString()}</td>
-                    <td className="px-8 py-5 text-right">
-                      <div className="flex items-center justify-end gap-2">
-                        <button onClick={() => handleEdit(route)} className="w-8 h-8 flex items-center justify-center bg-white border border-slate-100 text-slate-400 hover:text-primary rounded-lg transition-all"><i className="fas fa-edit text-[10px]"></i></button>
-                        <button onClick={() => handleDelete(route.id, route.route_name)} className="w-8 h-8 flex items-center justify-center bg-white border border-slate-100 text-slate-400 hover:text-danger rounded-lg transition-all"><i className="fas fa-trash-alt text-[10px]"></i></button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          ) : (
-            <div className="p-24 text-center">
-               <div className="w-20 h-20 bg-slate-50 rounded-[2rem] flex items-center justify-center mx-auto mb-6">
-                   <i className="fas fa-map-marked text-3xl text-slate-200"></i>
-               </div>
-               <p className="text-[10px] font-black text-slate-300 uppercase tracking-[0.3em]">No routes registered in fleet</p>
+          ))
+        ) : (
+          <div className="col-span-full py-20 bg-slate-50 rounded-[3rem] border-2 border-dashed border-slate-200 flex flex-col items-center justify-center text-center px-8">
+            <div className="w-20 h-20 bg-white rounded-3xl flex items-center justify-center text-slate-300 mb-6 shadow-sm">
+              <RouteIcon size={40} />
             </div>
-          )}
-        </div>
+            <h3 className="text-xl font-black text-slate-900 tracking-tight mb-2">No Routes Defined</h3>
+            <p className="text-slate-500 text-sm max-w-xs mx-auto">Create your first route to start mapping your fleet operations.</p>
+          </div>
+        )}
       </div>
 
-      <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title={editingId ? "Edit Route" : "Provision New Route"}>
-        <form onSubmit={handleSubmit} className="space-y-5">
-          <div>
-            <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Route Identifier (Name)</label>
-            <input 
-              required
-              type="text" 
-              className={inputClass} 
-              placeholder="e.g. West Coast Link"
-              value={formData.route_name}
-              onChange={(e) => setFormData({...formData, route_name: e.target.value})}
-            />
+      <Modal 
+        isOpen={isModalOpen} 
+        onClose={() => setIsModalOpen(false)} 
+        title={selectedRoute ? 'Edit Route' : 'Create Route'}
+      >
+        <div className="space-y-6">
+          <div className="space-y-2">
+            <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">Route Name</label>
+            <input type="text" className="w-full bg-slate-50 border-none rounded-xl p-4 text-sm font-bold focus:ring-2 ring-primary/20 outline-none" placeholder="Kangra Main Express" />
           </div>
           <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Internal Code</label>
-              <input 
-                required
-                type="text" 
-                className={inputClass + " font-black uppercase text-primary"} 
-                placeholder="R-XXX"
-                value={formData.code}
-                onChange={(e) => setFormData({...formData, code: e.target.value.toUpperCase()})}
-              />
+            <div className="space-y-2">
+              <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">Route Code</label>
+              <input type="text" className="w-full bg-slate-50 border-none rounded-xl p-4 text-sm font-bold focus:ring-2 ring-primary/20 outline-none" placeholder="KNG-01" />
             </div>
-            <div>
-              <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Distance (KM)</label>
-              <input 
-                required
-                type="number" 
-                className={inputClass} 
-                placeholder="0"
-                value={formData.distance_km || ''}
-                onChange={(e) => setFormData({...formData, distance_km: Number(e.target.value)})}
-              />
+            <div className="space-y-2">
+              <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">Base Fee (₹)</label>
+              <input type="number" className="w-full bg-slate-50 border-none rounded-xl p-4 text-sm font-bold focus:ring-2 ring-primary/20 outline-none" placeholder="1800" />
             </div>
           </div>
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Start Point</label>
-              <input 
-                type="text" 
-                className={inputClass} 
-                placeholder="e.g. City Center"
-                value={formData.start_point || ''}
-                onChange={(e) => setFormData({...formData, start_point: e.target.value})}
-              />
-            </div>
-            <div>
-              <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">End Point</label>
-              <input 
-                type="text" 
-                className={inputClass} 
-                placeholder="e.g. School Campus"
-                value={formData.end_point || ''}
-                onChange={(e) => setFormData({...formData, end_point: e.target.value})}
-              />
-            </div>
+          <div className="space-y-2">
+            <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">Distance (KM)</label>
+            <input type="number" className="w-full bg-slate-50 border-none rounded-xl p-4 text-sm font-bold focus:ring-2 ring-primary/20 outline-none" placeholder="15" />
           </div>
-          <div>
-            <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Monthly Base Fee (₹)</label>
-            <input 
-              required
-              type="number" 
-              className={inputClass + " text-primary text-lg font-black"} 
-              placeholder="0"
-              value={formData.base_fee || ''}
-              onChange={(e) => setFormData({...formData, base_fee: Number(e.target.value)})}
-            />
-          </div>
-          <div className="pt-6 flex gap-3">
-            <button 
-              type="button" 
-              onClick={() => setIsModalOpen(false)}
-              className="flex-1 py-4 bg-slate-100 text-slate-600 font-black uppercase text-[10px] tracking-widest rounded-2xl hover:bg-slate-200 transition-all active:scale-95"
-            >
-              Cancel
-            </button>
-            <button 
-              type="submit" 
-              className="flex-1 py-4 bg-primary text-white font-black uppercase text-[10px] tracking-widest rounded-2xl shadow-xl shadow-primary/20 transition-all hover:bg-blue-800 active:scale-95"
-            >
-              {editingId ? 'Update Route' : 'Provision Route'}
-            </button>
-          </div>
-        </form>
+          <button className="w-full py-5 bg-primary text-white font-black uppercase text-[10px] tracking-widest rounded-2xl shadow-xl shadow-primary/20 active:scale-95 transition-all mt-4">
+            {selectedRoute ? 'Update Route' : 'Establish Route'}
+          </button>
+        </div>
       </Modal>
     </div>
   );

@@ -1,107 +1,91 @@
-import React, { useState, useEffect } from 'react';
-import { otpService } from '../services/otpService';
-import { showToast } from '../lib/swal';
-import { APP_NAME } from '../constants';
+
+import React, { useState } from 'react';
+import { Mail, ArrowLeft, Send, CheckCircle2, ShieldCheck } from 'lucide-react';
+import { Link } from 'react-router-dom';
 
 const ForgotPassword: React.FC = () => {
-  const [tab, setTab] = useState<'ADMIN' | 'PARENT'>('ADMIN');
-  const [step, setStep] = useState(1);
-  const [identifier, setIdentifier] = useState('');
-  const [otp, setOtp] = useState('');
-  const [newPassword, setNewPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
-  const [profileId, setProfileId] = useState('');
-  const [phone, setPhone] = useState('');
-  const [loading, setLoading] = useState(false);
-  const [timer, setTimer] = useState(0);
-  const [showPassword, setShowPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [email, setEmail] = useState('');
+  const [isSent, setIsSent] = useState(false);
 
-  useEffect(() => {
-    let interval: any;
-    if (timer > 0) interval = setInterval(() => setTimer((prev) => prev - 1), 1000);
-    return () => clearInterval(interval);
-  }, [timer]);
-
-  const handleSendOtp = async () => {
-    setLoading(true);
-    try {
-      const res = await otpService.sendForgotPasswordOTP(identifier, tab);
-      setProfileId(res.profileId);
-      setPhone(res.phone);
-      setStep(2);
-      setTimer(30);
-      showToast('OTP sent successfully', 'success');
-    } catch (err: any) {
-      showToast(err.message, 'error');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleVerifyOtp = async () => {
-    setLoading(true);
-    try {
-      await otpService.verifyForgotPasswordOTP(phone, otp);
-      setStep(3);
-    } catch (err: any) {
-      showToast(err.message, 'error');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleResetPassword = async () => {
-    if (newPassword !== confirmPassword) return showToast('Passwords do not match', 'error');
-    setLoading(true);
-    try {
-      await otpService.resetPassword(profileId, newPassword);
-      showToast('Password reset successful. Please login.', 'success');
-      setTimeout(() => window.location.href = '/', 1500);
-    } catch (err: any) {
-      showToast(err.message, 'error');
-    } finally {
-      setLoading(false);
-    }
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    // Simulate sending reset link
+    setIsSent(true);
   };
 
   return (
-    <div className="min-h-screen bg-slate-900 flex items-center justify-center p-4">
-      <div className="max-w-md w-full bg-white rounded-[2.5rem] p-8 shadow-2xl">
-        <h1 className="text-2xl font-black text-slate-900 text-center mb-8 uppercase tracking-widest">{APP_NAME}</h1>
-        <div className="flex gap-2 mb-8 bg-slate-100 p-1 rounded-2xl">
-          <button onClick={() => { setTab('ADMIN'); setStep(1); }} className={`flex-1 py-3 rounded-xl font-black text-[10px] uppercase tracking-widest ${tab === 'ADMIN' ? 'bg-white shadow' : ''}`}>Admin Reset</button>
-          <button onClick={() => { setTab('PARENT'); setStep(1); }} className={`flex-1 py-3 rounded-xl font-black text-[10px] uppercase tracking-widest ${tab === 'PARENT' ? 'bg-white shadow' : ''}`}>Parent Reset</button>
+    <div className="min-h-screen bg-slate-950 flex items-center justify-center p-6 relative overflow-hidden font-sans">
+      {/* Background Accents */}
+      <div className="absolute top-0 left-0 w-full h-full pointer-events-none">
+        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-primary/10 rounded-full blur-[120px]"></div>
+        <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-blue-500/10 rounded-full blur-[120px]"></div>
+      </div>
+
+      <div className="w-full max-w-md relative z-10">
+        <div className="bg-white rounded-[3rem] p-12 shadow-2xl border border-white/10">
+          <div className="text-center mb-12">
+            <div className="w-20 h-20 bg-primary/10 text-primary rounded-[2rem] flex items-center justify-center mx-auto mb-6">
+              <ShieldCheck size={40} />
+            </div>
+            <h1 className="text-3xl font-black text-slate-900 tracking-tight uppercase">Reset Access</h1>
+            <p className="text-slate-500 font-bold uppercase text-[10px] tracking-widest mt-2">Recover your account credentials</p>
+          </div>
+
+          {!isSent ? (
+            <form onSubmit={handleSubmit} className="space-y-8">
+              <div className="space-y-2">
+                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-4">Email Address</label>
+                <div className="relative group">
+                  <Mail className="absolute left-6 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-primary transition-colors" size={20} />
+                  <input 
+                    type="email" 
+                    required
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder="name@example.com" 
+                    className="w-full bg-slate-50 border-none rounded-2xl py-5 pl-16 pr-6 text-sm font-bold focus:ring-4 ring-primary/10 outline-none transition-all"
+                  />
+                </div>
+              </div>
+
+              <button 
+                type="submit"
+                className="w-full bg-primary text-white py-5 rounded-2xl font-black uppercase text-xs tracking-widest shadow-xl shadow-primary/20 hover:bg-primary-dark transition-all flex items-center justify-center gap-3"
+              >
+                <Send size={18} />
+                Send Reset Link
+              </button>
+            </form>
+          ) : (
+            <div className="text-center space-y-8 animate-in zoom-in duration-500">
+              <div className="w-16 h-16 bg-emerald-50 text-emerald-600 rounded-full flex items-center justify-center mx-auto">
+                <CheckCircle2 size={32} />
+              </div>
+              <div className="space-y-2">
+                <p className="text-lg font-black text-slate-900 uppercase tracking-tight">Email Sent!</p>
+                <p className="text-sm font-medium text-slate-500 leading-relaxed">
+                  We've sent a password reset link to <span className="text-slate-900 font-bold">{email}</span>. Please check your inbox.
+                </p>
+              </div>
+              <button 
+                onClick={() => setIsSent(false)}
+                className="text-[10px] font-black text-primary uppercase tracking-widest hover:underline"
+              >
+                Didn't receive it? Try again
+              </button>
+            </div>
+          )}
+
+          <div className="mt-12 pt-10 border-t border-slate-50 text-center">
+            <Link 
+              to="/login" 
+              className="inline-flex items-center gap-2 text-[10px] font-black text-slate-400 uppercase tracking-widest hover:text-primary transition-colors"
+            >
+              <ArrowLeft size={14} />
+              Back to Sign In
+            </Link>
+          </div>
         </div>
-
-        {step === 1 && (
-          <div className="space-y-4">
-            <input type="text" placeholder={tab === 'ADMIN' ? 'Enter Phone Number' : 'Enter Admission Number'} value={identifier} onChange={(e) => setIdentifier(e.target.value)} className="w-full px-5 py-4 rounded-2xl bg-slate-50 border border-slate-200" />
-            <button onClick={handleSendOtp} disabled={loading} className="w-full py-4 bg-primary text-white rounded-2xl font-black uppercase tracking-widest">{loading ? 'Sending...' : 'Send OTP'}</button>
-          </div>
-        )}
-
-        {step === 2 && (
-          <div className="space-y-4">
-            <input type="text" placeholder="Enter 6-digit OTP" value={otp} onChange={(e) => setOtp(e.target.value)} className="w-full px-5 py-4 rounded-2xl bg-slate-50 border border-slate-200" />
-            <button onClick={handleVerifyOtp} disabled={loading} className="w-full py-4 bg-primary text-white rounded-2xl font-black uppercase tracking-widest">{loading ? 'Verifying...' : 'Verify OTP'}</button>
-            <button onClick={handleSendOtp} disabled={timer > 0 || loading} className="w-full py-2 text-slate-400 text-[10px] uppercase font-bold tracking-widest">{timer > 0 ? `Resend in ${timer}s` : 'Resend OTP'}</button>
-          </div>
-        )}
-
-        {step === 3 && (
-          <div className="space-y-4">
-            <div className="relative">
-              <input type={showPassword ? "text" : "password"} placeholder="New Password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} className="w-full px-5 py-4 rounded-2xl bg-slate-50 border border-slate-200" />
-              <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400"><i className={`fas ${showPassword ? 'fa-eye-slash' : 'fa-eye'}`}></i></button>
-            </div>
-            <div className="relative">
-              <input type={showConfirmPassword ? "text" : "password"} placeholder="Confirm New Password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} className="w-full px-5 py-4 rounded-2xl bg-slate-50 border border-slate-200" />
-              <button type="button" onClick={() => setShowConfirmPassword(!showConfirmPassword)} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400"><i className={`fas ${showConfirmPassword ? 'fa-eye-slash' : 'fa-eye'}`}></i></button>
-            </div>
-            <button onClick={handleResetPassword} disabled={loading} className="w-full py-4 bg-primary text-white rounded-2xl font-black uppercase tracking-widest">{loading ? 'Resetting...' : 'Reset Password'}</button>
-          </div>
-        )}
       </div>
     </div>
   );

@@ -63,18 +63,9 @@ export interface Student {
   base_fee?: number; // Deprecated
   status: 'active' | 'inactive' | 'graduated';
   risk_score?: number;
-
   routes?: { route_name: string };
   buses?: { plate: string };
-
-  parent?: {
-    id: string;
-    full_name: string;
-    phone_number: string;
-  };
-
-  profiles?: { full_name: string; phone_number: string }; // optional fallback
-
+  profiles?: { full_name: string; phone_number: string };
   created_at?: string;
 }
 
@@ -140,6 +131,8 @@ export interface Bus {
   plate: string;
   model: string;
   capacity: number;
+  fuel_type?: string;
+  insurance_expiry?: string;
   driver_name?: string;
   driver_phone?: string;
   route_id?: string;

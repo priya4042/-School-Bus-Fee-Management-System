@@ -1,324 +1,184 @@
-import React, { useState } from 'react';
-import { useBuses } from '../hooks/useBuses';
-import { useRoutes } from '../hooks/useRoutes';
+
+import React, { useState, useEffect } from 'react';
+import { api } from '../lib/api';
+import { Bus as BusType } from '../types';
+import { 
+  Plus, 
+  Bus as BusIcon, 
+  MoreVertical, 
+  ShieldCheck, 
+  AlertTriangle, 
+  Settings, 
+  Calendar,
+  User,
+  Fuel,
+  Gauge,
+  CheckCircle2,
+  XCircle,
+  Wrench
+} from 'lucide-react';
 import Modal from '../components/Modal';
-import { showConfirm, showToast, showLoading, closeSwal } from '../lib/swal';
+import { showToast, showConfirm } from '../lib/swal';
 
 const Buses: React.FC = () => {
-  const { buses, loading, registerBus, updateBus, deleteBus } = useBuses();
-  const { routes } = useRoutes();
+  const [buses, setBuses] = useState<BusType[]>([]);
+  const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [editingId, setEditingId] = useState<string | null>(null);
-  
-  const [formData, setFormData] = useState({
-    bus_number: '',
-    plate: '',
-    model: '',
-    capacity: 40,
-    driver_name: '',
-    driver_phone: '',
-    status: 'idle' as any,
-    route_id: ''
-  });
+  const [selectedBus, setSelectedBus] = useState<BusType | null>(null);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsModalOpen(false);
-    showLoading('Syncing Records...');
-    
-    // Prepare payload - handle empty route_id
-    const payload = {
-      ...formData,
-      route_id: formData.route_id || null
-    };
+  useEffect(() => {
+    fetchBuses();
+  }, []);
 
-    let result;
-    if (editingId) {
-      result = await updateBus(editingId, payload);
-    } else {
-      result = await registerBus(payload);
-    }
-    
-    closeSwal();
-    if (result.success) {
-      resetForm();
-      showToast(editingId ? 'Vehicle updated' : 'Vehicle registered', 'success');
-    } else {
-      // If failed, re-open modal so user doesn't lose data
-      setIsModalOpen(true);
-      import('../lib/swal').then(({ showAlert }) => {
-        showAlert('Failed', result.error || 'Could not save vehicle record.', 'error');
-      });
+  const fetchBuses = async () => {
+    try {
+      const { data } = await api.get('buses');
+      setBuses(data || []);
+    } catch (err) {
+      console.error('Failed to fetch buses:', err);
+    } finally {
+      setLoading(false);
     }
   };
 
-  const resetForm = () => {
-    setFormData({ 
-      bus_number: '', 
-      plate: '', 
-      model: '', 
-      capacity: 40, 
-      driver_name: '', 
-      driver_phone: '', 
-      status: 'idle', 
-      route_id: '' 
-    });
-    setEditingId(null);
-  };
-
-  const handleEdit = (bus: any) => {
-    setFormData({
-      bus_number: bus.bus_number || '',
-      plate: bus.plate || bus.vehicle_number || '', // Fallback for old data
-      model: bus.model || '',
-      capacity: bus.capacity,
-      driver_name: bus.driver_name || '',
-      driver_phone: bus.driver_phone || '',
-      status: bus.status || 'idle',
-      route_id: bus.route_id || ''
-    });
-    setEditingId(bus.id);
-    setIsModalOpen(true);
-  };
-
-  const handleDelete = async (id: string, plate: string) => {
-    const confirmed = await showConfirm(
-      'Decommission Vehicle?',
-      `Are you sure you want to remove ${plate} from the active fleet?`,
-      'Remove Asset'
-    );
+  const handleDelete = async (id: string) => {
+    const confirmed = await showConfirm('Decommission Bus?', 'This will remove the bus from active fleet operations.');
     if (confirmed) {
-      showLoading('Removing Asset...');
-      const result = await deleteBus(id);
-      closeSwal();
-      if (result.success) {
-        showToast('Asset removed successfully', 'info');
-      } else {
-        import('../lib/swal').then(({ showAlert }) => {
-          showAlert('Failed', result.error || 'Could not delete vehicle.', 'error');
-        });
+      try {
+        await api.delete(`buses/${id}`);
+        showToast('Bus removed successfully');
+        fetchBuses();
+      } catch (err) {
+        showToast('Failed to remove bus', 'error');
       }
     }
   };
 
-  const inputClass = "w-full px-5 py-4 rounded-2xl bg-primary/5 border border-primary/20 focus:border-primary focus:ring-4 focus:ring-primary/10 outline-none font-bold text-slate-800 placeholder-slate-300 transition-all";
-  const selectClass = "w-full px-5 py-4 rounded-2xl bg-primary/5 border border-primary/20 focus:border-primary focus:ring-4 focus:ring-primary/10 outline-none font-bold bg-white text-slate-800 cursor-pointer transition-all";
-
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+    <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
         <div>
-          <h2 className="text-2xl font-black text-slate-800 tracking-tight uppercase">Fleet Asset Control</h2>
-          <p className="text-slate-500 font-bold uppercase text-[10px] tracking-widest">Active vehicle inventory and monitoring</p>
+          <h1 className="text-4xl font-black text-slate-900 tracking-tight uppercase">Fleet Management</h1>
+          <p className="text-slate-500 font-bold uppercase text-[10px] tracking-widest mt-1">Vehicle Assets & Maintenance</p>
         </div>
         <button 
-          onClick={() => { resetForm(); setIsModalOpen(true); }}
-          className="bg-primary text-white px-8 py-3 rounded-2xl font-black text-[10px] uppercase tracking-widest flex items-center gap-3 hover:bg-blue-700 transition-all shadow-xl shadow-primary/20"
+          onClick={() => { setSelectedBus(null); setIsModalOpen(true); }}
+          className="bg-primary text-white px-8 py-4 rounded-2xl font-black uppercase text-[10px] tracking-widest shadow-xl shadow-primary/30 hover:bg-primary-dark hover:shadow-2xl hover:-translate-y-1 transition-all flex items-center gap-3 active:scale-95 active:translate-y-0"
         >
-          <i className="fas fa-bus-alt"></i>
-          Register Fleet Asset
+          <Plus size={18} />
+          Add New Vehicle
         </button>
       </div>
 
-      <div className="bg-white rounded-[2.5rem] border border-slate-200 overflow-hidden shadow-premium">
-        <div className="overflow-x-auto min-h-[400px]">
-          {loading ? (
-             <div className="flex flex-col items-center justify-center h-80 gap-4">
-                <i className="fas fa-circle-notch fa-spin text-primary text-3xl"></i>
-                <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Scanning Hangar...</p>
-             </div>
-          ) : (
-            <table className="w-full text-left">
-              <thead>
-                <tr className="bg-slate-50/50 text-slate-400 text-[9px] font-black uppercase tracking-[0.2em] border-b border-slate-100">
-                  <th className="px-8 py-5">Vehicle Identity</th>
-                  <th className="px-8 py-5">Driver Details</th>
-                  <th className="px-8 py-5">Assigned Route</th>
-                  <th className="px-8 py-5">Capacity</th>
-                  <th className="px-8 py-5 text-center">Status</th>
-                  <th className="px-8 py-5 text-right">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-50">
-                {buses.length > 0 ? buses.map((bus) => (
-                  <tr key={bus.id} className="hover:bg-slate-50/50 transition-colors group">
-                    <td className="px-8 py-5">
-                      <div className="flex items-center gap-4">
-                        <div className="w-12 h-12 rounded-2xl bg-slate-900 text-white flex items-center justify-center group-hover:rotate-6 transition-transform">
-                          <i className="fas fa-bus text-lg"></i>
-                        </div>
-                        <div>
-                          <p className="font-black text-slate-800 tracking-tight text-sm uppercase">{bus.bus_number}</p>
-                          <p className="text-[10px] text-slate-400 font-black uppercase tracking-widest mt-1">{bus.plate || bus.vehicle_number}</p>
-                        </div>
-                      </div>
-                    </td>
-                    <td className="px-8 py-5">
-                      <div>
-                        <p className="font-bold text-slate-700 text-xs">{bus.driver_name || 'Unassigned'}</p>
-                        <p className="text-[10px] text-slate-400 font-bold mt-0.5">{bus.driver_phone}</p>
-                      </div>
-                    </td>
-                    <td className="px-8 py-5">
-                      <p className="text-xs font-black text-slate-600 uppercase tracking-tight">{bus.routes?.route_name || 'Unassigned'}</p>
-                    </td>
-                    <td className="px-8 py-5">
-                      <div className="flex items-center gap-2">
-                         <i className="fas fa-users text-slate-300"></i>
-                         <span className="text-xs font-bold text-slate-600">{bus.capacity} Seats</span>
-                      </div>
-                    </td>
-                    <td className="px-8 py-5 text-center">
-                      <span className={`px-4 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest border ${
-                        bus.status === 'active' ? 'bg-success/10 text-success border-success/10' :
-                        bus.status === 'maintenance' ? 'bg-danger/10 text-danger border-danger/10' : 'bg-slate-100 text-slate-500 border-slate-200'
-                      }`}>
-                        {bus.status?.toUpperCase()}
-                      </span>
-                    </td>
-                    <td className="px-8 py-5 text-right">
-                      <div className="flex justify-end gap-2">
-                        <button onClick={() => handleEdit(bus)} className="w-9 h-9 bg-slate-50 hover:bg-slate-100 rounded-xl transition-all text-slate-400 flex items-center justify-center">
-                          <i className="fas fa-edit text-xs"></i>
-                        </button>
-                        <button 
-                          onClick={() => handleDelete(bus.id, bus.plate || bus.vehicle_number)}
-                          className="w-9 h-9 bg-slate-50 hover:bg-red-50 hover:text-red-500 rounded-xl transition-all text-slate-400 flex items-center justify-center"
-                        >
-                          <i className="fas fa-trash-alt text-xs"></i>
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                )) : (
-                  <tr>
-                    <td colSpan={6} className="p-32 text-center">
-                       <i className="fas fa-truck-monster text-5xl text-slate-100 mb-6 block"></i>
-                       <p className="text-[11px] font-black text-slate-300 uppercase tracking-[0.4em]">Zero assets logged in fleet</p>
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
-          )}
-        </div>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+        {loading ? (
+          [1, 2, 3].map(i => (
+            <div key={i} className="bg-white p-10 rounded-[3rem] border border-slate-100 animate-pulse h-96"></div>
+          ))
+        ) : buses.length > 0 ? (
+          buses.map(bus => (
+            <div key={bus.id} className="bg-white p-10 rounded-[3rem] border border-slate-100 shadow-premium hover:shadow-2xl transition-all duration-500 group relative overflow-hidden">
+              <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-bl-full -mr-4 -mt-4 transition-transform group-hover:scale-150 duration-700"></div>
+              
+              <div className="flex justify-between items-start mb-8 relative z-10">
+                <div className="w-16 h-16 bg-slate-50 rounded-2xl flex items-center justify-center text-slate-300 group-hover:bg-primary/10 group-hover:text-primary transition-colors">
+                  <BusIcon size={32} />
+                </div>
+                <div className="flex gap-2">
+                  <span className={`text-[8px] font-black px-3 py-1 rounded-full uppercase tracking-widest border ${
+                    bus.status === 'active' ? 'bg-emerald-50 text-emerald-600 border-emerald-100' : 'bg-red-50 text-red-600 border-red-100'
+                  }`}>
+                    {bus.status}
+                  </span>
+                  <button className="p-2 text-slate-300 hover:text-primary transition-colors">
+                    <MoreVertical size={18} />
+                  </button>
+                </div>
+              </div>
+
+              <h3 className="text-2xl font-black text-slate-800 tracking-tight mb-2 group-hover:text-primary transition-colors">{bus.bus_number}</h3>
+              <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-8 flex items-center gap-2">
+                <ShieldCheck size={12} className="text-primary" />
+                Insurance Valid: {new Date(bus.insurance_expiry).toLocaleDateString()}
+              </p>
+
+              <div className="grid grid-cols-2 gap-6 mb-10">
+                <div className="space-y-1">
+                  <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Capacity</p>
+                  <div className="flex items-center gap-2">
+                    <User size={14} className="text-slate-300" />
+                    <p className="text-lg font-black text-slate-800">{bus.capacity} Seats</p>
+                  </div>
+                </div>
+                <div className="space-y-1">
+                  <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Fuel Type</p>
+                  <div className="flex items-center gap-2">
+                    <Fuel size={14} className="text-slate-300" />
+                    <p className="text-lg font-black text-slate-800 uppercase">{bus.fuel_type}</p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex gap-3 pt-8 border-t border-slate-50 relative z-10">
+                <button 
+                  onClick={() => { setSelectedBus(bus); setIsModalOpen(true); }}
+                  className="flex-1 py-4 bg-slate-50 text-slate-600 text-[9px] font-black uppercase tracking-widest rounded-2xl hover:bg-slate-900 hover:text-white transition-all shadow-sm hover:shadow-lg active:scale-95 flex items-center justify-center gap-2"
+                >
+                  <Wrench size={14} />
+                  Maintenance
+                </button>
+                <button 
+                  onClick={() => handleDelete(bus.id)}
+                  className="px-5 py-4 bg-red-50 text-red-600 rounded-2xl hover:bg-red-600 hover:text-white transition-all shadow-sm hover:shadow-lg active:scale-95"
+                >
+                  <XCircle size={18} />
+                </button>
+              </div>
+            </div>
+          ))
+        ) : (
+          <div className="col-span-full py-20 bg-slate-50 rounded-[3rem] border-2 border-dashed border-slate-200 flex flex-col items-center justify-center text-center px-8">
+            <div className="w-20 h-20 bg-white rounded-3xl flex items-center justify-center text-slate-300 mb-6 shadow-sm">
+              <BusIcon size={40} />
+            </div>
+            <h3 className="text-xl font-black text-slate-900 tracking-tight mb-2">No Vehicles Found</h3>
+            <p className="text-slate-500 text-sm max-w-xs mx-auto">Add your first vehicle to start tracking your fleet assets.</p>
+          </div>
+        )}
       </div>
 
-      <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title={editingId ? "Edit Fleet Asset" : "Register Fleet Asset"}>
-        <form onSubmit={handleSubmit} className="space-y-5">
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Bus Number</label>
-              <input 
-                required
-                type="text" 
-                className={inputClass + " font-black uppercase text-primary"} 
-                placeholder="e.g. BUS-101"
-                value={formData.bus_number}
-                onChange={(e) => setFormData({...formData, bus_number: e.target.value.toUpperCase()})}
-              />
-            </div>
-            <div>
-              <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Vehicle Number</label>
-              <input 
-                required
-                type="text" 
-                className={inputClass + " font-black uppercase"} 
-                placeholder="e.g. KA-01-AB-1234"
-                value={formData.plate}
-                onChange={(e) => setFormData({...formData, plate: e.target.value.toUpperCase()})}
-              />
-            </div>
+      <Modal 
+        isOpen={isModalOpen} 
+        onClose={() => setIsModalOpen(false)} 
+        title={selectedBus ? 'Edit Vehicle' : 'Add Vehicle'}
+      >
+        <div className="space-y-6">
+          <div className="space-y-2">
+            <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">Registration Number</label>
+            <input type="text" className="w-full bg-slate-50 border-none rounded-xl p-4 text-sm font-bold focus:ring-2 ring-primary/20 outline-none" placeholder="HP-68-1234" />
           </div>
-          
           <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Driver Name</label>
-              <input 
-                type="text" 
-                className={inputClass} 
-                placeholder="Full Name"
-                value={formData.driver_name}
-                onChange={(e) => setFormData({...formData, driver_name: e.target.value})}
-              />
+            <div className="space-y-2">
+              <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">Capacity</label>
+              <input type="number" className="w-full bg-slate-50 border-none rounded-xl p-4 text-sm font-bold focus:ring-2 ring-primary/20 outline-none" placeholder="40" />
             </div>
-            <div>
-              <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Driver Phone</label>
-              <input 
-                type="tel" 
-                className={inputClass} 
-                placeholder="Phone Number"
-                value={formData.driver_phone}
-                onChange={(e) => setFormData({...formData, driver_phone: e.target.value})}
-              />
-            </div>
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Seating Capacity</label>
-              <input 
-                required
-                type="number" 
-                className={inputClass + " font-black"} 
-                value={formData.capacity}
-                onChange={(e) => setFormData({...formData, capacity: Number(e.target.value)})}
-              />
-            </div>
-            <div>
-              <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Vehicle Model</label>
-              <input 
-                type="text" 
-                className={inputClass} 
-                placeholder="e.g. Tata Starbus"
-                value={formData.model}
-                onChange={(e) => setFormData({...formData, model: e.target.value})}
-              />
-            </div>
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Assigned Route</label>
-              <select 
-                className={selectClass}
-                value={formData.route_id}
-                onChange={(e) => setFormData({...formData, route_id: e.target.value})}
-              >
-                <option value="">Select Route...</option>
-                {routes.map(r => <option key={r.id} value={r.id}>{r.route_name}</option>)}
-              </select>
-            </div>
-            <div>
-              <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Operational Status</label>
-              <select 
-                className={selectClass}
-                value={formData.status}
-                onChange={(e) => setFormData({...formData, status: e.target.value})}
-              >
-                <option value="idle">Idle</option>
-                <option value="active">On Route</option>
-                <option value="maintenance">Maintenance</option>
+            <div className="space-y-2">
+              <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">Fuel Type</label>
+              <select className="w-full bg-slate-50 border-none rounded-xl p-4 text-sm font-bold focus:ring-2 ring-primary/20 outline-none">
+                <option>Diesel</option>
+                <option>CNG</option>
+                <option>Electric</option>
               </select>
             </div>
           </div>
-
-          <div className="pt-6 flex gap-3">
-            <button 
-              type="button" 
-              onClick={() => setIsModalOpen(false)}
-              className="flex-1 py-4 bg-slate-100 text-slate-600 font-black uppercase text-[10px] tracking-widest rounded-2xl hover:bg-slate-200 transition-all active:scale-95"
-            >
-              Cancel
-            </button>
-            <button 
-              type="submit" 
-              className="flex-1 py-4 bg-primary text-white font-black uppercase text-[10px] tracking-widest rounded-2xl shadow-xl shadow-primary/20 transition-all hover:bg-blue-800 active:scale-95"
-            >
-              {editingId ? 'Update Asset' : 'Register Asset'}
-            </button>
+          <div className="space-y-2">
+            <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">Insurance Expiry</label>
+            <input type="date" className="w-full bg-slate-50 border-none rounded-xl p-4 text-sm font-bold focus:ring-2 ring-primary/20 outline-none" />
           </div>
-        </form>
+          <button className="w-full py-5 bg-primary text-white font-black uppercase text-[10px] tracking-widest rounded-2xl shadow-xl shadow-primary/20 active:scale-95 transition-all mt-4">
+            {selectedBus ? 'Update Vehicle' : 'Register Vehicle'}
+          </button>
+        </div>
       </Modal>
     </div>
   );

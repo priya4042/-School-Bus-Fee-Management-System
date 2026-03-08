@@ -12,6 +12,7 @@ interface ImportMetaEnv {
   readonly VITE_API_BASE_URL: string
   readonly VITE_RAZORPAY_KEY_SECRET: string
   readonly VITE_CAMERA_STREAM_BASE_URL: string
+  readonly VITE_OTP_PROVIDER: string
   // more env variables...
 }
 

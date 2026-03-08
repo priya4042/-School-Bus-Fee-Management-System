@@ -11,7 +11,11 @@ interface AuthState {
   setUser: (user: User | null) => void;
   setAccessToken: (token: string | null) => void;
   init: () => Promise<void>;
-  loginWithCredentials: (identifier: string, password?: string, type?: 'EMAIL' | 'ADMISSION' | 'PHONE' | 'ADMIN') => Promise<void>;
+  loginWithCredentials: (
+    identifier: string,
+    password?: string,
+    type?: 'EMAIL' | 'ADMISSION' | 'PHONE' | 'ADMIN'
+  ) => Promise<User>;
   registerAdmin: (data: any) => Promise<void>;
   registerParent: (data: any) => Promise<void>;
   forgotPassword: (email: string) => Promise<void>;
@@ -37,9 +41,9 @@ export const useAuthStore = create<AuthState>((set) => ({
           .select('*')
           .eq('id', session.user.id)
           .single();
-        
+
         set({ 
-          user: profile, 
+          user: profile || null, 
           accessToken: session.access_token,
           initialized: true, 
           loading: false 
@@ -53,58 +57,40 @@ export const useAuthStore = create<AuthState>((set) => ({
     }
   },
 
-  loginWithCredentials: async (identifier: string, password?: string, type?: 'EMAIL' | 'ADMISSION' | 'PHONE' | 'ADMIN') => {
-    set({ loading: true });
-    try {
-      // Updated to use apiPost
-      const data = await apiPost('auth', 'login', { identifier, password, type });
+loginWithCredentials: async (identifier: string, password?: string, type?: 'EMAIL' | 'ADMISSION' | 'PHONE' | 'ADMIN') => {
+  set({ loading: true });
+  try {
+    if (!identifier || !password) throw new Error('Identifier and password are required');
 
-      if (!data || !data.session || !data.user) {
-        console.error('Invalid login response:', data);
-        throw new Error('Login failed: Invalid server response');
-      }
+    const payload = { identifier, password, type };
 
-      // The Express API returns the Supabase auth data (session and user)
-      // We need to set the session in the local Supabase client
-      const { error } = await supabase.auth.setSession({
-        access_token: data.session.access_token,
-        refresh_token: data.session.refresh_token
-      });
+    const data = await apiPost('auth', 'login', payload);
 
-      if (error) {
-        console.error('Supabase setSession error:', error);
-        throw new Error('Failed to establish session');
-      }
-
-      const { data: profile, error: profileError } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', data.user.id)
-        .single();
-        
-      if (profileError) {
-        console.warn('Profile fetch error (using auth user data as fallback):', profileError);
-      }
-
-      set({ 
-        user: profile || data.user, 
-        accessToken: data.session.access_token,
-        loading: false,
-        initialized: true
-      });
-    } catch (err: any) {
-      console.error('Login error:', err);
-      set({ loading: false });
-      throw new Error(err.message || 'Login failed');
+    if (!data || !data.user || !data.session) {
+      throw new Error('Login failed: Invalid server response');
     }
-  },
+
+    // Set Supabase session
+    await supabase.auth.setSession({
+      access_token: data.session.access_token,
+      refresh_token: data.session.refresh_token,
+    });
+
+    set({ user: data.user, accessToken: data.session.access_token, loading: false, initialized: true });
+
+    return data.user;
+  } catch (err: any) {
+    console.error('Login error:', err);
+    set({ loading: false });
+    throw new Error(err.message || 'Login failed');
+  }
+},
 
   registerAdmin: async (data: any) => {
     set({ loading: true });
     try {
-      // Updated to use apiPost
       await apiPost('auth', 'register', {
-        email: data.email,
+        identifier: data.email, // Backend expects `identifier`
         password: data.password,
         full_name: data.fullName,
         role: UserRole.ADMIN,
@@ -121,9 +107,8 @@ export const useAuthStore = create<AuthState>((set) => ({
   registerParent: async (data: any) => {
     set({ loading: true });
     try {
-      // Updated to use apiPost
       await apiPost('auth', 'register', {
-        email: data.email,
+        identifier: data.email,
         password: data.password,
         full_name: data.fullName,
         role: UserRole.PARENT,
@@ -138,6 +123,7 @@ export const useAuthStore = create<AuthState>((set) => ({
   },
 
   forgotPassword: async (email: string) => {
+    if (!email) throw new Error('Email is required');
     const { error } = await supabase.auth.resetPasswordForEmail(email);
     if (error) throw error;
   },

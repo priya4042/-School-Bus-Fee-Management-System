@@ -1,266 +1,202 @@
-import React, { useState, useEffect } from 'react';
-import Modal from '../components/Modal.tsx';
-import { useStudents } from '../hooks/useStudents.ts';
-import { useRoutes } from '../hooks/useRoutes.ts';
-import { useBuses } from '../hooks/useBuses.ts';
-import { showConfirm, showToast, showAlert, showLoading, closeSwal } from '../lib/swal.ts';
 
+import React, { useState, useEffect } from 'react';
+import { api } from '../lib/api';
+import { Student } from '../types';
+import { 
+  Search, 
+  Plus, 
+  Filter, 
+  MoreVertical, 
+  UserPlus, 
+  GraduationCap,
+  Phone,
+  MapPin,
+  Bus,
+  CheckCircle2,
+  XCircle,
+  AlertCircle
+} from 'lucide-react';
+import Modal from '../components/Modal';
+import { showToast, showConfirm } from '../lib/swal';
 
 const Students: React.FC = () => {
-  const { students, loading, addStudent, updateStudent, deleteStudent } = useStudents();
-  const { routes } = useRoutes();
-  const { buses } = useBuses();
-  
+  const [students, setStudents] = useState<Student[]>([]);
+  const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [editingId, setEditingId] = useState<string | null>(null);
-  const [parents, setParents] = useState<any[]>([]);
-  
-  const [formData, setFormData] = useState({
-    full_name: '',
-    admission_number: '',
-    grade: '',
-    section: '',
-    route_id: '',
-    bus_id: '',
-    parent_name: '',
-    parent_phone: '',
-    boarding_point: '',
-    monthly_fee: 0,
-    status: 'active' as any
-  });
+  const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
 
-  // Removed fetchParents useEffect as it's no longer needed
+  useEffect(() => {
+    fetchStudents();
+  }, []);
 
-  const filteredStudents = (students || []).filter(s => {
-    const term = searchTerm.toLowerCase().trim();
-    if (!term) return true;
-    return (s.full_name || '').toLowerCase().includes(term) || 
-           (s.admission_number || '').toLowerCase().includes(term);
-  });
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    setIsModalOpen(false);
-    showLoading('Syncing Records...');
-    let result;
-    
-    if (editingId) {
-      result = await updateStudent(editingId, formData);
-    } else {
-      result = await addStudent(formData);
-    }
-    
-    closeSwal();
-    
-    if (result.success) {
-      resetForm();
-      showToast(editingId ? 'Student updated' : 'Student registered', 'success');
-    } else {
-      setIsModalOpen(true);
-      showAlert('Error', result.error || 'Failed to save student record.', 'error');
+  const fetchStudents = async () => {
+    try {
+      const { data } = await api.get('students');
+      setStudents(data || []);
+    } catch (err) {
+      console.error('Failed to fetch students:', err);
+    } finally {
+      setLoading(false);
     }
   };
 
-  const resetForm = () => {
-    setFormData({
-      full_name: '',
-      admission_number: '',
-      grade: '',
-      section: '',
-      route_id: '',
-      bus_id: '',
-      parent_name: '',
-      parent_phone: '',
-      boarding_point: '',
-      monthly_fee: 0,
-      status: 'active'
-    });
-    setEditingId(null);
-  };
+  const filteredStudents = students.filter(s => 
+    s.full_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    s.admission_number.toLowerCase().includes(searchTerm.toLowerCase())
+  );
 
-  const handleEdit = (student: any) => {
-    setFormData({
-      full_name: student.full_name,
-      admission_number: student.admission_number,
-      grade: student.grade,
-      section: student.section,
-      route_id: student.route_id || '',
-      bus_id: student.bus_id || '',
-      parent_name: student.profiles?.full_name || '',
-      parent_phone: student.profiles?.phone_number || '',
-      boarding_point: student.boarding_point || '',
-      monthly_fee: student.monthly_fee || student.base_fee || 0,
-      status: student.status || 'active'
-    });
-    setEditingId(student.id);
-    setIsModalOpen(true);
-  };
-
-  const handleDelete = async (id: string, name: string) => {
-    const confirmed = await showConfirm('Remove Student?', `Archive record for ${name}?`, 'Delete');
+  const handleDelete = async (id: string) => {
+    const confirmed = await showConfirm('Delete Student?', 'This action cannot be undone.');
     if (confirmed) {
-      showLoading('Deleting...');
-      const result = await deleteStudent(id);
-      closeSwal();
-      if (result.success) showToast('Record deleted', 'info');
-      else showAlert('Error', result.error || 'Failed to delete record', 'error');
+      try {
+        await api.delete(`students/${id}`);
+        showToast('Student deleted successfully');
+        fetchStudents();
+      } catch (err) {
+        showToast('Failed to delete student', 'error');
+      }
     }
   };
-
-  const inputClass = "w-full px-5 py-4 rounded-2xl bg-primary/5 border border-primary/20 focus:border-primary focus:ring-4 focus:ring-primary/10 outline-none font-bold text-sm transition-all text-slate-800 placeholder-slate-400";
-  const selectClass = "w-full px-5 py-4 rounded-2xl bg-primary/5 border border-primary/20 focus:border-primary focus:ring-4 focus:ring-primary/10 outline-none font-bold text-sm bg-white transition-all text-slate-800 cursor-pointer";
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+    <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
         <div>
-          <h2 className="text-xl md:text-2xl font-black text-slate-800 tracking-tight uppercase">Student Directory</h2>
-          <p className="text-secondary font-bold uppercase text-[10px] tracking-widest">Global Enrollment & Fleet Mapping</p>
+          <h1 className="text-4xl font-black text-slate-900 tracking-tight uppercase">Student Registry</h1>
+          <p className="text-slate-500 font-bold uppercase text-[10px] tracking-widest mt-1">Manage Enrollment & Logistics</p>
         </div>
         <button 
-          onClick={() => { resetForm(); setIsModalOpen(true); }}
-          className="bg-primary text-white px-8 py-3 rounded-2xl font-black text-[10px] uppercase tracking-widest flex items-center justify-center gap-3 hover:bg-blue-700 transition-all shadow-xl shadow-primary/20"
+          onClick={() => { setSelectedStudent(null); setIsModalOpen(true); }}
+          className="bg-primary text-white px-8 py-4 rounded-2xl font-black uppercase text-[10px] tracking-widest shadow-xl shadow-primary/30 hover:bg-primary-dark hover:shadow-2xl hover:-translate-y-1 transition-all flex items-center gap-3 active:scale-95 active:translate-y-0"
         >
-          <i className="fas fa-plus"></i>
-          Register Student
+          <UserPlus size={18} />
+          Enroll New Student
         </button>
       </div>
 
-      <div className="bg-white rounded-2xl md:rounded-[2.5rem] border border-slate-200 shadow-premium overflow-hidden">
-        <div className="p-6 bg-slate-50/50 border-b border-slate-100">
-          <div className="relative max-w-md">
-            <i className="fas fa-search absolute left-5 top-1/2 -translate-y-1/2 text-slate-400"></i>
-            <input 
-              type="text" 
-              placeholder="Search by student name or admission number..." 
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-12 pr-6 py-3 rounded-2xl border border-primary/20 bg-primary/5 focus:border-primary focus:ring-4 focus:ring-primary/10 outline-none transition-all font-bold text-sm"
-            />
-          </div>
+      <div className="flex flex-col md:flex-row gap-4">
+        <div className="flex-1 bg-white rounded-2xl shadow-sm border border-slate-100 flex items-center px-6 py-4 focus-within:ring-4 ring-primary/10 transition-all">
+          <Search size={20} className="text-slate-400 mr-4" />
+          <input 
+            type="text" 
+            placeholder="Search by name or admission number..." 
+            className="bg-transparent border-none focus:ring-0 text-sm font-bold text-slate-700 placeholder:text-slate-300 w-full"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+          />
         </div>
-
-        <div className="responsive-table-container">
-          {loading ? (
-            <div className="flex flex-col items-center justify-center h-80">
-              <i className="fas fa-circle-notch fa-spin text-primary text-3xl"></i>
-            </div>
-          ) : (
-            <table className="w-full text-left responsive-table">
-              <thead>
-                <tr className="bg-slate-50 text-slate-400 text-[9px] font-black uppercase tracking-widest border-b border-slate-100">
-                  <th className="px-8 py-5">Student Identity</th>
-                  <th className="px-8 py-5">Class-Section</th>
-                  <th className="px-8 py-5">Route / Bus</th>
-                  <th className="px-8 py-5">Parent Info</th>
-                  <th className="px-8 py-5">Fee (Monthly)</th>
-                  <th className="px-8 py-5 text-right">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-50">
-                {filteredStudents.map((student) => (
-                  <tr key={student.id} className="hover:bg-slate-50/50 transition-colors">
-                    <td className="px-8 py-5">
-                      <p className="font-black text-slate-800 tracking-tight text-sm">{student.full_name}</p>
-                      <p className="text-[10px] text-slate-400 font-black uppercase tracking-widest">Adm: {student.admission_number}</p>
-                    </td>
-                    <td className="px-8 py-5">
-                      <span className="text-[10px] font-black uppercase tracking-widest text-primary bg-primary/5 px-3 py-1 rounded-lg border border-primary/10">
-                        {student.grade}-{student.section}
-                      </span>
-                    </td>
-                    <td className="px-8 py-5">
-                      <p className="text-xs font-black text-slate-600 uppercase tracking-tight">{student.routes?.route_name || 'No Route'}</p>
-                      <p className="text-[10px] text-slate-400 font-bold uppercase">{student.buses?.plate || 'No Bus'}</p>
-                    </td>
-                    <td className="px-8 py-5">
-                      <p className="text-xs font-bold text-slate-700">{student.profiles?.full_name || 'Unassigned'}</p>
-                      <p className="text-[10px] text-slate-400 font-bold">{student.profiles?.phone_number || ''}</p>
-                    </td>
-                    <td className="px-8 py-5">
-                      <p className="text-sm font-black text-slate-800">₹{student.monthly_fee || student.base_fee || 0}</p>
-                    </td>
-                    <td className="px-8 py-5 text-right">
-                      <div className="flex justify-end gap-2">
-                        <button onClick={() => handleEdit(student)} className="w-9 h-9 flex items-center justify-center bg-white border border-slate-100 text-slate-400 hover:text-primary rounded-xl transition-all shadow-sm"><i className="fas fa-edit text-xs"></i></button>
-                        <button onClick={() => handleDelete(student.id, student.full_name)} className="w-9 h-9 flex items-center justify-center bg-white border border-slate-100 text-slate-400 hover:text-danger rounded-xl transition-all shadow-sm"><i className="fas fa-trash-alt text-xs"></i></button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          )}
-        </div>
+        <button className="bg-white px-6 py-4 rounded-2xl border border-slate-100 text-slate-500 font-black uppercase text-[10px] tracking-widest hover:bg-slate-50 transition-all flex items-center gap-3">
+          <Filter size={18} />
+          Filters
+        </button>
       </div>
 
-      <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title={editingId ? "Edit Student" : "Register New Student"}>
-        <form onSubmit={handleSubmit} className="space-y-6">
-          <div className="space-y-4">
-            <h4 className="text-[10px] font-black text-primary uppercase tracking-[0.2em] border-b border-primary/10 pb-2">Academic Profile</h4>
-            <div>
-              <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5 ml-1">Student Legal Name</label>
-              <input type="text" required className={inputClass} placeholder="e.g. Rahul Verma" value={formData.full_name} onChange={(e) => setFormData({...formData, full_name: e.target.value})} />
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5 ml-1">Admission Number</label>
-                <input type="text" required className={inputClass} placeholder="Adm No" value={formData.admission_number} onChange={(e) => setFormData({...formData, admission_number: e.target.value})} />
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {loading ? (
+          [1, 2, 3, 4, 5, 6].map(i => (
+            <div key={i} className="bg-white p-8 rounded-[2.5rem] border border-slate-100 animate-pulse h-64"></div>
+          ))
+        ) : filteredStudents.length > 0 ? (
+          filteredStudents.map(student => (
+            <div key={student.id} className="bg-white p-8 rounded-[2.5rem] border border-slate-100 shadow-premium hover:shadow-2xl transition-all duration-500 group relative overflow-hidden">
+              <div className="absolute top-0 right-0 w-24 h-24 bg-primary/5 rounded-bl-full -mr-4 -mt-4 transition-transform group-hover:scale-150 duration-700"></div>
+              
+              <div className="flex justify-between items-start mb-6 relative z-10">
+                <div className="w-16 h-16 bg-slate-50 rounded-2xl flex items-center justify-center text-slate-300 group-hover:bg-primary/10 group-hover:text-primary transition-colors">
+                  <GraduationCap size={32} />
+                </div>
+                <div className="flex gap-2">
+                  <span className={`text-[8px] font-black px-3 py-1 rounded-full uppercase tracking-widest border ${
+                    student.status === 'active' ? 'bg-emerald-50 text-emerald-600 border-emerald-100' : 'bg-slate-50 text-slate-400 border-slate-100'
+                  }`}>
+                    {student.status}
+                  </span>
+                  <button className="p-2 text-slate-300 hover:text-primary transition-colors">
+                    <MoreVertical size={18} />
+                  </button>
+                </div>
               </div>
-              <div>
-                <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5 ml-1">Monthly Fee (₹)</label>
-                <input type="number" required className={inputClass} placeholder="Fee" value={formData.monthly_fee} onChange={(e) => setFormData({...formData, monthly_fee: Number(e.target.value)})} />
-              </div>
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-              <input type="text" required className={inputClass} placeholder="Grade (e.g. 5th)" value={formData.grade} onChange={(e) => setFormData({...formData, grade: e.target.value})} />
-              <input type="text" required className={inputClass + " uppercase"} placeholder="Section" value={formData.section} onChange={(e) => setFormData({...formData, section: e.target.value})} />
-            </div>
-          </div>
 
-          <div className="space-y-4">
-            <h4 className="text-[10px] font-black text-success uppercase tracking-[0.2em] border-b border-success/10 pb-2">Fleet Mapping</h4>
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5 ml-1">Parent Name</label>
-                <input type="text" className={inputClass} placeholder="Parent Full Name" value={formData.parent_name} onChange={(e) => setFormData({...formData, parent_name: e.target.value})} />
-              </div>
-              <div>
-                <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5 ml-1">Parent Phone</label>
-                <input type="tel" className={inputClass} placeholder="Phone Number" value={formData.parent_phone} onChange={(e) => setFormData({...formData, parent_phone: e.target.value})} />
-              </div>
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5 ml-1">Assigned Route</label>
-                <select required className={selectClass} value={formData.route_id} onChange={(e) => setFormData({...formData, route_id: e.target.value})}>
-                  <option value="">Select Route...</option>
-                  {routes.map(r => <option key={r.id} value={r.id}>{r.route_name}</option>)}
-                </select>
-              </div>
-              <div>
-                <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5 ml-1">Assigned Bus</label>
-                <select required className={selectClass} value={formData.bus_id} onChange={(e) => setFormData({...formData, bus_id: e.target.value})}>
-                  <option value="">Select Bus...</option>
-                  {buses.map(b => <option key={b.id} value={b.id}>{b.plate}</option>)}
-                </select>
-              </div>
-            </div>
-            <div>
-              <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5 ml-1">Boarding Point</label>
-              <input type="text" className={inputClass} placeholder="e.g. Main Gate, Sector 4" value={formData.boarding_point} onChange={(e) => setFormData({...formData, boarding_point: e.target.value})} />
-            </div>
-          </div>
+              <h3 className="text-xl font-black text-slate-800 tracking-tight mb-1 group-hover:text-primary transition-colors">{student.full_name}</h3>
+              <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-6">ID: {student.admission_number} • {student.grade} - {student.section}</p>
 
-          <div className="pt-4 flex gap-3">
-            <button type="button" onClick={() => setIsModalOpen(false)} className="flex-1 py-4 bg-slate-100 text-slate-500 font-black uppercase text-[10px] tracking-widest rounded-2xl transition-all active:scale-95">Cancel</button>
-            <button type="submit" className="flex-1 py-4 bg-primary text-white font-black uppercase text-[10px] tracking-widest rounded-2xl shadow-xl shadow-primary/20 transition-all active:scale-95">
-              {editingId ? 'Update Record' : 'Authorize Entry'}
-            </button>
+              <div className="space-y-3 mb-8">
+                <div className="flex items-center gap-3 text-slate-500">
+                  <div className="w-8 h-8 rounded-xl bg-slate-50 flex items-center justify-center text-slate-400 group-hover:bg-white transition-colors">
+                    <Bus size={14} />
+                  </div>
+                  <span className="text-xs font-bold">{student.route_name || 'No Route Assigned'}</span>
+                </div>
+                <div className="flex items-center gap-3 text-slate-500">
+                  <div className="w-8 h-8 rounded-xl bg-slate-50 flex items-center justify-center text-slate-400 group-hover:bg-white transition-colors">
+                    <MapPin size={14} />
+                  </div>
+                  <span className="text-xs font-bold truncate">{student.boarding_point || 'No Boarding Point'}</span>
+                </div>
+              </div>
+
+              <div className="flex gap-3 pt-6 border-t border-slate-50 relative z-10">
+                <button 
+                  onClick={() => { setSelectedStudent(student); setIsModalOpen(true); }}
+                  className="flex-1 py-3 bg-slate-50 text-slate-600 text-[9px] font-black uppercase tracking-widest rounded-xl hover:bg-slate-900 hover:text-white transition-all shadow-sm hover:shadow-lg active:scale-95"
+                >
+                  Edit Profile
+                </button>
+                <button 
+                  onClick={() => handleDelete(student.id)}
+                  className="px-4 py-3 bg-red-50 text-red-600 rounded-xl hover:bg-red-600 hover:text-white transition-all shadow-sm hover:shadow-lg active:scale-95"
+                >
+                  <XCircle size={16} />
+                </button>
+              </div>
+            </div>
+          ))
+        ) : (
+          <div className="col-span-full py-20 bg-slate-50 rounded-[3rem] border-2 border-dashed border-slate-200 flex flex-col items-center justify-center text-center px-8">
+            <div className="w-20 h-20 bg-white rounded-3xl flex items-center justify-center text-slate-300 mb-6 shadow-sm">
+              <GraduationCap size={40} />
+            </div>
+            <h3 className="text-xl font-black text-slate-900 tracking-tight mb-2">No Students Found</h3>
+            <p className="text-slate-500 text-sm max-w-xs mx-auto">Try adjusting your search or enroll a new student to get started.</p>
           </div>
-        </form>
+        )}
+      </div>
+
+      <Modal 
+        isOpen={isModalOpen} 
+        onClose={() => setIsModalOpen(false)} 
+        title={selectedStudent ? 'Edit Student' : 'Enroll Student'}
+      >
+        <div className="space-y-6">
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">Full Name</label>
+              <input type="text" className="w-full bg-slate-50 border-none rounded-xl p-4 text-sm font-bold focus:ring-2 ring-primary/20 outline-none" placeholder="John Doe" />
+            </div>
+            <div className="space-y-2">
+              <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">Admission No</label>
+              <input type="text" className="w-full bg-slate-50 border-none rounded-xl p-4 text-sm font-bold focus:ring-2 ring-primary/20 outline-none" placeholder="ADM-001" />
+            </div>
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">Grade</label>
+              <input type="text" className="w-full bg-slate-50 border-none rounded-xl p-4 text-sm font-bold focus:ring-2 ring-primary/20 outline-none" placeholder="10th" />
+            </div>
+            <div className="space-y-2">
+              <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">Section</label>
+              <input type="text" className="w-full bg-slate-50 border-none rounded-xl p-4 text-sm font-bold focus:ring-2 ring-primary/20 outline-none" placeholder="A" />
+            </div>
+          </div>
+          <div className="space-y-2">
+            <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">Monthly Fee (₹)</label>
+            <input type="number" className="w-full bg-slate-50 border-none rounded-xl p-4 text-sm font-bold focus:ring-2 ring-primary/20 outline-none" placeholder="1500" />
+          </div>
+          <button className="w-full py-5 bg-primary text-white font-black uppercase text-[10px] tracking-widest rounded-2xl shadow-xl shadow-primary/20 active:scale-95 transition-all mt-4">
+            {selectedStudent ? 'Update Profile' : 'Complete Enrollment'}
+          </button>
+        </div>
       </Modal>
     </div>
   );

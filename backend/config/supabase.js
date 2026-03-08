@@ -4,20 +4,42 @@ require('dotenv').config();
 const supabaseUrl = process.env.SUPABASE_URL;
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
-if (!supabaseUrl || !supabaseServiceKey) {
-  console.error('❌ Missing Supabase environment variables');
-  process.exit(1);
-}
+let supabaseAdmin;
 
-const supabaseAdmin = createClient(
-  supabaseUrl,
-  supabaseServiceKey,
-  {
+if (!supabaseUrl || !supabaseServiceKey) {
+  console.warn('Missing Supabase environment variables:');
+  if (!supabaseUrl) console.warn('- SUPABASE_URL is missing');
+  if (!supabaseServiceKey) console.warn('- SUPABASE_SERVICE_ROLE_KEY is missing');
+  console.warn('Using placeholder client.');
+  // Create a dummy client that logs warnings
+  const placeholder = (method) => async () => {
+    console.warn(`Supabase ${method} called but Supabase is not configured.`);
+    return { data: null, error: { message: 'Supabase not configured' } };
+  };
+
+  const chainable = () => ({
+    select: chainable,
+    eq: chainable,
+    lt: chainable,
+    gt: chainable,
+    insert: placeholder('insert'),
+    update: placeholder('update'),
+    delete: placeholder('delete'),
+    maybeSingle: placeholder('maybeSingle'),
+    single: placeholder('single'),
+  });
+
+  supabaseAdmin = {
+    from: () => chainable(),
     auth: {
-      autoRefreshToken: false,
-      persistSession: false
+      signInWithPassword: placeholder('signInWithPassword'),
+      signUp: placeholder('signUp'),
+      refreshSession: placeholder('refreshSession'),
+      getUser: placeholder('getUser'),
     }
-  }
-);
+  };
+} else {
+  supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
+}
 
 module.exports = supabaseAdmin;

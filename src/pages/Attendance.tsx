@@ -1,178 +1,93 @@
 
-import React, { useState, useEffect } from 'react';
-import { useAttendance } from '../hooks/useAttendance';
-import { useAuthStore } from '../store/authStore';
-import { useStudents } from '../hooks/useStudents';
-import { useRoutes } from '../hooks/useRoutes';
-import { showAlert } from '../lib/swal';
+import React from 'react';
+import { Calendar, CheckCircle2, XCircle, Search, Filter, Download } from 'lucide-react';
 
 const Attendance: React.FC = () => {
-  const { user } = useAuthStore();
-  const { markAttendance, fetchAttendance, loading: syncLoading } = useAttendance();
-  const { students } = useStudents();
-  const { routes } = useRoutes();
-  const [selectedRoute, setSelectedRoute] = useState('');
-  const [selectedShift, setSelectedShift] = useState<'MORNING' | 'AFTERNOON'>('MORNING');
-  const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
-  const [attendance, setAttendance] = useState<Record<string, boolean>>({});
-
-  useEffect(() => {
-    if (routes.length > 0 && !selectedRoute) {
-      setSelectedRoute(routes[0].id);
-    }
-  }, [routes]);
-
-  useEffect(() => {
-    const loadAttendance = async () => {
-      const type = selectedShift === 'MORNING' ? 'PICKUP' : 'DROP';
-      const records = await fetchAttendance(selectedDate, type);
-      const attendanceMap: Record<string, boolean> = {};
-      
-      records.forEach((r: any) => {
-        attendanceMap[r.student_id] = r.status;
-      });
-      setAttendance(attendanceMap);
-    };
-    loadAttendance();
-  }, [selectedDate, selectedShift, selectedRoute]);
-
-  const routeStudents = students.filter(s => s.route_id === selectedRoute);
-
-  const toggleStatus = async (studentId: string) => {
-    const currentStatus = attendance[studentId] || false;
-    const newStatus = !currentStatus;
-    
-    setAttendance(prev => ({
-      ...prev,
-      [studentId]: newStatus
-    }));
-
-    if (user) {
-      const type = selectedShift === 'MORNING' ? 'PICKUP' : 'DROP';
-      const success = await markAttendance(studentId, type, newStatus, user.id);
-      if (!success) {
-        setAttendance(prev => ({
-          ...prev,
-          [studentId]: currentStatus
-        }));
-        showAlert('Sync Failed', 'Could not synchronize attendance with the central cloud. Please check your internet connection.', 'error');
-      }
-    }
-  };
-
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+    <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
         <div>
-          <h2 className="text-2xl font-black text-slate-800 tracking-tight">Fleet Attendance</h2>
-          <p className="text-slate-500 font-bold uppercase text-[10px] tracking-widest">Real-time Manifest Tracking</p>
+          <h1 className="text-4xl font-black text-slate-900 tracking-tight uppercase">Attendance Registry</h1>
+          <p className="text-slate-500 font-bold uppercase text-[10px] tracking-widest mt-1">Daily Boarding & De-boarding Logs</p>
         </div>
-        <div className="flex gap-4">
-           <div className="flex p-1 bg-white border border-slate-200 rounded-2xl shadow-sm">
-              <button 
-                onClick={() => setSelectedShift('MORNING')}
-                className={`px-6 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${selectedShift === 'MORNING' ? 'bg-primary text-white shadow-lg' : 'text-slate-400'}`}
-              >
-                Pickup
-              </button>
-              <button 
-                onClick={() => setSelectedShift('AFTERNOON')}
-                className={`px-6 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${selectedShift === 'AFTERNOON' ? 'bg-primary text-white shadow-lg' : 'text-slate-400'}`}
-              >
-                Drop
-              </button>
-           </div>
-           <input 
-             type="date" 
-             value={selectedDate}
-             onChange={(e) => setSelectedDate(e.target.value)}
-             className="px-6 py-2 rounded-2xl border border-slate-200 bg-white font-black text-[10px] uppercase text-slate-600 focus:ring-4 focus:ring-primary/5 outline-none shadow-sm"
-           />
+        <div className="flex gap-3">
+          <button className="bg-white text-slate-900 px-6 py-4 rounded-2xl font-bold text-sm border border-slate-100 shadow-sm hover:bg-slate-50 transition-all flex items-center gap-2">
+            <Download size={18} />
+            Export Logs
+          </button>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-        {routes.map(route => (
-          <button 
-            key={route.id}
-            onClick={() => setSelectedRoute(route.id)}
-            className={`px-6 py-4 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all border ${
-              selectedRoute === route.id 
-                ? 'bg-slate-900 text-white border-slate-900 shadow-xl' 
-                : 'bg-white text-slate-400 border-slate-100 hover:border-slate-300'
-            }`}
-          >
-            {route.route_name}
-          </button>
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+        {[
+          { label: 'Total Students', value: '420', icon: <Calendar />, color: 'text-primary' },
+          { label: 'Present Today', value: '398', icon: <CheckCircle2 />, color: 'text-emerald-500' },
+          { label: 'Absent', value: '22', icon: <XCircle />, color: 'text-red-500' },
+          { label: 'Attendance Rate', value: '94.7%', icon: <Filter />, color: 'text-amber-500' },
+        ].map((stat, idx) => (
+          <div key={idx} className="bg-white p-8 rounded-[2.5rem] border border-slate-100 shadow-premium">
+            <div className={`w-12 h-12 rounded-2xl flex items-center justify-center mb-4 bg-slate-50 ${stat.color}`}>
+              {stat.icon}
+            </div>
+            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">{stat.label}</p>
+            <p className="text-3xl font-black text-slate-900 tracking-tight">{stat.value}</p>
+          </div>
         ))}
       </div>
 
-      <div className="bg-white rounded-[2.5rem] border border-slate-200 shadow-premium overflow-hidden">
-        <div className="p-8 bg-slate-50/50 border-b border-slate-100 flex items-center justify-between">
-           <div className="flex items-center gap-4">
-              <div className={`w-12 h-12 rounded-2xl flex items-center justify-center text-white shadow-lg ${selectedShift === 'MORNING' ? 'bg-orange-500 shadow-orange-500/20' : 'bg-primary shadow-primary/20'}`}>
-                <i className={`fas ${selectedShift === 'MORNING' ? 'fa-sun' : 'fa-moon'}`}></i>
-              </div>
-              <div>
-                <h3 className="font-black text-slate-800 uppercase text-xs tracking-widest">
-                  {routes.find(r => r.id === selectedRoute)?.route_name || 'Select Route'}
-                </h3>
-                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{selectedShift} SHIFT ACTIVE</p>
-              </div>
-           </div>
-           {syncLoading && <i className="fas fa-circle-notch fa-spin text-primary"></i>}
+      <div className="bg-white rounded-[3rem] shadow-premium border border-slate-100 overflow-hidden">
+        <div className="p-8 border-b border-slate-50 flex flex-col md:flex-row md:items-center justify-between gap-6">
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 bg-slate-50 rounded-2xl flex items-center justify-center text-slate-400">
+              <Search size={20} />
+            </div>
+            <input 
+              type="text" 
+              placeholder="Search by Student Name or ID..." 
+              className="bg-transparent border-none font-bold text-sm focus:ring-0 w-64"
+            />
+          </div>
+          <div className="flex gap-4">
+            <input type="date" className="bg-slate-50 border-none rounded-xl px-4 py-2 text-xs font-bold focus:ring-2 ring-primary/20" defaultValue={new Date().toISOString().split('T')[0]} />
+          </div>
         </div>
 
-        <div className="overflow-x-auto min-h-[400px]">
-          <table className="w-full text-left">
+        <div className="overflow-x-auto">
+          <table className="w-full text-left border-collapse">
             <thead>
-              <tr className="bg-slate-50/50 text-slate-400 text-[9px] font-black uppercase tracking-[0.2em] border-b border-slate-100">
-                <th className="px-8 py-5">Student Identity</th>
-                <th className="px-8 py-5">Class</th>
-                <th className="px-8 py-5 text-center">Status</th>
-                <th className="px-8 py-5 text-right">Emergency Phone</th>
+              <tr className="bg-slate-50/50">
+                <th className="px-8 py-6 text-[10px] font-black text-slate-400 uppercase tracking-widest">Student</th>
+                <th className="px-8 py-6 text-[10px] font-black text-slate-400 uppercase tracking-widest">Route</th>
+                <th className="px-8 py-6 text-[10px] font-black text-slate-400 uppercase tracking-widest">Morning (In)</th>
+                <th className="px-8 py-6 text-[10px] font-black text-slate-400 uppercase tracking-widest">Evening (Out)</th>
+                <th className="px-8 py-6 text-[10px] font-black text-slate-400 uppercase tracking-widest">Status</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-50">
-              {routeStudents.map((student) => (
-                <tr key={student.id} className="hover:bg-slate-50/50 transition-colors group">
-                  <td className="px-8 py-5">
-                    <div className="flex items-center gap-4">
-                      <div className="w-10 h-10 rounded-xl bg-slate-100 flex items-center justify-center text-slate-400 font-black">
-                        {student.full_name.charAt(0)}
-                      </div>
-                      <div>
-                        <p className="font-black text-slate-800 tracking-tight">{student.full_name}</p>
-                        <p className="text-[10px] text-slate-400 font-black uppercase tracking-widest">{student.admission_number}</p>
-                      </div>
-                    </div>
+              {[1, 2, 3, 4, 5].map((i) => (
+                <tr key={i} className="group hover:bg-slate-50/50 transition-colors">
+                  <td className="px-8 py-6">
+                    <p className="text-sm font-black text-slate-800 uppercase tracking-tight">Student {i}</p>
+                    <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mt-1">ID: ADM-00{i}</p>
                   </td>
-                  <td className="px-8 py-5">
-                    <span className="text-xs font-bold text-slate-500 uppercase">{student.grade}-{student.section}</span>
+                  <td className="px-8 py-6">
+                    <p className="text-xs font-black text-slate-700 uppercase">Route {i}</p>
                   </td>
-                  <td className="px-8 py-5 text-center">
-                    <button 
-                      onClick={() => toggleStatus(student.id)}
-                      className={`w-12 h-6 rounded-full relative transition-all ${attendance[student.id] ? 'bg-success' : 'bg-slate-200'}`}
-                    >
-                      <div className={`absolute top-1 left-1 w-4 h-4 bg-white rounded-full transition-transform ${attendance[student.id] ? 'translate-x-6' : ''}`}></div>
-                    </button>
+                  <td className="px-8 py-6">
+                    <p className="text-xs font-black text-slate-700 uppercase">07:45 AM</p>
                   </td>
-                  <td className="px-8 py-5 text-right">
-                    <button className="text-slate-400 hover:text-primary transition-colors">
-                      <i className="fas fa-phone-alt"></i>
-                    </button>
+                  <td className="px-8 py-6">
+                    <p className="text-xs font-black text-slate-700 uppercase">04:15 PM</p>
+                  </td>
+                  <td className="px-8 py-6">
+                    <span className="px-4 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest inline-flex items-center gap-2 bg-emerald-50 text-emerald-600 border border-emerald-100">
+                      <CheckCircle2 size={10} /> Present
+                    </span>
                   </td>
                 </tr>
               ))}
             </tbody>
           </table>
-          {routeStudents.length === 0 && (
-            <div className="p-20 text-center">
-               <i className="fas fa-search text-4xl text-slate-100 mb-4"></i>
-               <p className="text-[10px] font-black text-slate-300 uppercase tracking-widest">No matching manifests for this route</p>
-            </div>
-          )}
         </div>
       </div>
     </div>

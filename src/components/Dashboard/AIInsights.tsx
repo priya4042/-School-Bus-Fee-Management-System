@@ -1,57 +1,70 @@
 
 import React from 'react';
-import { AIInsight } from '../../types';
+import { Sparkles, TrendingUp, AlertTriangle, Zap, ChevronRight } from 'lucide-react';
 
 const AIInsights: React.FC = () => {
-  const insights: AIInsight[] = [
+  const insights = [
     {
-      id: '1',
-      type: 'PAYMENT_RISK',
-      title: 'High Default Risk Detected',
-      description: '3 parents in North Zone show an 85% probability of late payment this month based on historical data.',
-      priority: 'HIGH',
-      actionLabel: 'Send Preventive Reminders',
-      impact: 'High'
+      type: 'optimization',
+      title: 'Route Efficiency',
+      description: 'Route B is 15% less efficient than average. Consider re-routing via Sector 4.',
+      icon: Zap,
+      color: 'text-indigo-600 bg-indigo-50 border-indigo-100',
     },
     {
-      id: '2',
-      type: 'FLEET_EFFICIENCY',
-      title: 'Route Optimization',
-      description: 'Kangra Main Express is running at 40% capacity. Suggest merging with North Link to save ₹12k/month.',
-      priority: 'MEDIUM',
-      actionLabel: 'View Route Suggestion',
-      impact: 'Medium'
-    }
+      type: 'prediction',
+      title: 'Revenue Forecast',
+      description: 'Projected 12% increase in collections next month based on current trends.',
+      icon: TrendingUp,
+      color: 'text-emerald-600 bg-emerald-50 border-emerald-100',
+    },
+    {
+      type: 'alert',
+      title: 'Maintenance Alert',
+      description: 'Bus HP-68-1234 requires service in 250km to avoid potential downtime.',
+      icon: AlertTriangle,
+      color: 'text-orange-600 bg-orange-50 border-orange-100',
+    },
   ];
 
   return (
-    <div className="space-y-4">
-      <div className="flex items-center gap-2 mb-4">
-        <div className="w-8 h-8 bg-indigo-500/10 text-indigo-600 rounded-lg flex items-center justify-center">
-          <i className="fas fa-brain text-xs"></i>
-        </div>
-        <h3 className="text-xs font-black text-slate-800 uppercase tracking-widest">AI Strategic Insights</h3>
-      </div>
+    <div className="bg-white p-8 rounded-[2.5rem] border border-slate-100 shadow-premium group transition-all hover:shadow-2xl duration-500 relative overflow-hidden">
+      <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-bl-full -mr-10 -mt-10 blur-2xl group-hover:scale-150 transition-transform duration-700"></div>
       
-      {insights.map((insight, idx) => (
-        <div key={idx} className="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm hover:shadow-md transition-all group relative overflow-hidden">
-          {insight.priority === 'HIGH' && (
-            <div className="absolute top-0 right-0 w-1 h-full bg-red-500"></div>
-          )}
-          <div className="flex justify-between items-start mb-2">
-            <span className={`text-[8px] font-black px-2 py-0.5 rounded-full uppercase tracking-widest ${
-              insight.priority === 'HIGH' ? 'bg-red-50 text-red-600' : 'bg-blue-50 text-blue-600'
-            }`}>
-              {insight.priority} Priority
-            </span>
+      <div className="flex items-center justify-between mb-8 relative z-10">
+        <div className="flex items-center gap-3">
+          <div className="w-12 h-12 bg-primary text-white rounded-2xl flex items-center justify-center shadow-xl shadow-primary/20 animate-pulse">
+            <Sparkles size={24} />
           </div>
-          <h4 className="text-sm font-black text-slate-800 tracking-tight mb-1">{insight.title}</h4>
-          <p className="text-[11px] text-slate-500 font-medium leading-relaxed mb-4">{insight.description}</p>
-          <button className="w-full py-2.5 bg-slate-50 text-slate-600 text-[9px] font-black uppercase tracking-widest rounded-xl hover:bg-primary hover:text-white transition-all">
-            {insight.actionLabel}
-          </button>
+          <div>
+            <h3 className="text-lg font-black text-slate-800 uppercase tracking-tight">AI Insights</h3>
+            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">Predictive Fleet Intelligence</p>
+          </div>
         </div>
-      ))}
+        <button className="p-2 text-slate-300 hover:text-primary transition-colors">
+          <ChevronRight size={20} />
+        </button>
+      </div>
+
+      <div className="space-y-6 relative z-10">
+        {insights.map((insight, idx) => (
+          <div key={idx} className={`p-6 rounded-[2rem] border transition-all hover:translate-x-2 duration-300 group/item ${insight.color}`}>
+            <div className="flex gap-4">
+              <div className="w-10 h-10 rounded-xl bg-white/50 flex items-center justify-center shadow-sm">
+                <insight.icon size={20} />
+              </div>
+              <div className="flex-1">
+                <h4 className="text-[11px] font-black uppercase tracking-tight mb-1">{insight.title}</h4>
+                <p className="text-[10px] font-bold leading-relaxed opacity-80">{insight.description}</p>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      <button className="w-full mt-8 py-4 bg-slate-50 hover:bg-slate-900 hover:text-white rounded-2xl text-[9px] font-black uppercase tracking-widest transition-all shadow-sm active:scale-95">
+        Generate Full Analysis
+      </button>
     </div>
   );
 };

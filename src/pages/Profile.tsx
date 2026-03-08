@@ -1,309 +1,126 @@
 
-import React, { useState, useEffect } from 'react';
-import { User } from '../types';
-import { supabase } from '../lib/supabase';
+import React from 'react';
+import { User, UserRole } from '../types';
+import { User as UserIcon, Mail, Phone, Shield, Camera, LogOut, MapPin, Calendar, CreditCard, Bell, Settings } from 'lucide-react';
 import { useAuthStore } from '../store/authStore';
-import { showToast } from '../lib/swal';
-import axios from 'axios';
 
-const Profile: React.FC<{ user: User }> = ({ user }) => {
-  const { setUser } = useAuthStore();
-  const [preferences, setPreferences] = useState({
-    sms: true,
-    email: true,
-    push: true
-  });
-  const [updating, setUpdating] = useState(false);
-  const [message, setMessage] = useState('');
-  const [profileData, setProfileData] = useState({
-    fullName: '',
-    phoneNumber: '',
-    secondaryPhoneNumber: '',
-    fleetSecurityToken: '',
-    location: ''
-  });
+const Profile: React.FC<{ user?: User }> = ({ user: propUser }) => {
+  const { user: authUser, logout } = useAuthStore();
+  const user = propUser || authUser;
 
-  useEffect(() => {
-    if (user) {
-      setPreferences(user.preferences || { sms: true, email: true, push: true });
-      setProfileData({
-        fullName: user.fullName || user.full_name || '',
-        phoneNumber: user.phoneNumber || '',
-        secondaryPhoneNumber: user.secondaryPhoneNumber || '',
-        fleetSecurityToken: user.fleetSecurityToken || '',
-        location: user.location || 'Sector 45, Green Valley Apartments, Wing B, Flat 402, Gurugram, Haryana'
-      });
-    }
-  }, [user]);
-
-  const handleSaveProfile = async () => {
-    if (!user) return;
-    setUpdating(true);
-    try {
-      const { error } = await supabase
-        .from('profiles')
-        .update({
-          full_name: profileData.fullName || user.fullName,
-          phone_number: profileData.phoneNumber,
-          secondary_phone_number: profileData.secondaryPhoneNumber,
-          fleet_security_token: profileData.fleetSecurityToken,
-          location: profileData.location
-        })
-        .eq('id', user.id);
-
-      if (error) throw error;
-
-      setUser({
-        ...user,
-        phoneNumber: profileData.phoneNumber,
-        secondaryPhoneNumber: profileData.secondaryPhoneNumber,
-        fleetSecurityToken: profileData.fleetSecurityToken,
-        location: profileData.location
-      });
-
-      setMessage('Profile updated successfully');
-      setTimeout(() => setMessage(''), 3000);
-    } catch (err: any) {
-      console.error(err);
-      setMessage('Failed to update profile');
-    } finally {
-      setUpdating(false);
-    }
-  };
-
-  const togglePref = async (key: keyof typeof preferences) => {
-    if (!user) return;
-    const newPrefs = { ...preferences, [key]: !preferences[key] };
-    setPreferences(newPrefs);
-    setUpdating(true);
-    try {
-      const { error } = await supabase
-        .from('profiles')
-        .update({ preferences: newPrefs })
-        .eq('id', user.id);
-
-      if (error) throw error;
-
-      setUser({ ...user, preferences: newPrefs });
-      setMessage('Preferences updated successfully');
-      setTimeout(() => setMessage(''), 3000);
-    } catch (err) {
-      console.error(err);
-      setPreferences(preferences);
-      setMessage('Failed to update preferences');
-    } finally {
-      setUpdating(false);
-    }
-  };
-
-  const getInitial = () => {
-    const name = user?.fullName || user?.full_name || 'User';
-    return name.charAt(0).toUpperCase();
-  };
-
-  const getFullName = () => {
-    return user?.fullName || user?.full_name || 'User';
-  };
-
-  const handleDeleteAccount = async () => {
-    const confirmed = window.confirm('Are you absolutely sure? This action is permanent and will delete all your data from our systems.');
-    if (!confirmed) return;
-
-    setUpdating(true);
-    try {
-      await axios.delete(`/api/v1/auth/delete-account`, { withCredentials: true });
-      showToast('Account deleted successfully', 'success');
-      window.location.href = '/';
-    } catch (err: any) {
-      showToast(err.response?.data?.error || 'Failed to delete account', 'error');
-    } finally {
-      setUpdating(false);
-    }
-  };
-
-  if (!user) return null;
+  if (!user) return <div className="p-20 text-center">Loading Profile...</div>;
 
   return (
-    <div className="max-w-4xl space-y-8 pb-12">
-      <div className="flex justify-between items-center">
+    <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
         <div>
-          <h2 className="text-2xl font-bold text-slate-800">My Profile</h2>
-          <p className="text-slate-500">Manage account settings and contact details</p>
+          <h1 className="text-4xl font-black text-slate-900 tracking-tight uppercase">User Profile</h1>
+          <p className="text-slate-500 font-bold uppercase text-[10px] tracking-widest mt-1">Personal Identity & Account Security</p>
         </div>
         <button 
-          onClick={handleDeleteAccount}
-          disabled={updating}
-          className="text-xs font-bold text-red-500 hover:bg-red-50 px-4 py-2 rounded-lg transition-colors border border-red-100 disabled:opacity-50"
+          onClick={logout}
+          className="bg-red-50 text-red-600 px-8 py-4 rounded-2xl font-bold text-sm border border-red-100 hover:bg-red-100 transition-all flex items-center gap-2"
         >
-           Delete Account
+          <LogOut size={18} />
+          Sign Out
         </button>
       </div>
 
-      {message && (
-        <div className="p-4 bg-green-50 border border-green-100 text-green-700 rounded-xl text-sm font-bold flex items-center gap-2 animate-in fade-in slide-in-from-top-2">
-          <i className="fas fa-check-circle"></i>
-          {message}
-        </div>
-      )}
-
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        <div className="lg:col-span-2 space-y-6">
-          <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
-            <div className="bg-slate-50 p-8 flex items-center gap-6 border-b border-slate-100">
-              <div className="w-20 h-20 bg-primary text-white rounded-2xl flex items-center justify-center text-3xl font-bold shadow-lg shadow-primary/20 rotate-3">
-                {getInitial()}
-              </div>
-              <div>
-                <h3 className="text-xl font-bold text-slate-800">{getFullName()}</h3>
-                <p className="text-slate-500 text-sm">{user.email}</p>
-                <div className="flex gap-2 mt-2">
-                   <span className="px-2 py-0.5 bg-primary/10 text-primary text-[10px] font-black uppercase rounded-full">
-                    {user.role}
-                  </span>
-                  {user.admissionNumber && (
-                    <span className="px-2 py-0.5 bg-slate-100 text-slate-500 text-[10px] font-black uppercase rounded-full">
-                      ID: {user.admissionNumber}
-                    </span>
-                  )}
+        <div className="lg:col-span-1 space-y-8">
+          <div className="bg-white rounded-[3rem] p-10 shadow-premium border border-slate-100 text-center relative overflow-hidden group">
+            <div className="absolute top-0 left-0 w-full h-32 bg-slate-950 -mt-10 -skew-y-6 group-hover:skew-y-0 transition-transform duration-700"></div>
+            <div className="relative z-10">
+              <div className="w-32 h-32 bg-white rounded-[2.5rem] p-1 shadow-2xl mx-auto mb-6">
+                <div className="w-full h-full bg-slate-50 rounded-[2rem] flex items-center justify-center text-slate-300">
+                  <UserIcon size={64} />
                 </div>
               </div>
-            </div>
-
-            <div className="p-8 space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="md:col-span-2">
-                  <label className="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">Full Name</label>
-                  <input 
-                    type="text" 
-                    value={profileData.fullName}
-                    onChange={(e) => setProfileData({...profileData, fullName: e.target.value})}
-                    className="w-full px-4 py-3 bg-slate-50 rounded-xl border border-slate-200 outline-none focus:ring-2 focus:ring-primary/20 transition-all font-medium text-slate-700"
-                  />
+              <h2 className="text-2xl font-black text-slate-900 tracking-tight uppercase">{user.full_name}</h2>
+              <p className="text-primary font-black uppercase text-[10px] tracking-widest mt-1">{user.role} Account</p>
+              
+              <div className="mt-10 pt-10 border-t border-slate-50 space-y-6 text-left">
+                <div className="flex items-center gap-4">
+                  <div className="w-10 h-10 bg-slate-50 rounded-xl flex items-center justify-center text-slate-400">
+                    <Mail size={20} />
+                  </div>
+                  <div>
+                    <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest">Email Address</p>
+                    <p className="text-xs font-black text-slate-800 uppercase">{user.email}</p>
+                  </div>
                 </div>
-                <div>
-                  <label className="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">Phone Number</label>
-                  <input 
-                    type="tel" 
-                    value={profileData.phoneNumber}
-                    onChange={(e) => setProfileData({...profileData, phoneNumber: e.target.value})}
-                    className="w-full px-4 py-3 bg-slate-50 rounded-xl border border-slate-200 outline-none focus:ring-2 focus:ring-primary/20 transition-all font-medium text-slate-700"
-                  />
+                <div className="flex items-center gap-4">
+                  <div className="w-10 h-10 bg-slate-50 rounded-xl flex items-center justify-center text-slate-400">
+                    <Phone size={20} />
+                  </div>
+                  <div>
+                    <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest">Phone Number</p>
+                    <p className="text-xs font-black text-slate-800 uppercase">{user.phone_number || 'N/A'}</p>
+                  </div>
                 </div>
-                <div>
-                  <label className="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">Secondary Contact</label>
-                  <input 
-                    type="tel" 
-                    value={profileData.secondaryPhoneNumber}
-                    onChange={(e) => setProfileData({...profileData, secondaryPhoneNumber: e.target.value})}
-                    placeholder="Emergency alternative" 
-                    className="w-full px-4 py-3 bg-slate-50 rounded-xl border border-slate-200 outline-none focus:ring-2 focus:ring-primary/20 transition-all font-medium text-slate-700"
-                  />
+                <div className="flex items-center gap-4">
+                  <div className="w-10 h-10 bg-slate-50 rounded-xl flex items-center justify-center text-slate-400">
+                    <Shield size={20} />
+                  </div>
+                  <div>
+                    <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest">Account Status</p>
+                    <p className="text-xs font-black text-emerald-600 uppercase">Verified & Active</p>
+                  </div>
                 </div>
-                <div className="md:col-span-2">
-                  <label className="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">Residential Address</label>
-                  <textarea 
-                    value={profileData.location}
-                    onChange={(e) => setProfileData({...profileData, location: e.target.value})}
-                    rows={3}
-                    className="w-full px-4 py-3 bg-slate-50 rounded-xl border border-slate-200 outline-none focus:ring-2 focus:ring-primary/20 transition-all font-medium text-slate-700"
-                  ></textarea>
-                </div>
-              </div>
-
-              <div className="pt-6 border-t border-slate-100 flex justify-end">
-                <button 
-                  onClick={handleSaveProfile}
-                  disabled={updating}
-                  className="bg-primary text-white font-bold px-8 py-3 rounded-xl hover:bg-blue-700 transition-all shadow-lg shadow-primary/20 active:scale-95 disabled:opacity-50"
-                >
-                  {updating ? 'Saving...' : 'Save Information'}
-                </button>
               </div>
             </div>
           </div>
         </div>
 
-        <div className="space-y-6">
-          <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
-             <h4 className="font-bold text-slate-800 mb-6 flex items-center gap-2">
-                <i className="fas fa-bell text-primary"></i>
-                Notification Preferences
-             </h4>
-             
-             <div className="space-y-4">
-                <div className="flex items-center justify-between p-3 bg-slate-50 rounded-xl">
-                   <div>
-                      <p className="text-sm font-bold text-slate-700">SMS Alerts</p>
-                      <p className="text-[10px] text-slate-400 font-medium">Fee due & overdue SMS</p>
-                   </div>
-                   <button 
-                     disabled={updating}
-                     onClick={() => togglePref('sms')}
-                     className={`w-12 h-6 rounded-full relative transition-colors ${preferences.sms ? 'bg-success' : 'bg-slate-200'} ${updating ? 'opacity-50' : ''}`}
-                   >
-                     <div className={`absolute top-1 left-1 w-4 h-4 bg-white rounded-full transition-transform ${preferences.sms ? 'translate-x-6' : ''}`}></div>
-                   </button>
-                </div>
-
-                <div className="flex items-center justify-between p-3 bg-slate-50 rounded-xl">
-                   <div>
-                      <p className="text-sm font-bold text-slate-700">Email Notifications</p>
-                      <p className="text-[10px] text-slate-400 font-medium">Receipts & detailed reports</p>
-                   </div>
-                   <button 
-                     disabled={updating}
-                     onClick={() => togglePref('email')}
-                     className={`w-12 h-6 rounded-full relative transition-colors ${preferences.email ? 'bg-success' : 'bg-slate-200'} ${updating ? 'opacity-50' : ''}`}
-                   >
-                     <div className={`absolute top-1 left-1 w-4 h-4 bg-white rounded-full transition-transform ${preferences.email ? 'translate-x-6' : ''}`}></div>
-                   </button>
-                </div>
-
-                <div className="flex items-center justify-between p-3 bg-slate-50 rounded-xl">
-                   <div>
-                      <p className="text-sm font-bold text-slate-700">Push Notifications</p>
-                      <p className="text-[10px] text-slate-400 font-medium">Instant FCM mobile alerts</p>
-                   </div>
-                   <button 
-                     disabled={updating}
-                     onClick={() => togglePref('push')}
-                     className={`w-12 h-6 rounded-full relative transition-colors ${preferences.push ? 'bg-success' : 'bg-slate-200'} ${updating ? 'opacity-50' : ''}`}
-                   >
-                     <div className={`absolute top-1 left-1 w-4 h-4 bg-white rounded-full transition-transform ${preferences.push ? 'translate-x-6' : ''}`}></div>
-                   </button>
-                </div>
-             </div>
-
-             <div className="mt-6 p-4 bg-blue-50 rounded-xl border border-blue-100">
-                <div className="flex gap-3">
-                   <i className="fas fa-info-circle text-primary mt-0.5"></i>
-                   <p className="text-xs text-primary leading-relaxed font-medium">
-                      Critical alerts like emergency broadcasts and overdue notices cannot be completely disabled.
-                   </p>
-                </div>
-             </div>
+        <div className="lg:col-span-2 space-y-8">
+          <div className="bg-white rounded-[3rem] p-10 shadow-premium border border-slate-100">
+            <h3 className="text-xl font-black text-slate-900 tracking-tight uppercase mb-10">Account Settings</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+              <div className="space-y-2">
+                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-4">Full Name</label>
+                <input type="text" defaultValue={user.full_name} className="w-full px-6 py-4 rounded-2xl bg-slate-50 border border-slate-100 text-sm font-bold focus:ring-4 ring-primary/10 outline-none" />
+              </div>
+              <div className="space-y-2">
+                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-4">Email Address</label>
+                <input type="email" defaultValue={user.email} className="w-full px-6 py-4 rounded-2xl bg-slate-50 border border-slate-100 text-sm font-bold focus:ring-4 ring-primary/10 outline-none" />
+              </div>
+              <div className="space-y-2">
+                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-4">Phone Number</label>
+                <input type="tel" defaultValue={user.phone_number || ''} className="w-full px-6 py-4 rounded-2xl bg-slate-50 border border-slate-100 text-sm font-bold focus:ring-4 ring-primary/10 outline-none" />
+              </div>
+              <div className="space-y-2">
+                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-4">New Password</label>
+                <input type="password" placeholder="••••••••" className="w-full px-6 py-4 rounded-2xl bg-slate-50 border border-slate-100 text-sm font-bold focus:ring-4 ring-primary/10 outline-none" />
+              </div>
+            </div>
+            <div className="mt-12 flex justify-end">
+              <button className="bg-primary text-white px-10 py-4 rounded-2xl font-black uppercase text-[10px] tracking-widest shadow-xl shadow-primary/20 hover:bg-primary-dark transition-all">
+                Update Dossier
+              </button>
+            </div>
           </div>
 
-          <div className="bg-slate-800 p-6 rounded-2xl text-white">
-             <h4 className="font-bold mb-4 flex items-center gap-2">
-                <i className="fas fa-shield-alt text-success"></i>
-                Security
-             </h4>
-             <div className="space-y-4">
-                <div>
-                   <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Fleet Security Token</label>
-                   <input 
-                     type="password" 
-                     placeholder="Enter token for camera access"
-                     value={profileData.fleetSecurityToken}
-                     onChange={(e) => setProfileData({...profileData, fleetSecurityToken: e.target.value})}
-                     className="w-full px-4 py-3 bg-white/5 rounded-xl border border-white/10 outline-none focus:ring-2 focus:ring-primary/20 transition-all font-medium text-white placeholder-white/20"
-                   />
+          <div className="bg-white rounded-[3rem] p-10 shadow-premium border border-slate-100">
+            <h3 className="text-xl font-black text-slate-900 tracking-tight uppercase mb-10">System Preferences</h3>
+            <div className="space-y-4">
+              {[
+                { title: 'Email Notifications', icon: <Bell />, enabled: true },
+                { title: 'SMS Alerts', icon: <Phone />, enabled: false },
+                { title: 'Two-Factor Auth', icon: <Shield />, enabled: true },
+              ].map((item, idx) => (
+                <div key={idx} className="flex items-center justify-between p-6 bg-slate-50 rounded-[2rem] border border-slate-100">
+                  <div className="flex items-center gap-4">
+                    <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center text-primary shadow-sm">
+                      {item.icon}
+                    </div>
+                    <span className="text-[10px] font-black uppercase tracking-widest text-slate-700">{item.title}</span>
+                  </div>
+                  <div className={`w-12 h-6 rounded-full relative cursor-pointer ${item.enabled ? 'bg-primary' : 'bg-slate-200'}`}>
+                    <div className={`absolute top-1 w-4 h-4 bg-white rounded-full shadow-sm transition-all ${item.enabled ? 'right-1' : 'left-1'}`}></div>
+                  </div>
                 </div>
-                <button className="w-full py-3 bg-white/10 hover:bg-white/20 rounded-xl text-sm font-bold transition-all flex items-center justify-center gap-2">
-                   Change Password
-                </button>
-             </div>
+              ))}
+            </div>
           </div>
         </div>
       </div>

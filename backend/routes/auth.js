@@ -49,6 +49,21 @@ router.post('/login', async (req, res) => {
       }
 
       finalEmail = profile.email;
+    } else if (type === 'PHONE') {
+      // Login using Phone Number
+      const { data: profile, error: profileError } = await supabaseAdmin
+        .from('profiles')
+        .select('email')
+        .eq('phone_number', loginIdentifier.trim())
+        .maybeSingle();
+
+      if (profileError) throw profileError;
+
+      if (!profile?.email) {
+        return res.status(404).json({ error: 'User with this phone number not found' });
+      }
+
+      finalEmail = profile.email;
     }
 
     console.log("LOGIN EMAIL:", finalEmail);

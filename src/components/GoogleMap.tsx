@@ -1,99 +1,66 @@
-import React, { useEffect, useRef, useState } from 'react';
-import { ENV } from '../config/env';
+import React from 'react';
+import { MapPin, Navigation, Compass, Shield } from 'lucide-react';
 
 interface GoogleMapProps {
-  location: { lat: number; lng: number } | null;
+  location: { lat: number; lng: number };
   busId?: string;
 }
 
 const GoogleMap: React.FC<GoogleMapProps> = ({ location, busId }) => {
-  const mapRef = useRef<HTMLDivElement>(null);
-  const [map, setMap] = useState<any>(null);
-  const [marker, setMarker] = useState<any>(null);
-  const [error, setError] = useState<string | null>(null);
+  return (
+    <div className="w-full h-full bg-slate-900 relative overflow-hidden flex items-center justify-center group">
+       {/* Abstract Map Grid */}
+       <div className="absolute inset-0 opacity-10 grid grid-cols-12 grid-rows-12 gap-px pointer-events-none">
+          {Array.from({ length: 144 }).map((_, i) => (
+             <div key={i} className="border border-white/20"></div>
+          ))}
+       </div>
 
-  useEffect(() => {
-    if (!ENV.GOOGLE_MAPS_API_KEY) {
-      setError('Google Maps API Key is missing. Please configure GOOGLE_MAPS_API_KEY in env.js');
-      return;
-    }
+       {/* Radial Pulse */}
+       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-primary/5 rounded-full blur-3xl animate-pulse"></div>
+       
+       {/* Map UI Elements */}
+       <div className="absolute top-6 right-6 z-20 space-y-4">
+          <div className="bg-black/80 backdrop-blur-xl p-4 rounded-2xl border border-white/10 text-white flex items-center gap-4">
+             <div className="w-10 h-10 bg-primary/20 text-primary rounded-xl flex items-center justify-center shadow-xl shadow-primary/20">
+                <Navigation size={20} />
+             </div>
+             <div>
+                <p className="text-[8px] font-black text-white/40 uppercase tracking-widest">Telemetry Data</p>
+                <p className="text-[10px] font-black uppercase tracking-tight">42 km/h • Heading NE</p>
+             </div>
+          </div>
+          <div className="bg-black/80 backdrop-blur-xl p-4 rounded-2xl border border-white/10 text-white flex items-center gap-4">
+             <div className="w-10 h-10 bg-white/5 text-white/40 rounded-xl flex items-center justify-center">
+                <Compass size={20} />
+             </div>
+             <div>
+                <p className="text-[8px] font-black text-white/40 uppercase tracking-widest">Coordinates</p>
+                <p className="text-[10px] font-black uppercase tracking-tight">{location.lat.toFixed(4)}N, {location.lng.toFixed(4)}E</p>
+             </div>
+          </div>
+       </div>
 
-    // Load Google Maps script if not already loaded
-    if (!window.google) {
-      const script = document.createElement('script');
-      script.src = `https://maps.googleapis.com/maps/api/js?key=${ENV.GOOGLE_MAPS_API_KEY}&libraries=places`;
-      script.async = true;
-      script.defer = true;
-      script.onload = initMap;
-      script.onerror = () => setError('Failed to load Google Maps API. Check your API key and network.');
-      document.head.appendChild(script);
-    } else {
-      initMap();
-    }
+       {/* Bus Marker */}
+       <div className="relative z-10 transition-transform duration-1000 group-hover:scale-110">
+          <div className="absolute -inset-10 bg-primary/20 rounded-full blur-2xl animate-pulse"></div>
+          <div className="w-16 h-16 bg-primary text-white rounded-3xl flex items-center justify-center shadow-2xl shadow-primary/40 border-4 border-white/10 relative">
+             <i className="fas fa-bus text-2xl"></i>
+             <div className="absolute -top-1 -right-1 w-4 h-4 bg-emerald-500 rounded-full border-2 border-slate-900"></div>
+          </div>
+       </div>
 
-    function initMap() {
-      if (!mapRef.current || !window.google) return;
-
-      try {
-        const initialLocation = location || { lat: 32.0900, lng: 76.2600 };
-        const gMap = new window.google.maps.Map(mapRef.current, {
-          center: initialLocation,
-          zoom: 15,
-          disableDefaultUI: true,
-          styles: [
-            {
-              featureType: 'poi',
-              elementType: 'labels',
-              stylers: [{ visibility: 'off' }]
-            }
-          ]
-        });
-
-        const gMarker = new window.google.maps.Marker({
-          position: initialLocation,
-          map: gMap,
-          title: busId ? `Bus ${busId}` : 'Bus Location',
-          icon: {
-            path: window.google.maps.SymbolPath.CIRCLE,
-            scale: 10,
-            fillColor: '#1e40af',
-            fillOpacity: 1,
-            strokeWeight: 2,
-            strokeColor: '#ffffff'
-          }
-        });
-
-        setMap(gMap);
-        setMarker(gMarker);
-      } catch (err: any) {
-        if (err.message?.includes('ApiNotActivatedMapError')) {
-          setError('Google Maps API is not activated. Please enable it in Google Cloud Console.');
-        } else {
-          setError('Error initializing Google Maps: ' + err.message);
-        }
-      }
-    }
-  }, []);
-
-  useEffect(() => {
-    if (map && marker && location && window.google) {
-      const newPos = new window.google.maps.LatLng(location.lat, location.lng);
-      marker.setPosition(newPos);
-      map.panTo(newPos);
-    }
-  }, [location, map, marker]);
-
-  if (error) {
-    return (
-      <div className="w-full h-full flex flex-col items-center justify-center bg-slate-100 p-6 text-center">
-        <i className="fas fa-map-marked-alt text-4xl text-slate-300 mb-4"></i>
-        <p className="text-sm font-bold text-slate-600 mb-2">Map Unavailable</p>
-        <p className="text-[10px] font-black uppercase tracking-widest text-danger">{error}</p>
-      </div>
-    );
-  }
-
-  return <div ref={mapRef} className="w-full h-full rounded-[2rem]" />;
+       {/* Bottom Controls */}
+       <div className="absolute bottom-6 left-6 z-20 flex items-center gap-4">
+          <div className="bg-black/80 backdrop-blur-xl px-6 py-4 rounded-2xl border border-white/10 text-white flex items-center gap-4">
+             <div className="w-8 h-8 bg-white/5 rounded-lg flex items-center justify-center text-primary">
+                <Shield size={16} />
+             </div>
+             <p className="text-[9px] font-black uppercase tracking-widest">Encrypted Satellite Feed</p>
+          </div>
+       </div>
+    </div>
+  );
 };
 
 export default GoogleMap;

@@ -3,14 +3,13 @@ import { createRequire } from 'module';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import cors from 'cors';
-import dotenv from 'dotenv';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const require = createRequire(import.meta.url);
 
-// Load environment variables from .env first
+// Load environment variables
+import dotenv from 'dotenv';
 dotenv.config();
-
 // Also try loading .env.production if .env is missing or empty
 if (!process.env.VITE_SUPABASE_URL) {
   dotenv.config({ path: '.env.production' });
@@ -25,61 +24,60 @@ if (!process.env.SUPABASE_SERVICE_ROLE_KEY && process.env.VITE_SUPABASE_ANON_KEY
   process.env.SUPABASE_SERVICE_ROLE_KEY = process.env.VITE_SUPABASE_ANON_KEY;
 }
 if (!process.env.TWILIO_ACCOUNT_SID && process.env.VITE_TWILIO_ACCOUNT_SID) {
-  process.env.TWILIO_ACCOUNT_SID = process.env.VITE_TWILIO_ACCOUNT_SID;
+    process.env.TWILIO_ACCOUNT_SID = process.env.VITE_TWILIO_ACCOUNT_SID;
 }
 if (!process.env.TWILIO_AUTH_TOKEN && process.env.VITE_TWILIO_AUTH_TOKEN) {
-  process.env.TWILIO_AUTH_TOKEN = process.env.VITE_TWILIO_AUTH_TOKEN;
+    process.env.TWILIO_AUTH_TOKEN = process.env.VITE_TWILIO_AUTH_TOKEN;
 }
 if (!process.env.TWILIO_PHONE_NUMBER && process.env.VITE_TWILIO_PHONE_NUMBER) {
-  process.env.TWILIO_PHONE_NUMBER = process.env.VITE_TWILIO_PHONE_NUMBER;
+    process.env.TWILIO_PHONE_NUMBER = process.env.VITE_TWILIO_PHONE_NUMBER;
 }
 
 async function startServer() {
   const app = express();
-  const PORT = Number(process.env.PORT) || 3000; // Convert to number
+  const PORT = Number(process.env.PORT) || 3000;
 
   // Middleware
   app.use(express.json());
-
+  
   // CORS configuration
-  app.use(
-    cors({
-      origin: '*', // Allow all origins
-      methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-      allowedHeaders: ['Origin', 'X-Requested-With', 'Content-Type', 'Accept', 'Authorization'],
-    })
-  );
+  app.use(cors({
+    origin: '*', // Allow all origins for now to fix connection issues
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Origin', 'X-Requested-With', 'Content-Type', 'Accept', 'Authorization']
+  }));
 
   // Health check route
-  app.get('/api/health', (_req, res) => {
+  app.get('/api/health', (req, res) => {
     res.json({ status: 'ok', message: 'Backend is running' });
   });
 
-  // Mount backend routes safely
-  const routeFiles: { path: string; prefix: string }[] = [
-    { path: './backend/routes/auth', prefix: '/api/auth' },
-    { path: './backend/routes/otp', prefix: '/api/otp' },
-    { path: './backend/routes/students', prefix: '/api/students' },
-    { path: './backend/routes/buses', prefix: '/api/buses' },
-    { path: './backend/routes/routes', prefix: '/api/routes' },
-    { path: './backend/routes/fees', prefix: '/api/fees' },
-    { path: './backend/routes/payments', prefix: '/api/payments' },
-    { path: './backend/routes/notifications', prefix: '/api/notifications' },
-    { path: './backend/routes/attendance', prefix: '/api/attendance' },
-    { path: './backend/routes/users', prefix: '/api/users' },
-    { path: './backend/routes/receipts', prefix: '/api/receipts' },
+  // Mount backend routes
+  const routes = [
+    { path: '/api/auth', file: './backend/routes/auth' },
+    { path: '/api/otp', file: './backend/routes/otp' },
+    { path: '/api/students', file: './backend/routes/students' },
+    { path: '/api/buses', file: './backend/routes/buses' },
+    { path: '/api/routes', file: './backend/routes/routes' },
+    { path: '/api/fees', file: './backend/routes/fees' },
+    { path: '/api/payments', file: './backend/routes/payments' },
+    { path: '/api/notifications', file: './backend/routes/notifications' },
+    { path: '/api/attendance', file: './backend/routes/attendance' },
+    { path: '/api/users', file: './backend/routes/users' },
+    { path: '/api/receipts', file: './backend/routes/receipts' },
   ];
 
-  for (const route of routeFiles) {
+  routes.forEach(route => {
     try {
-      const router = require(route.path);
-      app.use(route.prefix, router);
-    } catch (err) {
-      console.warn(`Warning: Could not load route ${route.path}. Skipping.`, err);
+      const routeHandler = require(route.file);
+      app.use(route.path, routeHandler);
+      console.log(`Loaded route: ${route.path}`);
+    } catch (error) {
+      console.warn(`Skipping route ${route.path}: ${route.file} not found or failed to load`);
     }
-  }
+  });
 
-  // Vite middleware (development only)
+  // Vite middleware (only in development)
   if (process.env.NODE_ENV !== 'production') {
     try {
       const { createServer: createViteServer } = await import('vite');
@@ -94,9 +92,9 @@ async function startServer() {
     }
   } else {
     console.log('Running in production mode. Vite middleware disabled.');
-
-    // Root route for production
-    app.get('/', (_req, res) => {
+    
+    // Root route for production (API backend status)
+    app.get('/', (req, res) => {
       res.send('School Bus Fee Management System Backend is Running');
     });
   }
@@ -106,6 +104,4 @@ async function startServer() {
   });
 }
 
-startServer().catch((err) => {
-  console.error('Failed to start server:', err);
-});
+startServer();
