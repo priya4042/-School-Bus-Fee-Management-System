@@ -2,32 +2,57 @@ const express = require('express');
 const router = express.Router();
 const supabaseAdmin = require('../config/supabase');
 
+// =============================
 // Get all students with parent info
+// =============================
 router.get('/', async (req, res) => {
   try {
+
     const { data, error } = await supabaseAdmin
-  .from('students')
-  .select(`
-    *,
-    profiles (
-      full_name,
-      phone_number
-    )
-  `);
+      .from('students')
+      .select(`
+        *,
+        profiles:parent_id (
+          full_name,
+          phone_number
+        ),
+        routes (
+          route_name
+        ),
+        buses (
+          plate
+        )
+      `);
 
     if (error) throw error;
 
     res.json(data);
+
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 });
 
-// Create a student
-// Create a student
+
+// =============================
+// Create Student
+// =============================
 router.post('/', async (req, res) => {
+
   try {
-    const { admission_number } = req.body;
+
+    const {
+      full_name,
+      admission_number,
+      grade,
+      section,
+      route_id,
+      bus_id,
+      parent_name,
+      parent_phone,
+      boarding_point,
+      monthly_fee
+    } = req.body;
 
     // Check duplicate admission number
     const { data: existingStudent } = await supabaseAdmin
@@ -42,23 +67,72 @@ router.post('/', async (req, res) => {
       });
     }
 
-    // Find parent with same admission number
-    const { data: parent } = await supabaseAdmin
-      .from('profiles')
-      .select('id, full_name, phone_number')
-      .eq('admission_number', admission_number)
-      .eq('role', 'PARENT')
-      .maybeSingle();
+    let parentId = null;
 
-    const studentData = {
-      ...req.body,
-      parent_id: parent ? parent.id : null,
-      parent_phone: parent ? parent.phone_number : null
-    };
+    if (parent_phone) {
 
+      const parentEmail = `parent.${parent_phone}@school.com`;
+      const defaultPassword = parent_phone.slice(-6);
+
+      // Check if parent already exists
+      const { data: existingParent } = await supabaseAdmin
+        .from('profiles')
+        .select('*')
+        .eq('phone_number', parent_phone)
+        .eq('role', 'PARENT')
+        .maybeSingle();
+
+      if (existingParent) {
+
+        parentId = existingParent.id;
+
+      } else {
+
+        // Create Supabase Auth user
+        const { data: authUser, error: authError } =
+          await supabaseAdmin.auth.admin.createUser({
+            email: parentEmail,
+            password: defaultPassword,
+            email_confirm: true,
+            user_metadata: {
+              full_name: parent_name,
+              role: 'PARENT'
+            }
+          });
+
+        if (authError) throw authError;
+
+        parentId = authUser.user.id;
+
+        // Create profile
+        const { error: profileError } = await supabaseAdmin
+          .from('profiles')
+          .insert({
+            id: parentId,
+            full_name: parent_name,
+            email: parentEmail,
+            phone_number: parent_phone,
+            role: 'PARENT'
+          });
+
+        if (profileError) throw profileError;
+      }
+    }
+
+    // Insert student
     const { data, error } = await supabaseAdmin
       .from('students')
-      .insert(studentData)
+      .insert({
+        full_name,
+        admission_number,
+        grade,
+        section,
+        route_id,
+        bus_id,
+        boarding_point,
+        monthly_fee,
+        parent_id: parentId
+      })
       .select()
       .single();
 
@@ -71,9 +145,14 @@ router.post('/', async (req, res) => {
   }
 });
 
-// Update a student
+
+// =============================
+// Update Student
+// =============================
 router.put('/:id', async (req, res) => {
+
   try {
+
     const { id } = req.params;
 
     const { data, error } = await supabaseAdmin
@@ -85,34 +164,38 @@ router.put('/:id', async (req, res) => {
 
     if (error) throw error;
 
-    // Send route assignment SMS if route_id changed
-    if (req.body.route_id) {
+
+    // Send SMS when route assigned
+    if (req.body.route_id && data.parent_id) {
+
       try {
+
         const { data: route } = await supabaseAdmin
           .from('routes')
           .select('route_name')
           .eq('id', req.body.route_id)
           .single();
 
-        if (route && data.parent_id) {
-          const { data: parent } = await supabaseAdmin
-            .from('profiles')
-            .select('phone_number')
-            .eq('id', data.parent_id)
-            .single();
+        const { data: parent } = await supabaseAdmin
+          .from('profiles')
+          .select('phone_number')
+          .eq('id', data.parent_id)
+          .single();
 
-          if (parent?.phone_number) {
-            const { sendSMS } = require('../utils/sms');
+        if (parent?.phone_number && route?.route_name) {
 
-            await sendSMS(
-              parent.phone_number,
-              `Bus route assigned for ${data.full_name}: ${route.route_name}.`
-            );
-          }
+          const { sendSMS } = require('../utils/sms');
+
+          await sendSMS(
+            parent.phone_number,
+            `Bus route assigned for ${data.full_name}: ${route.route_name}.`
+          );
         }
 
       } catch (smsErr) {
-        console.error('Failed to send route assignment SMS:', smsErr);
+
+        console.error('SMS error:', smsErr);
+
       }
     }
 
@@ -123,9 +206,14 @@ router.put('/:id', async (req, res) => {
   }
 });
 
-// Delete a student
+
+// =============================
+// Delete Student
+// =============================
 router.delete('/:id', async (req, res) => {
+
   try {
+
     const { id } = req.params;
 
     const { error } = await supabaseAdmin
@@ -138,8 +226,11 @@ router.delete('/:id', async (req, res) => {
     res.json({ success: true });
 
   } catch (err) {
+
     res.status(500).json({ error: err.message });
+
   }
 });
+
 
 module.exports = router;
