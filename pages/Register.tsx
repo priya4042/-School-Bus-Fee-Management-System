@@ -65,6 +65,22 @@ const Register: React.FC<RegisterProps> = ({ onRegister, onBackToLogin, initialR
         // valid: false means admission number not in DB
         if (admissionCheck.valid === false) throw new Error(admissionCheck.message || 'Admission number not found');
         if (admissionCheck.exists) throw new Error(admissionCheck.message || 'Admission number already registered');
+        // If the school has provided parent name/phone for this admission, require the registrant to match them
+        try {
+          const expectedPhone = (admissionCheck.parentPhone || '').replace(/\D/g, '').slice(-10);
+          const providedPhone = (formData.phone || '').replace(/\D/g, '').slice(-10);
+          if (expectedPhone && providedPhone && expectedPhone !== providedPhone) {
+            throw new Error('Provided phone does not match school records for this admission number. Please verify with administration.');
+          }
+
+          const expectedName = (admissionCheck.parentName || '').trim().toLowerCase();
+          const providedName = (formData.fullName || '').trim().toLowerCase();
+          if (expectedName && providedName && expectedName !== providedName) {
+            throw new Error('Provided parent name does not match school records for this admission number. Please verify with administration.');
+          }
+        } catch (e: any) {
+          throw e;
+        }
       }
 
       const res = await otpService.sendOTP(formData.phone, formData.admissionNo);
