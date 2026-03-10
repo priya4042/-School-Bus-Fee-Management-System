@@ -88,6 +88,7 @@ export interface MonthlyDue {
   last_date?: string;
   status: PaymentStatus;
   paid_at?: string;
+  transaction_id?: string;
   created_at?: string;
   students?: Partial<Student>;
 }

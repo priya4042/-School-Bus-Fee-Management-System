@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { User, MonthlyDue, PaymentStatus, Student } from '../types';
-import { MOCK_STUDENTS, MOCK_DUES, MONTHS } from '../constants';
+import { MONTHS } from '../constants';
 import { usePayments } from '../hooks/usePayments';
 import PaymentPortal from '../components/PaymentPortal';
 import api from '../lib/api';
@@ -11,6 +11,7 @@ import BoardingLocationPicker from '../components/Location/BoardingLocationPicke
 import { useReceipts } from '../hooks/useReceipts';
 import { showToast } from '../lib/swal';
 import GoogleMap from '../components/GoogleMap';
+import { supabase } from '../lib/supabase';
 
 const ParentDashboard: React.FC<{ user: User }> = ({ user }) => {
   const { paymentState, openPortal, closePortal, initiateRazorpay } = usePayments();
@@ -38,14 +39,26 @@ const ParentDashboard: React.FC<{ user: User }> = ({ user }) => {
     const loadInitialData = async () => {
       setLoading(true);
       try {
-        const { data: studentsData } = await api.get('students');
-        // In real app, filter by parent_id or admission_number
-        const family = (studentsData || []).filter((s: any) => s.admission_number === user.admissionNumber || s.parent_id === user.id);
+        const { data: studentsData, error: studentsError } = await supabase
+          .from('students')
+          .select('*')
+          .eq('parent_id', user.id);
+        if (studentsError) throw studentsError;
+        const family = studentsData || [];
         setFamilyStudents(family);
         if (family.length > 0) setSelectedStudent(family[0]);
 
-        const { data: duesData } = await api.get('fees/dues');
-        setDues(duesData || []);
+        if (family.length > 0) {
+          const studentIds = family.map((s: Student) => s.id);
+          const { data: duesData, error: duesError } = await supabase
+            .from('monthly_dues')
+            .select('*')
+            .in('student_id', studentIds)
+            .order('year', { ascending: true })
+            .order('month', { ascending: true });
+          if (duesError) throw duesError;
+          setDues(duesData || []);
+        }
       } catch (err) {
         console.error("Failed to load dashboard data", err);
       } finally {
@@ -183,15 +196,23 @@ const ParentDashboard: React.FC<{ user: User }> = ({ user }) => {
                     <div>
                        <h3 className="text-xl md:text-3xl font-black text-white tracking-tight mb-2">Live Monitor</h3>
                        <p className="text-white/30 font-black uppercase text-[8px] md:text-[10px] tracking-[0.4em] max-w-[250px] mx-auto">
-                          Connect to encrypted satellite stream
+                          {(user as any).preferences?.tracking === true
+                            ? 'Connect to encrypted satellite stream'
+                            : 'Tracking access not enabled — contact school admin'}
                        </p>
                     </div>
-                    <button 
-                       onClick={() => setTrackingActive(true)}
-                       className="bg-primary text-white px-8 md:px-12 py-3 md:py-5 rounded-xl md:rounded-2xl font-black uppercase text-[9px] md:text-[11px] tracking-widest shadow-2xl hover:scale-105 transition-all shadow-primary/20 active:scale-95"
-                    >
-                       Establish Uplink
-                    </button>
+                    {(user as any).preferences?.tracking === true ? (
+                      <button
+                         onClick={() => setTrackingActive(true)}
+                         className="bg-primary text-white px-8 md:px-12 py-3 md:py-5 rounded-xl md:rounded-2xl font-black uppercase text-[9px] md:text-[11px] tracking-widest shadow-2xl hover:scale-105 transition-all shadow-primary/20 active:scale-95"
+                      >
+                         Establish Uplink
+                      </button>
+                    ) : (
+                      <div className="px-6 py-3 bg-white/5 border border-white/10 rounded-2xl text-[9px] font-black text-white/40 uppercase tracking-widest">
+                        Access Restricted
+                      </div>
+                    )}
                  </div>
               )}
 
@@ -267,8 +288,8 @@ const ParentDashboard: React.FC<{ user: User }> = ({ user }) => {
                      {isPaid ? (
                         <div className="flex flex-col items-end gap-2">
                            <i className="fas fa-check-circle text-success text-lg"></i>
-                           <button 
-                             onClick={() => downloadReceipt(due.id, due.id)}
+                           <button
+                             onClick={() => downloadReceipt(due.id, due.transaction_id || due.id)}
                              className="text-[7px] font-black text-primary uppercase tracking-widest hover:underline flex items-center gap-1"
                            >
                              <i className="fas fa-download"></i>

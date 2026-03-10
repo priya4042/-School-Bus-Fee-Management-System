@@ -1,11 +1,8 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell, PieChart, Pie } from 'recharts';
+import React, { useState, useEffect } from 'react';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import DashboardCard from '../components/DashboardCard';
 import AIInsights from '../components/Dashboard/AIInsights';
-import Modal from '../components/Modal';
-import api from '../lib/api';
 import { supabase } from '../lib/supabase';
-import { showToast } from '../lib/swal';
 import { useTracking } from '../hooks/useTracking';
 import { useBuses } from '../hooks/useBuses';
 import BusCameraModal from '../components/BusCameraModal';
@@ -29,28 +26,45 @@ const AdminDashboard: React.FC = () => {
   useEffect(() => {
     const fetchStats = async () => {
       try {
-        const { data } = await api.get('dashboard/stats');
-        setStats(data);
-      } catch (err) {
-        setStats({
-          totalCollection: "₹12.4L",
-          activeStudents: 412,
-          defaulters: 18,
-          lateFeeCollected: "₹4,250",
-          revenueTrend: [
-            { month: 'Oct', revenue: 450000 },
-            { month: 'Nov', revenue: 520000 },
-            { month: 'Dec', revenue: 480000 },
-            { month: 'Jan', revenue: 610000 },
-            { month: 'Feb', revenue: 590000 },
-            { month: 'Mar', revenue: 650000 },
-          ],
-          paymentHealth: [
-            { name: 'Paid', value: 380, color: '#1e40af' },
-            { name: 'Overdue', value: 18, color: '#f59e0b' },
-            { name: 'Unpaid', value: 14, color: '#ef4444' },
-          ]
+        const [{ data: students }, { data: dues }, { data: buses }] = await Promise.all([
+          supabase.from('students').select('id'),
+          supabase.from('monthly_dues').select('total_due, status, month, year'),
+          supabase.from('buses').select('id, status'),
+        ]);
+
+        const allDues = dues || [];
+        const paidDues = allDues.filter(d => d.status === 'PAID');
+        const totalCollection = paidDues.reduce((sum, d) => sum + Number(d.total_due || 0), 0);
+        const allBuses = buses || [];
+        const activeBuses = allBuses.filter(b => b.status === 'active').length;
+
+        const MONTH_NAMES = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+        const now = new Date();
+        const revenueTrend = Array.from({ length: 6 }, (_, i) => {
+          const d = new Date(now.getFullYear(), now.getMonth() - (5 - i), 1);
+          const rev = paidDues
+            .filter(due => Number(due.year) === d.getFullYear() && Number(due.month) === d.getMonth() + 1)
+            .reduce((s, due) => s + Number(due.total_due || 0), 0);
+          return { month: MONTH_NAMES[d.getMonth()], revenue: rev };
         });
+
+        setStats({
+          totalCollection: totalCollection >= 100000
+            ? `₹${(totalCollection / 100000).toFixed(1)}L`
+            : `₹${totalCollection.toLocaleString('en-IN')}`,
+          activeStudents: (students || []).length,
+          defaulters: allDues.filter(d => d.status === 'OVERDUE').length,
+          activeBuses: `${activeBuses}/${allBuses.length}`,
+          revenueTrend,
+          paymentHealth: [
+            { name: 'Paid', value: paidDues.length, color: '#1e40af' },
+            { name: 'Overdue', value: allDues.filter(d => d.status === 'OVERDUE').length, color: '#f59e0b' },
+            { name: 'Unpaid', value: allDues.filter(d => d.status === 'PENDING').length, color: '#ef4444' },
+          ],
+        });
+      } catch (err) {
+        console.error('Failed to load stats:', err);
+        setStats({ totalCollection: '₹0', activeStudents: 0, defaulters: 0, activeBuses: '0/0', revenueTrend: [], paymentHealth: [] });
       } finally {
         setLoading(false);
       }
@@ -97,7 +111,7 @@ const AdminDashboard: React.FC = () => {
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
               <DashboardCard title="Revenue (MTD)" value={stats.totalCollection} icon="fa-wallet" color="blue" />
               <DashboardCard title="Total Students" value={stats.activeStudents} icon="fa-user-graduate" color="green" />
-              <DashboardCard title="Active Fleet" value="1/1" icon="fa-bus" color="orange" />
+              <DashboardCard title="Active Fleet" value={stats.activeBuses} icon="fa-bus" color="orange" />
             </div>
 
             <div className="bg-white p-8 rounded-[2.5rem] border border-slate-200 shadow-premium overflow-hidden">

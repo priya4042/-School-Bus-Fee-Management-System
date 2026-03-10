@@ -25,8 +25,8 @@ const Login: React.FC<LoginProps> = ({ onLogin, onGoToRegister }) => {
     setError('');
 
     try {
-      let type: 'ADMIN' | 'ADMISSION' = 'ADMIN';
-      
+      let type: 'ADMIN' | 'ADMISSION';
+
       if (loginRole === UserRole.ADMIN) {
         type = 'ADMIN';
       } else {
@@ -37,7 +37,11 @@ const Login: React.FC<LoginProps> = ({ onLogin, onGoToRegister }) => {
       showToast('Login successful', 'success');
       if (onLogin) onLogin(user);
     } catch (err: any) {
-      setError(err.message);
+      if (err.message.includes('401') || err.message.includes('Invalid login credentials')) {
+        setError('Incorrect password. If you have forgotten your password, please reset it.');
+      } else {
+        setError(err.message || 'Login failed. Please check your credentials.');
+      }
     } finally {
       setLoading(false);
     }

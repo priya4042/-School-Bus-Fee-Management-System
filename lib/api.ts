@@ -1,27 +1,34 @@
-import axios from 'axios';
+import axios, { AxiosRequestConfig } from 'axios';
 import { ENV } from '../config/env';
+import { supabase } from './supabase';
+import type { InternalAxiosRequestConfig } from 'axios';
 
-const axiosInstance = axios.create({
-  baseURL: ENV.SUPABASE_FUNCTIONS_URL,
+// Create axios instance
+export const axiosInstance = axios.create({
+  baseURL: ENV.API_BASE_URL,
   headers: {
     'Content-Type': 'application/json',
   },
 });
 
-// Add interceptor to include Supabase token
-axiosInstance.interceptors.request.use(async (config) => {
-  try {
-    const { data: { session } } = await (await import('./supabase')).supabase.auth.getSession();
-    if (session?.access_token) {
-      config.headers.Authorization = `Bearer ${session.access_token}`;
+// Request interceptor to attach Supabase token
+axiosInstance.interceptors.request.use(
+  async (config: InternalAxiosRequestConfig) => {
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session?.access_token) {
+        // Axios 1.x: use set() for headers
+        config.headers?.set?.('Authorization', `Bearer ${session.access_token}`);
+      }
+    } catch (err) {
+      console.error('[API] Failed to attach auth token:', err);
     }
-  } catch (err) {
-    console.error('Failed to attach auth header:', err);
-  }
-  return config;
-});
+    return config;
+  },
+  (error) => Promise.reject(error)
+);
 
-// Add interceptor to handle empty responses
+// Response interceptor to handle empty or non-JSON responses
 axiosInstance.interceptors.response.use(
   (response) => {
     if (response.data === null || response.data === undefined || response.data === '') {
@@ -30,67 +37,77 @@ axiosInstance.interceptors.response.use(
     return response;
   },
   (error) => {
-    console.error('API Error:', error);
+    console.error('[API] Axios response error:', error);
     return Promise.reject(error);
   }
 );
 
-export const apiPost = async (module: string, action: string, body: any = {}, method: string = 'POST') => {
+// Generic API POST/GET wrapper using fetch
+export const apiPost = async (
+  module: string,
+  action: string,
+  body: any = {},
+  method: 'POST' | 'GET' | 'PUT' | 'DELETE' = 'POST'
+) => {
   try {
-    if (!ENV.SUPABASE_FUNCTIONS_URL) {
-      console.error('[API] SUPABASE_FUNCTIONS_URL is not configured in environment variables.');
-      throw new Error('API configuration error: Missing SUPABASE_FUNCTIONS_URL');
+    if (!ENV.API_BASE_URL) {
+      console.warn('[API] API_BASE_URL is not configured.');
     }
-    const url = `${ENV.SUPABASE_FUNCTIONS_URL}/api/${module}/${action}`;
+
+    let baseUrl = ENV.API_BASE_URL.replace(/\/$/, '');
+    if (baseUrl.endsWith('/api')) baseUrl = baseUrl.slice(0, -4);
+    const url = action ? `${baseUrl}/api/${module}/${action}` : `${baseUrl}/api/${module}`;
+
+    console.log(`[API] Requesting ${method} ${url}`);
+
+    const { data: { session } } = await supabase.auth.getSession();
+    const token = session?.access_token;
+
     const response = await fetch(url, {
-      method: method,
+      method,
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${(await (await import('./supabase')).supabase.auth.getSession()).data.session?.access_token || ''}`
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
       },
       body: method !== 'GET' ? JSON.stringify(body) : undefined,
     });
 
-    console.log(`[API] Response status: ${response.status} for ${url}`);
-
-    let data;
-    try {
-      data = await response.json();
-    } catch (e) {
-      console.error(`[API] Error parsing JSON for ${url}:`, e);
-      throw new Error('Server returned an invalid JSON response');
+    let data: any;
+    const contentType = response.headers.get('content-type');
+    if (contentType?.includes('application/json')) {
+      try {
+        data = await response.json();
+      } catch (e) {
+        throw new Error('Server returned invalid JSON');
+      }
+    } else {
+      const text = await response.text();
+      console.error(`[API] Non-JSON response for ${url}:`, text.substring(0, 200));
+      throw new Error(`Server returned non-JSON response: ${response.status}`);
     }
 
     if (!response.ok) {
-      throw new Error(data.message || data.code || `API request failed with status ${response.status}`);
+      const errorMessage = data.message || data.error || data.code || `API failed with status ${response.status}`;
+      throw new Error(errorMessage);
     }
 
     return data;
-  } catch (error) {
-    console.error(`API Error [${module}/${action}]:`, error);
+  } catch (error: any) {
+    if (error.message === 'Failed to fetch') {
+      throw new Error('Unable to connect to the server. Check CORS or server status.');
+    }
     throw error;
   }
 };
 
-
+// High-level API wrapper using axiosInstance
 export const api = {
   get: async (url: string, config?: any) => {
-    let targetUrl = url.startsWith('/') ? url : `/${url}`;
-    
-    if (targetUrl === '/reports/defaulters') targetUrl = '/fees/defaulters';
-    if (targetUrl === '/dues') targetUrl = '/fees/dues';
-    if (targetUrl === '/stats') targetUrl = '/dashboard/stats';
-    
+    const targetUrl = url.startsWith('/') ? url : `/${url}`;
     return axiosInstance.get(`/api${targetUrl}`, config);
   },
   post: async (url: string, data?: any, config?: any) => {
-    // Handle both /payments/create-order and payments/create-order
-    let targetUrl = url.startsWith('/') ? url : `/${url}`;
-    
-    // Map old Vercel routes to new Supabase Edge Function routes
-    if (targetUrl === '/payments/create-order') targetUrl = '/payments/createOrder';
-    if (targetUrl === '/v1/payments/verify') targetUrl = '/payments/verifyPayment';
-    
+    const targetUrl = url.startsWith('/') ? url : `/${url}`;
     return axiosInstance.post(`/api${targetUrl}`, data, config);
   },
   put: async (url: string, data?: any, config?: any) => {
@@ -100,7 +117,7 @@ export const api = {
   delete: async (url: string, config?: any) => {
     const targetUrl = url.startsWith('/') ? url : `/${url}`;
     return axiosInstance.delete(`/api${targetUrl}`, config);
-  }
+  },
 };
 
 export default api;

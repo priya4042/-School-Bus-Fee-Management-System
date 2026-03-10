@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from 'react';
-import api from '../lib/api';
+import { supabase } from '../lib/supabase';
 
 export const useBuses = () => {
   const [buses, setBuses] = useState<any[]>([]);
@@ -9,10 +9,11 @@ export const useBuses = () => {
   const fetchBuses = async () => {
     setLoading(true);
     try {
-      const { data } = await api.get('/buses');
-      setBuses(data);
+      const { data, error } = await supabase.from('buses').select('*').order('bus_number');
+      if (error) throw error;
+      setBuses(data || []);
     } catch (err) {
-      console.error('Failed to fetch buses', err);
+      console.error('Failed to fetch buses:', err);
     } finally {
       setLoading(false);
     }
@@ -20,33 +21,34 @@ export const useBuses = () => {
 
   const registerBus = async (busData: any) => {
     try {
-      await api.post('/buses', busData);
+      const { error } = await supabase.from('buses').insert(busData);
+      if (error) throw error;
       await fetchBuses();
       return { success: true };
     } catch (err: any) {
-      console.error(err);
-      return { success: false, error: err.response?.data?.error || err.message };
+      return { success: false, error: err.message };
     }
   };
 
   const updateBus = async (id: string, busData: any) => {
     try {
-      await api.put(`/buses/${id}`, busData);
+      const { error } = await supabase.from('buses').update(busData).eq('id', id);
+      if (error) throw error;
       await fetchBuses();
       return { success: true };
     } catch (err: any) {
-      console.error('Failed to update bus', err);
-      return { success: false, error: err.response?.data?.error || err.message };
+      return { success: false, error: err.message };
     }
   };
 
   const deleteBus = async (id: string) => {
     try {
-      await api.delete(`/buses/${id}`);
+      const { error } = await supabase.from('buses').delete().eq('id', id);
+      if (error) throw error;
       await fetchBuses();
       return { success: true };
     } catch (err: any) {
-      return { success: false, error: err.response?.data?.error || err.message };
+      return { success: false, error: err.message };
     }
   };
 

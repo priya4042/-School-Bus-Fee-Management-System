@@ -1,8 +1,7 @@
 
 import { useState, useEffect } from 'react';
-import api from '../lib/api';
+import { supabase } from '../lib/supabase';
 import { Route } from '../types';
-import { DEFAULT_ROUTES } from '../constants';
 
 export const useRoutes = () => {
   const [routes, setRoutes] = useState<Route[]>([]);
@@ -11,10 +10,12 @@ export const useRoutes = () => {
   const fetchRoutes = async () => {
     setLoading(true);
     try {
-      const { data } = await api.get('routes');
-      setRoutes(data);
+      const { data, error } = await supabase.from('routes').select('*').order('route_name');
+      if (error) throw error;
+      setRoutes(data || []);
     } catch (err) {
-      setRoutes(DEFAULT_ROUTES);
+      console.error('Failed to fetch routes:', err);
+      setRoutes([]);
     } finally {
       setLoading(false);
     }
@@ -22,27 +23,30 @@ export const useRoutes = () => {
 
   const addRoute = async (routeData: any): Promise<{ success: boolean; error?: string }> => {
     try {
-      await api.post('routes', routeData);
+      const { error } = await supabase.from('routes').insert(routeData);
+      if (error) throw error;
       await fetchRoutes();
       return { success: true };
     } catch (err: any) {
-      return { success: false, error: "Database Synchronization Failed" };
+      return { success: false, error: err.message };
     }
   };
 
   const updateRoute = async (id: string, routeData: any) => {
     try {
-      await api.put(`routes/${id}`, routeData);
+      const { error } = await supabase.from('routes').update(routeData).eq('id', id);
+      if (error) throw error;
       await fetchRoutes();
       return { success: true };
     } catch (err: any) {
-      return { success: false, error: "Update Failed" };
+      return { success: false, error: err.message };
     }
   };
 
   const deleteRoute = async (id: string) => {
     try {
-      await api.delete(`routes/${id}`);
+      const { error } = await supabase.from('routes').delete().eq('id', id);
+      if (error) throw error;
       await fetchRoutes();
       return true;
     } catch (err) {

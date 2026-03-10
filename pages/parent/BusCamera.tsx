@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { Camera, MapPin, Clock, Zap, AlertCircle, ShieldCheck } from 'lucide-react';
+import { Camera, MapPin, Clock, Zap, AlertCircle, ShieldCheck, ShieldOff } from 'lucide-react';
 import CameraFeed from '../../components/Camera/CameraFeed';
-import { apiPost } from '../../lib/api';
 import { User } from '../../types';
+import { supabase } from '../../lib/supabase';
 
 const BusCamera: React.FC<{ user: User }> = ({ user }) => {
   const [cameras, setCameras] = useState<any[]>([]);
@@ -10,36 +10,69 @@ const BusCamera: React.FC<{ user: User }> = ({ user }) => {
   const [busInfo, setBusInfo] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
+  const cameraEnabled = (user as any).preferences?.camera === true;
+
   useEffect(() => {
+    if (!cameraEnabled) { setLoading(false); return; }
     fetchCameraData();
   }, [user]);
 
   const fetchCameraData = async () => {
-    if (!user) return;
     try {
-      // 1. Get parent's students to find their bus
-      // Updated to use apiPost with GET method
-      const students = await apiPost('parent-students', user.id, {}, 'GET');
-      if (students && students.length > 0 && students[0].buses) {
-        const bus = students[0].buses;
+      const { data: studentsData } = await supabase
+        .from('students')
+        .select('*, buses(id, bus_number, plate)')
+        .eq('parent_id', user.id)
+        .limit(1);
+
+      if (studentsData && studentsData.length > 0 && studentsData[0].buses) {
+        const bus = studentsData[0].buses;
         setBusInfo(bus);
-        
-        // 2. Get cameras for this bus
-        // Updated to use apiPost with GET method
-        const cameraData = await apiPost('bus-cameras', bus.id, {}, 'GET');
+
+        const { data: cameraData } = await supabase
+          .from('bus_cameras')
+          .select('*')
+          .eq('bus_id', bus.id);
+
         setCameras(cameraData || []);
-        if (cameraData && cameraData.length > 0) {
-          setSelectedCamera(cameraData[0]);
-        }
+        if (cameraData && cameraData.length > 0) setSelectedCamera(cameraData[0]);
       }
     } catch (err: any) {
-      console.error(err);
-      alert(err.message || 'Failed to fetch camera data. Please try again.');
+      console.error('Failed to fetch camera data:', err);
     } finally {
       setLoading(false);
     }
   };
 
+  if (loading) return (
+    <div className="py-20 text-center">
+      <i className="fas fa-circle-notch fa-spin text-primary text-2xl"></i>
+    </div>
+  );
+
+  // Permission denied
+  if (!cameraEnabled) {
+    return (
+      <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
+        <div>
+          <h1 className="text-4xl font-black text-slate-900 tracking-tight">Live Bus Monitor</h1>
+          <p className="text-slate-500 font-medium mt-2">Real-time safety monitoring for your child's journey</p>
+        </div>
+        <div className="py-32 bg-white rounded-[3rem] border border-slate-100 shadow-sm flex flex-col items-center justify-center text-center px-8">
+          <div className="w-24 h-24 bg-red-50 text-red-400 rounded-[2rem] flex items-center justify-center mb-6">
+            <ShieldOff size={48} />
+          </div>
+          <h3 className="text-2xl font-black text-slate-900 tracking-tight uppercase mb-3">Access Restricted</h3>
+          <p className="text-slate-500 font-bold text-sm max-w-sm mx-auto">
+            Camera access has not been granted for your account. Please contact the school administrator to enable live camera monitoring.
+          </p>
+          <div className="mt-8 px-6 py-3 bg-slate-50 rounded-2xl border border-slate-100">
+            <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Contact Admin to Enable Access</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
@@ -50,7 +83,7 @@ const BusCamera: React.FC<{ user: User }> = ({ user }) => {
         </div>
         <div className="flex items-center gap-3 bg-emerald-50 text-emerald-600 px-6 py-3 rounded-2xl border border-emerald-100">
           <ShieldCheck size={20} />
-          <span className="text-xs font-black uppercase tracking-widest">Secure Feed</span>
+          <span className="text-xs font-black uppercase tracking-widest">Access Granted</span>
         </div>
       </div>
 
@@ -70,8 +103,8 @@ const BusCamera: React.FC<{ user: User }> = ({ user }) => {
                 {selectedCamera ? (
                   <div className="w-full h-full flex flex-col items-center justify-center">
                     <p className="text-white font-black text-xl mb-4">Click to Start Stream</p>
-                    <button 
-                      onClick={() => setSelectedCamera(selectedCamera)}
+                    <button
+                      onClick={() => setSelectedCamera({ ...selectedCamera })}
                       className="bg-primary text-white p-6 rounded-full shadow-2xl shadow-primary/40 hover:scale-110 transition-transform"
                     >
                       <Zap size={32} fill="currentColor" />
@@ -83,10 +116,9 @@ const BusCamera: React.FC<{ user: User }> = ({ user }) => {
                     <p className="text-sm font-bold opacity-40">Select a camera to view live feed</p>
                   </div>
                 )}
-                
                 <div className="absolute top-6 left-6 flex gap-2">
                   <span className="bg-black/50 backdrop-blur-md text-white text-[10px] font-black uppercase tracking-widest px-3 py-1.5 rounded-lg border border-white/10">
-                    {busInfo.plate}
+                    {busInfo.plate || busInfo.bus_number}
                   </span>
                   <span className="bg-emerald-500 text-white text-[10px] font-black uppercase tracking-widest px-3 py-1.5 rounded-lg border border-emerald-400">
                     Live
@@ -95,41 +127,45 @@ const BusCamera: React.FC<{ user: User }> = ({ user }) => {
               </div>
             </div>
 
-            <div className="bg-white rounded-[2.5rem] p-8 shadow-premium border border-slate-100">
-              <h3 className="text-lg font-black text-slate-900 tracking-tight mb-6">Available Cameras</h3>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                {cameras.map((cam) => (
-                  <button
-                    key={cam.id}
-                    onClick={() => setSelectedCamera(cam)}
-                    className={`p-6 rounded-3xl border transition-all text-left flex flex-col gap-4 ${
-                      selectedCamera?.id === cam.id ? 'bg-primary border-primary text-white shadow-lg shadow-primary/20' : 'bg-slate-50 border-slate-100 text-slate-600 hover:bg-slate-100'
-                    }`}
-                  >
-                    <Camera size={24} />
-                    <div>
-                      <p className="font-bold text-sm">{cam.camera_name}</p>
-                      <p className={`text-[10px] font-black uppercase tracking-widest ${selectedCamera?.id === cam.id ? 'text-white/60' : 'text-slate-400'}`}>
-                        {cam.camera_type}
-                      </p>
-                    </div>
-                  </button>
-                ))}
+            {cameras.length > 0 && (
+              <div className="bg-white rounded-[2.5rem] p-8 shadow-premium border border-slate-100">
+                <h3 className="text-lg font-black text-slate-900 tracking-tight mb-6">Available Cameras</h3>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  {cameras.map((cam) => (
+                    <button
+                      key={cam.id}
+                      onClick={() => setSelectedCamera(cam)}
+                      className={`p-6 rounded-3xl border transition-all text-left flex flex-col gap-4 ${
+                        selectedCamera?.id === cam.id
+                          ? 'bg-primary border-primary text-white shadow-lg shadow-primary/20'
+                          : 'bg-slate-50 border-slate-100 text-slate-600 hover:bg-slate-100'
+                      }`}
+                    >
+                      <Camera size={24} />
+                      <div>
+                        <p className="font-bold text-sm">{cam.camera_name}</p>
+                        <p className={`text-[10px] font-black uppercase tracking-widest ${selectedCamera?.id === cam.id ? 'text-white/60' : 'text-slate-400'}`}>
+                          {cam.camera_type}
+                        </p>
+                      </div>
+                    </button>
+                  ))}
+                </div>
               </div>
-            </div>
+            )}
           </div>
 
           <div className="space-y-8">
             <div className="bg-white rounded-[2.5rem] p-8 shadow-premium border border-slate-100">
-              <h3 className="text-lg font-black text-slate-900 tracking-tight mb-6">Bus Status</h3>
+              <h3 className="text-lg font-black text-slate-900 tracking-tight mb-6">Bus Info</h3>
               <div className="space-y-6">
                 <div className="flex items-center gap-4">
                   <div className="w-12 h-12 bg-blue-50 text-blue-600 rounded-2xl flex items-center justify-center">
                     <MapPin size={24} />
                   </div>
                   <div>
-                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Current Location</p>
-                    <p className="font-bold text-slate-900">Near Kangra Fort</p>
+                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Bus Number</p>
+                    <p className="font-bold text-slate-900">{busInfo.bus_number || 'N/A'}</p>
                   </div>
                 </div>
                 <div className="flex items-center gap-4">
@@ -137,8 +173,8 @@ const BusCamera: React.FC<{ user: User }> = ({ user }) => {
                     <Zap size={24} />
                   </div>
                   <div>
-                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Current Speed</p>
-                    <p className="font-bold text-slate-900">42 km/h</p>
+                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Plate</p>
+                    <p className="font-bold text-slate-900">{busInfo.plate || 'N/A'}</p>
                   </div>
                 </div>
                 <div className="flex items-center gap-4">
@@ -146,15 +182,15 @@ const BusCamera: React.FC<{ user: User }> = ({ user }) => {
                     <Clock size={24} />
                   </div>
                   <div>
-                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Last Update</p>
-                    <p className="font-bold text-slate-900">Just now</p>
+                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Cameras</p>
+                    <p className="font-bold text-slate-900">{cameras.length} Active</p>
                   </div>
                 </div>
               </div>
             </div>
 
             <div className="bg-slate-900 rounded-[2.5rem] p-8 text-white shadow-2xl relative overflow-hidden">
-              <AlertCircle size={32} className="mb-6 text-warning" />
+              <AlertCircle size={32} className="mb-6 text-amber-400" />
               <h3 className="text-xl font-black tracking-tight mb-2">Privacy Notice</h3>
               <p className="text-slate-400 text-sm font-medium mb-6">Camera access is strictly for safety monitoring. Recording or sharing these feeds is prohibited.</p>
               <div className="flex items-center gap-3 text-[10px] font-black uppercase tracking-widest text-slate-500">
@@ -166,11 +202,11 @@ const BusCamera: React.FC<{ user: User }> = ({ user }) => {
         </div>
       )}
 
-      {selectedCamera && (
-        <CameraFeed 
+      {selectedCamera && busInfo && (
+        <CameraFeed
           streamUrl={selectedCamera.stream_url}
           cameraName={selectedCamera.camera_name}
-          busName={busInfo?.plate || 'Bus'}
+          busName={busInfo.plate || busInfo.bus_number || 'Bus'}
           onClose={() => setSelectedCamera(null)}
         />
       )}

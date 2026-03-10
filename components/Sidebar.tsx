@@ -24,20 +24,34 @@ const Sidebar: React.FC<SidebarProps> = ({ user, onLogout, activeTab, setActiveT
     { name: 'User Directory', icon: 'fa-address-book' },
     { name: 'Routes', icon: 'fa-route' },
     { name: 'Buses', icon: 'fa-bus' },
+    { name: 'Live Tracking', icon: 'fa-location-dot' },
+    { name: 'Bus Camera', icon: 'fa-video' },
+    { name: 'Payments', icon: 'fa-credit-card' },
     { name: 'Fees', icon: 'fa-file-invoice-dollar' },
     { name: 'Reports', icon: 'fa-file-alt' },
     { name: 'Notifications', icon: 'fa-bullhorn' },
     { name: 'Audit Logs', icon: 'fa-fingerprint' },
+    { name: 'Permissions', icon: 'fa-shield-alt' },
     ...(isSuperAdmin ? [{ name: 'Bus admins', icon: 'fa-user-shield' }] : []),
     { name: 'Settings', icon: 'fa-cog' },
+    { name: 'Support', icon: 'fa-headset' },
   ];
 
   const parentLinks = [
     { name: 'Dashboard', icon: 'fa-home' },
+    { name: 'Student Profile', icon: 'fa-user-graduate' },
+    { name: 'Attendance History', icon: 'fa-clipboard-check' },
+    { name: 'Routes', icon: 'fa-route' },
+    { name: 'Live Tracking', icon: 'fa-location-dot' },
+    { name: 'Boarding Points', icon: 'fa-map-marker-alt' },
+    { name: 'Bus Camera', icon: 'fa-video' },
     { name: 'Payments', icon: 'fa-credit-card' },
+    { name: 'Fees', icon: 'fa-file-invoice-dollar' },
     { name: 'Notifications', icon: 'fa-bell' },
     { name: 'Receipts', icon: 'fa-receipt' },
     { name: 'Profile', icon: 'fa-user' },
+    { name: 'Settings', icon: 'fa-cog' },
+    { name: 'Support', icon: 'fa-headset' },
   ];
 
   const getLinks = () => {

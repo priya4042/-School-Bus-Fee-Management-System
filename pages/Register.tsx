@@ -4,6 +4,7 @@ import { APP_NAME } from '../constants';
 import { showToast } from '../lib/swal';
 import { useAuthStore } from '../store/authStore';
 import { otpService } from '../services/otpService';
+import { userService } from '../services/userService';
 
 interface RegisterProps {
   onRegister: (user: any) => void;
@@ -16,7 +17,7 @@ const Register: React.FC<RegisterProps> = ({ onRegister, onBackToLogin, initialR
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   
-  const [regStep, setRegStep] = useState<'initial' | 'otp' | 'details' | 'success'>('initial');
+  const [regStep, setRegStep] = useState<'form' | 'success'>('form');
   const [isOtpSent, setIsOtpSent] = useState(false);
   const [otp, setOtp] = useState('');
   const [timer, setTimer] = useState(0);
@@ -46,23 +47,37 @@ const Register: React.FC<RegisterProps> = ({ onRegister, onBackToLogin, initialR
     setError('');
 
     try {
-      if (role === UserRole.ADMIN) {
-        // Admin registration doesn't use OTP in this flow, it uses the secret key
-        setRegStep('details');
-        return;
-      }
+      if (formData.password.length < 8) throw new Error("Password must be at least 8 characters.");
+      if (!formData.phone || formData.phone.length < 10) throw new Error("Please enter a valid 10-digit phone number.");
+      if (!formData.email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) throw new Error("Please enter a valid email address.");
+      if (role === UserRole.PARENT && !formData.admissionNo) throw new Error("Please enter the student's Admission Number.");
 
-      // Basic validation
-      if (!formData.admissionNo) throw new Error("Please enter admission number.");
-      if (!formData.phone || formData.phone.length < 10) throw new Error("Please enter a valid phone number.");
+      // Check phone uniqueness
+      const phoneCheck = await userService.checkUserExists(formData.phone, 'PHONE');
+      if (phoneCheck.exists) throw new Error(phoneCheck.message || 'Phone number already registered');
+
+      // Check email uniqueness
+      const emailCheck = await userService.checkUserExists(formData.email, 'EMAIL');
+      if (emailCheck.exists) throw new Error(emailCheck.message || 'Email already registered');
+
+      if (role === UserRole.PARENT) {
+        const admissionCheck = await userService.checkUserExists(formData.admissionNo, 'ADMISSION');
+        // valid: false means admission number not in DB
+        if (admissionCheck.valid === false) throw new Error(admissionCheck.message || 'Admission number not found');
+        if (admissionCheck.exists) throw new Error(admissionCheck.message || 'Admission number already registered');
+      }
 
       const res = await otpService.sendOTP(formData.phone, formData.admissionNo);
       if (res.success) {
-        setRegStep('otp');
+        setIsOtpSent(true);
         setTimer(30);
-        showToast('OTP sent successfully', 'success');
       } else {
-        setError(res.error || 'Failed to send OTP');
+        if (res.error && res.error.includes('OTP already sent')) {
+          setIsOtpSent(true);
+          setTimer(30);
+        } else {
+          setError(res.error || 'Failed to send OTP');
+        }
       }
     } catch (err: any) {
       setError(err.message);
@@ -76,32 +91,11 @@ const Register: React.FC<RegisterProps> = ({ onRegister, onBackToLogin, initialR
     setLoading(true);
     setError('');
     try {
-      const res = await otpService.sendOTP(formData.phone, formData.admissionNo);
+      const res = await otpService.sendOTP(formData.phone);
       if (res.success) {
         setTimer(30);
-        showToast('OTP resent successfully', 'success');
       } else {
         setError(res.error || 'Failed to resend OTP');
-      }
-    } catch (err: any) {
-      setError(err.message);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleVerifyOtp = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-    setError('');
-
-    try {
-      const verifyRes = await otpService.verifyOTP(formData.phone, otp, formData.admissionNo);
-      if (verifyRes.success) {
-        setRegStep('details');
-        showToast('OTP verified successfully', 'success');
-      } else {
-        throw new Error(verifyRes.error || 'Invalid OTP');
       }
     } catch (err: any) {
       setError(err.message);
@@ -126,9 +120,15 @@ const Register: React.FC<RegisterProps> = ({ onRegister, onBackToLogin, initialR
           email: formData.email,
           password: formData.password,
           secret: formData.adminKey,
-          phoneNumber: formData.phone
+          phoneNumber: formData.phone // Add phone number to admin registration
         });
       } else {
+        // Verify OTP first
+        const verifyRes = await otpService.verifyOTP(formData.phone, otp, formData.admissionNo);
+        if (!verifyRes.success) {
+          throw new Error(verifyRes.error || 'Invalid OTP');
+        }
+
         await registerParent({
           admissionNumber: formData.admissionNo,
           fullName: formData.fullName,
@@ -141,14 +141,18 @@ const Register: React.FC<RegisterProps> = ({ onRegister, onBackToLogin, initialR
       setRegStep('success');
       showToast('Account created successfully!', 'success');
       
-      const { user } = useAuthStore.getState();
-      if (user) {
-        setTimeout(() => {
+      // If we have a user in the store now (auto-logged in by backend), trigger redirection
+      // Otherwise redirect to login
+      setTimeout(() => {
+        const { user } = useAuthStore.getState();
+        if (user) {
           onRegister(user);
-        }, 1500);
-      }
+        } else {
+          onBackToLogin();
+        }
+      }, 2000);
     } catch (err: any) {
-      setError(err.message);
+      setError(err.message || 'Registration failed. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -157,7 +161,7 @@ const Register: React.FC<RegisterProps> = ({ onRegister, onBackToLogin, initialR
   const toggleRole = () => {
      setRole(role === UserRole.PARENT ? UserRole.ADMIN : UserRole.PARENT);
      setError('');
-     setRegStep('initial');
+     setIsOtpSent(false);
      setOtp('');
   };
 
@@ -204,10 +208,14 @@ const Register: React.FC<RegisterProps> = ({ onRegister, onBackToLogin, initialR
               </button>
            </div>
 
-           {error && <div className="bg-red-50 text-red-600 p-4 rounded-xl text-[9px] font-black uppercase mb-8 border border-red-100">{error}</div>}
+           {error && (
+             <div className="bg-red-50 text-red-600 p-4 rounded-xl text-[9px] font-black uppercase mb-8 border border-red-100">
+               <p>{error}</p>
+             </div>
+           )}
 
-           {regStep === 'otp' ? (
-             <form onSubmit={handleVerifyOtp} className="space-y-6">
+           {role === UserRole.PARENT && isOtpSent ? (
+             <form onSubmit={handleRegister} className="space-y-6">
                <div className="space-y-1">
                   <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">Enter OTP</label>
                   <input required type="text" value={otp} onChange={(e) => setOtp(e.target.value)} className={inputClass} placeholder="Enter 6-digit OTP" maxLength={6} />
@@ -227,27 +235,64 @@ const Register: React.FC<RegisterProps> = ({ onRegister, onBackToLogin, initialR
                </div>
                
                <button type="submit" disabled={loading} className="w-full py-5 rounded-2xl bg-primary text-white font-black uppercase text-[10px] tracking-widest transition-all shadow-xl shadow-primary/20 active:scale-[0.98]">
-                 {loading ? <i className="fas fa-circle-notch fa-spin"></i> : 'Verify OTP'}
+                 {loading ? <i className="fas fa-circle-notch fa-spin"></i> : 'Verify & Create Account'}
                </button>
 
                <button 
                   type="button"
-                  onClick={() => setRegStep('initial')}
+                  onClick={() => setIsOtpSent(false)}
                   className="w-full py-3 text-[10px] font-black text-slate-400 uppercase tracking-widest hover:text-slate-600"
                 >
                   Change Details
                 </button>
              </form>
-           ) : regStep === 'details' ? (
-             <form onSubmit={handleRegister} className="space-y-6">
-                <div className="space-y-1">
-                   <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">Full Name</label>
-                   <input required type="text" value={formData.fullName} onChange={(e) => setFormData({...formData, fullName: e.target.value})} className={role === UserRole.PARENT ? inputClass : adminInputClass} placeholder="e.g. John Smith" />
+           ) : (
+             <form onSubmit={role === UserRole.PARENT ? handleSendOtp : handleRegister} className="space-y-6">
+                {role === UserRole.ADMIN && (
+                  <div className="p-6 bg-slate-50 rounded-2xl border border-slate-100 mb-6">
+                     <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Master Admin Secret</label>
+                     <div className="relative">
+                       <input 
+                         required 
+                         type={showAdminKey ? "text" : "password"} 
+                         value={formData.adminKey} 
+                         onChange={(e) => setFormData({...formData, adminKey: e.target.value})} 
+                         className={adminInputClass.replace('text-sm', 'text-base font-black')} 
+                         placeholder="••••••••" 
+                       />
+                       <button
+                         type="button"
+                         onClick={() => setShowAdminKey(!showAdminKey)}
+                         className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-primary transition-colors"
+                       >
+                         <i className={`fas ${showAdminKey ? 'fa-eye-slash' : 'fa-eye'}`}></i>
+                       </button>
+                     </div>
+                  </div>
+                )}
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                   {role === UserRole.PARENT && (
+                     <div className="space-y-1">
+                        <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">Admission Number</label>
+                        <input required type="text" value={formData.admissionNo} onChange={(e) => setFormData({...formData, admissionNo: e.target.value})} className={inputClass} placeholder="Enter Admission Number" />
+                     </div>
+                   )}
+                   <div className="space-y-1">
+                      <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">Full Name</label>
+                      <input required type="text" value={formData.fullName} onChange={(e) => setFormData({...formData, fullName: e.target.value})} className={role === UserRole.PARENT ? inputClass : adminInputClass} placeholder="e.g. John Smith" />
+                   </div>
                 </div>
 
-                <div className="space-y-1">
-                   <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">Email Address</label>
-                   <input required type="email" value={formData.email} onChange={(e) => setFormData({...formData, email: e.target.value})} className={role === UserRole.PARENT ? inputClass : adminInputClass} placeholder="parent@example.com" />
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                   <div className="space-y-1">
+                      <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">Email</label>
+                      <input required type="email" value={formData.email} onChange={(e) => setFormData({...formData, email: e.target.value})} className={role === UserRole.PARENT ? inputClass : adminInputClass} placeholder="parent@example.com" />
+                   </div>
+                   <div className="space-y-1">
+                      <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">Mobile Number</label>
+                      <input required type="tel" value={formData.phone} onChange={(e) => setFormData({...formData, phone: e.target.value.replace(/\D/g, '').slice(0, 10)})} className={role === UserRole.PARENT ? inputClass : adminInputClass} placeholder="9876543210" />
+                   </div>
                 </div>
 
                 <div className="space-y-1">
@@ -272,58 +317,7 @@ const Register: React.FC<RegisterProps> = ({ onRegister, onBackToLogin, initialR
                 </div>
 
                 <button type="submit" disabled={loading} className={`w-full py-5 rounded-2xl text-white font-black uppercase text-[10px] tracking-widest transition-all shadow-xl active:scale-[0.98] ${role === UserRole.ADMIN ? 'bg-slate-900 shadow-slate-900/20' : 'bg-primary shadow-primary/20'}`}>
-                  {loading ? <i className="fas fa-circle-notch fa-spin"></i> : 'Complete Registration'}
-                </button>
-
-                <button 
-                  type="button"
-                  onClick={() => setRegStep('initial')}
-                  className="w-full py-3 text-[10px] font-black text-slate-400 uppercase tracking-widest hover:text-slate-600"
-                >
-                  Back to Start
-                </button>
-             </form>
-           ) : (
-             <form onSubmit={handleSendOtp} className="space-y-6">
-                {role === UserRole.ADMIN && (
-                  <div className="p-6 bg-slate-50 rounded-2xl border border-slate-100 mb-6">
-                     <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Master Admin Secret</label>
-                     <div className="relative">
-                       <input 
-                         required 
-                         type={showAdminKey ? "text" : "password"} 
-                         value={formData.adminKey} 
-                         onChange={(e) => setFormData({...formData, adminKey: e.target.value})} 
-                         className={adminInputClass.replace('text-sm', 'text-base font-black')} 
-                         placeholder="••••••••" 
-                       />
-                       <button
-                         type="button"
-                         onClick={() => setShowAdminKey(!showAdminKey)}
-                         className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-primary transition-colors"
-                       >
-                         <i className={`fas ${showAdminKey ? 'fa-eye-slash' : 'fa-eye'}`}></i>
-                       </button>
-                     </div>
-                  </div>
-                )}
-
-                <div className="space-y-6">
-                   {role === UserRole.PARENT && (
-                     <div className="space-y-1">
-                        <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">Admission Number</label>
-                        <input required type="text" value={formData.admissionNo} onChange={(e) => setFormData({...formData, admissionNo: e.target.value})} className={inputClass} placeholder="Enter Admission Number" />
-                     </div>
-                   )}
-                   
-                   <div className="space-y-1">
-                      <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">Mobile Number</label>
-                      <input required type="tel" value={formData.phone} onChange={(e) => setFormData({...formData, phone: e.target.value.replace(/\D/g, '').slice(0, 10)})} className={role === UserRole.PARENT ? inputClass : adminInputClass} placeholder="9876543210" />
-                   </div>
-                </div>
-
-                <button type="submit" disabled={loading} className={`w-full py-5 rounded-2xl text-white font-black uppercase text-[10px] tracking-widest transition-all shadow-xl active:scale-[0.98] ${role === UserRole.ADMIN ? 'bg-slate-900 shadow-slate-900/20' : 'bg-primary shadow-primary/20'}`}>
-                  {loading ? <i className="fas fa-circle-notch fa-spin"></i> : (role === UserRole.PARENT ? 'Send OTP' : 'Next Step')}
+                  {loading ? <i className="fas fa-circle-notch fa-spin"></i> : (role === UserRole.PARENT ? 'Send OTP' : 'Create Account')}
                 </button>
              </form>
            )}
