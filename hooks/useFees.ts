@@ -414,6 +414,105 @@ export const useFees = () => {
     }
   };
 
+  const createFeesForYear = async (feeData: {
+    student_id: string;
+    year: number;
+    amount: number;
+    due_date_day: number;
+    last_date_day: number;
+    fine_after_days: number;
+    fine_per_day: number;
+    startMonth?: number;
+    endMonth?: number;
+  }) => {
+    try {
+      const startMonth = feeData.startMonth || 1;
+      const endMonth = feeData.endMonth || 12;
+
+      if (!feeData.student_id) throw new Error('Student ID is required');
+      if (feeData.amount <= 0) throw new Error('Amount must be greater than 0');
+      if (startMonth < 1 || startMonth > 12 || endMonth < 1 || endMonth > 12 || startMonth > endMonth) {
+        throw new Error('Invalid month range');
+      }
+
+      // Get existing fees for this student and year to avoid duplicates
+      const { data: existingFees, error: existingError } = await supabase
+        .from('monthly_dues')
+        .select('month')
+        .eq('student_id', feeData.student_id)
+        .eq('year', feeData.year);
+
+      if (existingError) throw existingError;
+
+      const existingMonths = new Set((existingFees || []).map(f => f.month));
+      const feesToCreate = [];
+
+      for (let month = startMonth; month <= endMonth; month++) {
+        if (existingMonths.has(month)) {
+          console.warn(`[Bulk Fee Creation] Fee already exists for student ${feeData.student_id} in month ${month}/${feeData.year}, skipping...`);
+          continue;
+        }
+
+        const dueDate = new Date(feeData.year, month - 1, feeData.due_date_day);
+        const lastDate = new Date(feeData.year, month - 1, feeData.last_date_day);
+
+        feesToCreate.push({
+          student_id: feeData.student_id,
+          month,
+          year: feeData.year,
+          amount: feeData.amount,
+          late_fee: 0,
+          due_date: toISODate(dueDate),
+          last_date: toISODate(lastDate),
+          fine_after_days: Number(feeData.fine_after_days ?? 5),
+          fine_per_day: Number(feeData.fine_per_day ?? 50),
+          status: 'PENDING',
+        });
+      }
+
+      if (feesToCreate.length === 0) {
+        console.warn('[Bulk Fee Creation] All months already have fees, nothing to create');
+        return {
+          success: true,
+          created: 0,
+          skipped: endMonth - startMonth + 1,
+          message: 'All months already have fees, no new fees created.'
+        };
+      }
+
+      const { error } = await supabase.from('monthly_dues').insert(feesToCreate);
+
+      if (error) {
+        console.error('[Bulk Fee Creation Error]', error);
+        throw error;
+      }
+
+      await fetchDues();
+      
+      return {
+        success: true,
+        created: feesToCreate.length,
+        skipped: (endMonth - startMonth + 1) - feesToCreate.length,
+        message: `Successfully created ${feesToCreate.length} fee(s) for ${MONTHS[startMonth - 1]} - ${MONTHS[endMonth - 1]} ${feeData.year}`
+      };
+    } catch (err: any) {
+      console.error('[createFeesForYear] Error:', err.message || err);
+      return {
+        success: false,
+        created: 0,
+        skipped: 0,
+        message: err.message || 'Failed to create bulk fees'
+      };
+    }
+  };
+
+  const toISODate = (date: Date) => {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  };
+
   useEffect(() => {
     fetchDues();
   }, []);
@@ -428,6 +527,7 @@ export const useFees = () => {
     generateMonthlyBills,
     waiveLateFee,
     createFee,
+    createFeesForYear,
     updateFee,
     deleteFee,
     recordManualPayment,

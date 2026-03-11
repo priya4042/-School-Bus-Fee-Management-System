@@ -16,10 +16,11 @@ const toISODate = (date: Date) => {
 };
 
 const Fees: React.FC = () => {
-  const { dues, loading: duesLoading, fetchDues, markAsPaid, sendNotification, createFee, updateFee, waiveLateFee } = useFees();
+  const { dues, loading: duesLoading, fetchDues, markAsPaid, sendNotification, createFee, createFeesForYear, updateFee, waiveLateFee } = useFees();
   const { students } = useStudents();
   const [searchTerm, setSearchTerm] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isBulkYearModalOpen, setIsBulkYearModalOpen] = useState(false);
   const [editingDue, setEditingDue] = useState<any>(null);
   const [formData, setFormData] = useState({
     student_id: '',
@@ -31,6 +32,18 @@ const Fees: React.FC = () => {
     fine_after_days: 5,
     fine_per_day: 50,
     sendNotification: true
+  });
+
+  const [bulkYearFormData, setBulkYearFormData] = useState({
+    student_id: '',
+    year: new Date().getFullYear(),
+    amount: 0,
+    due_date_day: 10,
+    last_date_day: 12,
+    fine_after_days: 5,
+    fine_per_day: 50,
+    startMonth: 1,
+    endMonth: 12,
   });
 
   const [statusFilter, setStatusFilter] = useState('ALL');
@@ -196,6 +209,60 @@ const Fees: React.FC = () => {
     }
   };
 
+  const handleBulkYearSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!bulkYearFormData.student_id) {
+      showAlert('Error', 'Please select a student', 'error');
+      return;
+    }
+    if (bulkYearFormData.amount <= 0) {
+      showAlert('Error', 'Fee amount must be greater than 0', 'error');
+      return;
+    }
+    if (bulkYearFormData.startMonth > bulkYearFormData.endMonth) {
+      showAlert('Error', 'Start month cannot be after end month', 'error');
+      return;
+    }
+
+    showLoading('Creating fees for selected months...');
+    const result = await createFeesForYear(bulkYearFormData);
+    closeSwal();
+
+    if (result.success) {
+      showAlert(
+        'Success',
+        `${result.message}\nCreated: ${result.created} | Skipped: ${result.skipped}`,
+        'success'
+      );
+      setIsBulkYearModalOpen(false);
+      setBulkYearFormData({
+        student_id: '',
+        year: new Date().getFullYear(),
+        amount: 0,
+        due_date_day: 10,
+        last_date_day: 12,
+        fine_after_days: 5,
+        fine_per_day: 50,
+        startMonth: 1,
+        endMonth: 12,
+      });
+      fetchDues();
+    } else {
+      showAlert('Error', result.message, 'error');
+    }
+  };
+
+  const handleBulkYearStudentChange = (studentId: string) => {
+    const student = students.find(s => s.id === studentId);
+    if (student) {
+      setBulkYearFormData(prev => ({
+        ...prev,
+        student_id: studentId,
+        amount: student.monthly_fee || 0
+      }));
+    }
+  };
+
   const filteredDues = dues.filter(d => 
     (d.student_name || d.students?.full_name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
     (d.admission_number || d.students?.admission_number || '').toLowerCase().includes(searchTerm.toLowerCase())
@@ -211,17 +278,26 @@ const Fees: React.FC = () => {
           <h2 className="text-2xl font-black text-slate-800 tracking-tight uppercase">Fee Management</h2>
           <p className="text-slate-500 font-bold uppercase text-[10px] tracking-widest">Monitor collections and generate monthly dues</p>
         </div>
-        <button 
-          onClick={() => {
-            setEditingDue(null);
-            applyPolicyDefaultsToForm(formData.month, formData.year);
-            setIsModalOpen(true);
-          }}
-          className="bg-primary text-white px-8 py-3 rounded-2xl font-black text-[10px] uppercase tracking-widest flex items-center gap-3 hover:bg-blue-700 transition-all shadow-xl shadow-primary/20"
-        >
-          <i className="fas fa-magic"></i>
-          Generate Monthly Dues
-        </button>
+        <div className="flex flex-col md:flex-row gap-3">
+          <button 
+            onClick={() => {
+              setEditingDue(null);
+              applyPolicyDefaultsToForm(formData.month, formData.year);
+              setIsModalOpen(true);
+            }}
+            className="bg-primary text-white px-8 py-3 rounded-2xl font-black text-[10px] uppercase tracking-widest flex items-center gap-3 hover:bg-blue-700 transition-all shadow-xl shadow-primary/20"
+          >
+            <i className="fas fa-magic"></i>
+            Generate Monthly Dues
+          </button>
+          <button 
+            onClick={() => setIsBulkYearModalOpen(true)}
+            className="bg-indigo-600 text-white px-8 py-3 rounded-2xl font-black text-[10px] uppercase tracking-widest flex items-center gap-3 hover:bg-indigo-700 transition-all shadow-xl shadow-indigo-600/20"
+          >
+            <i className="fas fa-calendar-alt"></i>
+            Generate Year Fees
+          </button>
+        </div>
       </div>
 
       <div className="bg-white rounded-[2.5rem] border border-slate-200 overflow-hidden shadow-premium">
@@ -490,6 +566,157 @@ const Fees: React.FC = () => {
               className="w-full bg-primary text-white py-4 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-blue-700 transition-all shadow-xl shadow-primary/20"
             >
               {editingDue ? "Update Fee Record" : "Generate Fee Record"}
+            </button>
+          </div>
+        </form>
+      </Modal>
+
+      <Modal isOpen={isBulkYearModalOpen} onClose={() => setIsBulkYearModalOpen(false)} title="Generate Fees for Complete Year">
+        <form onSubmit={handleBulkYearSubmit} className="space-y-4">
+          <div>
+            <label className={labelClass}>Select Student</label>
+            <select 
+              value={bulkYearFormData.student_id}
+              onChange={(e) => handleBulkYearStudentChange(e.target.value)}
+              className={inputClass}
+              required
+            >
+              <option value="">Choose a student...</option>
+              {students.map(s => (
+                <option key={s.id} value={s.id}>{s.full_name} ({s.admission_number})</option>
+              ))}
+            </select>
+          </div>
+
+          <div>
+            <label className={labelClass}>Year</label>
+            <input 
+              type="number" 
+              value={bulkYearFormData.year}
+              onChange={(e) => setBulkYearFormData({...bulkYearFormData, year: Number(e.target.value)})}
+              className={inputClass}
+              required
+            />
+            <p className="text-[9px] text-slate-400 mt-1 italic">Will create fees for all selected months in this year</p>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className={labelClass}>Start Month</label>
+              <select 
+                value={bulkYearFormData.startMonth}
+                onChange={(e) => setBulkYearFormData({...bulkYearFormData, startMonth: Number(e.target.value)})}
+                className={inputClass}
+              >
+                {MONTHS.map((m, i) => (
+                  <option key={m} value={i + 1}>{m}</option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className={labelClass}>End Month</label>
+              <select 
+                value={bulkYearFormData.endMonth}
+                onChange={(e) => setBulkYearFormData({...bulkYearFormData, endMonth: Number(e.target.value)})}
+                className={inputClass}
+              >
+                {MONTHS.map((m, i) => (
+                  <option key={m} value={i + 1}>{m}</option>
+                ))}
+              </select>
+            </div>
+          </div>
+
+          <div>
+            <label className={labelClass}>Bus Fee Amount (₹)</label>
+            <input 
+              type="number" 
+              value={bulkYearFormData.amount}
+              onChange={(e) => setBulkYearFormData({...bulkYearFormData, amount: Number(e.target.value)})}
+              className={inputClass}
+              required
+            />
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className={labelClass}>Due Date Day (e.g., 10)</label>
+              <input 
+                type="number" 
+                min="1" 
+                max="31"
+                value={bulkYearFormData.due_date_day}
+                onChange={(e) => setBulkYearFormData({...bulkYearFormData, due_date_day: Number(e.target.value)})}
+                className={inputClass}
+                required
+              />
+              <p className="text-[9px] text-slate-400 mt-1 italic">Fees will be due on this day of each month</p>
+            </div>
+            <div>
+              <label className={labelClass}>Last Date Day (e.g., 12)</label>
+              <input 
+                type="number" 
+                min="1" 
+                max="31"
+                value={bulkYearFormData.last_date_day}
+                onChange={(e) => setBulkYearFormData({...bulkYearFormData, last_date_day: Number(e.target.value)})}
+                className={inputClass}
+                required
+              />
+              <p className="text-[9px] text-slate-400 mt-1 italic">Fine starts after this day</p>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className={labelClass}>Fine After Days</label>
+              <input 
+                type="number" 
+                value={bulkYearFormData.fine_after_days}
+                onChange={(e) => setBulkYearFormData({...bulkYearFormData, fine_after_days: Number(e.target.value)})}
+                className={inputClass}
+              />
+            </div>
+            <div>
+              <label className={labelClass}>Fine Per Day (₹)</label>
+              <input 
+                type="number" 
+                value={bulkYearFormData.fine_per_day}
+                onChange={(e) => setBulkYearFormData({...bulkYearFormData, fine_per_day: Number(e.target.value)})}
+                className={inputClass}
+              />
+            </div>
+          </div>
+
+          <div className="p-4 bg-indigo-50 border border-indigo-100 rounded-2xl space-y-2">
+            <p className="text-[10px] font-black text-indigo-600 uppercase tracking-widest">Summary</p>
+            <p className="text-[10px] font-bold text-slate-600 uppercase tracking-wider">
+              Creating fees for <span className="text-slate-900 text-sm">{bulkYearFormData.endMonth - bulkYearFormData.startMonth + 1} months</span>
+            </p>
+            <p className="text-[10px] font-bold text-slate-600 uppercase tracking-wider">
+              Range: <span className="text-slate-900">{MONTHS[bulkYearFormData.startMonth - 1]} - {MONTHS[bulkYearFormData.endMonth - 1]} {bulkYearFormData.year}</span>
+            </p>
+            <p className="text-[10px] font-bold text-slate-600 uppercase tracking-wider">
+              Fee per month: <span className="text-slate-900">₹{bulkYearFormData.amount}</span>
+            </p>
+            <p className="text-[10px] font-bold text-slate-600 uppercase tracking-wider">
+              Total amount: <span className="text-slate-900 text-sm">₹{bulkYearFormData.amount * (bulkYearFormData.endMonth - bulkYearFormData.startMonth + 1)}</span>
+            </p>
+          </div>
+
+          <div className="pt-4 flex gap-3">
+            <button 
+              type="button"
+              onClick={() => setIsBulkYearModalOpen(false)}
+              className="flex-1 bg-slate-200 text-slate-800 py-3 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-slate-300 transition-all"
+            >
+              Cancel
+            </button>
+            <button 
+              type="submit"
+              className="flex-1 bg-indigo-600 text-white py-3 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-indigo-700 transition-all shadow-xl shadow-indigo-600/20"
+            >
+              Create {bulkYearFormData.endMonth - bulkYearFormData.startMonth + 1} Fees
             </button>
           </div>
         </form>
