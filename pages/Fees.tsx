@@ -21,6 +21,8 @@ const Fees: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isBulkYearModalOpen, setIsBulkYearModalOpen] = useState(false);
+  const [isStudentFeesModalOpen, setIsStudentFeesModalOpen] = useState(false);
+  const [selectedStudentForFeesView, setSelectedStudentForFeesView] = useState<any>(null);
   const [editingDue, setEditingDue] = useState<any>(null);
   const [formData, setFormData] = useState({
     student_id: '',
@@ -90,6 +92,59 @@ const Fees: React.FC = () => {
     } catch {
     }
   }, []);
+
+  useEffect(() => {
+    if (!editingDue) {
+      applyPolicyDefaultsToForm(formData.month, formData.year);
+    }
+  }, [policyDefaults]);
+
+  // Get unique students with their fee data
+  const getUniqueStudentsWithFees = () => {
+    const studentMap = new Map();
+    
+    dues.forEach(due => {
+      if (!studentMap.has(due.student_id)) {
+        const student = students.find(s => s.id === due.student_id);
+        if (student) {
+          studentMap.set(due.student_id, {
+            ...student,
+            studentDues: []
+          });
+        }
+      }
+      studentMap.get(due.student_id)?.studentDues.push(due);
+    });
+
+    return Array.from(studentMap.values());
+  };
+
+  const getStudentTotalDue = (studentDues: any[]) => {
+    return studentDues.reduce((sum, due) => sum + (Number(due.total_due) || Number(due.amount) || 0), 0);
+  };
+
+  const getStudentPaidAmount = (studentDues: any[]) => {
+    return studentDues.filter(d => d.status === 'PAID').reduce((sum, due) => sum + (Number(due.total_due) || Number(due.amount) || 0), 0);
+  };
+
+  const getStudentPendingAmount = (studentDues: any[]) => {
+    const total = getStudentTotalDue(studentDues);
+    const paid = getStudentPaidAmount(studentDues);
+    return total - paid;
+  };
+
+  const getStudentOverdueCount = (studentDues: any[]) => {
+    return studentDues.filter(d => d.status === 'OVERDUE').length;
+  };
+
+  const getStudentPaidCount = (studentDues: any[]) => {
+    return studentDues.filter(d => d.status === 'PAID').length;
+  };
+
+  const handleViewStudentFees = (student: any) => {
+    setSelectedStudentForFeesView(student);
+    setIsStudentFeesModalOpen(true);
+  };
 
   useEffect(() => {
     if (!editingDue) {
@@ -268,6 +323,13 @@ const Fees: React.FC = () => {
     (d.admission_number || d.students?.admission_number || '').toLowerCase().includes(searchTerm.toLowerCase())
   );
 
+  const uniqueStudentsFiltered = getUniqueStudentsWithFees().filter(student => {
+    const term = searchTerm.toLowerCase();
+    if (!term) return true;
+    return (student.full_name || '').toLowerCase().includes(term) ||
+           (student.admission_number || '').toLowerCase().includes(term);
+  });
+
   const inputClass = "w-full px-4 py-2 rounded-xl border border-slate-200 focus:border-primary focus:ring-4 focus:ring-primary/10 outline-none transition-all font-bold text-sm";
   const labelClass = "block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1 ml-1";
 
@@ -312,19 +374,6 @@ const Fees: React.FC = () => {
               className="w-full pl-12 pr-6 py-3 rounded-2xl border border-primary/20 bg-primary/5 focus:border-primary focus:ring-4 focus:ring-primary/10 outline-none transition-all font-bold text-sm"
             />
           </div>
-          <div className="flex items-center gap-2 w-full md:w-auto">
-            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest whitespace-nowrap">Filter Status:</label>
-            <select 
-              value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value)}
-              className="bg-white border border-slate-200 px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest outline-none focus:ring-4 focus:ring-primary/5"
-            >
-              <option value="ALL">All Dues</option>
-              <option value="PENDING">Pending</option>
-              <option value="PAID">Paid</option>
-              <option value="OVERDUE">Overdue Only</option>
-            </select>
-          </div>
         </div>
 
         <div className="responsive-table-container">
@@ -337,88 +386,78 @@ const Fees: React.FC = () => {
               <thead>
                 <tr className="bg-slate-50 text-slate-400 text-[9px] font-black uppercase tracking-widest border-b border-slate-100">
                   <th className="px-8 py-5">Student</th>
-                  <th className="px-8 py-5">Month/Year</th>
-                  <th className="px-8 py-5">Amount</th>
-                  <th className="px-8 py-5">Status</th>
-                  <th className="px-8 py-5">Actions</th>
+                  <th className="px-8 py-5">Adm. No</th>
+                  <th className="px-8 py-5">Grade/Section</th>
+                  <th className="px-8 py-5">Total Due</th>
+                  <th className="px-8 py-5">Paid / Pending</th>
+                  <th className="px-8 py-5">Status Summary</th>
+                  <th className="px-8 py-5 text-right">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-50">
-                {filteredDues.filter(d => {
-                  if (statusFilter === 'ALL') return true;
-                  if (statusFilter === 'OVERDUE') return d.status === 'OVERDUE' || (d.status !== 'PAID' && d.late_fee > 0);
-                  return d.status === statusFilter;
-                }).map((due) => (
-                  <tr key={due.id} className="hover:bg-slate-50/50 transition-colors">
-                    <td className="px-8 py-5">
-                      <p className="font-black text-slate-800 tracking-tight text-sm">{due.student_name || due.students?.full_name}</p>
-                      <p className="text-[10px] text-slate-400 font-black uppercase tracking-widest">Adm: {due.admission_number || due.students?.admission_number}</p>
-                    </td>
-                    <td className="px-8 py-5">
-                      <p className="text-xs font-bold text-slate-600 uppercase">{MONTHS[due.month-1]} {due.year}</p>
-                    </td>
-                    <td className="px-8 py-5">
-                      <div className="space-y-1">
-                        <p className="text-sm font-black text-slate-800">₹{due.total_due || (due.amount + (due.late_fee || 0))}</p>
-                        {due.late_fee > 0 && (
-                          <p className="text-[9px] font-black text-danger uppercase tracking-widest">Incl. ₹{due.late_fee} Late Fee</p>
-                        )}
-                      </div>
-                    </td>
-                    <td className="px-8 py-5">
-                      <span className={`px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest border ${
-                        due.status === 'PAID'
-                          ? 'bg-success/10 text-success border-success/10'
-                          : due.status === 'OVERDUE'
-                            ? 'bg-danger/10 text-danger border-danger/10'
-                            : 'bg-amber-50 text-amber-600 border-amber-100'
-                      }`}>
-                        {due.status}
-                      </span>
-                      {due.paid_at && (
-                        <p className="text-[9px] text-slate-400 mt-1 font-bold">{new Date(due.paid_at).toLocaleDateString()}</p>
-                      )}
-                    </td>
-                    <td className="px-8 py-5">
-                      <div className="flex items-center gap-2">
-                        {due.status !== 'PAID' && (
-                          <>
-                            <button 
-                              onClick={() => handleMarkPaid(due.id)}
-                              className="p-2 text-success hover:bg-success/10 rounded-lg transition-all"
-                              title="Mark as Paid"
-                            >
-                              <i className="fas fa-check-circle"></i>
-                            </button>
-                            <button 
-                              onClick={() => handleEdit(due)}
-                              className="p-2 text-amber-500 hover:bg-amber-50 rounded-lg transition-all"
-                              title="Edit Fee"
-                            >
-                              <i className="fas fa-edit"></i>
-                            </button>
-                            <button 
-                              onClick={() => handleManualNotify(due.id)}
-                              className="p-2 text-primary hover:bg-primary/10 rounded-lg transition-all"
-                              title="Send Notification"
-                            >
-                              <i className="fas fa-bell"></i>
-                            </button>
-                            {Number(due.late_fee || 0) > 0 && (
-                              <button
-                                onClick={() => handleWaiveLateFee(due.id)}
-                                className="p-2 text-indigo-600 hover:bg-indigo-50 rounded-lg transition-all"
-                                title="Waive Late Fee (Admin Only)"
-                              >
-                                <i className="fas fa-hand-holding-usd"></i>
-                              </button>
+                {uniqueStudentsFiltered.length > 0 ? (
+                  uniqueStudentsFiltered.map((student) => {
+                    const totalDue = getStudentTotalDue(student.studentDues);
+                    const paidAmount = getStudentPaidAmount(student.studentDues);
+                    const pendingAmount = getStudentPendingAmount(student.studentDues);
+                    const overdueCount = getStudentOverdueCount(student.studentDues);
+                    const paidCount = getStudentPaidCount(student.studentDues);
+
+                    return (
+                      <tr key={student.id} className="hover:bg-slate-50/50 transition-colors">
+                        <td className="px-8 py-5">
+                          <p className="font-black text-slate-800 tracking-tight text-sm">{student.full_name}</p>
+                        </td>
+                        <td className="px-8 py-5">
+                          <p className="text-[10px] text-slate-400 font-black uppercase tracking-widest">{student.admission_number}</p>
+                        </td>
+                        <td className="px-8 py-5">
+                          <span className="text-[10px] font-black uppercase tracking-widest text-primary bg-primary/5 px-3 py-1 rounded-lg border border-primary/10">
+                            {student.grade}-{student.section}
+                          </span>
+                        </td>
+                        <td className="px-8 py-5">
+                          <p className="text-lg font-black text-slate-800">₹{totalDue.toLocaleString('en-IN')}</p>
+                        </td>
+                        <td className="px-8 py-5">
+                          <div className="space-y-1">
+                            <p className="text-xs font-black text-success">✓ ₹{paidAmount.toLocaleString('en-IN')}</p>
+                            <p className="text-xs font-black text-danger">⏳ ₹{pendingAmount.toLocaleString('en-IN')}</p>
+                          </div>
+                        </td>
+                        <td className="px-8 py-5">
+                          <div className="flex gap-2 flex-wrap">
+                            <span className="px-2 py-1 rounded-lg text-[9px] font-black uppercase tracking-widest bg-success/10 text-success border border-success/10">
+                              {paidCount} Paid
+                            </span>
+                            {overdueCount > 0 && (
+                              <span className="px-2 py-1 rounded-lg text-[9px] font-black uppercase tracking-widest bg-danger/10 text-danger border border-danger/10">
+                                {overdueCount} Overdue
+                              </span>
                             )}
-                          </>
-                        )}
-                      </div>
+                          </div>
+                        </td>
+                        <td className="px-8 py-5 text-right">
+                          <div className="flex justify-end gap-2">
+                            <button 
+                              onClick={() => handleViewStudentFees(student)}
+                              className="w-9 h-9 flex items-center justify-center bg-white border border-slate-100 text-slate-400 hover:text-indigo-600 rounded-xl transition-all shadow-sm"
+                              title="View All Fees"
+                            >
+                              <i className="fas fa-list text-xs"></i>
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })
+                ) : (
+                  <tr>
+                    <td colSpan={7} className="px-8 py-8 text-center text-slate-400 font-bold">
+                      No fees created yet. Use "Generate Monthly Dues" or "Generate Year Fees" to create fees.
                     </td>
                   </tr>
-                ))}
+                )}
               </tbody>
             </table>
           )}
@@ -720,6 +759,89 @@ const Fees: React.FC = () => {
             </button>
           </div>
         </form>
+      </Modal>
+
+      <Modal isOpen={isStudentFeesModalOpen} onClose={() => setIsStudentFeesModalOpen(false)} title={selectedStudentForFeesView ? `All Monthly Fees - ${selectedStudentForFeesView.full_name}` : "Student Fees"}>
+        {selectedStudentForFeesView && (
+          <div className="space-y-6">
+            {/* Summary Cards */}
+            <div className="grid grid-cols-3 gap-4">
+              <div className="bg-primary/5 border border-primary/10 rounded-2xl p-4">
+                <p className="text-[9px] font-black text-primary uppercase tracking-widest mb-2">Total Due</p>
+                <p className="text-2xl font-black text-slate-800">₹{getStudentTotalDue(selectedStudentForFeesView.studentDues).toLocaleString('en-IN')}</p>
+              </div>
+              <div className="bg-success/5 border border-success/10 rounded-2xl p-4">
+                <p className="text-[9px] font-black text-success uppercase tracking-widest mb-2">Total Paid</p>
+                <p className="text-2xl font-black text-slate-800">₹{getStudentPaidAmount(selectedStudentForFeesView.studentDues).toLocaleString('en-IN')}</p>
+              </div>
+              <div className="bg-amber-50 border border-amber-100 rounded-2xl p-4">
+                <p className="text-[9px] font-black text-amber-600 uppercase tracking-widest mb-2">Pending</p>
+                <p className="text-2xl font-black text-slate-800">₹{getStudentPendingAmount(selectedStudentForFeesView.studentDues).toLocaleString('en-IN')}</p>
+              </div>
+            </div>
+
+            {/* Fees Table */}
+            <div className="bg-white rounded-2xl border border-slate-100 overflow-hidden">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="bg-slate-50 text-slate-400 text-[9px] font-black uppercase tracking-widest border-b border-slate-100">
+                    <th className="px-4 py-3 text-left">Month/Year</th>
+                    <th className="px-4 py-3 text-left">Amount</th>
+                    <th className="px-4 py-3 text-left">Status</th>
+                    <th className="px-4 py-3 text-left">Total Due</th>
+                    <th className="px-4 py-3 text-left">Paid Date</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-50">
+                  {selectedStudentForFeesView.studentDues.sort((a: any, b: any) => {
+                    if (a.year !== b.year) return b.year - a.year;
+                    return b.month - a.month;
+                  }).map((fee: any) => (
+                    <tr key={fee.id} className="hover:bg-slate-50/50 transition-colors">
+                      <td className="px-4 py-3">
+                        <p className="font-bold text-slate-700">{MONTHS[fee.month - 1]} {fee.year}</p>
+                      </td>
+                      <td className="px-4 py-3">
+                        <p className="font-black text-slate-800">₹{Number(fee.amount).toLocaleString('en-IN')}</p>
+                      </td>
+                      <td className="px-4 py-3">
+                        <span className={`px-2 py-1 rounded-lg text-[9px] font-black uppercase tracking-widest border ${
+                          fee.status === 'PAID'
+                            ? 'bg-success/10 text-success border-success/10'
+                            : fee.status === 'OVERDUE'
+                              ? 'bg-danger/10 text-danger border-danger/10'
+                              : 'bg-amber-50 text-amber-600 border-amber-100'
+                        }`}>
+                          {fee.status}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3">
+                        <p className="font-bold text-slate-800">₹{(Number(fee.total_due) || Number(fee.amount)).toLocaleString('en-IN')}</p>
+                        {fee.late_fee > 0 && (
+                          <p className="text-[9px] font-bold text-danger">+₹{Number(fee.late_fee).toLocaleString('en-IN')} Fine</p>
+                        )}
+                      </td>
+                      <td className="px-4 py-3">
+                        <p className="text-[9px] font-bold text-slate-600">
+                          {fee.paid_at ? new Date(fee.paid_at).toLocaleDateString('en-IN') : '-'}
+                        </p>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            <div className="flex gap-3 pt-2">
+              <button 
+                onClick={() => setIsStudentFeesModalOpen(false)}
+                className="flex-1 bg-slate-100 text-slate-600 py-3 rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-slate-200 transition-all"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        )}
       </Modal>
     </div>
   );

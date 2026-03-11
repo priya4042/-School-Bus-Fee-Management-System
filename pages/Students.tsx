@@ -3,16 +3,21 @@ import Modal from '../components/Modal.tsx';
 import { useStudents } from '../hooks/useStudents.ts';
 import { useRoutes } from '../hooks/useRoutes.ts';
 import { useBuses } from '../hooks/useBuses.ts';
+import { useFees } from '../hooks/useFees.ts';
+import { MONTHS } from '../constants.ts';
 import { showConfirm, showToast, showAlert, showLoading, closeSwal } from '../lib/swal.ts';
 
 const Students: React.FC = () => {
   const { students, loading, addStudent, updateStudent, deleteStudent } = useStudents();
   const { routes } = useRoutes();
   const { buses } = useBuses();
+  const { dues } = useFees();
   
   const [searchTerm, setSearchTerm] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isFeeModalOpen, setIsFeeModalOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [selectedStudentForFees, setSelectedStudentForFees] = useState<any>(null);
   const [parents, setParents] = useState<any[]>([]);
   
   const [formData, setFormData] = useState({
@@ -108,6 +113,26 @@ const Students: React.FC = () => {
     }
   };
 
+  const handleViewFees = (student: any) => {
+    setSelectedStudentForFees(student);
+    setIsFeeModalOpen(true);
+  };
+
+  const getStudentFees = (studentId: string) => {
+    return dues.filter(due => due.student_id === studentId).sort((a, b) => {
+      if (a.year !== b.year) return b.year - a.year;
+      return b.month - a.month;
+    });
+  };
+
+  const calculateTotalDue = (fees: any[]) => {
+    return fees.reduce((sum, fee) => sum + (Number(fee.total_due) || Number(fee.amount) || 0), 0);
+  };
+
+  const calculateTotalPaid = (fees: any[]) => {
+    return fees.filter(f => f.status === 'PAID').reduce((sum, fee) => sum + (Number(fee.total_due) || Number(fee.amount) || 0), 0);
+  };
+
   const inputClass = "w-full px-5 py-4 rounded-2xl bg-primary/5 border border-primary/20 focus:border-primary focus:ring-4 focus:ring-primary/10 outline-none font-bold text-sm transition-all text-slate-800 placeholder-slate-400";
   const selectClass = "w-full px-5 py-4 rounded-2xl bg-primary/5 border border-primary/20 focus:border-primary focus:ring-4 focus:ring-primary/10 outline-none font-bold text-sm bg-white transition-all text-slate-800 cursor-pointer";
 
@@ -183,8 +208,9 @@ const Students: React.FC = () => {
                     </td>
                     <td className="px-8 py-5 text-right">
                       <div className="flex justify-end gap-2">
-                        <button onClick={() => handleEdit(student)} className="w-9 h-9 flex items-center justify-center bg-white border border-slate-100 text-slate-400 hover:text-primary rounded-xl transition-all shadow-sm"><i className="fas fa-edit text-xs"></i></button>
-                        <button onClick={() => handleDelete(student.id, student.full_name)} className="w-9 h-9 flex items-center justify-center bg-white border border-slate-100 text-slate-400 hover:text-danger rounded-xl transition-all shadow-sm"><i className="fas fa-trash-alt text-xs"></i></button>
+                        <button onClick={() => handleViewFees(student)} className="w-9 h-9 flex items-center justify-center bg-white border border-slate-100 text-slate-400 hover:text-indigo-600 rounded-xl transition-all shadow-sm" title="View Yearly Fees"><i className="fas fa-receipt text-xs"></i></button>
+                        <button onClick={() => handleEdit(student)} className="w-9 h-9 flex items-center justify-center bg-white border border-slate-100 text-slate-400 hover:text-primary rounded-xl transition-all shadow-sm" title="Edit Student"><i className="fas fa-edit text-xs"></i></button>
+                        <button onClick={() => handleDelete(student.id, student.full_name)} className="w-9 h-9 flex items-center justify-center bg-white border border-slate-100 text-slate-400 hover:text-danger rounded-xl transition-all shadow-sm" title="Delete Student"><i className="fas fa-trash-alt text-xs"></i></button>
                       </div>
                     </td>
                   </tr>
@@ -260,6 +286,94 @@ const Students: React.FC = () => {
             </button>
           </div>
         </form>
+      </Modal>
+
+      <Modal isOpen={isFeeModalOpen} onClose={() => setIsFeeModalOpen(false)} title={selectedStudentForFees ? `Yearly Fees - ${selectedStudentForFees.full_name} (Adm: ${selectedStudentForFees.admission_number})` : "Yearly Fees"}>
+        {selectedStudentForFees && (
+          <div className="space-y-6">
+            {/* Summary Cards */}
+            <div className="grid grid-cols-3 gap-4">
+              <div className="bg-primary/5 border border-primary/10 rounded-2xl p-4">
+                <p className="text-[9px] font-black text-primary uppercase tracking-widest mb-2">Total Due</p>
+                <p className="text-2xl font-black text-slate-800">₹{calculateTotalDue(getStudentFees(selectedStudentForFees.id)).toLocaleString('en-IN')}</p>
+              </div>
+              <div className="bg-success/5 border border-success/10 rounded-2xl p-4">
+                <p className="text-[9px] font-black text-success uppercase tracking-widest mb-2">Total Paid</p>
+                <p className="text-2xl font-black text-slate-800">₹{calculateTotalPaid(getStudentFees(selectedStudentForFees.id)).toLocaleString('en-IN')}</p>
+              </div>
+              <div className="bg-amber-50 border border-amber-100 rounded-2xl p-4">
+                <p className="text-[9px] font-black text-amber-600 uppercase tracking-widest mb-2">Pending</p>
+                <p className="text-2xl font-black text-slate-800">₹{(calculateTotalDue(getStudentFees(selectedStudentForFees.id)) - calculateTotalPaid(getStudentFees(selectedStudentForFees.id))).toLocaleString('en-IN')}</p>
+              </div>
+            </div>
+
+            {/* Fees Table */}
+            <div className="bg-white rounded-2xl border border-slate-100 overflow-hidden">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="bg-slate-50 text-slate-400 text-[9px] font-black uppercase tracking-widest border-b border-slate-100">
+                    <th className="px-4 py-3 text-left">Month/Year</th>
+                    <th className="px-4 py-3 text-left">Amount</th>
+                    <th className="px-4 py-3 text-left">Status</th>
+                    <th className="px-4 py-3 text-left">Total Due</th>
+                    <th className="px-4 py-3 text-left">Paid Date</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-50">
+                  {getStudentFees(selectedStudentForFees.id).length > 0 ? (
+                    getStudentFees(selectedStudentForFees.id).map((fee: any) => (
+                      <tr key={fee.id} className="hover:bg-slate-50/50 transition-colors">
+                        <td className="px-4 py-3">
+                          <p className="font-bold text-slate-700">{MONTHS[fee.month - 1]} {fee.year}</p>
+                        </td>
+                        <td className="px-4 py-3">
+                          <p className="font-black text-slate-800">₹{Number(fee.amount).toLocaleString('en-IN')}</p>
+                        </td>
+                        <td className="px-4 py-3">
+                          <span className={`px-2 py-1 rounded-lg text-[9px] font-black uppercase tracking-widest border ${
+                            fee.status === 'PAID'
+                              ? 'bg-success/10 text-success border-success/10'
+                              : fee.status === 'OVERDUE'
+                                ? 'bg-danger/10 text-danger border-danger/10'
+                                : 'bg-amber-50 text-amber-600 border-amber-100'
+                          }`}>
+                            {fee.status}
+                          </span>
+                        </td>
+                        <td className="px-4 py-3">
+                          <p className="font-bold text-slate-800">₹{(Number(fee.total_due) || Number(fee.amount)).toLocaleString('en-IN')}</p>
+                          {fee.late_fee > 0 && (
+                            <p className="text-[9px] font-bold text-danger">+₹{Number(fee.late_fee).toLocaleString('en-IN')} Fine</p>
+                          )}
+                        </td>
+                        <td className="px-4 py-3">
+                          <p className="text-[9px] font-bold text-slate-600">
+                            {fee.paid_at ? new Date(fee.paid_at).toLocaleDateString('en-IN') : '-'}
+                          </p>
+                        </td>
+                      </tr>
+                    ))
+                  ) : (
+                    <tr>
+                      <td colSpan={5} className="px-4 py-8 text-center text-slate-400 font-bold">
+                        No fees created for this student yet
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+
+            <div className="flex gap-3 pt-2">
+              <button 
+                onClick={() => setIsFeeModalOpen(false)}
+                className="flex-1 bg-slate-100 text-slate-600 py-3 rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-slate-200 transition-all"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        )}
       </Modal>
     </div>
   );
