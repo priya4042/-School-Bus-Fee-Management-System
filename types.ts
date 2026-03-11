@@ -54,6 +54,7 @@ export interface Student {
   grade: string;
   section: string;
   parent_id?: string;
+  parent_name?: string;
   parent_phone?: string;
   bus_id?: string;
   route_id?: string;

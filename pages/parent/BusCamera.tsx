@@ -64,7 +64,7 @@ const BusCamera: React.FC<{ user: User }> = ({ user }) => {
           </div>
           <h3 className="text-2xl font-black text-slate-900 tracking-tight uppercase mb-3">Access Restricted</h3>
           <p className="text-slate-500 font-bold text-sm max-w-sm mx-auto">
-            Camera access has not been granted for your account. Please contact the school administrator to enable live camera monitoring.
+            Camera access has not been granted for your account. Please contact the Bus Administrator to enable live camera monitoring.
           </p>
           <div className="mt-8 px-6 py-3 bg-slate-50 rounded-2xl border border-slate-100">
             <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Contact Admin to Enable Access</p>

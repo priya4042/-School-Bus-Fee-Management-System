@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import { User, UserPreferences } from '../../types';
 import {
   User as UserIcon, Bell, Shield, LogOut, HelpCircle, ChevronRight,
@@ -10,8 +10,10 @@ import { showToast } from '../../lib/swal';
 
 const Settings: React.FC<{ user: User }> = ({ user }) => {
   const { logout, setUser } = useAuthStore();
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
   const [activeTab, setActiveTab] = useState('profile');
   const [saving, setSaving] = useState(false);
+  const [uploadingAvatar, setUploadingAvatar] = useState(false);
 
   // Profile form state
   const [fullName, setFullName] = useState(user.full_name || '');
@@ -75,8 +77,83 @@ const Settings: React.FC<{ user: User }> = ({ user }) => {
   const handleSavePrefs = async (key: keyof UserPreferences, value: boolean) => {
     const updated = { ...prefs, [key]: value };
     setPrefs(updated);
-    await supabase.from('profiles').update({ preferences: updated }).eq('id', user.id);
+    const mergedPreferences = { ...((user.preferences as any) || {}), ...updated };
+    await supabase.from('profiles').update({ preferences: mergedPreferences }).eq('id', user.id);
+    setUser({ ...user, preferences: mergedPreferences as any });
     showToast('Preference saved', 'success');
+  };
+
+  const readAsDataUrl = (file: File): Promise<string> =>
+    new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(String(reader.result || ''));
+      reader.onerror = () => reject(new Error('Failed to read selected image'));
+      reader.readAsDataURL(file);
+    });
+
+  const handleAvatarPick = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith('image/')) {
+      showToast('Please select a valid image file', 'error');
+      event.target.value = '';
+      return;
+    }
+
+    if (file.size > 5 * 1024 * 1024) {
+      showToast('Image size must be less than 5MB', 'error');
+      event.target.value = '';
+      return;
+    }
+
+    setUploadingAvatar(true);
+    try {
+      const extension = (file.name.split('.').pop() || 'jpg').toLowerCase();
+      const path = `${user.id}/${Date.now()}.${extension}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from('avatars')
+        .upload(path, file, { upsert: true, cacheControl: '3600' });
+
+      let avatarUrl = '';
+
+      if (!uploadError) {
+        const { data } = supabase.storage.from('avatars').getPublicUrl(path);
+        avatarUrl = data.publicUrl;
+      } else {
+        avatarUrl = await readAsDataUrl(file);
+      }
+
+      const { error: updateAvatarError } = await supabase
+        .from('profiles')
+        .update({ avatar_url: avatarUrl })
+        .eq('id', user.id);
+
+      if (updateAvatarError) {
+        const fallbackPreferences = {
+          ...((user.preferences as any) || {}),
+          avatar_url: avatarUrl,
+        };
+
+        const { error: updatePrefsError } = await supabase
+          .from('profiles')
+          .update({ preferences: fallbackPreferences })
+          .eq('id', user.id);
+
+        if (updatePrefsError) throw updatePrefsError;
+        setUser({ ...user, avatar_url: avatarUrl, preferences: fallbackPreferences as any });
+      } else {
+        setUser({ ...user, avatar_url: avatarUrl });
+      }
+
+      showToast('Profile image updated successfully', 'success');
+    } catch (error: any) {
+      showToast(error?.message || 'Failed to update profile image', 'error');
+    } finally {
+      setUploadingAvatar(false);
+      event.target.value = '';
+    }
   };
 
   const inputClass =
@@ -156,10 +233,31 @@ const Settings: React.FC<{ user: User }> = ({ user }) => {
               <div className="flex items-center gap-8 mb-12 pb-12 border-b border-slate-50">
                 <div className="relative group">
                   <div className="w-32 h-32 bg-slate-50 rounded-[2.5rem] flex items-center justify-center text-slate-300 overflow-hidden border-4 border-white shadow-xl">
-                    <UserIcon size={64} />
+                    {(user.avatar_url || (user.preferences as any)?.avatar_url) ? (
+                      <img
+                        src={user.avatar_url || (user.preferences as any)?.avatar_url}
+                        alt="Profile"
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <UserIcon size={64} />
+                    )}
                   </div>
-                  <button className="absolute bottom-0 right-0 w-10 h-10 bg-primary text-white rounded-xl flex items-center justify-center shadow-lg hover:scale-110 transition-transform">
-                    <Camera size={18} />
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="image/*"
+                    capture="user"
+                    className="hidden"
+                    onChange={handleAvatarPick}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => fileInputRef.current?.click()}
+                    disabled={uploadingAvatar}
+                    className="absolute bottom-0 right-0 w-10 h-10 bg-primary text-white rounded-xl flex items-center justify-center shadow-lg hover:scale-110 transition-transform disabled:opacity-60"
+                  >
+                    {uploadingAvatar ? <i className="fas fa-circle-notch fa-spin"></i> : <Camera size={18} />}
                   </button>
                 </div>
                 <div>

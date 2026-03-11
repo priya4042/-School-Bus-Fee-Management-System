@@ -15,7 +15,7 @@ const Privacy: React.FC = () => {
 
           <section>
             <h2 className="text-xl font-black text-slate-800 mb-4 uppercase tracking-tight">2. Location Data</h2>
-            <p>For real-time bus tracking, we collect precise location data from bus GPS devices. This data is only accessible to authorized parents and administrators.</p>
+            <p>For real-time bus tracking, we collect precise location data from bus GPS devices. This data is only accessible to authorized parents and Bus Administrators.</p>
           </section>
 
           <section>

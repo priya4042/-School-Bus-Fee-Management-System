@@ -1,6 +1,8 @@
 // Removed problematic reference to vite/client to fix the "Cannot find type definition file" error.
 // Manual type definitions for ImportMeta are provided to ensure type safety for Vite environment variables.
 interface ImportMetaEnv {
+  readonly DEV: boolean
+  readonly VITE_ALLOW_DEV_OTP?: string
   readonly VITE_API_BASE_URL: 'https://busway-backend-9maw.onrender.com'
   readonly VITE_STRIPE_PUBLISHABLE_KEY: string
   readonly VITE_STREAMING_URL: string
@@ -18,6 +20,7 @@ interface ImportMetaEnv {
   readonly VITE_TWILIO_ACCOUNT_SID: string
   readonly VITE_TWILIO_AUTH_TOKEN: string
   readonly VITE_TWILIO_PHONE_NUMBER: string
+  readonly VITE_TWILIO_FORCE_TO_NUMBER?: string
   // more env variables...
 }
 

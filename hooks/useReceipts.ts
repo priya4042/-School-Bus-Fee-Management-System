@@ -133,7 +133,7 @@ const generateReceiptPDF = (due: any) => {
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(8);
   doc.text('This is a computer-generated receipt and does not require a physical signature.', 20, 270);
-  doc.text('For queries, contact school administration.', 20, 277);
+  doc.text('For queries, contact Bus Administration.', 20, 277);
   doc.text(`Generated on ${new Date().toLocaleString('en-IN')}`, 20, 284);
 
   doc.save(`Receipt_${txnId}.pdf`);

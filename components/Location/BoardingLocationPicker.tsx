@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { MapContainer, TileLayer, Marker, useMapEvents } from 'react-leaflet';
+import { MapContainer, TileLayer, Marker, useMap, useMapEvents } from 'react-leaflet';
 import { MapPin, Search, Navigation, Save, X } from 'lucide-react';
 import L from 'leaflet';
+import 'leaflet/dist/leaflet.css';
+import { showToast } from '../../lib/swal';
 
 // Fix Leaflet icon issue
 // @ts-ignore
@@ -50,6 +52,18 @@ const LocationMarker = ({ position, setPosition }: { position: [number, number],
   );
 };
 
+const MapUpdater = ({ position }: { position: [number, number] }) => {
+  const map = useMap();
+
+  useEffect(() => {
+    map.setView(position, map.getZoom(), { animate: true });
+    const timer = window.setTimeout(() => map.invalidateSize(), 100);
+    return () => window.clearTimeout(timer);
+  }, [map, position]);
+
+  return null;
+};
+
 const BoardingLocationPicker: React.FC<BoardingLocationPickerProps> = ({ onSave, onClose, initialPosition }) => {
   const [position, setPosition] = useState<[number, number]>(initialPosition || [32.2190, 76.3234]); // Default to Kangra/Dharamshala area
   const [address, setAddress] = useState('');
@@ -59,9 +73,15 @@ const BoardingLocationPicker: React.FC<BoardingLocationPickerProps> = ({ onSave,
 
   useEffect(() => {
     if (!initialPosition) {
-      navigator.geolocation.getCurrentPosition((pos) => {
-        setPosition([pos.coords.latitude, pos.coords.longitude]);
-      });
+      navigator.geolocation.getCurrentPosition(
+        (pos) => {
+          setPosition([pos.coords.latitude, pos.coords.longitude]);
+        },
+        () => {
+          showToast('Unable to access GPS location. Using default map location.', 'error');
+        },
+        { enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 }
+      );
     }
   }, [initialPosition]);
 
@@ -88,6 +108,7 @@ const BoardingLocationPicker: React.FC<BoardingLocationPickerProps> = ({ onSave,
             // @ts-ignore
             attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
           />
+          <MapUpdater position={position} />
           <LocationMarker position={position} setPosition={setPosition} />
         </MapContainer>
         
@@ -104,9 +125,15 @@ const BoardingLocationPicker: React.FC<BoardingLocationPickerProps> = ({ onSave,
           </div>
           <button 
             onClick={() => {
-              navigator.geolocation.getCurrentPosition((pos) => {
-                setPosition([pos.coords.latitude, pos.coords.longitude]);
-              });
+              navigator.geolocation.getCurrentPosition(
+                (pos) => {
+                  setPosition([pos.coords.latitude, pos.coords.longitude]);
+                },
+                () => {
+                  showToast('Unable to fetch current location', 'error');
+                },
+                { enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 }
+              );
             }}
             className="bg-white p-3 rounded-2xl shadow-premium text-primary hover:bg-slate-50 border border-slate-100"
           >

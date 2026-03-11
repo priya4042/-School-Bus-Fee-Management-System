@@ -300,7 +300,7 @@ const FeeHistory: React.FC<{ user: User }> = ({ user }) => {
             <h3 className="text-xl font-black text-slate-900 tracking-tight uppercase">No Records Found</h3>
             <p className="text-slate-500 font-bold uppercase text-[10px] tracking-widest mt-2">
               {students.length === 0
-                ? 'No students linked to your account. Contact school admin.'
+                ? 'No students linked to your account. Contact Bus Administrator.'
                 : 'No fee records match your filter.'}
             </p>
           </div>

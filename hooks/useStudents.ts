@@ -29,10 +29,11 @@ export const useStudents = () => {
       // Resolve parent_id from phone number if provided
       let parent_id: string | null = null;
       if (studentData.parent_phone) {
+        const digits = String(studentData.parent_phone).replace(/\D/g, '').slice(-10);
         const { data: profileData } = await supabase
           .from('profiles')
           .select('id')
-          .eq('phone_number', studentData.parent_phone)
+          .or(`phone_number.eq.${digits},phone_number.eq.+91${digits}`)
           .eq('role', 'PARENT')
           .maybeSingle();
         if (profileData) parent_id = profileData.id;
@@ -48,6 +49,8 @@ export const useStudents = () => {
         boarding_point: studentData.boarding_point || null,
         monthly_fee: studentData.monthly_fee || 0,
         status: studentData.status || 'active',
+        parent_name: studentData.parent_name || null,
+        parent_phone: studentData.parent_phone || null,
         parent_id,
       });
       if (error) throw error;
@@ -64,10 +67,11 @@ export const useStudents = () => {
       // Resolve parent_id from phone number if provided
       let parent_id: string | undefined = undefined;
       if (studentData.parent_phone) {
+        const digits = String(studentData.parent_phone).replace(/\D/g, '').slice(-10);
         const { data: profileData } = await supabase
           .from('profiles')
           .select('id')
-          .eq('phone_number', studentData.parent_phone)
+          .or(`phone_number.eq.${digits},phone_number.eq.+91${digits}`)
           .eq('role', 'PARENT')
           .maybeSingle();
         parent_id = profileData?.id ?? undefined;
@@ -83,6 +87,8 @@ export const useStudents = () => {
         boarding_point: studentData.boarding_point || null,
         monthly_fee: studentData.monthly_fee || 0,
         status: studentData.status || 'active',
+        parent_name: studentData.parent_name || null,
+        parent_phone: studentData.parent_phone || null,
       };
       if (parent_id !== undefined) updatePayload.parent_id = parent_id;
 

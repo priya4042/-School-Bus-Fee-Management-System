@@ -15,10 +15,11 @@ export const userService = {
   ): Promise<UserExistsResult> => {
     try {
       if (type === 'PHONE') {
+        const digits = identifier.replace(/\D/g, '').slice(-10);
         const { data } = await supabase
           .from('profiles')
           .select('id')
-          .eq('phone_number', identifier)
+          .or(`phone_number.eq.${digits},phone_number.eq.+91${digits}`)
           .maybeSingle();
         return {
           exists: !!data,
@@ -31,7 +32,7 @@ export const userService = {
         const { data } = await supabase
           .from('profiles')
           .select('id')
-          .eq('email', identifier.toLowerCase())
+          .eq('email', identifier.trim().toLowerCase())
           .maybeSingle();
         return {
           exists: !!data,
@@ -41,17 +42,18 @@ export const userService = {
       }
 
       if (type === 'ADMISSION') {
+        const normalizedAdmission = identifier.trim();
         const { data } = await supabase
           .from('students')
           .select('id, parent_id, parent_name, parent_phone')
-          .eq('admission_number', identifier)
+          .eq('admission_number', normalizedAdmission)
           .maybeSingle();
 
         if (!data) {
           return {
             exists: false,
             valid: false,
-            message: 'Admission number not found. Please verify with school administration.'
+            message: 'Admission number not found. Please verify with Bus Administration.'
           };
         }
 

@@ -1,7 +1,22 @@
 import { create } from 'zustand';
 import { User, UserRole } from '../types';
 import { supabase } from '../lib/supabase';
-import { apiPost } from '../lib/api';
+
+const normalizeRole = (role?: string | null): UserRole => {
+  const value = (role || '').toUpperCase();
+  if (value === UserRole.SUPER_ADMIN) return UserRole.SUPER_ADMIN;
+  if (value === UserRole.ADMIN) return UserRole.ADMIN;
+  return UserRole.PARENT;
+};
+
+const normalizeProfile = (profile: any) => ({
+  ...profile,
+  role: normalizeRole(profile.role),
+  fullName: profile.full_name,
+  phoneNumber: profile.phone_number,
+  admissionNumber: profile.admission_number,
+  avatar_url: profile.avatar_url || profile.preferences?.avatar_url,
+});
 
 interface AuthState {
   user: User | null;
@@ -42,8 +57,10 @@ export const useAuthStore = create<AuthState>((set) => ({
           .eq('id', session.user.id)
           .single();
 
+        const normalizedProfile = profile ? normalizeProfile(profile) : null;
+
         set({ 
-          user: profile || null, 
+          user: normalizedProfile || null,
           accessToken: session.access_token,
           initialized: true, 
           loading: false 
@@ -73,7 +90,7 @@ loginWithCredentials: async (identifier: string, password?: string, type?: 'EMAI
         .maybeSingle();
 
       if (studentError) throw new Error('Error looking up student. Please try again.');
-      if (!student) throw new Error('Admission number not found. Please verify with school administration.');
+      if (!student) throw new Error('Admission number not found. Please verify with Bus Administration.');
       if (!student.parent_id) throw new Error('No parent account linked to this admission number. Please register first.');
 
       const { data: profile, error: profileError } = await supabase
@@ -116,7 +133,13 @@ loginWithCredentials: async (identifier: string, password?: string, type?: 'EMAI
       .eq('id', authData.user.id)
       .single();
 
-    const userProfile = profile || authData.user;
+    const userProfile = profile
+      ? normalizeProfile(profile)
+      : {
+          ...(authData.user as any),
+          role: normalizeRole((authData.user as any)?.user_metadata?.role),
+        };
+
     set({ user: userProfile, accessToken: authData.session?.access_token || null, loading: false, initialized: true });
 
     return userProfile;
@@ -130,16 +153,49 @@ loginWithCredentials: async (identifier: string, password?: string, type?: 'EMAI
   registerAdmin: async (data: any) => {
     set({ loading: true });
     try {
-      await apiPost('auth', 'register', {
+      let userId: string;
+
+      const { data: authData, error: signUpError } = await supabase.auth.signUp({
         email: data.email,
-        username: data.email,
-        identifier: data.email,
         password: data.password,
-        full_name: data.fullName,
-        role: UserRole.ADMIN,
-        secret: data.secret,
-        phone: data.phoneNumber
       });
+
+      if (signUpError) {
+        const msg = signUpError.message?.toLowerCase() || '';
+        if (
+          msg.includes('already registered') ||
+          msg.includes('already been registered') ||
+          msg.includes('user already') ||
+          msg.includes('database error saving new user')
+        ) {
+          const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
+            email: data.email,
+            password: data.password,
+          });
+
+          if (signInError || !signInData.user) {
+            throw new Error('Admin account already exists. Please log in with existing credentials or reset password.');
+          }
+
+          userId = signInData.user.id;
+        } else {
+          throw signUpError;
+        }
+      } else {
+        if (!authData.user) throw new Error('Admin registration failed — no user returned');
+        userId = authData.user.id;
+      }
+
+      const { error: profileError } = await supabase.from('profiles').upsert({
+        id: userId,
+        email: data.email.toLowerCase(),
+        full_name: data.fullName,
+        phone_number: data.phoneNumber || null,
+        role: 'ADMIN',
+      });
+
+      if (profileError) throw profileError;
+
       set({ loading: false });
     } catch (err: any) {
       set({ loading: false });
@@ -153,27 +209,31 @@ loginWithCredentials: async (identifier: string, password?: string, type?: 'EMAI
       let userId: string;
 
       // 1. Try to create Supabase Auth user
+      // Keep signUp payload minimal to avoid DB trigger/metadata conflicts.
       const { data: authData, error: signUpError } = await supabase.auth.signUp({
         email: data.email,
-        password: data.password,
-        options: {
-          data: {
-            full_name: data.fullName,
-            role: 'PARENT',
-            phone_number: data.phone,
-          }
-        }
+        password: data.password
       });
 
       if (signUpError) {
         // If already registered in Auth (partial previous attempt), sign in to recover
         const msg = signUpError.message?.toLowerCase() || '';
-        if (msg.includes('already registered') || msg.includes('already been registered') || msg.includes('user already')) {
+        if (
+          msg.includes('already registered') ||
+          msg.includes('already been registered') ||
+          msg.includes('user already') ||
+          msg.includes('database error saving new user')
+        ) {
           const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
             email: data.email,
             password: data.password,
           });
-          if (signInError) throw new Error('Account already exists. Please log in with your existing password.');
+          if (signInError) {
+            if (msg.includes('database error saving new user')) {
+              throw new Error('Registration is blocked by a database/auth trigger issue. Please contact admin to check Supabase Auth trigger/policies.');
+            }
+            throw new Error('Account already exists. Please log in with your existing password.');
+          }
           if (!signInData.user) throw new Error('Registration recovery failed.');
           userId = signInData.user.id;
         } else {
@@ -190,18 +250,37 @@ loginWithCredentials: async (identifier: string, password?: string, type?: 'EMAI
         email: data.email.toLowerCase(),
         full_name: data.fullName,
         phone_number: data.phone,
+        admission_number: data.admissionNumber?.trim(),
         role: 'PARENT',
       });
       if (profileError) throw profileError;
 
       // 3. Link student to parent profile
-      await supabase
+      const { data: linkedStudents, error: linkError } = await supabase
         .from('students')
         .update({ parent_id: userId })
-        .eq('admission_number', data.admissionNumber)
-        .is('parent_id', null);
+        .eq('admission_number', data.admissionNumber?.trim())
+        .select('id, parent_id');
 
-      set({ loading: false });
+      if (linkError) throw linkError;
+      if (!linkedStudents || linkedStudents.length === 0) {
+        throw new Error('Admission number not found for linking. Please contact Bus Administration.');
+      }
+
+      const currentProfile = {
+        id: userId,
+        email: data.email.toLowerCase(),
+        full_name: data.fullName,
+        fullName: data.fullName,
+        phone_number: data.phone,
+        phoneNumber: data.phone,
+        admission_number: data.admissionNumber?.trim(),
+        admissionNumber: data.admissionNumber?.trim(),
+        role: UserRole.PARENT,
+      } as unknown as User;
+
+      set({ user: currentProfile, loading: false, initialized: true });
+
     } catch (err: any) {
       set({ loading: false });
       throw new Error(err.message || 'Parent registration failed');

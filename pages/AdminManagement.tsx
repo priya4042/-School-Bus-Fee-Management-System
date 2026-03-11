@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import Modal from '../components/Modal';
 import { useAdmin } from '../hooks/useAdmin';
 import { UserRole } from '../types';
-import { showToast, showAlert, showLoading, closeSwal } from '../lib/swal';
+import { showToast, showAlert, showLoading, closeSwal, showConfirm } from '../lib/swal';
 
 const AdminManagement: React.FC = () => {
   const { admins, loading, toggleAdminStatus, createAdmin } = useAdmin();
@@ -31,10 +31,12 @@ const AdminManagement: React.FC = () => {
     }
   };
 
-  const handleToggleStatus = async (id: number, status: boolean, name: string) => {
+  const handleToggleStatus = async (id: string, status: boolean, name: string) => {
     const action = status ? 'Activate' : 'Deactivate';
-    const confirmed = await import('../lib/swal').then(({ showConfirm }) => 
-      showConfirm(`${action} Account?`, `Are you sure you want to ${action.toLowerCase()} ${name}?`, action)
+    const confirmed = await showConfirm(
+      `${action} Account?`,
+      `Are you sure you want to ${action.toLowerCase()} ${name}?`,
+      action
     );
     
     if (confirmed) {

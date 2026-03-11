@@ -20,6 +20,8 @@ const Register: React.FC<RegisterProps> = ({ onRegister, onBackToLogin, initialR
   const [regStep, setRegStep] = useState<'form' | 'success'>('form');
   const [isOtpSent, setIsOtpSent] = useState(false);
   const [otp, setOtp] = useState('');
+  const [devOtpHint, setDevOtpHint] = useState('');
+  const [devOtpValue, setDevOtpValue] = useState('');
   const [timer, setTimer] = useState(0);
   const [showPassword, setShowPassword] = useState(false);
   const [showAdminKey, setShowAdminKey] = useState(false);
@@ -45,6 +47,8 @@ const Register: React.FC<RegisterProps> = ({ onRegister, onBackToLogin, initialR
     e.preventDefault();
     setLoading(true);
     setError('');
+    setDevOtpHint('');
+    setDevOtpValue('');
 
     try {
       if (formData.password.length < 8) throw new Error("Password must be at least 8 characters.");
@@ -65,26 +69,15 @@ const Register: React.FC<RegisterProps> = ({ onRegister, onBackToLogin, initialR
         // valid: false means admission number not in DB
         if (admissionCheck.valid === false) throw new Error(admissionCheck.message || 'Admission number not found');
         if (admissionCheck.exists) throw new Error(admissionCheck.message || 'Admission number already registered');
-        // If the school has provided parent name/phone for this admission, require the registrant to match them
-        try {
-          const expectedPhone = (admissionCheck.parentPhone || '').replace(/\D/g, '').slice(-10);
-          const providedPhone = (formData.phone || '').replace(/\D/g, '').slice(-10);
-          if (expectedPhone && providedPhone && expectedPhone !== providedPhone) {
-            throw new Error('Provided phone does not match school records for this admission number. Please verify with administration.');
-          }
-
-          const expectedName = (admissionCheck.parentName || '').trim().toLowerCase();
-          const providedName = (formData.fullName || '').trim().toLowerCase();
-          if (expectedName && providedName && expectedName !== providedName) {
-            throw new Error('Provided parent name does not match school records for this admission number. Please verify with administration.');
-          }
-        } catch (e: any) {
-          throw e;
-        }
       }
 
-      const res = await otpService.sendOTP(formData.phone, formData.admissionNo);
+      const res = role === UserRole.PARENT
+        ? await otpService.sendOTP(formData.phone, formData.admissionNo)
+        : await otpService.sendForgotPasswordOTP(formData.phone, 'ADMIN');
       if (res.success) {
+        const fallbackOtp = (res as any).devOtp ? String((res as any).devOtp) : '';
+        setDevOtpHint(fallbackOtp ? `DEV OTP: ${fallbackOtp}` : '');
+        setDevOtpValue(fallbackOtp);
         setIsOtpSent(true);
         setTimer(30);
       } else {
@@ -107,8 +100,13 @@ const Register: React.FC<RegisterProps> = ({ onRegister, onBackToLogin, initialR
     setLoading(true);
     setError('');
     try {
-      const res = await otpService.sendOTP(formData.phone);
+      const res = role === UserRole.PARENT
+        ? await otpService.sendOTP(formData.phone, formData.admissionNo)
+        : await otpService.sendForgotPasswordOTP(formData.phone, 'ADMIN');
       if (res.success) {
+        const fallbackOtp = (res as any).devOtp ? String((res as any).devOtp) : '';
+        setDevOtpHint(fallbackOtp ? `DEV OTP: ${fallbackOtp}` : '');
+        setDevOtpValue(fallbackOtp);
         setTimer(30);
       } else {
         setError(res.error || 'Failed to resend OTP');
@@ -128,6 +126,15 @@ const Register: React.FC<RegisterProps> = ({ onRegister, onBackToLogin, initialR
     try {
       if (formData.password.length < 8) throw new Error("Password must be at least 8 characters.");
 
+      const verifyRes = await otpService.verifyOTP(
+        formData.phone,
+        otp,
+        role === UserRole.PARENT ? formData.admissionNo : undefined
+      );
+      if (!verifyRes.success) {
+        throw new Error(verifyRes.error || 'Invalid OTP');
+      }
+
       const { registerAdmin, registerParent } = useAuthStore.getState();
 
       if (role === UserRole.ADMIN) {
@@ -139,12 +146,6 @@ const Register: React.FC<RegisterProps> = ({ onRegister, onBackToLogin, initialR
           phoneNumber: formData.phone // Add phone number to admin registration
         });
       } else {
-        // Verify OTP first
-        const verifyRes = await otpService.verifyOTP(formData.phone, otp, formData.admissionNo);
-        if (!verifyRes.success) {
-          throw new Error(verifyRes.error || 'Invalid OTP');
-        }
-
         await registerParent({
           admissionNumber: formData.admissionNo,
           fullName: formData.fullName,
@@ -178,6 +179,8 @@ const Register: React.FC<RegisterProps> = ({ onRegister, onBackToLogin, initialR
      setRole(role === UserRole.PARENT ? UserRole.ADMIN : UserRole.PARENT);
      setError('');
      setIsOtpSent(false);
+      setDevOtpHint('');
+      setDevOtpValue('');
      setOtp('');
   };
 
@@ -230,11 +233,36 @@ const Register: React.FC<RegisterProps> = ({ onRegister, onBackToLogin, initialR
              </div>
            )}
 
-           {role === UserRole.PARENT && isOtpSent ? (
+           {isOtpSent ? (
              <form onSubmit={handleRegister} className="space-y-6">
                <div className="space-y-1">
                   <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">Enter OTP</label>
-                  <input required type="text" value={otp} onChange={(e) => setOtp(e.target.value)} className={inputClass} placeholder="Enter 6-digit OTP" maxLength={6} />
+                  <input
+                    required
+                    type="text"
+                    value={otp}
+                    onChange={(e) => setOtp(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                    className={inputClass}
+                    placeholder="Enter 6-digit OTP"
+                    inputMode="numeric"
+                    maxLength={6}
+                  />
+                  {devOtpHint && (
+                    <div className="mt-2 p-3 rounded-xl bg-amber-50 border border-amber-200 text-amber-700 text-[10px] font-black uppercase tracking-widest">
+                      <div className="flex items-center justify-between gap-3">
+                        <span>{devOtpHint}</span>
+                        {devOtpValue && (
+                          <button
+                            type="button"
+                            onClick={() => setOtp(devOtpValue)}
+                            className="px-3 py-1 rounded-lg bg-amber-100 border border-amber-300 text-amber-800 text-[9px] font-black uppercase tracking-widest"
+                          >
+                            Use OTP
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  )}
                   <div className="flex justify-between items-center mt-2 px-1">
                     <span className="text-[10px] font-bold text-slate-500">
                       OTP sent to {formData.phone.slice(0, 2)}******{formData.phone.slice(-2)}
@@ -263,7 +291,7 @@ const Register: React.FC<RegisterProps> = ({ onRegister, onBackToLogin, initialR
                 </button>
              </form>
            ) : (
-             <form onSubmit={role === UserRole.PARENT ? handleSendOtp : handleRegister} className="space-y-6">
+             <form onSubmit={handleSendOtp} className="space-y-6">
                 {role === UserRole.ADMIN && (
                   <div className="p-6 bg-slate-50 rounded-2xl border border-slate-100 mb-6">
                      <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Master Admin Secret</label>
@@ -333,7 +361,7 @@ const Register: React.FC<RegisterProps> = ({ onRegister, onBackToLogin, initialR
                 </div>
 
                 <button type="submit" disabled={loading} className={`w-full py-5 rounded-2xl text-white font-black uppercase text-[10px] tracking-widest transition-all shadow-xl active:scale-[0.98] ${role === UserRole.ADMIN ? 'bg-slate-900 shadow-slate-900/20' : 'bg-primary shadow-primary/20'}`}>
-                  {loading ? <i className="fas fa-circle-notch fa-spin"></i> : (role === UserRole.PARENT ? 'Send OTP' : 'Create Account')}
+                  {loading ? <i className="fas fa-circle-notch fa-spin"></i> : 'Send OTP'}
                 </button>
              </form>
            )}

@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useBuses } from '../hooks/useBuses';
 import { useRoutes } from '../hooks/useRoutes';
 import Modal from '../components/Modal';
-import { showConfirm, showToast, showLoading, closeSwal } from '../lib/swal';
+import { showConfirm, showToast, showLoading, closeSwal, showAlert } from '../lib/swal';
 
 const Buses: React.FC = () => {
   const { buses, loading, registerBus, updateBus, deleteBus } = useBuses();
@@ -46,9 +46,7 @@ const Buses: React.FC = () => {
     } else {
       // If failed, re-open modal so user doesn't lose data
       setIsModalOpen(true);
-      import('../lib/swal').then(({ showAlert }) => {
-        showAlert('Failed', result.error || 'Could not save vehicle record.', 'error');
-      });
+      showAlert('Failed', result.error || 'Could not save vehicle record.', 'error');
     }
   };
 
@@ -94,9 +92,7 @@ const Buses: React.FC = () => {
       if (result.success) {
         showToast('Asset removed successfully', 'info');
       } else {
-        import('../lib/swal').then(({ showAlert }) => {
-          showAlert('Failed', result.error || 'Could not delete vehicle.', 'error');
-        });
+        showAlert('Failed', result.error || 'Could not delete vehicle.', 'error');
       }
     }
   };

@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { MapPin, Plus, Trash2, Star, CheckCircle2, AlertCircle, Navigation } from 'lucide-react';
 import BoardingLocationPicker from '../../components/Location/BoardingLocationPicker';
-import { apiPost } from '../../lib/api';
 import { User } from '../../types';
+import { supabase } from '../../lib/supabase';
+import { showToast } from '../../lib/swal';
 
 interface BoardingLocation {
   id: string;
@@ -14,6 +15,8 @@ interface BoardingLocation {
   special_instructions: string;
   is_primary: boolean;
 }
+
+const BOARDING_TABLES = ['boarding_points', 'boarding_locations'] as const;
 
 const BoardingLocations: React.FC<{ user: User }> = ({ user }) => {
   const [locations, setLocations] = useState<BoardingLocation[]>([]);
@@ -29,15 +32,23 @@ const BoardingLocations: React.FC<{ user: User }> = ({ user }) => {
   const fetchData = async () => {
     if (!user) return;
     try {
-      // Updated to use apiPost with GET method
-      const studentData = await apiPost('parent-students', user.id, {}, 'GET');
+      const { data: studentData, error } = await supabase
+        .from('students')
+        .select('id, full_name')
+        .eq('parent_id', user.id)
+        .order('full_name', { ascending: true });
+
+      if (error) throw error;
+
       setStudents(studentData || []);
       if (studentData && studentData.length > 0) {
-        setSelectedStudent(studentData[0].id);
-        fetchLocations(studentData[0].id);
+        const firstStudentId = String(studentData[0].id);
+        setSelectedStudent(firstStudentId);
+        fetchLocations(firstStudentId);
       }
     } catch (err) {
       console.error(err);
+      showToast('Failed to load student list', 'error');
     } finally {
       setLoading(false);
     }
@@ -45,34 +56,95 @@ const BoardingLocations: React.FC<{ user: User }> = ({ user }) => {
 
   const fetchLocations = async (studentId: string) => {
     try {
-      // Updated to use apiPost with GET method
-      const data = await apiPost('boarding-points', studentId, {}, 'GET');
-      setLocations(data || []);
+      let loaded = false;
+
+      for (const table of BOARDING_TABLES) {
+        const query = supabase
+          .from(table)
+          .select('id, location_name, address, latitude, longitude, landmark, special_instructions, is_primary')
+          .eq('student_id', studentId);
+
+        const { data, error } = table === 'boarding_locations'
+          ? await query.eq('is_active', true).order('created_at', { ascending: false })
+          : await query.order('id', { ascending: false });
+
+        if (!error) {
+          setLocations((data || []) as BoardingLocation[]);
+          loaded = true;
+          break;
+        }
+      }
+
+      if (!loaded) {
+        throw new Error('Boarding table not found or access denied.');
+      }
     } catch (err) {
       console.error(err);
+      setLocations([]);
+      showToast('Failed to load boarding points', 'error');
     }
   };
 
   const handleSaveLocation = async (data: any) => {
     try {
-      // Updated to use apiPost with POST method and empty action
-      await apiPost('boarding-points', '', { ...data, student_id: selectedStudent }, 'POST');
+      if (!selectedStudent) {
+        throw new Error('No student selected');
+      }
+
+      const payload = {
+        ...data,
+        student_id: selectedStudent,
+      };
+
+      let saved = false;
+      for (const table of BOARDING_TABLES) {
+        const insertPayload = table === 'boarding_locations'
+          ? { ...payload, is_active: true }
+          : payload;
+
+        const { error } = await supabase.from(table).insert(insertPayload);
+        if (!error) {
+          saved = true;
+          break;
+        }
+      }
+
+      if (!saved) {
+        throw new Error('Unable to save boarding point with current table configuration.');
+      }
+
       fetchLocations(selectedStudent);
       setIsAdding(false);
+      showToast('Boarding point saved successfully', 'success');
     } catch (err: any) {
       console.error(err);
-      alert(err.message || 'Failed to save location. Please try again.');
+      showToast(err.message || 'Failed to save location. Please try again.', 'error');
     }
   };
 
   const handleDelete = async (id: string) => {
     try {
-      // Updated to use apiPost with DELETE method
-      await apiPost('boarding-points', id, {}, 'DELETE');
+      let removed = false;
+      for (const table of BOARDING_TABLES) {
+        const { error } = table === 'boarding_locations'
+          ? await supabase.from(table).update({ is_active: false }).eq('id', id)
+          : await supabase.from(table).delete().eq('id', id);
+
+        if (!error) {
+          removed = true;
+          break;
+        }
+      }
+
+      if (!removed) {
+        throw new Error('Unable to remove boarding point with current table configuration.');
+      }
+
       fetchLocations(selectedStudent);
+      showToast('Boarding point removed', 'success');
     } catch (err: any) {
       console.error(err);
-      alert(err.message || 'Failed to delete location. Please try again.');
+      showToast(err.message || 'Failed to delete location. Please try again.', 'error');
     }
   };
 
@@ -140,7 +212,11 @@ const BoardingLocations: React.FC<{ user: User }> = ({ user }) => {
             <div className="space-y-3 mb-8 flex-1">
               <div className="flex items-center gap-3 text-slate-400">
                 <Navigation size={14} />
-                <span className="text-xs font-mono">{loc.latitude.toFixed(4)}, {loc.longitude.toFixed(4)}</span>
+                <span className="text-xs font-mono">
+                  {Number.isFinite(loc.latitude) && Number.isFinite(loc.longitude)
+                    ? `${loc.latitude.toFixed(4)}, ${loc.longitude.toFixed(4)}`
+                    : 'Coordinates unavailable'}
+                </span>
               </div>
               {loc.landmark && (
                 <div className="flex items-center gap-3 text-slate-400">

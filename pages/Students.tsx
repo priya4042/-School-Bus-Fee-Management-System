@@ -87,8 +87,8 @@ const Students: React.FC = () => {
       section: student.section,
       route_id: student.route_id || '',
       bus_id: student.bus_id || '',
-      parent_name: student.profiles?.full_name || '',
-      parent_phone: student.profiles?.phone_number || '',
+      parent_name: student.profiles?.full_name || student.parent_name || '',
+      parent_phone: student.profiles?.phone_number || student.parent_phone || '',
       boarding_point: student.boarding_point || '',
       monthly_fee: student.monthly_fee || student.base_fee || 0,
       status: student.status || 'active'
@@ -175,8 +175,8 @@ const Students: React.FC = () => {
                       <p className="text-[10px] text-slate-400 font-bold uppercase">{student.buses?.plate || 'No Bus'}</p>
                     </td>
                     <td className="px-8 py-5">
-                      <p className="text-xs font-bold text-slate-700">{student.profiles?.full_name || 'Unassigned'}</p>
-                      <p className="text-[10px] text-slate-400 font-bold">{student.profiles?.phone_number || ''}</p>
+                      <p className="text-xs font-bold text-slate-700">{student.profiles?.full_name || student.parent_name || 'Unassigned'}</p>
+                      <p className="text-[10px] text-slate-400 font-bold">{student.profiles?.phone_number || student.parent_phone || ''}</p>
                     </td>
                     <td className="px-8 py-5">
                       <p className="text-sm font-black text-slate-800">₹{student.monthly_fee || student.base_fee || 0}</p>

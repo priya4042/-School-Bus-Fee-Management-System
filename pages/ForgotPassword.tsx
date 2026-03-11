@@ -128,7 +128,7 @@ const ForgotPassword: React.FC = () => {
       
       setStep(4);
       showToast('Password reset successfully', 'success');
-      setTimeout(() => navigate('/login'), 2000);
+      setTimeout(() => navigate('/'), 2000);
     } catch (err: any) {
       setError(err.message || 'Failed to reset password');
     } finally {
@@ -420,8 +420,8 @@ const ForgotPassword: React.FC = () => {
 
           <div className="mt-12 pt-10 border-t border-slate-50 text-center">
             <a
-              href="/login"
-              onClick={(e) => { e.preventDefault(); navigate('/login'); }}
+              href="/"
+              onClick={(e) => { e.preventDefault(); navigate('/'); }}
               className="inline-flex items-center gap-2 text-[10px] font-black text-slate-400 uppercase tracking-widest hover:text-primary transition-colors"
             >
               <ArrowLeft size={14} />

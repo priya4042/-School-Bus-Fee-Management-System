@@ -80,7 +80,7 @@ const ParentDashboard: React.FC<{ user: User }> = ({ user }) => {
      <div className="p-20 text-center bg-white rounded-3xl shadow-sm">
         <i className="fas fa-user-graduate text-slate-300 text-6xl mb-4"></i>
         <h2 className="text-xl font-bold text-slate-700">No Students Found</h2>
-        <p className="text-slate-500 mt-2">Please contact the school admin to link your child's account.</p>
+        <p className="text-slate-500 mt-2">Please contact the Bus Administrator to link your child's account.</p>
      </div>
   );
 
@@ -198,7 +198,7 @@ const ParentDashboard: React.FC<{ user: User }> = ({ user }) => {
                        <p className="text-white/30 font-black uppercase text-[8px] md:text-[10px] tracking-[0.4em] max-w-[250px] mx-auto">
                           {(user as any).preferences?.tracking === true
                             ? 'Connect to encrypted satellite stream'
-                            : 'Tracking access not enabled — contact school admin'}
+                            : 'Tracking access not enabled — contact Bus Administrator'}
                        </p>
                     </div>
                     {(user as any).preferences?.tracking === true ? (

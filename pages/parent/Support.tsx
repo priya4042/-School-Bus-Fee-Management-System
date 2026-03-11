@@ -144,7 +144,7 @@ const Support: React.FC<{ user: User }> = ({ user }) => {
           </div>
           <h3 className="text-xl font-black text-slate-900 tracking-tight uppercase mb-4">Call Support</h3>
           <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest leading-loose mb-8">
-            Speak directly with our school transport administrators.
+            Speak directly with our Bus Administrators.
           </p>
           <div className="w-full bg-emerald-600 text-white py-4 rounded-2xl font-black uppercase text-[10px] tracking-widest shadow-xl shadow-emerald-600/20 hover:bg-emerald-700 transition-all text-center">
             Call Now
