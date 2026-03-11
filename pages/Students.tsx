@@ -308,18 +308,19 @@ const Students: React.FC = () => {
             </div>
 
             {/* Fees Table */}
-            <div className="bg-white rounded-2xl border border-slate-100 overflow-hidden">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="bg-slate-50 text-slate-400 text-[9px] font-black uppercase tracking-widest border-b border-slate-100">
-                    <th className="px-4 py-3 text-left">Month/Year</th>
-                    <th className="px-4 py-3 text-left">Amount</th>
-                    <th className="px-4 py-3 text-left">Status</th>
-                    <th className="px-4 py-3 text-left">Total Due</th>
-                    <th className="px-4 py-3 text-left">Paid Date</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-50">
+            <div className="bg-white rounded-2xl border border-slate-100 overflow-hidden max-h-96 flex flex-col">
+              <div className="overflow-y-auto flex-1">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="bg-slate-50 text-slate-400 text-[9px] font-black uppercase tracking-widest border-b border-slate-100 sticky top-0">
+                      <th className="px-4 py-3 text-left">Month/Year</th>
+                      <th className="px-4 py-3 text-left">Amount</th>
+                      <th className="px-4 py-3 text-left">Status</th>
+                      <th className="px-4 py-3 text-left">Total Due</th>
+                      <th className="px-4 py-3 text-left">Paid Date</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-50">
                   {getStudentFees(selectedStudentForFees.id).length > 0 ? (
                     getStudentFees(selectedStudentForFees.id).map((fee: any) => (
                       <tr key={fee.id} className="hover:bg-slate-50/50 transition-colors">
@@ -360,8 +361,9 @@ const Students: React.FC = () => {
                       </td>
                     </tr>
                   )}
-                </tbody>
-              </table>
+                  </tbody>
+                </table>
+              </div>
             </div>
 
             <div className="flex gap-3 pt-2">
