@@ -2,108 +2,21 @@
 @tailwind components;
 @tailwind utilities;
 
-@layer base {
-  body { 
-    font-family: 'Plus Jakarta Sans', sans-serif; 
-    -webkit-tap-highlight-color: transparent;
-    @apply bg-slate-50 text-slate-900 antialiased;
-  }
+body { 
+  font-family: 'Plus Jakarta Sans', sans-serif; 
+  -webkit-tap-highlight-color: transparent;
 }
-
-@layer utilities {
-  .scrollbar-hide::-webkit-scrollbar { display: none; }
-  
-  .scrollbar-thin::-webkit-scrollbar {
-    width: 6px;
-    height: 6px;
-  }
-  
-  .scrollbar-thin::-webkit-scrollbar-track {
-    @apply bg-transparent;
-  }
-  
-  .scrollbar-thin::-webkit-scrollbar-thumb {
-    @apply bg-slate-200 rounded-full hover:bg-slate-300 transition-colors;
-  }
-}
-
+.scrollbar-hide::-webkit-scrollbar { display: none; }
 #map, #parent-map { height: 100%; width: 100%; min-height: 400px; border-radius: 2rem; }
-
-/* SweetAlert2 Customization */
-.swal2-popup { 
-  border-radius: 2.5rem !important; 
-  padding: 3rem !important; 
-  width: 90% !important; 
-  max-width: 480px !important;
-  @apply shadow-2xl border border-slate-100 !important;
-}
-
-.swal2-title {
-  @apply font-black text-slate-900 tracking-tight text-2xl mb-2 !important;
-}
-
-.swal2-html-container {
-  @apply font-medium text-slate-500 text-sm !important;
-}
-
+.swal2-popup { border-radius: 2rem !important; padding: 2.5rem !important; width: 90% !important; max-width: 500px !important; }
 .swal2-container { z-index: 10000 !important; }
-
-.swal2-confirm { 
-  background-color: #1e40af !important; 
-  border-radius: 1rem !important; 
-  font-weight: 800 !important; 
-  text-transform: uppercase !important; 
-  letter-spacing: 0.1em !important; 
-  font-size: 11px !important;
-  padding: 1rem 2rem !important;
-  box-shadow: 0 10px 30px -10px rgba(30, 64, 175, 0.3) !important;
-}
-
-.swal2-cancel {
-  background-color: #f1f5f9 !important;
-  color: #64748b !important;
-  border-radius: 1rem !important;
-  font-weight: 800 !important;
-  text-transform: uppercase !important;
-  letter-spacing: 0.1em !important;
-  font-size: 11px !important;
-  padding: 1rem 2rem !important;
-}
+.swal2-confirm { background-color: #1e40af !important; border-radius: 1rem !important; font-weight: 800 !important; text-transform: uppercase !important; letter-spacing: 0.1em !important; font-size: 10px !important; }
 
 .responsive-table-container {
   overflow-x: auto;
   width: 100%;
   -webkit-overflow-scrolling: touch;
-  @apply rounded-3xl border border-slate-100 shadow-sm bg-white;
 }
-
 .responsive-table {
   min-width: 850px;
-  @apply w-full;
-}
-
-.responsive-table th {
-  @apply px-6 py-4 text-left text-[10px] font-black text-slate-400 uppercase tracking-widest bg-slate-50/50 border-b border-slate-100;
-}
-
-.responsive-table td {
-  @apply px-6 py-4 text-sm font-bold text-slate-700 border-b border-slate-50 transition-colors;
-}
-
-.responsive-table tr:hover td {
-  @apply bg-slate-50/50;
-}
-
-.responsive-table tr:last-child td {
-  @apply border-b-0;
-}
-
-/* Animations */
-@keyframes fadeIn {
-  from { opacity: 0; transform: translateY(10px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-
-.animate-in {
-  animation: fadeIn 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
