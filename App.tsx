@@ -16,12 +16,15 @@ import Receipts from './pages/Receipts';
 import Profile from './pages/Profile';
 import Attendance from './pages/Attendance';
 import Payments from './pages/Payments';
+import AdminPayments from './pages/AdminPayments';
 import AdminNotifications from './pages/AdminNotifications';
 import Notifications from './pages/Notifications';
 import AuditLogs from './pages/AuditLogs';
 import AdminManagement from './pages/AdminManagement';
 import UserDirectory from './pages/UserDirectory';
 import Permissions from './pages/Permissions';
+import LiveTracking from './pages/LiveTracking';
+import BusCameraAdmin from './pages/BusCameraAdmin';
 import Sidebar from './components/Sidebar';
 import Topbar from './components/Topbar';
 import { useAuthStore } from './store/authStore';
@@ -62,6 +65,7 @@ const App: React.FC = () => {
         case 'Routes': return <Routes />;
         case 'Buses': return <Buses />;
         case 'Fees': return <Fees />;
+        case 'Payments': return <AdminPayments />;
         case 'Reports': return <Reports />;
         case 'Settings': return <Settings />;
         case 'Attendance': return <Attendance />;
@@ -70,8 +74,8 @@ const App: React.FC = () => {
         case 'Bus admins': return <AdminManagement />;
         case 'User Directory': return <UserDirectory />;
         case 'Permissions': return <Permissions />;
-        case 'Live Tracking': return <AdminDashboard />;
-        case 'Bus Camera': return <AdminDashboard />;
+        case 'Live Tracking': return <LiveTracking />;
+        case 'Bus Camera': return <BusCameraAdmin />;
         default: return <AdminDashboard />;
       }
     } 
