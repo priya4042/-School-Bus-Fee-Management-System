@@ -1,37 +1,155 @@
+# 🚌 School Bus Fee Management System
 
-# 🚌 BusWay Pro: Deployment Fix
+An end-to-end, role-based platform for school transport operations — combining **fee collection**, **receipts**, **student/route management**, and **live parent notifications** in one system.
 
-If Vercel is not showing a deployment, check these **Project Settings** in your Vercel Dashboard:
+---
 
-## 🛠️ Vercel Dashboard Checklist
-1.  **Framework Preset**: Ensure "Vite" is selected.
-2.  **Root Directory**: Should be `./` (the default).
-3.  **Build Command**: `npm run build`
-4.  **Output Directory**: `dist`
-5.  **Environment Variables**:
-    *   `VITE_API_BASE_URL` = Your Render Backend URL (e.g., `https://busway-backend-9maw.onrender.com`)
-    *   `VITE_APP_URL` = Your deployed frontend URL (e.g., `https://your-project.vercel.app`)
-    *   `VITE_AUTH_REDIRECT_URL` = Password reset redirect URL (e.g., `https://your-project.vercel.app/forgot-password`)
+## ✨ Project Overview
 
-## 🚀 To Trigger a New Build
-1.  Commit the new `vercel.json` file.
-2.  Push to GitHub.
-3.  Vercel will automatically detect the new file and start a fresh deployment.
+This project helps schools manage transport services with separate experiences for:
 
-## 🔗 Live URLs (Examples)
-- **Frontend**: `https://your-project.vercel.app`
-- **Backend**: `https://your-api.onrender.com`
+- 👨‍💼 **Admin / Super Admin**
+    - Student, bus, route and attendance operations
+    - Fee policy management and waiver actions
+    - Parent broadcast notifications
+    - Audit-oriented payment visibility
 
-## 🔐 Credentials
-- **Login**: `admin@school.com`
-- **Password**: `admin123`
+- 👨‍👩‍👧 **Parent**
+    - Dashboard, fee history, payments and receipts
+    - Live notification center
+    - Profile/preferences management
+    - Password/account controls
 
-## ✅ Play Store + Production Release Checklist
-1. Set production env values in `.env.production` and your hosting dashboard.
-2. Add Supabase Auth redirect URLs (`Site URL` + `Redirect URLs`) to match `VITE_APP_URL` and `VITE_AUTH_REDIRECT_URL`.
-3. Keep Render backend on a non-sleeping plan for stable login/payment flows.
-4. Set backend CORS envs: `FRONTEND_URL` and `FRONTEND_URLS`.
-5. Verify account deletion works from Profile (`Delete Account`) before submission.
-6. Ensure Privacy Policy URL and Terms URL are publicly reachable from the app.
-7. Complete Play Console Data Safety form accurately (location, contact info, payments, auth data).
-8. Build Android app using `npm run android:build` and generate signed release in Android Studio.
+---
+
+## 🧩 Core Features
+
+- 💳 **Payment Flow Hardening**
+    - Razorpay order + verification fallback handling
+    - Reliable due/payment persistence
+
+- 🧾 **Receipt Management**
+    - Receipt creation and download pathways
+    - Payment-success metadata alignment
+
+- 🔔 **Realtime Notifications**
+    - Navbar alert bell powered by Supabase data
+    - Parent/Admin notification focus jump from Topbar
+    - Mark-read sync with database
+
+- 📌 **Fee & Waiver Rules**
+    - Dynamic overdue/late-fee logic
+    - Admin waiver processing with parent notification updates
+
+- 🛡️ **Auth & Recovery Improvements**
+    - Robust forgot-password flow and fallback handling
+    - Environment-aware redirect behavior
+
+- 🖼️ **Profile Image Controls**
+    - Upload + remove avatar support in settings
+    - Fallback support for `preferences.avatar_url`
+
+---
+
+## 🏗️ Tech Stack
+
+- ⚛️ **Frontend**: React + TypeScript + Vite + Tailwind CSS
+- 🔐 **Auth / DB / Realtime**: Supabase
+- 💰 **Payments**: Razorpay
+- 🚀 **Frontend Hosting**: Vercel
+- 🧠 **Backend/API**: Python service (Render deployment)
+
+---
+
+## 📁 Main Modules
+
+- `pages/` — role-based screens (admin + parent)
+- `components/` — reusable UI components
+- `hooks/` — data and business logic hooks
+- `lib/` — API, Supabase, telemetry, utility clients
+- `backend/` — Python backend services
+- `supabase/migrations/` — SQL schema updates
+
+---
+
+## ⚙️ Local Setup
+
+1. Clone repository
+2. Install dependencies
+
+```bash
+npm install
+```
+
+3. Configure environment variables in `.env`
+4. Start dev server
+
+```bash
+npm run dev
+```
+
+5. Build production bundle
+
+```bash
+npm run build
+```
+
+---
+
+## 🌐 Deployment Notes
+
+### Vercel (Frontend)
+
+- Framework Preset: `Vite`
+- Build Command: `npm run build`
+- Output Directory: `dist`
+- Root Directory: `./`
+
+Required envs:
+
+- `VITE_API_BASE_URL`
+- `VITE_APP_URL`
+- `VITE_AUTH_REDIRECT_URL`
+
+### Render (Backend)
+
+- Keep backend awake for stable auth/payment callbacks
+- Configure CORS envs:
+    - `FRONTEND_URL`
+    - `FRONTEND_URLS`
+
+---
+
+## 🗃️ Database Notes
+
+Recent migrations are in `supabase/migrations/`, including:
+
+- fee/payment alignment
+- notifications type updates
+- avatar support (`profiles.avatar_url`)
+
+---
+
+## ✅ Production Readiness Checklist
+
+- Supabase auth redirects match deployed URLs
+- Privacy Policy + Terms URLs are publicly reachable
+- Payments, receipts, and notifications tested in production mode
+- Account recovery and delete-account flow verified
+- Play Store release checklist completed (if mobile packaging is used)
+
+---
+
+## 🤝 Contributing
+
+For internal team development:
+
+- Use feature branches for major updates
+- Run lint/build before pushing
+- Add SQL migration for any DB schema change
+
+---
+
+## 📌 Maintainer Note
+
+If this repository is private, only invited collaborators can access source code. Deployment with Vercel/Render continues as long as GitHub integration permissions remain enabled.
