@@ -9,31 +9,38 @@ import { PaymentStatus, MonthlyDue } from '../types';
 export const calculateCurrentLedger = (due: MonthlyDue): { lateFee: number, total: number, isFineApplied: boolean } => {
   const today = new Date();
   const dueDate = new Date(due.due_date);
-  const lastDate = new Date(due.last_date);
+  const lastDate = due.last_date ? new Date(due.last_date) : null;
+  const baseFee = Number(due.amount ?? due.base_fee ?? 0);
+  const discount = Number(due.discount ?? 0);
+  const fineAfterDays = Math.max(0, Number(due.fine_after_days ?? 0));
+  const finePerDay = Math.max(0, Number(due.fine_per_day ?? 0));
   
   if (due.status === PaymentStatus.PAID) {
-    return { lateFee: due.late_fee, total: due.total_due, isFineApplied: due.late_fee >= due.fine_amount };
+    return {
+      lateFee: Number(due.late_fee || 0),
+      total: Number(due.total_due || baseFee),
+      isFineApplied: Number(due.late_fee || 0) > 0,
+    };
   }
 
   let lateFee = 0;
   let isFineApplied = false;
 
-  if (today > lastDate) {
-    // Hard deadline passed - Fixed Fine is applied
-    lateFee = due.fine_amount || 500;
-    isFineApplied = true;
-  } else if (today > dueDate) {
-    // Soft deadline passed - Daily penalty applies
+  if (today > dueDate) {
     const diffTime = Math.abs(today.getTime() - dueDate.getTime());
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-    const dailyRate = 50; // Standard school policy
-    lateFee = Math.min(diffDays * dailyRate, due.fine_amount || 500);
-    isFineApplied = lateFee >= (due.fine_amount || 500);
+    const chargeableDays = Math.max(0, diffDays - fineAfterDays);
+    lateFee = chargeableDays * finePerDay;
+    isFineApplied = lateFee > 0;
+
+    if (lastDate && today > lastDate && finePerDay > 0) {
+      isFineApplied = true;
+    }
   }
 
   return {
     lateFee,
-    total: due.base_fee + lateFee - due.discount,
+    total: Math.max(0, baseFee + lateFee - discount),
     isFineApplied
   };
 };

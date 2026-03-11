@@ -2,7 +2,7 @@ import React, { useRef, useState } from 'react';
 import { User, UserPreferences } from '../../types';
 import {
   User as UserIcon, Bell, Shield, LogOut, HelpCircle, ChevronRight,
-  Camera, Smartphone, Globe, Mail, MessageSquare, Eye, EyeOff, Check,
+  Camera, Smartphone, Globe, Mail, MessageSquare, Eye, EyeOff, Check, Trash2,
 } from 'lucide-react';
 import { useAuthStore } from '../../store/authStore';
 import { supabase } from '../../lib/supabase';
@@ -83,6 +83,43 @@ const Settings: React.FC<{ user: User }> = ({ user }) => {
     showToast('Preference saved', 'success');
   };
 
+  const isMissingAvatarColumnError = (error: any) => {
+    const message = String(error?.message || '').toLowerCase();
+    return message.includes("could not find the 'avatar_url' column") || message.includes('schema cache');
+  };
+
+  const persistAvatarUrl = async (avatarUrl: string | null) => {
+    const updatedPreferences = { ...((user.preferences as any) || {}) };
+
+    if (avatarUrl) {
+      updatedPreferences.avatar_url = avatarUrl;
+    } else {
+      delete updatedPreferences.avatar_url;
+    }
+
+    const { error: directError } = await supabase
+      .from('profiles')
+      .update({ avatar_url: avatarUrl as any })
+      .eq('id', user.id);
+
+    if (directError && !isMissingAvatarColumnError(directError)) {
+      throw directError;
+    }
+
+    if (!directError) {
+      setUser({ ...user, avatar_url: avatarUrl || undefined, preferences: updatedPreferences as any });
+      return;
+    }
+
+    const { error: prefError } = await supabase
+      .from('profiles')
+      .update({ preferences: updatedPreferences })
+      .eq('id', user.id);
+
+    if (prefError) throw prefError;
+    setUser({ ...user, avatar_url: avatarUrl || undefined, preferences: updatedPreferences as any });
+  };
+
   const readAsDataUrl = (file: File): Promise<string> =>
     new Promise((resolve, reject) => {
       const reader = new FileReader();
@@ -125,27 +162,7 @@ const Settings: React.FC<{ user: User }> = ({ user }) => {
         avatarUrl = await readAsDataUrl(file);
       }
 
-      const { error: updateAvatarError } = await supabase
-        .from('profiles')
-        .update({ avatar_url: avatarUrl })
-        .eq('id', user.id);
-
-      if (updateAvatarError) {
-        const fallbackPreferences = {
-          ...((user.preferences as any) || {}),
-          avatar_url: avatarUrl,
-        };
-
-        const { error: updatePrefsError } = await supabase
-          .from('profiles')
-          .update({ preferences: fallbackPreferences })
-          .eq('id', user.id);
-
-        if (updatePrefsError) throw updatePrefsError;
-        setUser({ ...user, avatar_url: avatarUrl, preferences: fallbackPreferences as any });
-      } else {
-        setUser({ ...user, avatar_url: avatarUrl });
-      }
+      await persistAvatarUrl(avatarUrl);
 
       showToast('Profile image updated successfully', 'success');
     } catch (error: any) {
@@ -153,6 +170,22 @@ const Settings: React.FC<{ user: User }> = ({ user }) => {
     } finally {
       setUploadingAvatar(false);
       event.target.value = '';
+    }
+  };
+
+  const handleRemoveAvatar = async () => {
+    const hasAvatar = !!(user.avatar_url || (user.preferences as any)?.avatar_url);
+    if (!hasAvatar || uploadingAvatar) return;
+
+    setUploadingAvatar(true);
+    try {
+      await persistAvatarUrl(null);
+      showToast('Profile image removed', 'success');
+      if (fileInputRef.current) fileInputRef.current.value = '';
+    } catch (error: any) {
+      showToast(error?.message || 'Failed to remove profile image', 'error');
+    } finally {
+      setUploadingAvatar(false);
     }
   };
 
@@ -259,6 +292,17 @@ const Settings: React.FC<{ user: User }> = ({ user }) => {
                   >
                     {uploadingAvatar ? <i className="fas fa-circle-notch fa-spin"></i> : <Camera size={18} />}
                   </button>
+                  {(user.avatar_url || (user.preferences as any)?.avatar_url) && (
+                    <button
+                      type="button"
+                      onClick={handleRemoveAvatar}
+                      disabled={uploadingAvatar}
+                      className="absolute -top-2 -right-2 w-9 h-9 bg-red-500 text-white rounded-xl flex items-center justify-center shadow-lg hover:bg-red-600 transition-colors disabled:opacity-60"
+                      title="Remove profile image"
+                    >
+                      <Trash2 size={16} />
+                    </button>
+                  )}
                 </div>
                 <div>
                   <h3 className="text-2xl font-black text-slate-900 tracking-tight uppercase">{user.full_name}</h3>

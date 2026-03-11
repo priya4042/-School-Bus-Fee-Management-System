@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { User, UserRole } from '../types';
 import { supabase } from '../lib/supabase';
+import { ENV } from '../config/env';
 
 const normalizeRole = (role?: string | null): UserRole => {
   const value = (role || '').toUpperCase();
@@ -289,7 +290,9 @@ loginWithCredentials: async (identifier: string, password?: string, type?: 'EMAI
 
   forgotPassword: async (email: string) => {
     if (!email) throw new Error('Email is required');
-    const { error } = await supabase.auth.resetPasswordForEmail(email);
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: ENV.AUTH_REDIRECT_URL,
+    });
     if (error) throw error;
   },
 

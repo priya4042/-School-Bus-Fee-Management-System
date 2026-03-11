@@ -1,6 +1,7 @@
 import { apiPost } from '../lib/api';
 import { supabase } from '../lib/supabase';
 import { showToast } from '../lib/swal';
+import { ENV } from '../config/env';
 
 const isDevMode = import.meta.env.DEV || import.meta.env.VITE_ALLOW_DEV_OTP === 'true';
 const forcedOtpRecipient = import.meta.env.VITE_TWILIO_FORCE_TO_NUMBER?.trim();
@@ -234,8 +235,87 @@ export const otpService = {
 
   resetPasswordWithPhone: async (phone: string, otp: string, newPassword: string, admissionNumber?: string, role?: string) => {
     try {
-      await apiPost('otp', 'reset-password', { phone, otp, newPassword, admissionNumber, role }, 'POST');
-      return { success: true };
+      const payload = { phone, otp, newPassword, admissionNumber, role };
+
+      const endpointAttempts: Array<() => Promise<any>> = [
+        () => apiPost('v1/otp', 'reset-password', payload, 'POST'),
+        () => apiPost('otp', 'reset-password', payload, 'POST'),
+        async () => {
+          const response = await fetch('/api/v1/otp/reset-password', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload),
+          });
+
+          const contentType = response.headers.get('content-type') || '';
+          const data = contentType.includes('application/json')
+            ? await response.json()
+            : { error: `Server returned non-JSON response: ${response.status}` };
+
+          if (!response.ok) {
+            throw new Error(data?.error || data?.message || `Reset failed (${response.status})`);
+          }
+
+          return data;
+        },
+      ];
+
+      let lastError: any = null;
+      for (const attempt of endpointAttempts) {
+        try {
+          await attempt();
+          return { success: true };
+        } catch (err) {
+          lastError = err;
+        }
+      }
+
+      // Fallback: if API endpoint is unavailable, trigger standard Supabase reset email
+      // so user can still complete password reset without backend OTP reset route.
+      const normalizedPhone = normalizeToE164India(phone);
+      let resolvedEmail: string | null = null;
+
+      if ((role || '').toUpperCase() === 'PARENT' && admissionNumber?.trim()) {
+        const { data: student, error: studentError } = await supabase
+          .from('students')
+          .select('parent_id')
+          .eq('admission_number', admissionNumber.trim())
+          .maybeSingle();
+
+        if (!studentError && student?.parent_id) {
+          const { data: profile } = await supabase
+            .from('profiles')
+            .select('email')
+            .eq('id', student.parent_id)
+            .maybeSingle();
+          resolvedEmail = profile?.email || null;
+        }
+      } else {
+        const digits = normalizedPhone.replace('+91', '');
+        const query = supabase
+          .from('profiles')
+          .select('email')
+          .or(`phone_number.eq.${digits},phone_number.eq.${normalizedPhone},phone_number.eq.+91${digits}`);
+
+        const { data: profile } = (role || '').toUpperCase() === 'ADMIN'
+          ? await query.in('role', ['ADMIN', 'SUPER_ADMIN']).maybeSingle()
+          : await query.maybeSingle();
+
+        resolvedEmail = profile?.email || null;
+      }
+
+      if (!resolvedEmail) {
+        throw lastError || new Error('Unable to resolve account for password reset.');
+      }
+
+      const { error: emailResetError } = await supabase.auth.resetPasswordForEmail(resolvedEmail, {
+        redirectTo: ENV.AUTH_REDIRECT_URL,
+      });
+      if (emailResetError) {
+        throw emailResetError;
+      }
+
+      return { success: true, mode: 'EMAIL_LINK_SENT', email: resolvedEmail };
     } catch (error: any) {
       throw new Error(error.message || 'Failed to reset password');
     }

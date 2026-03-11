@@ -3,13 +3,15 @@ import { User, UserRole, Notification } from '../types';
 import { useAuthStore } from '../store/authStore';
 import { ARRIVAL_EVENT, PAYMENT_EVENT } from '../lib/telemetry';
 import { showToast } from '../lib/swal';
+import { supabase } from '../lib/supabase';
 
 interface TopbarProps {
   user: User;
   onMenuClick?: () => void;
+  onOpenNotifications?: (notificationId?: string) => void;
 }
 
-const Topbar: React.FC<TopbarProps> = ({ user, onMenuClick }) => {
+const Topbar: React.FC<TopbarProps> = ({ user, onMenuClick, onOpenNotifications }) => {
   const [showNotifications, setShowNotifications] = useState(false);
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const modalRef = useRef<HTMLDivElement>(null);
@@ -27,34 +29,67 @@ const Topbar: React.FC<TopbarProps> = ({ user, onMenuClick }) => {
     };
   }, []);
 
-  const fetchNotes = () => {
-    const saved = localStorage.getItem('db_global_notifications');
-    if (saved) {
-      setNotifications(JSON.parse(saved));
-    } else {
-      const initial = [
-        {
-          id: '1',
-          title: 'Monthly Bill Generated',
-          message: 'March 2025 invoices are ready for distribution.',
-          type: 'INFO',
-          read: false,
-          timestamp: '10m ago'
-        }
-      ];
-      setNotifications(initial as any);
-      localStorage.setItem('db_global_notifications', JSON.stringify(initial));
+  const mapNotification = (record: any): Notification => ({
+    id: String(record.id),
+    user_id: String(record.user_id),
+    title: record.title,
+    message: record.message,
+    type: record.type,
+    is_read: !!record.is_read,
+    read: !!record.is_read,
+    created_at: record.created_at,
+    timestamp: record.created_at,
+  });
+
+  const fetchNotes = async () => {
+    if (!user?.id) return;
+    const { data, error } = await supabase
+      .from('notifications')
+      .select('*')
+      .eq('user_id', user.id)
+      .order('created_at', { ascending: false })
+      .limit(30);
+
+    if (error) {
+      console.error('Topbar notifications fetch failed:', error);
+      return;
     }
+
+    setNotifications((data || []).map(mapNotification));
   };
 
   useEffect(() => {
     fetchNotes();
+
+    const channel = supabase
+      .channel(`topbar-notifications-${user?.id}`)
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'notifications',
+          filter: `user_id=eq.${user?.id}`,
+        },
+        (payload: any) => {
+          if (payload?.eventType === 'INSERT' && payload.new) {
+            const inserted = mapNotification(payload.new);
+            setNotifications((prev) => [inserted, ...prev].slice(0, 30));
+            showToast(inserted.title || 'New notification', inserted.type === 'WARNING' ? 'warning' : 'info');
+          } else if (payload?.eventType === 'UPDATE' && payload.new) {
+            const updated = mapNotification(payload.new);
+            setNotifications((prev) => prev.map((item) => (item.id === updated.id ? updated : item)));
+          } else if (payload?.eventType === 'DELETE' && payload.old?.id) {
+            setNotifications((prev) => prev.filter((item) => item.id !== String(payload.old.id)));
+          }
+        }
+      )
+      .subscribe();
     
     // Listen for real-time Arrival broadcasts
     const handleArrival = (e: any) => {
         const { busPlate } = e.detail;
         showToast(`Bus ${busPlate} has Reached School!`, 'success');
-        fetchNotes(); // Refresh list
     };
 
     window.addEventListener(ARRIVAL_EVENT, handleArrival);
@@ -62,17 +97,33 @@ const Topbar: React.FC<TopbarProps> = ({ user, onMenuClick }) => {
     const handlePayment = (e: any) => {
         const { studentName, amount } = e.detail;
         showToast(`Fee Received: ₹${Number(amount || 0).toLocaleString()} for ${studentName}`, 'success');
-        fetchNotes();
     };
     window.addEventListener(PAYMENT_EVENT, handlePayment);
 
     return () => {
+      supabase.removeChannel(channel);
         window.removeEventListener(ARRIVAL_EVENT, handleArrival);
         window.removeEventListener(PAYMENT_EVENT, handlePayment);
     };
-}, []);
+  }, [user?.id]);
 
   const unreadCount = notifications.filter(n => !n.read).length;
+
+  const handleOpenNotification = async (notification: Notification) => {
+    if (!notification.read) {
+      const { error } = await supabase
+        .from('notifications')
+        .update({ is_read: true })
+        .eq('id', notification.id as any);
+
+      if (!error) {
+        setNotifications(prev => prev.map(n => n.id === notification.id ? { ...n, read: true, is_read: true } : n));
+      }
+    }
+
+    setShowNotifications(false);
+    onOpenNotifications?.(String(notification.id));
+  };
 
   const getDisplayName = () => {
     if (!user) return 'User';
@@ -109,15 +160,26 @@ const Topbar: React.FC<TopbarProps> = ({ user, onMenuClick }) => {
             <div ref={modalRef} className="absolute right-0 mt-4 w-96 bg-white border border-slate-100 rounded-3xl shadow-2xl z-50 animate-in fade-in slide-in-from-top-4 overflow-hidden">
               <div className="p-6 border-b border-slate-50 flex justify-between items-center bg-slate-50/50">
                 <span className="text-[10px] font-black text-slate-800 uppercase tracking-widest">Alert Center</span>
-                <button onClick={() => {
-                  const readAll = notifications.map(n => ({...n, read: true}));
-                  setNotifications(readAll);
-                  localStorage.setItem('db_global_notifications', JSON.stringify(readAll));
+                <button onClick={async () => {
+                  const unreadIds = notifications.filter(n => !n.read).map(n => n.id);
+                  if (unreadIds.length === 0) return;
+                  const { error } = await supabase
+                    .from('notifications')
+                    .update({ is_read: true })
+                    .in('id', unreadIds as any);
+
+                  if (!error) {
+                    setNotifications(prev => prev.map(n => ({ ...n, read: true, is_read: true })));
+                  }
                 }} className="text-[8px] font-black text-primary uppercase tracking-widest">Mark All Read</button>
               </div>
               <div className="max-h-[400px] overflow-y-auto scrollbar-hide divide-y divide-slate-50">
                 {notifications.length > 0 ? notifications.map((n) => (
-                  <div key={n.id} className={`p-5 hover:bg-slate-50 transition-all cursor-pointer group ${!n.read ? 'bg-blue-50/20' : ''}`}>
+                  <div
+                    key={n.id}
+                    onClick={() => handleOpenNotification(n)}
+                    className={`p-5 hover:bg-slate-50 transition-all cursor-pointer group ${!n.read ? 'bg-blue-50/20' : ''}`}
+                  >
                     <div className="flex items-start gap-4">
                       <div className={`w-8 h-8 rounded-lg flex items-center justify-center text-xs mt-1 ${
                         n.type === 'SUCCESS' ? 'bg-green-100 text-green-600' : 
@@ -128,7 +190,7 @@ const Topbar: React.FC<TopbarProps> = ({ user, onMenuClick }) => {
                       <div className="flex-1">
                         <p className="text-xs font-black text-slate-800 group-hover:text-primary transition-colors">{n.title}</p>
                         <p className="text-[11px] text-slate-500 font-medium mt-1 leading-relaxed">{n.message}</p>
-                        <p className="text-[9px] text-slate-300 font-bold uppercase mt-2 tracking-widest">{n.timestamp}</p>
+                        <p className="text-[9px] text-slate-300 font-bold uppercase mt-2 tracking-widest">{n.timestamp ? new Date(n.timestamp).toLocaleString('en-IN') : ''}</p>
                       </div>
                     </div>
                   </div>

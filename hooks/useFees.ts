@@ -4,6 +4,52 @@ import { supabase } from '../lib/supabase';
 import { PaymentTelemetry } from '../lib/telemetry';
 import { MonthlyDue, Defaulter, PaymentStatus } from '../types';
 
+const DAY_MS = 24 * 60 * 60 * 1000;
+
+const getDayStart = (date: Date) => new Date(date.getFullYear(), date.getMonth(), date.getDate());
+
+const calculateDueLedger = (due: any) => {
+  const today = getDayStart(new Date());
+  const dueDate = due?.due_date ? getDayStart(new Date(due.due_date)) : null;
+
+  const baseAmount = Number(due?.amount ?? due?.base_fee ?? 0);
+  const graceDays = Math.max(0, Number(due?.fine_after_days ?? 0));
+  const dailyFine = Math.max(0, Number(due?.fine_per_day ?? 0));
+
+  if (due?.status === PaymentStatus.PAID) {
+    const paidLateFee = Number(due?.late_fee || 0);
+    return {
+      late_fee: paidLateFee,
+      total_due: baseAmount + paidLateFee,
+      status: PaymentStatus.PAID,
+      isOverdue: false,
+      daysLate: 0,
+    };
+  }
+
+  if (!dueDate || today <= dueDate) {
+    return {
+      late_fee: 0,
+      total_due: baseAmount,
+      status: PaymentStatus.PENDING,
+      isOverdue: false,
+      daysLate: 0,
+    };
+  }
+
+  const totalLateDays = Math.max(0, Math.floor((today.getTime() - dueDate.getTime()) / DAY_MS));
+  const chargeableDays = Math.max(0, totalLateDays - graceDays);
+  const lateFee = chargeableDays * dailyFine;
+
+  return {
+    late_fee: lateFee,
+    total_due: baseAmount + lateFee,
+    status: PaymentStatus.OVERDUE,
+    isOverdue: true,
+    daysLate: totalLateDays,
+  };
+};
+
 export const useFees = () => {
   const [dues, setDues] = useState<MonthlyDue[]>([]);
   const [defaulters, setDefaulters] = useState<Defaulter[]>([]);
@@ -19,7 +65,51 @@ export const useFees = () => {
         .order('year', { ascending: false })
         .order('month', { ascending: false });
       if (error) throw error;
-      setDues(data || []);
+
+      const sourceDues = data || [];
+      const normalizedDues = sourceDues.map((due: any) => {
+        const ledger = calculateDueLedger(due);
+        return {
+          ...due,
+          late_fee: ledger.late_fee,
+          total_due: ledger.total_due,
+          status: ledger.status,
+        };
+      });
+
+      const updates = normalizedDues
+        .filter((due: any) => {
+          const original = sourceDues.find((item: any) => item.id === due.id);
+          if (!original) return false;
+          return Number(original.late_fee || 0) !== Number(due.late_fee || 0)
+            || String(original.status || '') !== String(due.status || '')
+            || Number(original.total_due || 0) !== Number(due.total_due || 0);
+        })
+        .map(async (due: any) => {
+          const primaryPayload: any = {
+            late_fee: due.late_fee,
+            status: due.status,
+            total_due: due.total_due,
+          };
+
+          const { error: updateError } = await supabase
+            .from('monthly_dues')
+            .update(primaryPayload)
+            .eq('id', due.id);
+
+          if (updateError) {
+            await supabase
+              .from('monthly_dues')
+              .update({ late_fee: due.late_fee, status: due.status } as any)
+              .eq('id', due.id);
+          }
+        });
+
+      if (updates.length > 0) {
+        await Promise.all(updates);
+      }
+
+      setDues(normalizedDues as any);
       setError(null);
     } catch (err: any) {
       setError(err.message || 'Failed to fetch dues');
@@ -75,7 +165,16 @@ export const useFees = () => {
 
   const createFee = async (feeData: Partial<MonthlyDue>) => {
     try {
-      const { error } = await supabase.from('monthly_dues').insert(feeData);
+      const amount = Number(feeData.amount || 0);
+      const payload: any = {
+        ...feeData,
+        amount,
+        late_fee: Number(feeData.late_fee || 0),
+        fine_after_days: Number(feeData.fine_after_days ?? 0),
+        fine_per_day: Number(feeData.fine_per_day ?? 0),
+        total_due: Number(feeData.total_due || amount),
+      };
+      const { error } = await supabase.from('monthly_dues').insert(payload);
       if (error) throw error;
       await fetchDues();
       return true;
@@ -86,7 +185,20 @@ export const useFees = () => {
 
   const updateFee = async (id: string, feeData: Partial<MonthlyDue>) => {
     try {
-      const { error } = await supabase.from('monthly_dues').update(feeData).eq('id', id);
+      const amount = Number(feeData.amount || 0);
+      const payload: any = {
+        ...feeData,
+        amount,
+        fine_after_days: Number(feeData.fine_after_days ?? 0),
+        fine_per_day: Number(feeData.fine_per_day ?? 0),
+      };
+
+      if (payload.status !== PaymentStatus.PAID) {
+        payload.late_fee = 0;
+        payload.total_due = amount;
+      }
+
+      const { error } = await supabase.from('monthly_dues').update(payload).eq('id', id);
       if (error) throw error;
       await fetchDues();
       return true;
@@ -150,16 +262,70 @@ export const useFees = () => {
 
   const waiveLateFee = async (dueId: string | number) => {
     try {
+      const { data: authData } = await supabase.auth.getUser();
+      const adminUserId = authData?.user?.id || null;
+
       const { data: due } = await supabase
         .from('monthly_dues')
-        .select('amount')
+        .select('id, month, year, amount, late_fee, student_id, students(parent_id, full_name)')
         .eq('id', String(dueId))
         .single();
+
+      if (!due) {
+        throw new Error('Due record not found');
+      }
+
+      const studentInfo = Array.isArray((due as any).students)
+        ? (due as any).students[0]
+        : (due as any).students;
+
+      const waivedAmount = Number(due.late_fee || 0);
+      const waivedAt = new Date().toISOString();
+
       const { error } = await supabase
         .from('monthly_dues')
         .update({ late_fee: 0, total_due: due?.amount || 0 })
         .eq('id', String(dueId));
       if (error) throw error;
+
+      if (studentInfo?.parent_id && waivedAmount > 0) {
+        await supabase
+          .from('notifications')
+          .insert({
+            user_id: studentInfo.parent_id,
+            title: 'Late Fee Waiver Approved',
+            message: `Admin approved your waiver request for ${studentInfo?.full_name || 'student'} (${due?.month}/${due?.year}). Late fee of ₹${waivedAmount.toLocaleString('en-IN')} has been removed.`,
+            type: 'SUCCESS',
+            is_read: false,
+          } as any);
+      }
+
+      const auditNote = `LATE_FEE_WAIVED by ${adminUserId || 'unknown_admin'} at ${waivedAt}; waived_amount=${waivedAmount}`;
+
+      const { error: waiverLogError } = await supabase
+        .from('waiver_requests')
+        .insert({
+          due_id: String(dueId),
+          parent_id: studentInfo?.parent_id || null,
+          reason: 'ADMIN_MANUAL_LATE_FEE_WAIVER',
+          status: 'APPROVED',
+          admin_notes: auditNote,
+        } as any);
+
+      if (waiverLogError) {
+        if (adminUserId) {
+          await supabase
+            .from('notifications')
+            .insert({
+              user_id: adminUserId,
+              title: 'Waiver Audit',
+              message: `Waiver fallback log for due ${String(dueId)} (${studentInfo?.full_name || 'Student'}). ${auditNote}`,
+              type: 'INFO',
+              is_read: false,
+            } as any);
+        }
+      }
+
       await fetchDues();
       return true;
     } catch (err: any) {

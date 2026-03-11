@@ -13,10 +13,11 @@ interface Notification {
   is_read: boolean;
 }
 
-const Notifications: React.FC<{ user: User }> = ({ user }) => {
+const Notifications: React.FC<{ user: User; focusNotificationId?: string; onFocusHandled?: () => void }> = ({ user, focusNotificationId, onFocusHandled }) => {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<'all' | 'unread'>('all');
+  const [highlightedId, setHighlightedId] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchNotifications = async () => {
@@ -32,7 +33,50 @@ const Notifications: React.FC<{ user: User }> = ({ user }) => {
       setLoading(false);
     };
     fetchNotifications();
+
+    const channel = supabase
+      .channel(`parent-notifications-${user.id}`)
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'notifications',
+          filter: `user_id=eq.${user.id}`,
+        },
+        (payload: any) => {
+          if (payload?.eventType === 'INSERT' && payload.new) {
+            setNotifications((prev) => [payload.new as Notification, ...prev]);
+            showToast(payload.new.title || 'New notification', payload.new.type === 'WARNING' ? 'warning' : 'info');
+          } else if (payload?.eventType === 'UPDATE' && payload.new) {
+            setNotifications((prev) =>
+              prev.map((n) => (n.id === payload.new.id ? (payload.new as Notification) : n))
+            );
+          } else if (payload?.eventType === 'DELETE' && payload.old?.id) {
+            setNotifications((prev) => prev.filter((n) => n.id !== payload.old.id));
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, [user.id]);
+
+  useEffect(() => {
+    if (!focusNotificationId || loading || notifications.length === 0) return;
+
+    setFilter('all');
+    const el = document.getElementById(`notif-${focusNotificationId}`);
+    if (!el) return;
+
+    el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    setHighlightedId(focusNotificationId);
+    onFocusHandled?.();
+    const timer = setTimeout(() => setHighlightedId(null), 2200);
+    return () => clearTimeout(timer);
+  }, [focusNotificationId, loading, notifications, onFocusHandled]);
 
   const markAsRead = async (id: string) => {
     const { error } = await supabase
@@ -147,8 +191,13 @@ const Notifications: React.FC<{ user: User }> = ({ user }) => {
           {!loading && filteredNotifications.map((notif) => (
             <div
               key={notif.id}
+              id={`notif-${notif.id}`}
               className={`bg-white rounded-[2.5rem] p-8 shadow-sm border transition-all group ${
-                notif.is_read ? 'border-slate-100 opacity-80' : 'border-primary/20'
+                highlightedId === notif.id
+                  ? 'border-primary ring-2 ring-primary/20'
+                  : notif.is_read
+                    ? 'border-slate-100 opacity-80'
+                    : 'border-primary/20'
               }`}
             >
               <div className="flex items-start gap-6">

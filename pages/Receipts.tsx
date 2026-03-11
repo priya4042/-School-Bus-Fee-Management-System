@@ -3,6 +3,7 @@ import { User } from '../types';
 import { MONTHS } from '../constants';
 import { useReceipts } from '../hooks/useReceipts';
 import api from '../lib/api';
+import { supabase } from '../lib/supabase';
 
 const Receipts: React.FC<{ user: User }> = ({ user }) => {
   const { downloadReceipt, downloading } = useReceipts();
@@ -13,44 +14,51 @@ const Receipts: React.FC<{ user: User }> = ({ user }) => {
     const fetchPayments = async () => {
       setLoading(true);
       try {
-        // 1. Fetch receipts from Supabase via API interceptor
-        const { data: supabaseReceipts } = await api.get('receipts');
-        
-        // 2. Map Supabase receipts to the format expected by the UI
-        const mappedReceipts = (supabaseReceipts || []).map((r: any) => ({
-          id: r.id,
-          transaction_id: r.transaction_id,
-          amount: r.amount,
-          studentName: r.student_name,
-          monthYear: r.month_year,
-          date: r.payment_date,
-          method: r.method,
-          status: r.status
+        const { data: receiptRows, error: receiptErr } = await supabase
+          .from('receipts')
+          .select('id, due_id, amount_paid, payment_method, transaction_id, created_at, monthly_dues(month, year, student_id), students:monthly_dues(student_id)');
+
+        if (receiptErr) throw receiptErr;
+
+        const mappedReceipts = (receiptRows || []).map((row: any) => ({
+          id: row.id,
+          due_id: row.due_id,
+          transaction_id: row.transaction_id || row.id,
+          amount: row.amount_paid,
+          monthYear: row.monthly_dues?.month && row.monthly_dues?.year
+            ? `${MONTHS[row.monthly_dues.month - 1]} ${row.monthly_dues.year}`
+            : 'N/A',
+          date: row.created_at,
+          method: row.payment_method || 'ONLINE',
+          status: 'PAID'
         }));
 
-        // 3. Fetch historical data from dues if needed (optional, but keeping for completeness)
-        let historicalReceipts = [];
-        try {
-            const { data: dues } = await api.get('fees/dues');
-            historicalReceipts = (dues || [])
-                .filter((d: any) => d.status === 'PAID')
-                .map((d: any) => ({
-                    id: d.transaction_id || `HIST-${d.id}`,
-                    transaction_id: d.transaction_id || `HIST-${d.id}`,
-                    monthYear: `${MONTHS[d.month - 1]} ${d.year}`,
-                    amount: d.total_due || d.amount,
-                    date: d.payment_date || d.due_date,
-                    method: 'Online'
-                }));
-        } catch (e) {
-            console.error("Historical dues fetch error:", e);
-        }
+        const { data: paidDues, error: duesErr } = await supabase
+          .from('monthly_dues')
+          .select('id, month, year, total_due, amount, paid_at, transaction_id, payment_method, students!inner(parent_id)')
+          .eq('status', 'PAID')
+          .eq('students.parent_id', user.id);
 
-        // Combine and filter duplicates by transaction ID
+        if (duesErr) throw duesErr;
+
+        const historicalReceipts = (paidDues || []).map((d: any) => ({
+          id: d.transaction_id || `HIST-${d.id}`,
+          due_id: d.id,
+          transaction_id: d.transaction_id || `HIST-${d.id}`,
+          monthYear: `${MONTHS[d.month - 1]} ${d.year}`,
+          amount: d.total_due || d.amount,
+          date: d.paid_at,
+          method: d.payment_method || 'ONLINE',
+          status: 'PAID'
+        }));
+
         const combined = [...mappedReceipts, ...historicalReceipts];
-        const unique = combined.filter((v, i, a) => a.findIndex(t => t.transaction_id === v.transaction_id) === i);
-        
-        setPayments(unique);
+        const unique = combined.filter((entry, index, all) => {
+          const key = entry.due_id || entry.transaction_id;
+          return all.findIndex((candidate) => (candidate.due_id || candidate.transaction_id) === key) === index;
+        });
+
+        setPayments(unique.sort((a, b) => new Date(b.date || 0).getTime() - new Date(a.date || 0).getTime()));
       } catch (err) {
         console.error("Receipt aggregation error:", err);
       } finally {
@@ -116,12 +124,12 @@ const Receipts: React.FC<{ user: User }> = ({ user }) => {
                     </td>
                     <td className="px-8 py-5 text-right">
                       <button 
-                        onClick={() => downloadReceipt(rec.transaction_id, rec.transaction_id)}
-                        disabled={downloading === String(rec.transaction_id)}
+                        onClick={() => downloadReceipt(rec.due_id || rec.id, rec.transaction_id)}
+                        disabled={downloading === String(rec.due_id || rec.id)}
                         className="w-10 h-10 bg-primary/10 text-primary hover:bg-primary hover:text-white rounded-xl transition-all flex items-center justify-center shadow-sm ml-auto"
                         title="Download PDF"
                       >
-                        {downloading === String(rec.transaction_id) ? (
+                        {downloading === String(rec.due_id || rec.id) ? (
                           <i className="fas fa-circle-notch fa-spin text-xs"></i>
                         ) : (
                           <i className="fas fa-file-pdf"></i>

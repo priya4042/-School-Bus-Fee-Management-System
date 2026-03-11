@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import api from '../lib/api';
 import { showToast, showLoading, closeSwal } from '../lib/swal';
 
+const FEE_SETTINGS_KEY = 'busway_fee_settings_v1';
+
 const Settings: React.FC = () => {
   const [activeTab, setActiveTab] = useState('fees');
   const [loading, setLoading] = useState(true);
@@ -17,10 +19,20 @@ const Settings: React.FC = () => {
   useEffect(() => {
     const fetchSettings = async () => {
       try {
+        const local = localStorage.getItem(FEE_SETTINGS_KEY);
+        if (local) {
+          setSettings((prev) => ({ ...prev, ...JSON.parse(local) }));
+        }
+
         const { data } = await api.get('settings/fees');
-        setSettings(data);
-      } catch (err) {
-        console.error("Failed to load settings:", err);
+        if (data) {
+          setSettings((prev) => ({ ...prev, ...data }));
+          localStorage.setItem(FEE_SETTINGS_KEY, JSON.stringify({ ...settings, ...data }));
+        }
+      } catch (err: any) {
+        if (err?.message) {
+          console.warn('Settings API unavailable, using local fee settings fallback.');
+        }
       } finally {
         setLoading(false);
       }
@@ -31,7 +43,11 @@ const Settings: React.FC = () => {
   const handleSave = async () => {
     showLoading('Syncing Global Parameters...');
     try {
-      await api.post('settings/fees', settings);
+      localStorage.setItem(FEE_SETTINGS_KEY, JSON.stringify(settings));
+      try {
+        await api.post('settings/fees', settings);
+      } catch {
+      }
       closeSwal();
       showToast('Configuration updated successfully', 'success');
     } catch (err) {

@@ -82,7 +82,7 @@ const PaymentPortal: React.FC<PaymentPortalProps> = ({ state, onClose, onInitiat
            
            <div className="w-full space-y-3 pt-6 border-t border-slate-100">
               <button 
-                onClick={() => downloadReceipt(state.transactionId, state.transactionId)}
+                onClick={() => downloadReceipt(state.dueId || state.transactionId, state.transactionId)}
                 disabled={!!downloading}
                 className="w-full py-4 bg-primary text-white font-black uppercase text-[10px] tracking-widest rounded-2xl shadow-xl shadow-primary/20 hover:bg-blue-800 transition-all flex items-center justify-center gap-3 active:scale-95"
               >
@@ -93,8 +93,9 @@ const PaymentPortal: React.FC<PaymentPortalProps> = ({ state, onClose, onInitiat
                 onClick={onClose}
                 className="w-full py-4 bg-slate-100 text-slate-500 font-black uppercase text-[10px] tracking-widest rounded-2xl hover:bg-slate-200 transition-all active:scale-95"
               >
-                Return to Dashboard
+                Cancel
               </button>
+              <p className="text-[9px] text-slate-400 text-center font-bold uppercase tracking-wider">Receipt stays available in Receipts module anytime.</p>
            </div>
         </div>
       );

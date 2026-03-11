@@ -43,6 +43,7 @@ import AttendanceHistory from './pages/parent/AttendanceHistory';
 const App: React.FC = () => {
   const { user, init, logout, loading, initialized } = useAuthStore();
   const [activeTab, setActiveTab] = useState('Dashboard');
+  const [selectedNotificationId, setSelectedNotificationId] = useState<string | undefined>(undefined);
   const [isRegistering, setIsRegistering] = useState(false);
   const [registerRole, setRegisterRole] = useState<UserRole | undefined>();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -64,7 +65,7 @@ const App: React.FC = () => {
         case 'Reports': return <Reports />;
         case 'Settings': return <Settings />;
         case 'Attendance': return <Attendance />;
-        case 'Notifications': return <AdminNotifications />;
+        case 'Notifications': return <AdminNotifications focusNotificationId={selectedNotificationId} onFocusHandled={() => setSelectedNotificationId(undefined)} />;
         case 'Audit Logs': return <AuditLogs />;
         case 'Bus admins': return <AdminManagement />;
         case 'User Directory': return <UserDirectory />;
@@ -85,7 +86,7 @@ const App: React.FC = () => {
         case 'Bus Camera': return <BusCamera user={user!} />;
         case 'Payments': return <Payments user={user!} />;
         case 'Fees': return <FeeHistory user={user!} />;
-        case 'Notifications': return <ParentNotifications user={user!} />;
+        case 'Notifications': return <ParentNotifications user={user!} focusNotificationId={selectedNotificationId} onFocusHandled={() => setSelectedNotificationId(undefined)} />;
         case 'Receipts': return <Receipts user={user!} />;
         case 'Profile': return <Profile user={user!} />;
         case 'Settings': return <ParentSettings user={user!} />;
@@ -136,7 +137,14 @@ const App: React.FC = () => {
               onClose={() => setIsSidebarOpen(false)}
             />
             <div className="flex-1 flex flex-col min-w-0">
-              <Topbar user={user} onMenuClick={() => setIsSidebarOpen(true)} />
+              <Topbar
+                user={user}
+                onMenuClick={() => setIsSidebarOpen(true)}
+                onOpenNotifications={(notificationId) => {
+                  setSelectedNotificationId(notificationId);
+                  setActiveTab('Notifications');
+                }}
+              />
               <main className="p-4 md:p-8 flex-1 overflow-auto bg-slate-50">
                 <div className="max-w-7xl mx-auto">
                   {renderContent()}

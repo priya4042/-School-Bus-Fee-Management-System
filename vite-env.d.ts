@@ -4,6 +4,8 @@ interface ImportMetaEnv {
   readonly DEV: boolean
   readonly VITE_ALLOW_DEV_OTP?: string
   readonly VITE_API_BASE_URL: 'https://busway-backend-9maw.onrender.com'
+  readonly VITE_APP_URL?: string
+  readonly VITE_AUTH_REDIRECT_URL?: string
   readonly VITE_STRIPE_PUBLISHABLE_KEY: string
   readonly VITE_STREAMING_URL: string
   readonly VITE_STREAMING_SERVER_SECRET: string

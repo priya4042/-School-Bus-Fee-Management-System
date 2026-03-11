@@ -27,6 +27,8 @@ const ForgotPassword: React.FC = () => {
 
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [completionMode, setCompletionMode] = useState<'PASSWORD_UPDATED' | 'EMAIL_LINK_SENT'>('PASSWORD_UPDATED');
+  const [completionEmail, setCompletionEmail] = useState('');
 
   useEffect(() => {
     let interval: any;
@@ -44,6 +46,8 @@ const ForgotPassword: React.FC = () => {
     try {
       if (resetMethod === 'EMAIL') {
         await forgotPassword(email);
+        setCompletionMode('EMAIL_LINK_SENT');
+        setCompletionEmail(email);
         setStep(4); // Success for email
       } else {
         if (phone.length < 10) throw new Error('Please enter a valid phone number');
@@ -111,23 +115,42 @@ const ForgotPassword: React.FC = () => {
       const { accessToken } = useAuthStore.getState();
       
       // If we have an access token (from verifyOTP), use standard resetPassword (supabase update)
+      let mode: 'PASSWORD_UPDATED' | 'EMAIL_LINK_SENT' = 'PASSWORD_UPDATED';
+
       if (accessToken) {
         const { user } = useAuthStore.getState();
         await otpService.resetPassword(user?.id || '', newPassword);
+        setCompletionMode('PASSWORD_UPDATED');
+        setCompletionEmail('');
       } else {
         // Otherwise try the phone-specific reset endpoint
         // Trying PUT as POST failed with 404
-        await otpService.resetPasswordWithPhone(
+        const resetRes: any = await otpService.resetPasswordWithPhone(
           phone, 
           otp, 
           newPassword, 
           role === UserRole.PARENT ? admissionNumber : undefined,
           role
         );
+
+        if (resetRes?.mode === 'EMAIL_LINK_SENT') {
+          mode = 'EMAIL_LINK_SENT';
+          setCompletionMode('EMAIL_LINK_SENT');
+          setCompletionEmail(resetRes?.email || 'your email');
+        } else {
+          mode = 'PASSWORD_UPDATED';
+          setCompletionMode('PASSWORD_UPDATED');
+          setCompletionEmail('');
+        }
       }
       
       setStep(4);
-      showToast('Password reset successfully', 'success');
+      showToast(
+        mode === 'EMAIL_LINK_SENT'
+          ? 'Reset link sent to your email'
+          : 'Password reset successfully',
+        'success'
+      );
       setTimeout(() => navigate('/'), 2000);
     } catch (err: any) {
       setError(err.message || 'Failed to reset password');
@@ -169,16 +192,17 @@ const ForgotPassword: React.FC = () => {
           </div>
           <div className="space-y-2">
             <p className="text-lg font-black text-slate-900 uppercase tracking-tight">
-              {resetMethod === 'EMAIL' ? 'Email Sent!' : 'Password Reset!'}
+              {completionMode === 'EMAIL_LINK_SENT' ? 'Email Sent!' : 'Password Reset!'}
             </p>
             <p className="text-sm font-medium text-slate-500 leading-relaxed">
-              {resetMethod === 'EMAIL' 
-                ? <span>We've sent a password reset link to <span className="text-slate-900 font-bold">{email}</span>. Please check your inbox.</span>
-                : <span>Your password has been successfully updated. Redirecting to login...</span>
-              }
+              {completionMode === 'EMAIL_LINK_SENT' ? (
+                <span>We've sent a password reset link to <span className="text-slate-900 font-bold">{completionEmail || email}</span>. Please check your inbox.</span>
+              ) : (
+                <span>Your password has been successfully updated. Redirecting to login...</span>
+              )}
             </p>
           </div>
-          {resetMethod === 'EMAIL' && (
+          {completionMode === 'EMAIL_LINK_SENT' && (
             <button 
               onClick={() => setStep(1)}
               className="text-[10px] font-black text-primary uppercase tracking-widest hover:underline"

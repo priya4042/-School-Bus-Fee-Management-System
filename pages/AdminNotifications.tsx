@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
 import { showToast, showAlert, showLoading, closeSwal } from '../lib/swal';
+import { useReceipts } from '../hooks/useReceipts';
 
 const TYPE_MAP: Record<string, string> = {
   emergency: 'DANGER',
@@ -16,39 +17,71 @@ const TITLE_MAP: Record<string, string> = {
   update: 'Route Update',
 };
 
-const AdminNotifications: React.FC = () => {
+const AdminNotifications: React.FC<{ focusNotificationId?: string; onFocusHandled?: () => void }> = ({ focusNotificationId, onFocusHandled }) => {
   const [msgType, setMsgType] = useState('announcement');
   const [message, setMessage] = useState('');
   const [target, setTarget] = useState('all');
   const [loading, setLoading] = useState(false);
   const [recentBroadcasts, setRecentBroadcasts] = useState<any[]>([]);
+  const [paymentConfirmations, setPaymentConfirmations] = useState<any[]>([]);
   const [routes, setRoutes] = useState<any[]>([]);
+  const [highlightedId, setHighlightedId] = useState<string | null>(null);
+  const { downloadReceipt, downloading } = useReceipts();
+
+  const extractReceiptMeta = (message: string) => {
+    const dueMatch = message?.match(/\[DUE_ID:([^\]]+)\]/);
+    const txnMatch = message?.match(/\[TXN:([^\]]+)\]/);
+    return {
+      dueId: dueMatch?.[1] || null,
+      txnId: txnMatch?.[1] || null,
+    };
+  };
 
   useEffect(() => {
     const fetchData = async () => {
       const [notifRes, routesRes] = await Promise.all([
         supabase
           .from('notifications')
-          .select('title, type, created_at')
+          .select('id, title, message, type, created_at')
           .order('created_at', { ascending: false })
-          .limit(30),
+          .limit(80),
         supabase.from('routes').select('id, route_name'),
       ]);
 
       // Deduplicate — same second = same broadcast
       const seen = new Set<string>();
-      const broadcasts = (notifRes.data || []).filter(n => {
+      const source = notifRes.data || [];
+
+      const broadcasts = source.filter(n => {
         const key = n.created_at.substring(0, 19);
         if (seen.has(key)) return false;
         seen.add(key);
         return true;
       }).slice(0, 5);
 
+      const confirmations = source
+        .filter(n => n.type === 'PAYMENT_SUCCESS' || n.title?.toLowerCase().includes('payment'))
+        .slice(0, 10);
+
       setRecentBroadcasts(broadcasts);
+      setPaymentConfirmations(confirmations);
       setRoutes(routesRes.data || []);
     };
     fetchData();
   }, []);
+
+  useEffect(() => {
+    if (!focusNotificationId) return;
+
+    const el = document.getElementById(`admin-notif-${focusNotificationId}`);
+    if (!el) return;
+
+    el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    setHighlightedId(focusNotificationId);
+    onFocusHandled?.();
+    const timer = setTimeout(() => setHighlightedId(null), 2200);
+    return () => clearTimeout(timer);
+  }, [focusNotificationId, paymentConfirmations, recentBroadcasts, onFocusHandled]);
 
   const handleBroadcast = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -95,17 +128,22 @@ const AdminNotifications: React.FC = () => {
       // Refresh recent broadcasts
       const { data: fresh } = await supabase
         .from('notifications')
-        .select('title, type, created_at')
+        .select('id, title, message, type, created_at')
         .order('created_at', { ascending: false })
-        .limit(30);
+        .limit(80);
       const seen = new Set<string>();
-      const updated = (fresh || []).filter(n => {
+      const allFresh = fresh || [];
+      const updated = allFresh.filter(n => {
         const key = n.created_at.substring(0, 19);
         if (seen.has(key)) return false;
         seen.add(key);
         return true;
       }).slice(0, 5);
+      const confirmations = allFresh
+        .filter(n => n.type === 'PAYMENT_SUCCESS' || n.title?.toLowerCase().includes('payment'))
+        .slice(0, 10);
       setRecentBroadcasts(updated);
+      setPaymentConfirmations(confirmations);
     } catch (err: any) {
       closeSwal();
       showAlert('Broadcast Failed', err.message || 'Failed to send broadcast. Please try again.', 'error');
@@ -201,6 +239,46 @@ const AdminNotifications: React.FC = () => {
         <div className="space-y-8">
           <div className="bg-white p-8 rounded-[2.5rem] border border-slate-200 shadow-sm">
             <h4 className="font-black text-slate-800 uppercase tracking-widest text-[10px] mb-8 flex items-center gap-3">
+              <i className="fas fa-receipt text-primary"></i>
+              Payment Confirmations
+            </h4>
+            {paymentConfirmations.length === 0 ? (
+              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest text-center py-6">No payment confirmations yet</p>
+            ) : (
+              <div className="space-y-6">
+                {paymentConfirmations.map((item) => {
+                  const meta = extractReceiptMeta(item.message || '');
+                  return (
+                    <div
+                      id={`admin-notif-${item.id}`}
+                      key={item.id}
+                      className={`pb-6 border-b border-slate-50 last:border-0 last:pb-0 rounded-2xl px-3 py-2 -mx-3 ${highlightedId === String(item.id) ? 'ring-2 ring-primary/20 border-primary/30' : ''}`}
+                    >
+                      <p className="text-xs font-black text-slate-800 tracking-tight leading-snug">{item.title}</p>
+                      <p className="text-[10px] text-slate-500 font-bold mt-2 leading-relaxed">{item.message}</p>
+                      <div className="flex items-center justify-between mt-3 gap-3">
+                        <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest">
+                          {new Date(item.created_at).toLocaleString('en-IN', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })}
+                        </span>
+                        {meta.dueId && (
+                          <button
+                            onClick={() => downloadReceipt(meta.dueId as string, (meta.txnId || meta.dueId) as string)}
+                            disabled={downloading === String(meta.dueId)}
+                            className="text-[9px] font-black text-primary uppercase tracking-widest hover:underline disabled:opacity-50"
+                          >
+                            {downloading === String(meta.dueId) ? 'Downloading...' : 'Download Receipt'}
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+
+          <div className="bg-white p-8 rounded-[2.5rem] border border-slate-200 shadow-sm">
+            <h4 className="font-black text-slate-800 uppercase tracking-widest text-[10px] mb-8 flex items-center gap-3">
               <i className="fas fa-history text-primary"></i>
               Recent Broadcasts
             </h4>
@@ -209,7 +287,11 @@ const AdminNotifications: React.FC = () => {
             ) : (
               <div className="space-y-6">
                 {recentBroadcasts.map((b, i) => (
-                  <div key={i} className="pb-6 border-b border-slate-50 last:border-0 last:pb-0">
+                  <div
+                    id={`admin-notif-${b.id}`}
+                    key={i}
+                    className={`pb-6 border-b border-slate-50 last:border-0 last:pb-0 rounded-2xl px-3 py-2 -mx-3 ${highlightedId === String(b.id) ? 'ring-2 ring-primary/20 border-primary/30' : ''}`}
+                  >
                     <p className="text-xs font-black text-slate-800 tracking-tight leading-snug">{b.title}</p>
                     <div className="flex items-center gap-2 mt-2">
                       <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest">

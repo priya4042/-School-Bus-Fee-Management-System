@@ -6,8 +6,17 @@ import { useStudents } from '../hooks/useStudents';
 import { useFees } from '../hooks/useFees';
 import Modal from '../components/Modal';
 
+const FEE_SETTINGS_KEY = 'busway_fee_settings_v1';
+
+const toISODate = (date: Date) => {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
+
 const Fees: React.FC = () => {
-  const { dues, loading: duesLoading, fetchDues, markAsPaid, sendNotification, createFee, updateFee } = useFees();
+  const { dues, loading: duesLoading, fetchDues, markAsPaid, sendNotification, createFee, updateFee, waiveLateFee } = useFees();
   const { students } = useStudents();
   const [searchTerm, setSearchTerm] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -25,6 +34,55 @@ const Fees: React.FC = () => {
   });
 
   const [statusFilter, setStatusFilter] = useState('ALL');
+  const [policyDefaults, setPolicyDefaults] = useState({
+    cutoffDay: 10,
+    gracePeriod: 2,
+    dailyPenalty: 50,
+  });
+
+  const dueDateForPreview = formData.due_date ? new Date(formData.due_date) : null;
+  const fineStartDateForPreview = dueDateForPreview
+    ? new Date(dueDateForPreview.getTime() + Math.max(0, formData.fine_after_days) * 24 * 60 * 60 * 1000)
+    : null;
+  const previewDailyFine = Math.max(0, Number(formData.fine_per_day || 0));
+  const previewFineDay1 = previewDailyFine;
+  const previewFineDay3 = previewDailyFine * 3;
+  const previewFineDay7 = previewDailyFine * 7;
+
+  const applyPolicyDefaultsToForm = (month: number, year: number) => {
+    const dueDate = new Date(year, Math.max(0, month - 1), policyDefaults.cutoffDay);
+    const lastDate = new Date(dueDate);
+    lastDate.setDate(lastDate.getDate() + policyDefaults.gracePeriod);
+
+    setFormData((prev) => ({
+      ...prev,
+      due_date: toISODate(dueDate),
+      last_date: toISODate(lastDate),
+      fine_after_days: policyDefaults.gracePeriod,
+      fine_per_day: policyDefaults.dailyPenalty,
+    }));
+  };
+
+  useEffect(() => {
+    try {
+      const local = localStorage.getItem(FEE_SETTINGS_KEY);
+      if (local) {
+        const parsed = JSON.parse(local);
+        setPolicyDefaults({
+          cutoffDay: Number(parsed.cutoffDay || 10),
+          gracePeriod: Number(parsed.gracePeriod || 2),
+          dailyPenalty: Number(parsed.dailyPenalty || 50),
+        });
+      }
+    } catch {
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!editingDue) {
+      applyPolicyDefaultsToForm(formData.month, formData.year);
+    }
+  }, [policyDefaults]);
 
   const handleEdit = (due: any) => {
     setEditingDue(due);
@@ -101,6 +159,24 @@ const Fees: React.FC = () => {
     }
   };
 
+  const handleWaiveLateFee = async (id: string) => {
+    const confirmed = await showConfirm(
+      'Waive Late Fee?',
+      'This will remove the current late fine from this due record.',
+      'Waive Fine'
+    );
+    if (!confirmed) return;
+
+    showLoading('Applying waiver...');
+    const success = await waiveLateFee(id);
+    closeSwal();
+    if (success) {
+      showToast('Late fee waived successfully', 'success');
+    } else {
+      showAlert('Error', 'Failed to waive late fee', 'error');
+    }
+  };
+
   const filteredDues = dues.filter(d => 
     (d.student_name || d.students?.full_name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
     (d.admission_number || d.students?.admission_number || '').toLowerCase().includes(searchTerm.toLowerCase())
@@ -117,7 +193,11 @@ const Fees: React.FC = () => {
           <p className="text-slate-500 font-bold uppercase text-[10px] tracking-widest">Monitor collections and generate monthly dues</p>
         </div>
         <button 
-          onClick={() => setIsModalOpen(true)}
+          onClick={() => {
+            setEditingDue(null);
+            applyPolicyDefaultsToForm(formData.month, formData.year);
+            setIsModalOpen(true);
+          }}
           className="bg-primary text-white px-8 py-3 rounded-2xl font-black text-[10px] uppercase tracking-widest flex items-center gap-3 hover:bg-blue-700 transition-all shadow-xl shadow-primary/20"
         >
           <i className="fas fa-magic"></i>
@@ -171,7 +251,7 @@ const Fees: React.FC = () => {
               <tbody className="divide-y divide-slate-50">
                 {filteredDues.filter(d => {
                   if (statusFilter === 'ALL') return true;
-                  if (statusFilter === 'OVERDUE') return d.status === 'PENDING' && d.late_fee > 0;
+                  if (statusFilter === 'OVERDUE') return d.status === 'OVERDUE' || (d.status !== 'PAID' && d.late_fee > 0);
                   return d.status === statusFilter;
                 }).map((due) => (
                   <tr key={due.id} className="hover:bg-slate-50/50 transition-colors">
@@ -192,7 +272,11 @@ const Fees: React.FC = () => {
                     </td>
                     <td className="px-8 py-5">
                       <span className={`px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest border ${
-                        due.status === 'PAID' ? 'bg-success/10 text-success border-success/10' : 'bg-danger/10 text-danger border-danger/10'
+                        due.status === 'PAID'
+                          ? 'bg-success/10 text-success border-success/10'
+                          : due.status === 'OVERDUE'
+                            ? 'bg-danger/10 text-danger border-danger/10'
+                            : 'bg-amber-50 text-amber-600 border-amber-100'
                       }`}>
                         {due.status}
                       </span>
@@ -225,6 +309,15 @@ const Fees: React.FC = () => {
                             >
                               <i className="fas fa-bell"></i>
                             </button>
+                            {Number(due.late_fee || 0) > 0 && (
+                              <button
+                                onClick={() => handleWaiveLateFee(due.id)}
+                                className="p-2 text-indigo-600 hover:bg-indigo-50 rounded-lg transition-all"
+                                title="Waive Late Fee (Admin Only)"
+                              >
+                                <i className="fas fa-hand-holding-usd"></i>
+                              </button>
+                            )}
                           </>
                         )}
                       </div>
@@ -260,7 +353,13 @@ const Fees: React.FC = () => {
               <label className={labelClass}>Month</label>
               <select 
                 value={formData.month}
-                onChange={(e) => setFormData({...formData, month: Number(e.target.value)})}
+                onChange={(e) => {
+                  const month = Number(e.target.value);
+                  setFormData({...formData, month});
+                  if (!editingDue) {
+                    applyPolicyDefaultsToForm(month, formData.year);
+                  }
+                }}
                 className={inputClass}
               >
                 {MONTHS.map((m, i) => (
@@ -273,7 +372,13 @@ const Fees: React.FC = () => {
               <input 
                 type="number" 
                 value={formData.year}
-                onChange={(e) => setFormData({...formData, year: Number(e.target.value)})}
+                onChange={(e) => {
+                  const year = Number(e.target.value);
+                  setFormData({...formData, year});
+                  if (!editingDue) {
+                    applyPolicyDefaultsToForm(formData.month, year);
+                  }
+                }}
                 className={inputClass}
               />
             </div>
@@ -332,6 +437,19 @@ const Fees: React.FC = () => {
                 className={inputClass}
               />
             </div>
+          </div>
+
+          <div className="p-4 bg-primary/5 border border-primary/10 rounded-2xl space-y-2">
+            <p className="text-[10px] font-black text-primary uppercase tracking-widest">Fine Preview</p>
+            <p className="text-[10px] font-bold text-slate-600 uppercase tracking-wider">
+              Fine starts on:{' '}
+              <span className="text-slate-900">
+                {fineStartDateForPreview ? fineStartDateForPreview.toLocaleDateString('en-IN') : 'Select due date'}
+              </span>
+            </p>
+            <p className="text-[10px] font-bold text-slate-600 uppercase tracking-wider">
+              Day 1: <span className="text-slate-900">₹{previewFineDay1}</span> • Day 3: <span className="text-slate-900">₹{previewFineDay3}</span> • Day 7: <span className="text-slate-900">₹{previewFineDay7}</span>
+            </p>
           </div>
 
           <div className="flex items-center gap-2 pt-2">
