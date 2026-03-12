@@ -696,3 +696,19 @@ Core parent/admin functionality, OTP/auth, boarding points, settings avatar uplo
 
 ### D) Validation
 - `npm run build` -> **PASS**
+
+---
+
+## 25) Continuation update — 2026-03-12 (payment handlers lazy-import hardening)
+
+### A) Issue observed
+- Live `verifyPayment` still returned Vercel `FUNCTION_INVOCATION_FAILED`, indicating module-load failure before request method handling.
+
+### B) Hardening change
+- Updated handlers to lazy-load `paymentCore` inside request `try` blocks:
+  - `api/v1/payments/verifyPayment.ts`
+  - `api/v1/payments/webhook.ts`
+- This prevents boot-time import failures from crashing the entire function and allows graceful JSON errors.
+
+### C) Validation
+- `npm run build` -> **PASS**
