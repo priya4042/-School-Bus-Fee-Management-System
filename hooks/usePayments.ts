@@ -301,12 +301,12 @@
     };
 
     const initiateRazorpay = async () => {
-      const userToken = localStorage.getItem('schoolBusToken');
-      console.log("Initiating Razorpay payment. Token found:", !!userToken);
+      const { data: { session } } = await supabase.auth.getSession();
+      console.log('Initiating Razorpay payment. Supabase session found:', !!session?.access_token);
       const razorpayKeyId = resolveRazorpayKeyId();
       
-      if (!userToken) {
-        alert("Please login to continue");
+      if (!session?.access_token) {
+        alert('Please login to continue');
         setPaymentState(prev => ({ ...prev, loading: false }));
         return;
       }
