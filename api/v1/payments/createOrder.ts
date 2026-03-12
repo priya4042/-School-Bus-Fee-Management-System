@@ -21,7 +21,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   const { amount, studentId, month, dueId, due_id } = req.body;
   const finalDueId = String(dueId || due_id || '').trim();
   const keyId = process.env.RAZORPAY_KEY_ID || process.env.VITE_RAZORPAY_KEY_ID || '';
-  const keySecret = process.env.RAZORPAY_KEY_SECRET || '';
+  const keySecret = process.env.RAZORPAY_KEY_SECRET || process.env.VITE_RAZORPAY_KEY_SECRET || '';
 
   console.log(`[Razorpay Order] Creating order for student: ${studentId}, amount: ${amount}, due: ${finalDueId}`);
 

@@ -573,3 +573,38 @@ Core parent/admin functionality, OTP/auth, boarding points, settings avatar uplo
 ### C) Result
 - API route file count under `api/**/*.ts` reduced to **12** (fits Hobby limit).
 - `npm run build` -> **PASS**
+
+---
+
+## 20) Continuation update — 2026-03-12 (Razorpay createOrder 500 + placeholder CORS hardening)
+
+### A) Production issue observed
+- Browser logs showed mixed failures during payment init:
+  - `POST /api/v1/payments/createOrder` -> `500`
+  - fallback calls attempted `https://your-project.vercel.app/...` -> CORS/preflight failure.
+
+### B) Root causes
+- Placeholder domain values from env templates could still be considered as payment API bases.
+- Payment base ordering could prioritize explicit env value before same-origin runtime base.
+- Some deployments may set `VITE_RAZORPAY_KEY_SECRET` but not `RAZORPAY_KEY_SECRET`, leading to server-side key lookup failure.
+
+### C) Fixes applied
+- `hooks/usePayments.ts`
+  - Added placeholder-domain guard for all payment base candidates.
+  - Payment base resolution now prioritizes runtime origin first, then explicit/app/api origins.
+  - Placeholder domains (`your-project.vercel.app`, `your-app.vercel.app`, `example.com`, `your-domain.com`) are ignored.
+- `api/v1/payments/createOrder.ts`
+  - Added secret fallback lookup: `RAZORPAY_KEY_SECRET || VITE_RAZORPAY_KEY_SECRET`.
+- `.env.production`
+  - Cleared `VITE_PAYMENT_API_BASE_URL` placeholder default to avoid accidental cross-origin calls.
+
+### D) Validation
+- `npm run build` -> **PASS**
+
+### E) Deployment verification steps
+- Check `https://school-bus-fee-management-system.vercel.app/api/v1/payments/health`.
+- Ensure `missingRequired` is empty, especially:
+  - `RAZORPAY_KEY_ID`
+  - `RAZORPAY_KEY_SECRET` (or ensure fallback var exists)
+  - `SUPABASE_URL`
+  - `SUPABASE_SERVICE_ROLE_KEY`

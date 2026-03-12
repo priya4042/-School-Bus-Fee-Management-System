@@ -73,22 +73,29 @@
 
     const normalizeBase = (value: string) => String(value || '').trim().replace(/\/+$/, '');
 
+    const isPlaceholderBase = (value: string) => {
+      const normalized = normalizeBase(value).toLowerCase();
+      if (!normalized) return false;
+      return (
+        normalized.includes('your-project.vercel.app') ||
+        normalized.includes('example.com') ||
+        normalized.includes('your-domain.com') ||
+        normalized.includes('your-app.vercel.app')
+      );
+    };
+
     const getPaymentApiBases = () => {
       const runtimeOrigin = typeof window !== 'undefined' ? window.location.origin : '';
       const appUrl = String(import.meta.env.VITE_APP_URL || '').trim();
       const explicitPaymentApiRaw = String((import.meta.env as any).VITE_PAYMENT_API_BASE_URL || '').trim();
-      const explicitPaymentApi = explicitPaymentApiRaw.includes('your-project.vercel.app')
+      const explicitPaymentApi = isPlaceholderBase(explicitPaymentApiRaw)
         ? ''
         : explicitPaymentApiRaw;
       const genericApi = String(ENV.API_BASE_URL || '').trim();
 
-      if (explicitPaymentApi) {
-        return [normalizeBase(explicitPaymentApi)].filter(Boolean);
-      }
-
-      const ordered = [explicitPaymentApi, runtimeOrigin, appUrl, genericApi]
+      const ordered = [runtimeOrigin, explicitPaymentApi, appUrl, genericApi]
         .map(normalizeBase)
-        .filter(Boolean);
+        .filter((base) => Boolean(base) && !isPlaceholderBase(base));
 
       return [...new Set(ordered)];
     };
