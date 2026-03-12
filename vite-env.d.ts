@@ -20,6 +20,8 @@ interface ImportMetaEnv {
   readonly VITE_MSG91_TEMPLATE_ID: string
   readonly VITE_MSG91_SENDER_ID: string
   readonly VITE_RAZORPAY_KEY_SECRET: string
+  readonly VITE_ADMIN_PAYMENT_QR_URL?: string
+  readonly VITE_ADMIN_UPI_ID?: string
   readonly VITE_CAMERA_STREAM_BASE_URL: string
   readonly VITE_TWILIO_ACCOUNT_SID: string
   readonly VITE_TWILIO_AUTH_TOKEN: string

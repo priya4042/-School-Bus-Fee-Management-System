@@ -10,6 +10,8 @@ interface PaymentPortalProps {
 
 const PaymentPortal: React.FC<PaymentPortalProps> = ({ state, onClose, onInitiateRazorpay }) => {
   const { downloadReceipt, downloading } = useReceipts();
+  const adminQrUrl = String(import.meta.env.VITE_ADMIN_PAYMENT_QR_URL || '').trim();
+  const adminUpiId = String(import.meta.env.VITE_ADMIN_UPI_ID || '').trim();
 
   const renderContent = () => {
     if (state.step === 'SELECT') {
@@ -45,6 +47,28 @@ const PaymentPortal: React.FC<PaymentPortalProps> = ({ state, onClose, onInitiat
                  <i className="fas fa-chevron-right text-white/40 ml-2"></i>
               </div>
             </button>
+
+            {adminQrUrl && (
+              <div className="p-5 bg-white rounded-2xl border border-slate-200">
+                <p className="text-[9px] font-black text-slate-500 uppercase tracking-widest mb-3">Alternative: Admin UPI QR</p>
+                <div className="flex flex-col sm:flex-row items-center gap-4">
+                  <img
+                    src={adminQrUrl}
+                    alt="Admin payment QR"
+                    className="w-28 h-28 rounded-xl border border-slate-200 object-cover"
+                  />
+                  <div className="text-center sm:text-left">
+                    <p className="text-[10px] font-black text-slate-700 uppercase tracking-widest">Scan & pay manually</p>
+                    {adminUpiId && (
+                      <p className="text-[10px] font-bold text-slate-500 mt-1">UPI ID: {adminUpiId}</p>
+                    )}
+                    <p className="text-[8px] font-bold text-slate-400 uppercase tracking-widest mt-2">
+                      After manual payment, share reference with bus admin.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
 
           <p className="text-[8px] text-slate-400 text-center font-medium uppercase tracking-widest">

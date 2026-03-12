@@ -831,3 +831,25 @@ Core parent/admin functionality, OTP/auth, boarding points, settings avatar uplo
 
 ### C) Validation
 - `npm run build` -> **PASS**
+
+---
+
+## 32) Continuation update — 2026-03-12 (admin QR shown in parent payment modal)
+
+### A) Requirement
+- Show admin QR in payment mode as an alternative/manual payment option.
+
+### B) Changes
+- `components/PaymentPortal.tsx`
+  - Added optional `Admin UPI QR` section in the payment selection view.
+  - Reads from frontend env vars:
+    - `VITE_ADMIN_PAYMENT_QR_URL`
+    - `VITE_ADMIN_UPI_ID`
+  - If QR URL is present, parent can scan and pay manually; UPI ID is displayed if provided.
+- `vite-env.d.ts`
+  - Added typings for new env vars.
+- `.env.example`
+  - Added config placeholders for QR URL and UPI ID.
+
+### C) Validation
+- `npm run build` -> **PASS**
