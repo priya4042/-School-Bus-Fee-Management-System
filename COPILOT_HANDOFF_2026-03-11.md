@@ -608,3 +608,25 @@ Core parent/admin functionality, OTP/auth, boarding points, settings avatar uplo
   - `RAZORPAY_KEY_SECRET` (or ensure fallback var exists)
   - `SUPABASE_URL`
   - `SUPABASE_SERVICE_ROLE_KEY`
+
+---
+
+## 21) Continuation update — 2026-03-12 (payment UI error diagnostics)
+
+### A) Request handled
+- Added frontend surface for backend payment failure metadata to speed up live debugging.
+
+### B) Changes
+- `hooks/usePayments.ts`
+  - `postPaymentApi` now preserves API error metadata on thrown errors:
+    - `code`
+    - `status`
+    - `details`
+  - Added `formatPaymentError(err, fallback)` helper.
+  - Payment initiation failure alert now shows combined diagnostics:
+    - message
+    - `Code: ...` (if present)
+    - `Status: ...` (if present)
+
+### C) Validation
+- `npm run build` -> **PASS**

@@ -122,10 +122,31 @@
         const error: any = new Error((data as any)?.error || (data as any)?.message || `HTTP ${response.status}`);
         error.status = response.status;
         error.url = url;
+        error.code = (data as any)?.code || '';
+        error.details = data;
         throw error;
       }
 
       return data;
+    };
+
+    const formatPaymentError = (err: any, fallback: string) => {
+      const message =
+        err?.response?.data?.message ||
+        err?.response?.data?.error ||
+        err?.message ||
+        fallback;
+
+      const code =
+        err?.response?.data?.code ||
+        err?.code ||
+        '';
+
+      const status = err?.status || err?.response?.status;
+      const parts = [message];
+      if (code) parts.push(`Code: ${code}`);
+      if (status) parts.push(`Status: ${status}`);
+      return parts.join(' | ');
     };
 
     const createOrder = async (dueId: string, amount: number, context: any) => {
@@ -401,7 +422,7 @@
 
       } catch (err: any) {
         console.error("Payment initiation failed:", err);
-        const errorMessage = err.response?.data?.message || err.message || 'Payment failed. Try again.';
+        const errorMessage = formatPaymentError(err, 'Payment failed. Try again.');
         showAlert('Payment Failed', errorMessage, 'error');
         setPaymentState(prev => ({ ...prev, step: 'SELECT', loading: false }));
       } finally {
