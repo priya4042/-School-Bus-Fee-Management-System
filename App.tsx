@@ -43,7 +43,8 @@ import AttendanceHistory from './pages/parent/AttendanceHistory';
 import ParentRoutes from './pages/parent/Routes';
 import ParentLiveTracking from './pages/parent/LiveTracking';
 
-const getAllowedTabs = (role?: UserRole) => {
+const getAllowedTabs = (user?: User | null) => {
+  const role = user?.role;
   if (role === UserRole.ADMIN || role === UserRole.SUPER_ADMIN) {
     return [
       'Dashboard',
@@ -66,13 +67,15 @@ const getAllowedTabs = (role?: UserRole) => {
   }
 
   if (role === UserRole.PARENT) {
+    const trackingEnabled = (user as any)?.preferences?.tracking === true;
+    const cameraEnabled = (user as any)?.preferences?.camera === true;
     return [
       'Dashboard',
       'Attendance History',
-      'Live Tracking',
       'Routes',
       'Boarding Points',
-      'Bus Camera',
+      ...(trackingEnabled ? ['Live Tracking'] : []),
+      ...(cameraEnabled ? ['Bus Camera'] : []),
       'Payments',
       'Fees',
       'Notifications',
@@ -109,7 +112,7 @@ const App: React.FC = () => {
     if (!user?.id || !user?.role) return;
     const key = getTabStorageKey(user);
     const savedTab = key ? window.localStorage.getItem(key) : null;
-    const allowedTabs = getAllowedTabs(user.role);
+    const allowedTabs = getAllowedTabs(user);
 
     if (savedTab && allowedTabs.includes(savedTab)) {
       setActiveTab(savedTab);
@@ -118,6 +121,11 @@ const App: React.FC = () => {
 
   useEffect(() => {
     if (!user?.id || !user?.role || !activeTab) return;
+    const allowedTabs = getAllowedTabs(user);
+    if (!allowedTabs.includes(activeTab)) {
+      setActiveTab('Dashboard');
+      return;
+    }
     const key = getTabStorageKey(user);
     if (key) {
       window.localStorage.setItem(key, activeTab);
@@ -149,10 +157,11 @@ const App: React.FC = () => {
     } 
     
     if (role === UserRole.PARENT) {
+      const trackingEnabled = (user as any)?.preferences?.tracking === true;
       switch (activeTab) {
         case 'Dashboard': return <ParentDashboard user={user!} />;
         case 'Attendance History': return <AttendanceHistory user={user!} />;
-        case 'Live Tracking': return <ParentLiveTracking user={user!} />;
+        case 'Live Tracking': return trackingEnabled ? <ParentLiveTracking user={user!} /> : <ParentDashboard user={user!} />;
         case 'Routes': return <ParentRoutes user={user!} />;
         case 'Boarding Points': return <BoardingLocations user={user!} />;
         case 'Bus Camera': return (user as any).preferences?.camera === true ? <BusCamera user={user!} /> : <ParentDashboard user={user!} />;

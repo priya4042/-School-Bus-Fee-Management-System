@@ -17,6 +17,7 @@ const Sidebar: React.FC<SidebarProps> = ({ user, onLogout, activeTab, setActiveT
   const isAdmin = user.role === UserRole.ADMIN || isSuperAdmin;
   const isParent = user.role === UserRole.PARENT;
   const parentCameraEnabled = (user as any).preferences?.camera === true;
+  const parentTrackingEnabled = (user as any).preferences?.tracking === true;
 
   const adminLinks = [
     { name: 'Dashboard', icon: 'fa-chart-pie' },
@@ -43,7 +44,7 @@ const Sidebar: React.FC<SidebarProps> = ({ user, onLogout, activeTab, setActiveT
     { name: 'Student Profile', icon: 'fa-user-graduate' },
     { name: 'Attendance History', icon: 'fa-clipboard-check' },
     { name: 'Routes', icon: 'fa-route' },
-    { name: 'Live Tracking', icon: 'fa-location-dot' },
+    ...(parentTrackingEnabled ? [{ name: 'Live Tracking', icon: 'fa-location-dot' }] : []),
     { name: 'Boarding Points', icon: 'fa-map-marker-alt' },
     ...(parentCameraEnabled ? [{ name: 'Bus Camera', icon: 'fa-video' }] : []),
     { name: 'Payments', icon: 'fa-credit-card' },

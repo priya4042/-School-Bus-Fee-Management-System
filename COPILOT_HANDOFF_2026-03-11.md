@@ -812,3 +812,22 @@ Core parent/admin functionality, OTP/auth, boarding points, settings avatar uplo
 
 ### C) Validation
 - `npm run build` -> **PASS**
+
+---
+
+## 31) Continuation update — 2026-03-12 (parent tracking permission hides nav link)
+
+### A) Requirement
+- If bus admin has not enabled parent tracking permission, hide `Live Tracking` nav link completely.
+
+### B) Changes
+- `components/Sidebar.tsx`
+  - Parent `Live Tracking` link now renders only when `(user.preferences.tracking === true)`.
+- `App.tsx`
+  - Parent `Live Tracking` tab render guarded by tracking permission; otherwise falls back to `ParentDashboard`.
+  - Tab persistence (`localStorage`) is now permission-aware for parent links:
+    - does not restore disallowed tabs
+    - auto-falls back to `Dashboard` if currently selected tab becomes disallowed.
+
+### C) Validation
+- `npm run build` -> **PASS**
