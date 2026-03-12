@@ -54,7 +54,7 @@ export const verifyCheckoutSignature = (input: {
   razorpayPaymentId: string;
   razorpaySignature: string;
 }) => {
-  const secret = process.env.RAZORPAY_KEY_SECRET || '';
+  const secret = process.env.RAZORPAY_KEY_SECRET || process.env.VITE_RAZORPAY_KEY_SECRET || '';
   if (!secret) {
     throw new Error('RAZORPAY_KEY_SECRET is not configured on server');
   }

@@ -17,11 +17,21 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  const required = [
-    'RAZORPAY_KEY_ID',
-    'RAZORPAY_KEY_SECRET',
-    'SUPABASE_URL',
-    'SUPABASE_SERVICE_ROLE_KEY',
+  const getEffective = (keys: string[]) => {
+    for (const key of keys) {
+      const value = String(process.env[key] || '').trim();
+      if (value) {
+        return { value, key };
+      }
+    }
+    return { value: '', key: '' };
+  };
+
+  const requiredWithFallbacks = [
+    { label: 'RAZORPAY_KEY_ID', keys: ['RAZORPAY_KEY_ID', 'VITE_RAZORPAY_KEY_ID'] },
+    { label: 'RAZORPAY_KEY_SECRET', keys: ['RAZORPAY_KEY_SECRET', 'VITE_RAZORPAY_KEY_SECRET'] },
+    { label: 'SUPABASE_URL', keys: ['SUPABASE_URL', 'VITE_SUPABASE_URL'] },
+    { label: 'SUPABASE_SERVICE_ROLE_KEY', keys: ['SUPABASE_SERVICE_ROLE_KEY'] },
   ] as const;
 
   const optional = [
@@ -31,13 +41,26 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     'PAYMENT_EMAIL_FROM',
   ] as const;
 
-  const missingRequired = required.filter((key) => !String(process.env[key] || '').trim());
+  const resolvedRequired = requiredWithFallbacks.map((entry) => {
+    const effective = getEffective([...entry.keys]);
+    return {
+      name: entry.label,
+      present: Boolean(effective.value),
+      resolvedFrom: effective.key || null,
+    };
+  });
+
+  const missingRequired = resolvedRequired
+    .filter((entry) => !entry.present)
+    .map((entry) => entry.name);
+
   const missingOptional = optional.filter((key) => !String(process.env[key] || '').trim());
 
   return res.status(200).json({
     ok: missingRequired.length === 0,
     missingRequired,
     missingOptional,
+    resolvedRequired,
     runtime: {
       nodeEnv: process.env.NODE_ENV || 'unknown',
       vercelEnv: process.env.VERCEL_ENV || 'unknown',

@@ -655,3 +655,24 @@ Core parent/admin functionality, OTP/auth, boarding points, settings avatar uplo
 
 ### D) Validation
 - `npm run build` -> **PASS**
+
+---
+
+## 23) Continuation update — 2026-03-12 (health endpoint effective env resolution)
+
+### A) Why
+- Live health output showed missing `RAZORPAY_KEY_ID` and `SUPABASE_URL`, but server runtime already supports fallback env names in some paths.
+
+### B) Changes
+- `api/v1/payments/health.ts`
+  - Added fallback-aware required checks:
+    - `RAZORPAY_KEY_ID` or `VITE_RAZORPAY_KEY_ID`
+    - `RAZORPAY_KEY_SECRET` or `VITE_RAZORPAY_KEY_SECRET`
+    - `SUPABASE_URL` or `VITE_SUPABASE_URL`
+    - `SUPABASE_SERVICE_ROLE_KEY`
+  - Added `resolvedRequired` field to show which variable key is actually being used.
+- `lib/server/payments/paymentCore.ts`
+  - `verifyCheckoutSignature` now also supports `VITE_RAZORPAY_KEY_SECRET` fallback.
+
+### C) Validation
+- `npm run build` -> **PASS**
