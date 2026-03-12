@@ -1,7 +1,5 @@
   import { useState } from 'react';
   import { showToast, showAlert } from '../lib/swal';
-  import api from '../lib/api';
-  import { ENV } from '../config/env';
   import { loadRazorpay } from '../lib/razorpay';
   import { supabase } from '../lib/supabase';
   import { PAYMENT_EVENT } from '../lib/telemetry';
@@ -91,9 +89,8 @@
       const explicitPaymentApi = isPlaceholderBase(explicitPaymentApiRaw)
         ? ''
         : explicitPaymentApiRaw;
-      const genericApi = String(ENV.API_BASE_URL || '').trim();
 
-      const ordered = [runtimeOrigin, explicitPaymentApi, appUrl, genericApi]
+      const ordered = [runtimeOrigin, explicitPaymentApi, appUrl]
         .map(normalizeBase)
         .filter((base) => Boolean(base) && !isPlaceholderBase(base));
 
@@ -184,27 +181,6 @@
         }
       }
 
-      if (paymentBases.length === 0) {
-        const fallbackAttempts = [
-          async () => (await api.post('/v1/payments/createOrder', {
-            amount,
-            studentId: context?.student_id,
-            month: context?.month,
-            dueId,
-            due_id: dueId,
-          })).data,
-        ];
-
-        for (const attempt of fallbackAttempts) {
-          try {
-            const order = await attempt();
-            if (order?.id) return order;
-          } catch (err: any) {
-            lastError = err;
-          }
-        }
-      }
-
       throw lastError || new Error('Unable to initialize payment order.');
     };
 
@@ -226,22 +202,6 @@
         for (const path of endpointPaths) {
           try {
             const response: any = await postPaymentApi(base, path, payload);
-            const ok = response?.success === true || response?.status === 'ok' || response?.status === 'success';
-            if (ok) return response;
-          } catch (err: any) {
-            lastError = err;
-          }
-        }
-      }
-
-      if (paymentBases.length === 0) {
-        const fallbackAttempts = [
-          async () => (await api.post('/v1/payments/verifyPayment', payload)).data,
-        ];
-
-        for (const attempt of fallbackAttempts) {
-          try {
-            const response = await attempt();
             const ok = response?.success === true || response?.status === 'ok' || response?.status === 'success';
             if (ok) return response;
           } catch (err: any) {

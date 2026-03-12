@@ -630,3 +630,28 @@ Core parent/admin functionality, OTP/auth, boarding points, settings avatar uplo
 
 ### C) Validation
 - `npm run build` -> **PASS**
+
+---
+
+## 22) Continuation update — 2026-03-12 (remove Render fallback for payment + live env finding)
+
+### A) Issue observed
+- Payment errors still showed mixed endpoint failures:
+  - `500` from app payment endpoint
+  - `404 Cannot POST /api/v1/payments/createOrder` from Render fallback.
+
+### B) Code fix
+- `hooks/usePayments.ts`
+  - Removed generic backend (`VITE_API_BASE_URL` / Render) as payment API base candidate.
+  - Removed legacy axios fallback calls (`/v1/payments/createOrder`, `/v1/payments/verifyPayment`).
+  - Payment flow now stays on payment-capable origins only (runtime origin / explicit payment base / app URL).
+
+### C) Live verification finding
+- Checked: `https://school-bus-fee-management-system.vercel.app/api/v1/payments/health`
+- Response:
+  - `ok: false`
+  - `missingRequired: ["RAZORPAY_KEY_ID", "SUPABASE_URL"]`
+- Conclusion: Vercel production env is missing required variables; this is the current root cause for live payment `500`.
+
+### D) Validation
+- `npm run build` -> **PASS**
