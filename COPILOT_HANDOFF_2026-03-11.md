@@ -712,3 +712,25 @@ Core parent/admin functionality, OTP/auth, boarding points, settings avatar uplo
 
 ### C) Validation
 - `npm run build` -> **PASS**
+
+---
+
+## 26) Continuation update — 2026-03-12 (Razorpay auth failure diagnostics hardening)
+
+### A) Issue observed
+- UI payment init failed with:
+  - `Authentication failed | Code: BAD_REQUEST_ERROR | Status: 500`
+- This indicates Razorpay credential auth rejection during create order.
+
+### B) Hardening changes
+- `api/v1/payments/createOrder.ts`
+  - Added env sanitizer for key values (trim + remove accidental surrounding quotes).
+  - Added response diagnostics on provider failure:
+    - `keyIdSource` / `keySecretSource`
+    - `keyMode` (`test` / `live` / `unknown` inferred from key id)
+    - `keyIdTail` (last 6 chars only, safe debug)
+- `lib/server/payments/paymentCore.ts`
+  - Applied same env sanitizer for signature/webhook secret usage.
+
+### C) Validation
+- `npm run build` -> **PASS**

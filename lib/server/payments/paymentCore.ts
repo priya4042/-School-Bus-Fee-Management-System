@@ -3,6 +3,8 @@ import { createClient } from '@supabase/supabase-js';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { sendPaymentEmails } from './emailService';
 
+const cleanEnv = (value: string) => String(value || '').trim().replace(/^['\"]|['\"]$/g, '');
+
 type RecordPaymentInput = {
   dueId: string;
   razorpayOrderId: string;
@@ -55,7 +57,7 @@ export const verifyCheckoutSignature = (input: {
   razorpayPaymentId: string;
   razorpaySignature: string;
 }) => {
-  const secret = process.env.RAZORPAY_KEY_SECRET || process.env.VITE_RAZORPAY_KEY_SECRET || '';
+  const secret = cleanEnv(process.env.RAZORPAY_KEY_SECRET || process.env.VITE_RAZORPAY_KEY_SECRET || '');
   if (!secret) {
     throw new Error('RAZORPAY_KEY_SECRET is not configured on server');
   }
@@ -69,7 +71,7 @@ export const verifyCheckoutSignature = (input: {
 };
 
 export const verifyWebhookSignature = (payload: string, signature: string) => {
-  const webhookSecret = process.env.RAZORPAY_WEBHOOK_SECRET || '';
+  const webhookSecret = cleanEnv(process.env.RAZORPAY_WEBHOOK_SECRET || '');
   if (!webhookSecret) {
     throw new Error('RAZORPAY_WEBHOOK_SECRET is not configured on server');
   }
