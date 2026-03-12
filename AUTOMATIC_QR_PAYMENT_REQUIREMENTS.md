@@ -22,6 +22,49 @@ Enable fully automatic parent fee payments via QR/UPI with no manual verificatio
    - `RESEND_API_KEY`
    - `PAYMENT_EMAIL_FROM` (verified domain sender)
 
+## How To Enable This In Razorpay
+
+### A) Razorpay Production Access (Live Mode)
+1. Create/login account at Razorpay Dashboard.
+2. Complete KYC and business activation.
+3. Submit required business details/documents:
+  - legal business name
+  - PAN/GST (as applicable)
+  - bank account for settlements
+  - website/app details and business category
+4. Wait for account activation approval from Razorpay.
+5. In Dashboard, switch from `Test` to `Live` mode and generate live API keys.
+6. Share live keys securely for deployment:
+  - `RAZORPAY_KEY_ID`
+  - `RAZORPAY_KEY_SECRET`
+
+### B) Enable UPI On Payment Gateway
+1. In Razorpay Dashboard, open `Settings` -> `Payment Methods` (or equivalent payment configuration area).
+2. Enable `UPI` under accepted methods.
+3. If not visible/enabled, raise a support ticket with Razorpay to enable UPI for your account type.
+4. Confirm UPI appears in checkout in `Live` mode.
+
+### C) Enable Dynamic QR / Smart Collect (For Automatic QR)
+1. Request/enable `Smart Collect` or Dynamic QR feature in Razorpay account.
+2. Configure webhook and callback processing in your app (this repo already has payment webhook endpoint).
+3. Validate with a live small-value transaction.
+
+### D) Verify It Is Really Active
+Use this checklist before going live:
+1. Live mode keys are set in Vercel (not test keys).
+2. Webhook URL is configured and delivering events:
+  - `https://school-bus-fee-management-system.vercel.app/api/v1/payments/webhook`
+3. Webhook events enabled:
+  - `payment.captured`
+  - `order.paid`
+4. One real transaction succeeds and appears in Razorpay Dashboard and app ledger/receipt.
+
+## If Client Does Not Want Razorpay
+Alternative providers can be used, but automation still requires all 3:
+1. programmatic payment order/collect creation
+2. signed webhook/callback support
+3. transaction reference mapping back to due/student in app backend
+
 ## Required Technical Approach For Automation
 Use gateway-linked dynamic payment creation, not static image-only QR.
 

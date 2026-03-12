@@ -896,3 +896,11 @@ Core parent/admin functionality, OTP/auth, boarding points, settings avatar uplo
   - Static QR vs automated flow clarification
   - QR not showing troubleshooting
   - Client decision checklist
+
+### C) Follow-up enhancement
+- Expanded guide with practical Razorpay activation steps:
+  - how to enable production/live account access
+  - how to enable UPI in gateway settings
+  - how to enable/request Smart Collect/Dynamic QR
+  - how to verify activation before go-live
+  - non-Razorpay provider requirements for equivalent automation
