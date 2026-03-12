@@ -676,3 +676,23 @@ Core parent/admin functionality, OTP/auth, boarding points, settings avatar uplo
 
 ### C) Validation
 - `npm run build` -> **PASS**
+
+---
+
+## 24) Continuation update — 2026-03-12 (verifyPayment serverless crash fix)
+
+### A) Issue observed
+- `GET /api/v1/payments/verifyPayment` showed Vercel `FUNCTION_INVOCATION_FAILED` while other payment routes were reachable.
+
+### B) Root cause fixed
+- `lib/server/payments/paymentCore.ts` imported `SupabaseClient` as a runtime value:
+  - `import { createClient, SupabaseClient } from '@supabase/supabase-js'`
+- In serverless runtime this can fail because `SupabaseClient` is a TypeScript type, not a runtime export.
+
+### C) Fix applied
+- Switched to type-only import:
+  - `import { createClient } from '@supabase/supabase-js'`
+  - `import type { SupabaseClient } from '@supabase/supabase-js'`
+
+### D) Validation
+- `npm run build` -> **PASS**
