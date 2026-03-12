@@ -80,6 +80,19 @@ const FeeHistory: React.FC<{ user: User }> = ({ user }) => {
     ).length,
   };
 
+  const getDueOrderValue = (due: MonthlyDue) => Number(due.year || 0) * 12 + Number(due.month || 0);
+
+  const isDuePayable = (targetDue: MonthlyDue) => {
+    if (targetDue.status === PaymentStatus.PAID) return true;
+    const targetValue = getDueOrderValue(targetDue);
+    const previousUnpaid = dues.some((due) => {
+      if (String(due.student_id) !== String(targetDue.student_id)) return false;
+      if (due.status === PaymentStatus.PAID) return false;
+      return getDueOrderValue(due) < targetValue;
+    });
+    return !previousUnpaid;
+  };
+
   const handleExport = () => {
     const rows = [
       ['Period', 'Student', 'Base Fee', 'Late Fee', 'Total', 'Status', 'Paid On'],
@@ -203,12 +216,14 @@ const FeeHistory: React.FC<{ user: User }> = ({ user }) => {
             <tbody className="divide-y divide-slate-50">
               {filteredDues.map((due) => {
                 const isPaid = due.status === PaymentStatus.PAID;
+                const isPayable = isDuePayable(due);
                 const isOverdue =
                   !isPaid && due.due_date && new Date() > new Date(due.due_date);
                 const student = students.find((s) => s.id === due.student_id);
+                const isLocked = !isPaid && !isPayable;
 
                 return (
-                  <tr key={due.id} className="group hover:bg-slate-50/50 transition-colors">
+                  <tr key={due.id} className={`group transition-colors ${isLocked ? 'opacity-60' : 'hover:bg-slate-50/50'}`}>
                     <td className="px-8 py-6">
                       <p className="text-sm font-black text-slate-800 uppercase tracking-tight">
                         {MONTHS[(due.month || 1) - 1]} {due.year}
@@ -270,6 +285,11 @@ const FeeHistory: React.FC<{ user: User }> = ({ user }) => {
                             <Download size={16} />
                           )}
                         </button>
+                      ) : isLocked ? (
+                        <div className="inline-flex items-center gap-2 text-slate-400">
+                          <i className="fas fa-lock text-xs"></i>
+                          <span className="text-[8px] font-black uppercase tracking-widest">Pay previous month first</span>
+                        </div>
                       ) : (
                         <button
                           onClick={() =>

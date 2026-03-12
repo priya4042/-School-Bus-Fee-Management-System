@@ -774,3 +774,24 @@ Core parent/admin functionality, OTP/auth, boarding points, settings avatar uplo
 
 ### C) Validation
 - `npm run build` -> **PASS**
+
+---
+
+## 29) Continuation update — 2026-03-12 (parent previous-month lock + refresh persistence)
+
+### A) Parent payment sequence enforcement
+- Implemented on the actual parent payment page used by routing:
+  - `pages/parent/FeeHistory.tsx`
+- Added per-student chronological lock:
+  - unpaid older month(s) -> newer month `Pay Now` is disabled/locked
+  - lock message shown: `Pay previous month first`
+- Rule is status-based, so even if late fee is waived, previous month must still be paid first.
+
+### B) Keep same page on hard refresh
+- `App.tsx`
+  - Added `activeTab` persistence in `localStorage` keyed by user role + user id.
+  - On app init for logged-in user, restores last valid tab.
+  - Prevents hard refresh from always resetting to `Dashboard`.
+
+### C) Validation
+- `npm run build` -> **PASS**

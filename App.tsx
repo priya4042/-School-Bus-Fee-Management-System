@@ -43,6 +43,55 @@ import AttendanceHistory from './pages/parent/AttendanceHistory';
 import ParentRoutes from './pages/parent/Routes';
 import ParentLiveTracking from './pages/parent/LiveTracking';
 
+const getAllowedTabs = (role?: UserRole) => {
+  if (role === UserRole.ADMIN || role === UserRole.SUPER_ADMIN) {
+    return [
+      'Dashboard',
+      'Students',
+      'Routes',
+      'Buses',
+      'Fees',
+      'Payments',
+      'Reports',
+      'Settings',
+      'Attendance',
+      'Notifications',
+      'Audit Logs',
+      'Bus admins',
+      'User Directory',
+      'Permissions',
+      'Live Tracking',
+      'Bus Camera',
+    ];
+  }
+
+  if (role === UserRole.PARENT) {
+    return [
+      'Dashboard',
+      'Attendance History',
+      'Live Tracking',
+      'Routes',
+      'Boarding Points',
+      'Bus Camera',
+      'Payments',
+      'Fees',
+      'Notifications',
+      'Receipts',
+      'Profile',
+      'Settings',
+      'Student Profile',
+      'Support',
+    ];
+  }
+
+  return ['Dashboard'];
+};
+
+const getTabStorageKey = (user?: User | null) => {
+  if (!user?.id || !user?.role) return '';
+  return `sbwp_active_tab_${user.role}_${user.id}`;
+};
+
 const App: React.FC = () => {
   const { user, init, logout, loading, initialized } = useAuthStore();
   const [activeTab, setActiveTab] = useState('Dashboard');
@@ -55,6 +104,25 @@ const App: React.FC = () => {
     // Initialize auth store regardless of Supabase config to allow UI to render
     init();
   }, [init]);
+
+  useEffect(() => {
+    if (!user?.id || !user?.role) return;
+    const key = getTabStorageKey(user);
+    const savedTab = key ? window.localStorage.getItem(key) : null;
+    const allowedTabs = getAllowedTabs(user.role);
+
+    if (savedTab && allowedTabs.includes(savedTab)) {
+      setActiveTab(savedTab);
+    }
+  }, [user?.id, user?.role]);
+
+  useEffect(() => {
+    if (!user?.id || !user?.role || !activeTab) return;
+    const key = getTabStorageKey(user);
+    if (key) {
+      window.localStorage.setItem(key, activeTab);
+    }
+  }, [activeTab, user?.id, user?.role]);
 
   const renderContent = () => {
     const role = user?.role;
