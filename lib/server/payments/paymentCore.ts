@@ -57,17 +57,27 @@ export const verifyCheckoutSignature = (input: {
   razorpayPaymentId: string;
   razorpaySignature: string;
 }) => {
-  const secret = cleanEnv(process.env.RAZORPAY_KEY_SECRET || process.env.VITE_RAZORPAY_KEY_SECRET || '');
-  if (!secret) {
+  const secrets = [
+    cleanEnv(process.env.RAZORPAY_KEY_SECRET || ''),
+    cleanEnv(process.env.VITE_RAZORPAY_KEY_SECRET || ''),
+  ].filter(Boolean);
+
+  if (secrets.length === 0) {
     throw new Error('RAZORPAY_KEY_SECRET is not configured on server');
   }
 
-  const generated = crypto
-    .createHmac('sha256', secret)
-    .update(`${input.razorpayOrderId}|${input.razorpayPaymentId}`)
-    .digest('hex');
+  for (const secret of [...new Set(secrets)]) {
+    const generated = crypto
+      .createHmac('sha256', secret)
+      .update(`${input.razorpayOrderId}|${input.razorpayPaymentId}`)
+      .digest('hex');
 
-  return generated === input.razorpaySignature;
+    if (generated === input.razorpaySignature) {
+      return true;
+    }
+  }
+
+  return false;
 };
 
 export const verifyWebhookSignature = (payload: string, signature: string) => {

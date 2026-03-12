@@ -734,3 +734,25 @@ Core parent/admin functionality, OTP/auth, boarding points, settings avatar uplo
 
 ### C) Validation
 - `npm run build` -> **PASS**
+
+---
+
+## 27) Continuation update — 2026-03-12 (Razorpay key-pair auto-resolution)
+
+### A) Issue observed
+- Payment create order still failed with Razorpay `Authentication failed (BAD_REQUEST_ERROR)`.
+- Likely env pairing mismatch between `RAZORPAY_*` and `VITE_RAZORPAY_*` variables.
+
+### B) Changes
+- `api/v1/payments/createOrder.ts`
+  - Added candidate key-pair resolution and retry order:
+    - `RAZORPAY_KEY_ID + RAZORPAY_KEY_SECRET`
+    - `VITE_RAZORPAY_KEY_ID + VITE_RAZORPAY_KEY_SECRET`
+    - cross-combined fallbacks
+  - Retries alternate pairs when provider indicates auth failure.
+  - Returns safe diagnostics including `triedPairs` and selected key source metadata.
+- `lib/server/payments/paymentCore.ts`
+  - `verifyCheckoutSignature` now checks signature against both configured secrets (if present), ensuring verify remains compatible with whichever pair succeeded in create-order.
+
+### C) Validation
+- `npm run build` -> **PASS**

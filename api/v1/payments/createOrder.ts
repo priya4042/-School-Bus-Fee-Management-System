@@ -9,6 +9,57 @@ const inferKeyMode = (keyId: string) => {
   return 'unknown';
 };
 
+type KeyPair = {
+  keyId: string;
+  keySecret: string;
+  keyIdSource: string;
+  keySecretSource: string;
+};
+
+const resolveKeyPairs = (): KeyPair[] => {
+  const raw = {
+    keyIdPrimary: cleanEnv(process.env.RAZORPAY_KEY_ID || ''),
+    keyIdFallback: cleanEnv(process.env.VITE_RAZORPAY_KEY_ID || ''),
+    keySecretPrimary: cleanEnv(process.env.RAZORPAY_KEY_SECRET || ''),
+    keySecretFallback: cleanEnv(process.env.VITE_RAZORPAY_KEY_SECRET || ''),
+  };
+
+  const candidates: KeyPair[] = [
+    {
+      keyId: raw.keyIdPrimary,
+      keySecret: raw.keySecretPrimary,
+      keyIdSource: 'RAZORPAY_KEY_ID',
+      keySecretSource: 'RAZORPAY_KEY_SECRET',
+    },
+    {
+      keyId: raw.keyIdFallback,
+      keySecret: raw.keySecretFallback,
+      keyIdSource: 'VITE_RAZORPAY_KEY_ID',
+      keySecretSource: 'VITE_RAZORPAY_KEY_SECRET',
+    },
+    {
+      keyId: raw.keyIdPrimary,
+      keySecret: raw.keySecretFallback,
+      keyIdSource: 'RAZORPAY_KEY_ID',
+      keySecretSource: 'VITE_RAZORPAY_KEY_SECRET',
+    },
+    {
+      keyId: raw.keyIdFallback,
+      keySecret: raw.keySecretPrimary,
+      keyIdSource: 'VITE_RAZORPAY_KEY_ID',
+      keySecretSource: 'RAZORPAY_KEY_SECRET',
+    },
+  ];
+
+  const uniq = new Map<string, KeyPair>();
+  for (const pair of candidates) {
+    if (!pair.keyId || !pair.keySecret) continue;
+    const key = `${pair.keyId}::${pair.keySecret}`;
+    if (!uniq.has(key)) uniq.set(key, pair);
+  }
+  return [...uniq.values()];
+};
+
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   res.setHeader('Access-Control-Allow-Credentials', 'true');
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -28,16 +79,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   const { amount, studentId, month, dueId, due_id } = req.body;
   const finalDueId = String(dueId || due_id || '').trim();
-  const keyIdRaw = process.env.RAZORPAY_KEY_ID || process.env.VITE_RAZORPAY_KEY_ID || '';
-  const keySecretRaw = process.env.RAZORPAY_KEY_SECRET || process.env.VITE_RAZORPAY_KEY_SECRET || '';
-  const keyId = cleanEnv(keyIdRaw);
-  const keySecret = cleanEnv(keySecretRaw);
-  const keyIdSource = String(process.env.RAZORPAY_KEY_ID || '').trim()
-    ? 'RAZORPAY_KEY_ID'
-    : (String(process.env.VITE_RAZORPAY_KEY_ID || '').trim() ? 'VITE_RAZORPAY_KEY_ID' : 'NONE');
-  const keySecretSource = String(process.env.RAZORPAY_KEY_SECRET || '').trim()
-    ? 'RAZORPAY_KEY_SECRET'
-    : (String(process.env.VITE_RAZORPAY_KEY_SECRET || '').trim() ? 'VITE_RAZORPAY_KEY_SECRET' : 'NONE');
+  const keyPairs = resolveKeyPairs();
 
   console.log(`[Razorpay Order] Creating order for student: ${studentId}, amount: ${amount}, due: ${finalDueId}`);
 
@@ -45,53 +87,71 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(400).json({ error: 'Amount is required' });
   }
 
-  if (!keyId || !keySecret) {
+  if (keyPairs.length === 0) {
     return res.status(500).json({
       error: 'Server payment configuration missing (RAZORPAY_KEY_ID / RAZORPAY_KEY_SECRET).',
     });
   }
 
-  try {
-    const razorpay = new Razorpay({
-      key_id: keyId,
-      key_secret: keySecret,
-    });
+  let lastError: any = null;
+  let lastPair: KeyPair | null = null;
 
-    const options = {
-      amount: Math.round(amount * 100),
-      currency: 'INR',
-      receipt: `receipt_${studentId}_${month}_${Date.now()}`,
-      notes: {
-        due_id: finalDueId,
-        student_id: String(studentId || ''),
-      },
-    };
+  for (const pair of keyPairs) {
+    try {
+      const razorpay = new Razorpay({
+        key_id: pair.keyId,
+        key_secret: pair.keySecret,
+      });
 
-    const order = await razorpay.orders.create(options);
-    console.log(`[Razorpay Order] Created order: ${order.id}`);
+      const options = {
+        amount: Math.round(amount * 100),
+        currency: 'INR',
+        receipt: `receipt_${studentId}_${month}_${Date.now()}`,
+        notes: {
+          due_id: finalDueId,
+          student_id: String(studentId || ''),
+        },
+      };
 
-    return res.status(200).json({
-      id: order.id,
-      amount: order.amount,
-      currency: order.currency,
-    });
-  } catch (error: any) {
-    console.error('[Razorpay Order] Error:', error);
-    const providerMessage =
-      error?.error?.description ||
-      error?.description ||
-      error?.message ||
-      'Failed to create order';
+      const order = await razorpay.orders.create(options);
+      console.log(`[Razorpay Order] Created order: ${order.id}`);
 
-    return res.status(500).json({
-      error: providerMessage,
-      code: error?.error?.code || error?.code || 'RAZORPAY_ORDER_CREATE_FAILED',
-      diagnostics: {
-        keyIdSource,
-        keySecretSource,
-        keyMode: inferKeyMode(keyId),
-        keyIdTail: keyId ? keyId.slice(-6) : '',
-      },
-    });
+      return res.status(200).json({
+        id: order.id,
+        amount: order.amount,
+        currency: order.currency,
+      });
+    } catch (error: any) {
+      lastError = error;
+      lastPair = pair;
+      const providerMessage = String(
+        error?.error?.description ||
+        error?.description ||
+        error?.message ||
+        ''
+      ).toLowerCase();
+      const providerCode = String(error?.error?.code || error?.code || '').toUpperCase();
+      const isAuthFailure = providerMessage.includes('authentication failed') || providerCode === 'BAD_REQUEST_ERROR';
+      if (!isAuthFailure) break;
+    }
   }
+
+  console.error('[Razorpay Order] Error:', lastError);
+  const providerMessage =
+    lastError?.error?.description ||
+    lastError?.description ||
+    lastError?.message ||
+    'Failed to create order';
+
+  return res.status(500).json({
+    error: providerMessage,
+    code: lastError?.error?.code || lastError?.code || 'RAZORPAY_ORDER_CREATE_FAILED',
+    diagnostics: {
+      keyIdSource: lastPair?.keyIdSource || 'NONE',
+      keySecretSource: lastPair?.keySecretSource || 'NONE',
+      keyMode: inferKeyMode(lastPair?.keyId || ''),
+      keyIdTail: lastPair?.keyId ? lastPair.keyId.slice(-6) : '',
+      triedPairs: keyPairs.map((pair) => `${pair.keyIdSource}+${pair.keySecretSource}`),
+    },
+  });
 }
