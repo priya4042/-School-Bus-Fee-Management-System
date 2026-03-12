@@ -552,3 +552,24 @@ Core parent/admin functionality, OTP/auth, boarding points, settings avatar uplo
 
 ### C) Use
 - Hit: `/api/v1/payments/health` after deploy to verify env config before payment testing.
+
+---
+
+## 19) Continuation update — 2026-03-12 (Vercel Hobby function limit fix)
+
+### A) Issue
+- Vercel Hobby build failed: more than 12 serverless functions detected.
+
+### B) Actions taken
+- Moved payment helper modules out of `api/` into `lib/server/payments/`:
+  - `emailService.ts`
+  - `paymentCore.ts`
+- Updated imports in:
+  - `api/v1/payments/verifyPayment.ts`
+  - `api/v1/payments/webhook.ts`
+- Removed dev-only endpoint:
+  - `api/dev/otp.ts`
+
+### C) Result
+- API route file count under `api/**/*.ts` reduced to **12** (fits Hobby limit).
+- `npm run build` -> **PASS**
