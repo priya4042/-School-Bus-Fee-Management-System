@@ -1,6 +1,9 @@
-import React from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import Modal from './Modal';
 import { useReceipts } from '../hooks/useReceipts';
+import api from '../lib/api';
+
+const FEE_SETTINGS_KEY = 'busway_fee_settings_v1';
 
 interface PaymentPortalProps {
   state: any;
@@ -10,8 +13,42 @@ interface PaymentPortalProps {
 
 const PaymentPortal: React.FC<PaymentPortalProps> = ({ state, onClose, onInitiateRazorpay }) => {
   const { downloadReceipt, downloading } = useReceipts();
-  const adminQrUrl = String(import.meta.env.VITE_ADMIN_PAYMENT_QR_URL || '').trim();
-  const adminUpiId = String(import.meta.env.VITE_ADMIN_UPI_ID || '').trim();
+  const [runtimeQrUrl, setRuntimeQrUrl] = useState('');
+  const [runtimeUpiId, setRuntimeUpiId] = useState('');
+
+  const adminQrUrl = useMemo(
+    () => String(runtimeQrUrl || import.meta.env.VITE_ADMIN_PAYMENT_QR_URL || '').trim(),
+    [runtimeQrUrl]
+  );
+  const adminUpiId = useMemo(
+    () => String(runtimeUpiId || import.meta.env.VITE_ADMIN_UPI_ID || '').trim(),
+    [runtimeUpiId]
+  );
+
+  useEffect(() => {
+    const fromLocal = () => {
+      try {
+        const localRaw = localStorage.getItem(FEE_SETTINGS_KEY);
+        if (!localRaw) return;
+        const local = JSON.parse(localRaw);
+        if (local?.adminPaymentQrUrl) setRuntimeQrUrl(String(local.adminPaymentQrUrl));
+        if (local?.adminUpiId) setRuntimeUpiId(String(local.adminUpiId));
+      } catch {
+      }
+    };
+
+    const fromApi = async () => {
+      try {
+        const { data } = await api.get('settings/fees');
+        if (data?.adminPaymentQrUrl) setRuntimeQrUrl(String(data.adminPaymentQrUrl));
+        if (data?.adminUpiId) setRuntimeUpiId(String(data.adminUpiId));
+      } catch {
+      }
+    };
+
+    fromLocal();
+    fromApi();
+  }, []);
 
   const renderContent = () => {
     if (state.step === 'SELECT') {

@@ -853,3 +853,26 @@ Core parent/admin functionality, OTP/auth, boarding points, settings avatar uplo
 
 ### C) Validation
 - `npm run build` -> **PASS**
+
+---
+
+## 33) Continuation update — 2026-03-12 (admin-manageable QR via Settings)
+
+### A) Request
+- Make admin QR configurable from admin UI, not only env.
+
+### B) Changes
+- `pages/Settings.tsx`
+  - Added new Fee Engine section: `Parent Payment QR`
+  - Added editable fields:
+    - `adminPaymentQrUrl`
+    - `adminUpiId`
+  - Values are included in existing save/reset flow (`settings/fees` + local fallback).
+- `components/PaymentPortal.tsx`
+  - Added runtime loading of QR config from:
+    - local cached fee settings (`busway_fee_settings_v1`)
+    - `api.get('settings/fees')`
+  - Falls back to env vars if runtime settings are unavailable.
+
+### C) Validation
+- `npm run build` -> **PASS**

@@ -13,7 +13,9 @@ const Settings: React.FC = () => {
     dailyPenalty: 50,
     maxPenalty: 500,
     strictNoSkip: true,
-    enforce2FA: false
+    enforce2FA: false,
+    adminPaymentQrUrl: '',
+    adminUpiId: ''
   });
 
   useEffect(() => {
@@ -63,7 +65,9 @@ const Settings: React.FC = () => {
         dailyPenalty: 50,
         maxPenalty: 500,
         strictNoSkip: true,
-        enforce2FA: false
+        enforce2FA: false,
+        adminPaymentQrUrl: '',
+        adminUpiId: ''
      });
      showToast('Parameters reset to defaults locally. Click Save to commit.', 'info');
   };
@@ -184,6 +188,54 @@ const Settings: React.FC = () => {
                     </div>
                     <p className="text-[9px] font-bold text-slate-400 uppercase ml-2">The highest total late fee a student can accumulate per month.</p>
                   </div>
+                </div>
+              </section>
+
+              <section className="bg-white rounded-[2.5rem] border border-slate-200 p-10 shadow-sm">
+                <div className="flex items-center gap-4 mb-10">
+                   <div className="w-12 h-12 bg-emerald-50 text-emerald-600 rounded-2xl flex items-center justify-center">
+                      <i className="fas fa-qrcode"></i>
+                   </div>
+                   <div>
+                      <h3 className="font-black text-slate-800 uppercase tracking-widest text-[11px]">Parent Payment QR</h3>
+                      <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">Manual UPI Alternative</p>
+                   </div>
+                </div>
+
+                <div className="grid grid-cols-1 gap-8">
+                  <div className="space-y-3">
+                    <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Admin QR Image URL</label>
+                    <input
+                      type="url"
+                      value={settings.adminPaymentQrUrl}
+                      onChange={(e) => setSettings({ ...settings, adminPaymentQrUrl: e.target.value })}
+                      placeholder="https://.../admin-upi-qr.png"
+                      className={themedInputClass}
+                    />
+                    <p className="text-[9px] font-bold text-slate-400 uppercase ml-2">Shown in parent payment modal as scan-to-pay option.</p>
+                  </div>
+
+                  <div className="space-y-3">
+                    <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Admin UPI ID</label>
+                    <input
+                      type="text"
+                      value={settings.adminUpiId}
+                      onChange={(e) => setSettings({ ...settings, adminUpiId: e.target.value })}
+                      placeholder="schoolbus@upi"
+                      className={themedInputClass}
+                    />
+                    <p className="text-[9px] font-bold text-slate-400 uppercase ml-2">Optional: shown below QR for quick verification.</p>
+                  </div>
+
+                  {settings.adminPaymentQrUrl && (
+                    <div className="p-5 bg-slate-50 rounded-2xl border border-slate-100 inline-flex items-center gap-4 w-fit">
+                      <img src={settings.adminPaymentQrUrl} alt="Admin payment QR preview" className="w-20 h-20 rounded-xl border border-slate-200 object-cover" />
+                      <div>
+                        <p className="text-[10px] font-black text-slate-700 uppercase tracking-widest">Preview</p>
+                        {settings.adminUpiId && <p className="text-[10px] font-bold text-slate-500 mt-1">UPI: {settings.adminUpiId}</p>}
+                      </div>
+                    </div>
+                  )}
                 </div>
               </section>
              </>
