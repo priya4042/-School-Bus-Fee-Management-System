@@ -876,3 +876,23 @@ Core parent/admin functionality, OTP/auth, boarding points, settings avatar uplo
 
 ### C) Validation
 - `npm run build` -> **PASS**
+
+---
+
+## 34) Continuation update — 2026-03-12 (automatic QR client brief page)
+
+### A) Request
+- Create a detailed page describing what is required for fully automatic parent QR payments and what to share with client.
+
+### B) Added document
+- New file: `AUTOMATIC_QR_PAYMENT_REQUIREMENTS.md`
+- Includes:
+  - Full automation objective and current limitations
+  - Client-provided prerequisites
+  - Razorpay dynamic QR/collect architecture
+  - Webhook URL/events/secret setup
+  - Required Vercel env vars
+  - Data updates expected on success
+  - Static QR vs automated flow clarification
+  - QR not showing troubleshooting
+  - Client decision checklist
