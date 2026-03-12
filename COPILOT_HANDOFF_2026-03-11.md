@@ -756,3 +756,21 @@ Core parent/admin functionality, OTP/auth, boarding points, settings avatar uplo
 
 ### C) Validation
 - `npm run build` -> **PASS**
+
+---
+
+## 28) Continuation update — 2026-03-12 (Razorpay receipt length fix)
+
+### A) Issue observed
+- Live payment init failed with:
+  - `receipt: the length must be no more than 40`
+  - `Code: BAD_REQUEST_ERROR`
+
+### B) Fix
+- `api/v1/payments/createOrder.ts`
+  - Added `buildReceipt(studentId, month)` helper to generate a compact, sanitized receipt id.
+  - Enforced max length <= 40 chars before sending to Razorpay.
+  - Replaced old long receipt template (`receipt_${...}`) with bounded helper output.
+
+### C) Validation
+- `npm run build` -> **PASS**

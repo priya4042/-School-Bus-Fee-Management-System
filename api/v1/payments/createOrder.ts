@@ -9,6 +9,18 @@ const inferKeyMode = (keyId: string) => {
   return 'unknown';
 };
 
+const buildReceipt = (studentId: string, month: string | number) => {
+  const studentPart = String(studentId || 'stu')
+    .replace(/[^a-zA-Z0-9]/g, '')
+    .slice(-10);
+  const monthPart = String(month || '0')
+    .replace(/[^a-zA-Z0-9]/g, '')
+    .slice(0, 2);
+  const tsPart = Date.now().toString().slice(-10);
+  // Keep receipt short; Razorpay max is 40 chars.
+  return `r_${studentPart}_${monthPart}_${tsPart}`.slice(0, 40);
+};
+
 type KeyPair = {
   keyId: string;
   keySecret: string;
@@ -106,7 +118,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       const options = {
         amount: Math.round(amount * 100),
         currency: 'INR',
-        receipt: `receipt_${studentId}_${month}_${Date.now()}`,
+        receipt: buildReceipt(String(studentId || ''), month),
         notes: {
           due_id: finalDueId,
           student_id: String(studentId || ''),
