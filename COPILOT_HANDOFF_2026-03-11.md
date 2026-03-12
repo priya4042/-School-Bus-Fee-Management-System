@@ -239,3 +239,316 @@ npx cap open android
 
 ## 7) Handoff summary (one-line)
 Core parent/admin functionality, OTP/auth, boarding points, settings avatar upload, terminology cleanup, and release-readiness docs were completed and validated; project is stable for continuation with remaining focus on Android native release setup and final mobile UX polish.
+
+---
+
+## 8) Continuation update — 2026-03-12
+
+> Ongoing workflow note: after every future code change set in this project, append a new dated continuation entry in this file so handoff continuity always stays current.
+
+### A) Git sync and environment correction
+- Pulled latest code from the correct inner repo (`origin/main`) successfully.
+- Confirmed branch tracking in inner project and avoided using outer accidental repo for pull/push operations.
+- Fixed PowerShell navigation issue for folder name starting with `-` by using:
+  - `cd ".\-School-Bus-Fee-Management-System"`
+
+### B) Production MIME error fix (module script served as text/html)
+**Reported issue:**
+- Browser error: *Expected a JavaScript-or-Wasm module script but server responded with MIME type text/html*.
+
+**Root cause:**
+- SPA rewrite rule was intercepting JS/CSS asset requests and returning `index.html`.
+
+**Fix applied:**
+- Updated `vercel.json` to filesystem-first routing with SPA fallback only after static file checks.
+
+### C) Parent-mode behavior updates (as requested)
+**Scope respected:**
+- No login/register changes in this cycle.
+- No admin flow changes in this cycle.
+
+**Implemented:**
+- Parent sees only their children routes via dedicated parent routes page.
+  - Added: `pages/parent/Routes.tsx`
+- Parent live tracking separated from Family Hub style layout.
+  - Added: `pages/parent/LiveTracking.tsx`
+- Parent tab routing rewired in `App.tsx`:
+  - `Routes` -> parent routes page
+  - `Live Tracking` -> parent live tracking page
+  - Parent `Payments` and `Receipts` -> unified fee/payment history page
+- Sidebar simplified for parent in `components/Sidebar.tsx`:
+  - Removed duplicate fee/receipt links in parent menu
+  - Hid `Bus Camera` link when camera permission is not granted
+- `pages/parent/BoardingLocations.tsx` hardened:
+  - Graceful fallback on missing table / 404 / RLS denied cases
+  - Reduced noisy hard-fail behavior
+- `pages/parent/Notifications.tsx` enhanced:
+  - Added handling for payment/bus/fee notification types so parent sees real admin/payment-driven notifications more reliably.
+
+### D) Parent identity display correction
+**Reported issue:**
+- Parent profile identity badge was showing student identity.
+
+**Fix applied:**
+- Updated `pages/Profile.tsx` so parent role shows parent account identity badge instead of student admission identity.
+
+### E) Validation performed
+- Build verification:
+  - `npm run build` -> PASS
+- Localhost smoke checks:
+  - Dev server started successfully.
+  - Verified rendering of `/`, `/privacy`, `/terms`, `/forgot-password`.
+  - Public route rendering is healthy.
+
+### F) Current known follow-up
+- Full authenticated end-to-end parent/admin scenario verification still requires interactive login credentials and browser walkthrough.
+
+---
+
+## 9) Continuation update — 2026-03-12 (runtime error fixes)
+
+### A) Supabase 406 fix for bus tracking query
+- **Issue observed:** `GET /rest/v1/bus_locations ... 406 (Not Acceptable)` during parent live tracking.
+- **Root cause:** `hooks/useTracking.ts` used `.single()` for last-known bus row; when no row exists, PostgREST returns 406 for object expectation.
+- **Fix:** switched to `.maybeSingle()` and added safe warning-only handling when no row/error is returned.
+
+### B) Supabase 400 fix for boarding points schema variance
+- **Issue observed:** `GET /rest/v1/boarding_points ... 400 (Bad Request)`.
+- **Root cause:** strict column projection in `pages/parent/BoardingLocations.tsx` could fail when tenant schema differs (column name variance).
+- **Fixes implemented:**
+  - Added fallback query path: if preferred projection returns 400, retry with `select('*')`.
+  - Added row normalization mapping to support alternate field names (`location_name/name/label`, `latitude/lat`, `longitude/lng`, etc.).
+  - Retained existing table fallback logic (`boarding_points` <-> `boarding_locations`).
+
+### C) Razorpay key resolution hardening
+- **Issue observed:** `Payment Error: Razorpay key missing`.
+- **Fixes implemented in `hooks/usePayments.ts`:**
+  - Added resolver that accepts `VITE_RAZORPAY_KEY_ID` and fallback alias `VITE_RAZORPAY_KEY`.
+  - Treats placeholder value (`your_razorpay_key_id`) as invalid.
+  - Uses resolved key for checkout instead of raw env access.
+  - Improved user-facing alert to explicitly request environment variable setup.
+- **Typing update:** `vite-env.d.ts` now includes optional `VITE_RAZORPAY_KEY`.
+
+### D) Validation
+- Ran `npm run build` after patches -> **PASS**.
+
+---
+
+## 10) Continuation update — 2026-03-12 (safe payment pipeline phase-1)
+
+### A) Objective implemented
+- Started secure payment architecture upgrade so payment success is recorded on server (idempotent), not trusted from client only.
+- Kept parent/admin UI flow intact while hardening backend verification + webhook handling.
+
+### B) New shared secure payment core
+- Added `api/v1/payments/paymentCore.ts` with shared functions:
+  - checkout signature verification (`order_id|payment_id` HMAC)
+  - webhook signature verification
+  - idempotent payment recording (`monthly_dues` update, `receipts` upsert-style behavior)
+  - parent + admin notification creation with duplicate protection via transaction token
+
+### C) API endpoint hardening
+- `api/v1/payments/verifyPayment.ts`
+  - refactored to use shared core
+  - supports both `dueId` and `due_id`
+  - returns `alreadyProcessed` for idempotent repeat calls
+- `api/v1/payments/webhook.ts`
+  - verifies webhook signature before processing
+  - handles successful payment events (`payment.captured`, `order.paid`)
+  - extracts `due_id` from Razorpay notes and records payment through shared core
+  - safely accepts/ignores unsupported events
+- `api/v1/payments/createOrder.ts`
+  - requires server-side Razorpay key config
+  - includes `notes.due_id` + `notes.student_id` on order for webhook reconciliation
+
+### D) Frontend alignment
+- `hooks/usePayments.ts`
+  - switched success flow to trust server verification path
+  - removed client-side direct DB persistence from the main success branch
+  - still dispatches local payment event for immediate UI refresh
+
+### E) Validation
+- `npm run lint` -> **PASS**
+- `npm run build` -> **PASS**
+
+### F) Deployment notes for testing
+- Required server env vars must be present:
+  - `RAZORPAY_KEY_ID`
+  - `RAZORPAY_KEY_SECRET`
+  - `RAZORPAY_WEBHOOK_SECRET`
+  - `SUPABASE_SERVICE_ROLE_KEY`
+- Razorpay webhook should point to:
+  - `/api/v1/payments/webhook`
+
+---
+
+## 11) Continuation update — 2026-03-12 (safe payment email phase-2)
+
+### A) What was added
+- Added optional email delivery for verified payments (parent + admins) with fail-safe behavior.
+- Payment success remains non-blocking: DB/payment state is not rolled back if email provider is unavailable.
+
+### B) New file
+- `api/v1/payments/emailService.ts`
+  - Supports provider-style API send (Resend endpoint) via server-side `fetch`.
+  - Controlled by `PAYMENT_EMAIL_ENABLED` flag.
+  - Uses `RESEND_API_KEY` + `PAYMENT_EMAIL_FROM`.
+  - Sends distinct subjects for parent and admin mail.
+
+### C) Payment core integration
+- `api/v1/payments/paymentCore.ts`
+  - Pulls parent/admin emails from `profiles` table.
+  - Dispatches email after successful, idempotent payment record.
+  - Wraps email dispatch in `try/catch` and logs warning on failure (non-blocking).
+
+### D) Env updates
+- `.env.example` now includes:
+  - `RAZORPAY_WEBHOOK_SECRET`
+  - `PAYMENT_EMAIL_ENABLED`
+  - `RESEND_API_KEY`
+  - `PAYMENT_EMAIL_FROM`
+
+### E) Validation
+- `npm run lint` -> **PASS**
+- `npm run build` -> **PASS**
+
+---
+
+## 12) Continuation update — 2026-03-12 (payment email audit logs)
+
+### A) Added audit table migration
+- New migration: `supabase/migrations/20260312_payment_email_delivery_logs.sql`
+- Creates `public.payment_email_logs` to track recipient-level email outcomes.
+- Captures: `due_id`, `transaction_id`, `recipient_email`, `recipient_role`, `provider`, `status`, `error_message`, `metadata`, `created_at`.
+- Includes indexes for `due_id`, `transaction_id`, and `created_at`.
+
+### B) Email service response enriched
+- `api/v1/payments/emailService.ts`
+  - now returns recipient lists and provider metadata along with success flags.
+  - supports explicit `disabled` reason when `PAYMENT_EMAIL_ENABLED` is off.
+
+### C) Server-side log writes in payment flow
+- `api/v1/payments/paymentCore.ts`
+  - writes `payment_email_logs` rows after each email dispatch attempt.
+  - records `SENT`, `FAILED`, or `SKIPPED` per recipient role (parent/admin).
+  - keeps behavior non-blocking; payment remains successful even if log insert/email fails.
+
+### D) Validation
+- `npm run lint` -> **PASS**
+- `npm run build` -> **PASS**
+
+---
+
+## 13) Continuation update — 2026-03-12 (gateway branding hidden in parent UI)
+
+### A) Parent payment modal wording
+- Updated `components/PaymentPortal.tsx`:
+  - `Pay with Razorpay` -> `Pay Securely`
+  - `Starting Payment...` -> `Starting Secure Payment...`
+
+### B) Parent support copy
+- Updated `pages/parent/Support.tsx` FAQ text to remove explicit Razorpay mention and use generic secure payment wording.
+
+---
+
+## 14) Continuation update — 2026-03-12 (payment API 404 routing fix)
+
+### A) Issue observed
+- Parent payment attempts were hitting Render backend payment paths and returning 404:
+  - `/api/v1/payments/create-order`
+  - `/api/v1/payments/createOrder`
+  - `/api/payments/create-order`
+
+### B) Root cause
+- Generic API base URL was pointing to external backend (`VITE_API_BASE_URL`) that does not host app-specific Razorpay serverless endpoints.
+
+### C) Fix implemented
+- Updated `hooks/usePayments.ts`:
+  - Added payment-specific base resolution order:
+    1. `VITE_PAYMENT_API_BASE_URL` (if set)
+    2. runtime origin (`window.location.origin`)
+    3. `VITE_APP_URL`
+    4. fallback `VITE_API_BASE_URL`
+  - Added direct `fetch` helper with auth token for payment endpoint calls.
+  - `createOrder` and `verifyPayment` now try app/serverless endpoints first, then legacy fallback calls.
+- Added env typing: `VITE_PAYMENT_API_BASE_URL` in `vite-env.d.ts`.
+- Added `.env.example` documentation for `VITE_PAYMENT_API_BASE_URL`.
+
+### D) Validation
+- `npm run build` -> **PASS**
+
+### E) Env file alignment
+- Updated `.env.local` and `.env.production` to include explicit `VITE_PAYMENT_API_BASE_URL` so payment calls are routed to the app domain hosting `/api/v1/payments/*` endpoints (instead of external generic backend routes that may 404).
+
+---
+
+## 15) Continuation update — 2026-03-12 (module MIME error fix)
+
+### A) Issue observed
+- Browser error: module script expected JS/Wasm but got `text/html`.
+
+### B) Root cause
+- Vercel SPA fallback route matched all paths and could rewrite missing/static asset requests to `index.html`.
+
+### C) Fix applied
+- Updated `vercel.json` fallback route from `"/.*"` to `"/[^.]*"` so only extensionless client routes are rewritten to `index.html`.
+- Static files with extensions (like `/assets/*.js`, `/assets/*.css`) are no longer rewritten as HTML.
+
+### D) Additional hardening for stale cache behavior
+- Added cache headers in `vercel.json`:
+  - `no-store` for `/`, `/index.html`, and `/service-worker.js`
+  - long immutable cache for `/assets/*`
+- Purpose: reduce stale `index.html` references to old hashed bundles, which can cause intermittent module MIME errors until hard refresh.
+
+---
+
+## 16) Continuation update — 2026-03-12 (payment CORS/preflight placeholder fix)
+
+### A) Issue observed
+- Browser calls were going to `https://your-project.vercel.app/...` and failing with CORS/preflight errors.
+
+### B) Fixes applied
+- Updated `.env.local`:
+  - `VITE_PAYMENT_API_BASE_URL=https://school-bus-fee-management-system.vercel.app`
+- Added runtime guard in `hooks/usePayments.ts`:
+  - ignores placeholder `your-project.vercel.app` value if accidentally left in env.
+
+### C) Validation
+- `npm run build` -> **PASS**
+
+---
+
+## 17) Continuation update — 2026-03-12 (canonical payment endpoint routing)
+
+### A) Problem
+- Payment create flow was trying many legacy endpoint variants and multiple base URLs, causing noisy CORS/404 fallback errors.
+
+### B) Fix
+- `hooks/usePayments.ts` now uses canonical endpoints only:
+  - create: `/api/v1/payments/createOrder`
+  - verify: `/api/v1/payments/verifyPayment`
+- If `VITE_PAYMENT_API_BASE_URL` is set, only that base is used.
+- Legacy fallback calls are now used only if no payment base is configured.
+
+### C) Validation
+- `npm run build` -> **PASS**
+
+---
+
+## 18) Continuation update — 2026-03-12 (payment env health endpoint)
+
+### A) Added API health check endpoint
+- New file: `api/v1/payments/health.ts`
+- Purpose: quickly validate deployment env readiness for payment APIs.
+
+### B) What it returns
+- `ok` boolean
+- `missingRequired` for:
+  - `RAZORPAY_KEY_ID`
+  - `RAZORPAY_KEY_SECRET`
+  - `SUPABASE_URL`
+  - `SUPABASE_SERVICE_ROLE_KEY`
+- `missingOptional` for webhook/email vars.
+
+### C) Use
+- Hit: `/api/v1/payments/health` after deploy to verify env config before payment testing.

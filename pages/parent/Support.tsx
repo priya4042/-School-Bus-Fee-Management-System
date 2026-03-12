@@ -17,7 +17,7 @@ const Support: React.FC<{ user: User }> = ({ user }) => {
   const [submitted, setSubmitted] = useState(false);
 
   const faqs = [
-    { q: 'How do I pay my fees online?', a: 'Go to "Fee History" in the sidebar and click "Pay Now" on any pending due. We support UPI, Cards, and Netbanking via Razorpay.' },
+    { q: 'How do I pay my fees online?', a: 'Go to "Fee History" in the sidebar and click "Pay Now" on any pending due. We support UPI, Cards, and Netbanking through our secure payment system.' },
     { q: 'How can I track my child\'s bus?', a: 'Go to the Dashboard and click "Establish Uplink" to see the live GPS location of the bus assigned to your child.' },
     { q: 'What should I do if the bus is delayed?', a: 'You will receive an automatic notification for delays. Check the live map in Dashboard for real-time status.' },
     { q: 'How do I change my boarding point?', a: 'Navigate to "Boarding Points" in the sidebar to view and update your child\'s pickup/drop location.' },

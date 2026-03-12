@@ -15,7 +15,12 @@ export const useTracking = (busId?: string) => {
         .from('bus_locations')
         .select('*')
         .eq('bus_id', busId)
-        .single();
+        .maybeSingle();
+
+      if (error) {
+        console.warn('Unable to load last bus location:', error);
+        return;
+      }
       
       if (data) {
         setLocation({ lat: data.latitude, lng: data.longitude, speed: data.speed });

@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { User } from '../types';
+import { User, UserRole } from '../types';
 import { supabase } from '../lib/supabase';
 import { useAuthStore } from '../store/authStore';
 import { showToast } from '../lib/swal';
@@ -106,6 +106,25 @@ const Profile: React.FC<{ user: User }> = ({ user }) => {
     return user?.fullName || user?.full_name || 'User';
   };
 
+  const getIdentityBadge = () => {
+    if (user?.role === UserRole.PARENT) {
+      return {
+        label: 'PARENT ID',
+        value: String(user.id || '').slice(0, 8).toUpperCase()
+      };
+    }
+
+    const admissionId = user?.admissionNumber || user?.admission_number;
+    if (!admissionId) return null;
+
+    return {
+      label: 'ID',
+      value: admissionId
+    };
+  };
+
+  const identityBadge = getIdentityBadge();
+
   const handleDeleteAccount = async () => {
     const confirmed = window.confirm('Are you absolutely sure? This action is permanent and will delete all your data from our systems.');
     if (!confirmed) return;
@@ -164,9 +183,9 @@ const Profile: React.FC<{ user: User }> = ({ user }) => {
                    <span className="px-2 py-0.5 bg-primary/10 text-primary text-[10px] font-black uppercase rounded-full">
                     {user.role}
                   </span>
-                  {user.admissionNumber && (
+                  {identityBadge && (
                     <span className="px-2 py-0.5 bg-slate-100 text-slate-500 text-[10px] font-black uppercase rounded-full">
-                      ID: {user.admissionNumber}
+                      {identityBadge.label}: {identityBadge.value}
                     </span>
                   )}
                 </div>

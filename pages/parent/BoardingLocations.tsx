@@ -18,6 +18,34 @@ interface BoardingLocation {
 
 const BOARDING_TABLES = ['boarding_points', 'boarding_locations'] as const;
 
+const normalizeLocation = (row: any): BoardingLocation => ({
+  id: String(row?.id || ''),
+  location_name: String(row?.location_name || row?.name || row?.label || 'Boarding Point'),
+  address: String(row?.address || row?.location_address || ''),
+  latitude: Number(row?.latitude ?? row?.lat ?? 0),
+  longitude: Number(row?.longitude ?? row?.lng ?? 0),
+  landmark: String(row?.landmark || row?.nearby_landmark || ''),
+  special_instructions: String(row?.special_instructions || row?.instructions || ''),
+  is_primary: Boolean(row?.is_primary ?? row?.primary ?? false),
+});
+
+const isMissingOrDenied = (error: any) => {
+  if (!error) return false;
+  const status = error?.status;
+  const code = error?.code;
+  const message = String(error?.message || '').toLowerCase();
+  return (
+    status === 404 ||
+    code === 'PGRST205' ||
+    code === '42P01' ||
+    code === '42501' ||
+    message.includes('not found') ||
+    message.includes('does not exist') ||
+    message.includes('permission denied') ||
+    message.includes('row-level security')
+  );
+};
+
 const BoardingLocations: React.FC<{ user: User }> = ({ user }) => {
   const [locations, setLocations] = useState<BoardingLocation[]>([]);
   const [isAdding, setIsAdding] = useState(false);
@@ -44,7 +72,7 @@ const BoardingLocations: React.FC<{ user: User }> = ({ user }) => {
       if (studentData && studentData.length > 0) {
         const firstStudentId = String(studentData[0].id);
         setSelectedStudent(firstStudentId);
-        fetchLocations(firstStudentId);
+        await fetchLocations(firstStudentId);
       }
     } catch (err) {
       console.error(err);
@@ -57,26 +85,50 @@ const BoardingLocations: React.FC<{ user: User }> = ({ user }) => {
   const fetchLocations = async (studentId: string) => {
     try {
       let loaded = false;
+      let hasUnexpectedError = false;
 
       for (const table of BOARDING_TABLES) {
-        const query = supabase
+        let data: any[] | null = null;
+        let error: any = null;
+
+        const preferredQuery = supabase
           .from(table)
           .select('id, location_name, address, latitude, longitude, landmark, special_instructions, is_primary')
           .eq('student_id', studentId);
 
-        const { data, error } = table === 'boarding_locations'
-          ? await query.eq('is_active', true).order('created_at', { ascending: false })
-          : await query.order('id', { ascending: false });
+        ({ data, error } = table === 'boarding_locations'
+          ? await preferredQuery.eq('is_active', true).order('created_at', { ascending: false })
+          : await preferredQuery.order('id', { ascending: false }));
+
+        if (error && error.status === 400) {
+          const fallbackQuery = supabase
+            .from(table)
+            .select('*')
+            .eq('student_id', studentId);
+
+          ({ data, error } = table === 'boarding_locations'
+            ? await fallbackQuery.eq('is_active', true).order('created_at', { ascending: false })
+            : await fallbackQuery.order('id', { ascending: false }));
+        }
 
         if (!error) {
-          setLocations((data || []) as BoardingLocation[]);
+          setLocations((data || []).map(normalizeLocation));
           loaded = true;
+          break;
+        }
+
+        if (!isMissingOrDenied(error)) {
+          console.error('Boarding locations query error:', error);
+          hasUnexpectedError = true;
           break;
         }
       }
 
       if (!loaded) {
-        throw new Error('Boarding table not found or access denied.');
+        setLocations([]);
+        if (hasUnexpectedError) {
+          showToast('Failed to load boarding points', 'error');
+        }
       }
     } catch (err) {
       console.error(err);
@@ -107,6 +159,10 @@ const BoardingLocations: React.FC<{ user: User }> = ({ user }) => {
           saved = true;
           break;
         }
+
+        if (!isMissingOrDenied(error)) {
+          throw error;
+        }
       }
 
       if (!saved) {
@@ -133,6 +189,10 @@ const BoardingLocations: React.FC<{ user: User }> = ({ user }) => {
         if (!error) {
           removed = true;
           break;
+        }
+
+        if (!isMissingOrDenied(error)) {
+          throw error;
         }
       }
 
@@ -171,11 +231,12 @@ const BoardingLocations: React.FC<{ user: User }> = ({ user }) => {
             <button
               key={student.id}
               onClick={() => {
-                setSelectedStudent(student.id);
-                fetchLocations(student.id);
+                const studentId = String(student.id);
+                setSelectedStudent(studentId);
+                fetchLocations(studentId);
               }}
               className={`px-6 py-3 rounded-2xl text-xs font-black uppercase tracking-widest whitespace-nowrap transition-all ${
-                selectedStudent === student.id ? 'bg-primary text-white shadow-lg shadow-primary/20' : 'bg-white text-slate-500 hover:bg-slate-50 border border-slate-100'
+                selectedStudent === String(student.id) ? 'bg-primary text-white shadow-lg shadow-primary/20' : 'bg-white text-slate-500 hover:bg-slate-50 border border-slate-100'
               }`}
             >
               {student.full_name}

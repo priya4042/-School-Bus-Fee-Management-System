@@ -8,7 +8,7 @@ interface Notification {
   id: string;
   title: string;
   message: string;
-  type: 'INFO' | 'WARNING' | 'SUCCESS' | 'DANGER';
+  type: 'INFO' | 'WARNING' | 'SUCCESS' | 'DANGER' | 'PAYMENT_SUCCESS' | 'FEE_DUE' | 'BUS_UPDATE';
   created_at: string;
   is_read: boolean;
 }
@@ -108,6 +108,9 @@ const Notifications: React.FC<{ user: User; focusNotificationId?: string; onFocu
 
   const getTypeIcon = (type: string) => {
     switch (type) {
+      case 'PAYMENT_SUCCESS': return <CheckCircle2 className="text-emerald-500" size={20} />;
+      case 'FEE_DUE': return <AlertTriangle className="text-amber-500" size={20} />;
+      case 'BUS_UPDATE': return <Bell className="text-primary" size={20} />;
       case 'SUCCESS': return <CheckCircle2 className="text-emerald-500" size={20} />;
       case 'WARNING': return <AlertTriangle className="text-amber-500" size={20} />;
       case 'DANGER': return <Bell className="text-red-500" size={20} />;

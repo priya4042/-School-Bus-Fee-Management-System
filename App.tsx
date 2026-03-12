@@ -12,10 +12,8 @@ import Reports from './pages/Reports';
 import Routes from './pages/Routes';
 import Buses from './pages/Buses';
 import Settings from './pages/Settings';
-import Receipts from './pages/Receipts';
 import Profile from './pages/Profile';
 import Attendance from './pages/Attendance';
-import Payments from './pages/Payments';
 import AdminPayments from './pages/AdminPayments';
 import AdminNotifications from './pages/AdminNotifications';
 import Notifications from './pages/Notifications';
@@ -42,6 +40,8 @@ import ParentSettings from './pages/parent/Settings';
 import StudentProfile from './pages/parent/StudentProfile';
 import Support from './pages/parent/Support';
 import AttendanceHistory from './pages/parent/AttendanceHistory';
+import ParentRoutes from './pages/parent/Routes';
+import ParentLiveTracking from './pages/parent/LiveTracking';
 
 const App: React.FC = () => {
   const { user, init, logout, loading, initialized } = useAuthStore();
@@ -84,14 +84,14 @@ const App: React.FC = () => {
       switch (activeTab) {
         case 'Dashboard': return <ParentDashboard user={user!} />;
         case 'Attendance History': return <AttendanceHistory user={user!} />;
-        case 'Live Tracking': return <ParentDashboard user={user!} />;
-        case 'Routes': return <Routes />;
+        case 'Live Tracking': return <ParentLiveTracking user={user!} />;
+        case 'Routes': return <ParentRoutes user={user!} />;
         case 'Boarding Points': return <BoardingLocations user={user!} />;
-        case 'Bus Camera': return <BusCamera user={user!} />;
-        case 'Payments': return <Payments user={user!} />;
+        case 'Bus Camera': return (user as any).preferences?.camera === true ? <BusCamera user={user!} /> : <ParentDashboard user={user!} />;
+        case 'Payments': return <FeeHistory user={user!} />;
         case 'Fees': return <FeeHistory user={user!} />;
         case 'Notifications': return <ParentNotifications user={user!} focusNotificationId={selectedNotificationId} onFocusHandled={() => setSelectedNotificationId(undefined)} />;
-        case 'Receipts': return <Receipts user={user!} />;
+        case 'Receipts': return <FeeHistory user={user!} />;
         case 'Profile': return <Profile user={user!} />;
         case 'Settings': return <ParentSettings user={user!} />;
         case 'Student Profile': return <StudentProfile user={user!} />;

@@ -1,6 +1,7 @@
   import { useState } from 'react';
   import { showToast, showAlert } from '../lib/swal';
   import api from '../lib/api';
+  import { ENV } from '../config/env';
   import { loadRazorpay } from '../lib/razorpay';
   import { supabase } from '../lib/supabase';
   import { PAYMENT_EVENT } from '../lib/telemetry';
@@ -44,6 +45,18 @@
       setPaymentState(prev => ({ ...prev, isOpen: false }));
     };
 
+    const resolveRazorpayKeyId = () => {
+      const raw = String(
+        import.meta.env.VITE_RAZORPAY_KEY_ID ||
+        import.meta.env.VITE_RAZORPAY_KEY ||
+        ''
+      ).trim();
+
+      if (!raw) return '';
+      if (raw === 'your_razorpay_key_id') return '';
+      return raw;
+    };
+
     const fetchDueContext = async (dueId: string) => {
       const { data, error } = await supabase
         .from('monthly_dues')
@@ -58,37 +71,109 @@
       return data as any;
     };
 
+    const normalizeBase = (value: string) => String(value || '').trim().replace(/\/+$/, '');
+
+    const getPaymentApiBases = () => {
+      const runtimeOrigin = typeof window !== 'undefined' ? window.location.origin : '';
+      const appUrl = String(import.meta.env.VITE_APP_URL || '').trim();
+      const explicitPaymentApiRaw = String((import.meta.env as any).VITE_PAYMENT_API_BASE_URL || '').trim();
+      const explicitPaymentApi = explicitPaymentApiRaw.includes('your-project.vercel.app')
+        ? ''
+        : explicitPaymentApiRaw;
+      const genericApi = String(ENV.API_BASE_URL || '').trim();
+
+      if (explicitPaymentApi) {
+        return [normalizeBase(explicitPaymentApi)].filter(Boolean);
+      }
+
+      const ordered = [explicitPaymentApi, runtimeOrigin, appUrl, genericApi]
+        .map(normalizeBase)
+        .filter(Boolean);
+
+      return [...new Set(ordered)];
+    };
+
+    const postPaymentApi = async (base: string, path: string, payload: any) => {
+      const { data: { session } } = await supabase.auth.getSession();
+      const url = `${normalizeBase(base)}${path.startsWith('/') ? path : `/${path}`}`;
+
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : {}),
+        },
+        body: JSON.stringify(payload || {}),
+      });
+
+      const contentType = response.headers.get('content-type') || '';
+      const data = contentType.includes('application/json')
+        ? await response.json().catch(() => ({}))
+        : { error: await response.text().catch(() => '') };
+
+      if (!response.ok) {
+        const error: any = new Error((data as any)?.error || (data as any)?.message || `HTTP ${response.status}`);
+        error.status = response.status;
+        error.url = url;
+        throw error;
+      }
+
+      return data;
+    };
+
     const createOrder = async (dueId: string, amount: number, context: any) => {
-      const attempts = [
-        async () => (await api.post('/v1/payments/create-order', {
+      let lastError: any;
+
+      const paymentBases = getPaymentApiBases();
+      const payloadVariants = [
+        {
+          amount,
+          dueId,
           due_id: dueId,
-          dueId,
-          amount,
-        })).data,
-        async () => (await api.post(`/v1/payments/create-order?due_id=${encodeURIComponent(dueId)}`, {
-          amount,
-        })).data,
-        async () => (await api.post('/payments/create-order', {
-          dueId,
-          amount,
           studentId: context?.student_id,
           month: context?.month,
-        })).data,
-        async () => (await api.post('/v1/payments/createOrder', {
+        },
+        {
           amount,
-          studentId: context?.student_id,
-          month: context?.month,
-          dueId,
-        })).data,
+          due_id: dueId,
+        },
       ];
 
-      let lastError: any;
-      for (const attempt of attempts) {
-        try {
-          const order = await attempt();
-          if (order?.id) return order;
-        } catch (err: any) {
-          lastError = err;
+      const endpointPaths = [
+        '/api/v1/payments/createOrder',
+      ];
+
+      for (const base of paymentBases) {
+        for (const path of endpointPaths) {
+          for (const payload of payloadVariants) {
+            try {
+              const order = await postPaymentApi(base, path, payload);
+              if ((order as any)?.id) return order;
+            } catch (err: any) {
+              lastError = err;
+            }
+          }
+        }
+      }
+
+      if (paymentBases.length === 0) {
+        const fallbackAttempts = [
+          async () => (await api.post('/v1/payments/createOrder', {
+            amount,
+            studentId: context?.student_id,
+            month: context?.month,
+            dueId,
+            due_id: dueId,
+          })).data,
+        ];
+
+        for (const attempt of fallbackAttempts) {
+          try {
+            const order = await attempt();
+            if (order?.id) return order;
+          } catch (err: any) {
+            lastError = err;
+          }
         }
       }
 
@@ -102,20 +187,38 @@
         due_id: dueId,
       };
 
-      const attempts = [
-        async () => (await api.post('/v1/payments/verify', payload)).data,
-        async () => (await api.post('/v1/payments/verifyPayment', payload)).data,
-        async () => (await api.post('/payments/verify', payload)).data,
+      let lastError: any;
+
+      const paymentBases = getPaymentApiBases();
+      const endpointPaths = [
+        '/api/v1/payments/verifyPayment',
       ];
 
-      let lastError: any;
-      for (const attempt of attempts) {
-        try {
-          const response = await attempt();
-          const ok = response?.success === true || response?.status === 'ok' || response?.status === 'success';
-          if (ok) return response;
-        } catch (err: any) {
-          lastError = err;
+      for (const base of paymentBases) {
+        for (const path of endpointPaths) {
+          try {
+            const response: any = await postPaymentApi(base, path, payload);
+            const ok = response?.success === true || response?.status === 'ok' || response?.status === 'success';
+            if (ok) return response;
+          } catch (err: any) {
+            lastError = err;
+          }
+        }
+      }
+
+      if (paymentBases.length === 0) {
+        const fallbackAttempts = [
+          async () => (await api.post('/v1/payments/verifyPayment', payload)).data,
+        ];
+
+        for (const attempt of fallbackAttempts) {
+          try {
+            const response = await attempt();
+            const ok = response?.success === true || response?.status === 'ok' || response?.status === 'success';
+            if (ok) return response;
+          } catch (err: any) {
+            lastError = err;
+          }
         }
       }
 
@@ -200,6 +303,7 @@
     const initiateRazorpay = async () => {
       const userToken = localStorage.getItem('schoolBusToken');
       console.log("Initiating Razorpay payment. Token found:", !!userToken);
+      const razorpayKeyId = resolveRazorpayKeyId();
       
       if (!userToken) {
         alert("Please login to continue");
@@ -207,9 +311,9 @@
         return;
       }
 
-      if (!import.meta.env.VITE_RAZORPAY_KEY_ID) {
-        console.error("Razorpay key missing. Add VITE_RAZORPAY_KEY_ID in .env.production or Vercel environment variables.");
-        showAlert('Payment Error', 'Razorpay key missing. Please contact support.', 'error');
+      if (!razorpayKeyId) {
+        console.error('Razorpay key missing. Add VITE_RAZORPAY_KEY_ID (or VITE_RAZORPAY_KEY) in environment variables.');
+        showAlert('Payment Error', 'Razorpay key is not configured. Please ask support to set VITE_RAZORPAY_KEY_ID.', 'error');
         return;
       }
 
@@ -228,7 +332,7 @@
         }
 
         const options = {
-          key: import.meta.env.VITE_RAZORPAY_KEY_ID,
+          key: razorpayKeyId,
           amount: order.amount,
           currency: "INR",
           name: "School Bus WayPro",
@@ -252,12 +356,16 @@
             try {
               setPaymentState(prev => ({ ...prev, step: 'PROCESSING' }));
               await verifyPayment(paymentResult, String(paymentState.dueId));
-              try {
-                await persistPaymentRecords(String(paymentState.dueId), paymentResult.razorpay_payment_id, dueContext);
-              } catch (syncErr: any) {
-                console.error('Post-payment sync issue:', syncErr);
-                showToast('Payment successful. Receipt sync may take a moment.', 'warning');
-              }
+
+              window.dispatchEvent(new CustomEvent(PAYMENT_EVENT, {
+                detail: {
+                  studentName: dueContext?.students?.full_name || paymentState.studentName,
+                  amount: Number(dueContext?.total_due || dueContext?.amount || paymentState.amount || 0),
+                  txnId: paymentResult.razorpay_payment_id,
+                  dueId: String(paymentState.dueId),
+                  timestamp: Date.now(),
+                }
+              }));
 
               setPaymentState(prev => ({
                 ...prev,

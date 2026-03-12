@@ -34,7 +34,7 @@ const PaymentPortal: React.FC<PaymentPortalProps> = ({ state, onClose, onInitiat
                   {state.loading ? <i className="fas fa-circle-notch fa-spin"></i> : <i className="fas fa-shield-alt text-xl"></i>}
                 </div>
                 <div className="text-left">
-                  <p className="font-black text-white text-sm">{state.loading ? "Starting Payment..." : "Pay with Razorpay"}</p>
+                  <p className="font-black text-white text-sm">{state.loading ? "Starting Secure Payment..." : "Pay Securely"}</p>
                   <p className="text-[9px] font-bold text-white/40 uppercase tracking-tighter">Cards, UPI, Netbanking, Wallets</p>
                 </div>
               </div>

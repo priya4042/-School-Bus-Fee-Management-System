@@ -16,6 +16,7 @@ const Sidebar: React.FC<SidebarProps> = ({ user, onLogout, activeTab, setActiveT
   const isSuperAdmin = user.role === UserRole.SUPER_ADMIN;
   const isAdmin = user.role === UserRole.ADMIN || isSuperAdmin;
   const isParent = user.role === UserRole.PARENT;
+  const parentCameraEnabled = (user as any).preferences?.camera === true;
 
   const adminLinks = [
     { name: 'Dashboard', icon: 'fa-chart-pie' },
@@ -44,11 +45,9 @@ const Sidebar: React.FC<SidebarProps> = ({ user, onLogout, activeTab, setActiveT
     { name: 'Routes', icon: 'fa-route' },
     { name: 'Live Tracking', icon: 'fa-location-dot' },
     { name: 'Boarding Points', icon: 'fa-map-marker-alt' },
-    { name: 'Bus Camera', icon: 'fa-video' },
+    ...(parentCameraEnabled ? [{ name: 'Bus Camera', icon: 'fa-video' }] : []),
     { name: 'Payments', icon: 'fa-credit-card' },
-    { name: 'Fees', icon: 'fa-file-invoice-dollar' },
     { name: 'Notifications', icon: 'fa-bell' },
-    { name: 'Receipts', icon: 'fa-receipt' },
     { name: 'Profile', icon: 'fa-user' },
     { name: 'Settings', icon: 'fa-cog' },
     { name: 'Support', icon: 'fa-headset' },
