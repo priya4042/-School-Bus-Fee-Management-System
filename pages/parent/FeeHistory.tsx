@@ -41,8 +41,8 @@ const FeeHistory: React.FC<{ user: User }> = ({ user }) => {
         .from('monthly_dues')
         .select('*')
         .in('student_id', studentIds)
-        .order('year', { ascending: false })
-        .order('month', { ascending: false });
+        .order('year', { ascending: true })
+        .order('month', { ascending: true });
 
       if (duesError) throw duesError;
       setDues(duesData || []);

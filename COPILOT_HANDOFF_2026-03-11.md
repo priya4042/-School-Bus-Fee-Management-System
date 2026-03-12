@@ -795,3 +795,20 @@ Core parent/admin functionality, OTP/auth, boarding points, settings avatar uplo
 
 ### C) Validation
 - `npm run build` -> **PASS**
+
+---
+
+## 30) Continuation update — 2026-03-12 (parent fee list oldest-first ordering)
+
+### A) Request
+- Parent asked that previous month should show at top in Payments list.
+
+### B) Change
+- `pages/parent/FeeHistory.tsx`
+  - Updated dues query ordering from descending to ascending:
+    - `year ASC`
+    - `month ASC`
+- Result: oldest/previous months appear first at top.
+
+### C) Validation
+- `npm run build` -> **PASS**
