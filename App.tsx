@@ -20,6 +20,7 @@ import AuditLogs from './pages/AuditLogs';
 import AdminManagement from './pages/AdminManagement';
 import UserDirectory from './pages/UserDirectory';
 import LiveTracking from './pages/LiveTracking';
+import Documentation from './pages/Documentation';
 import Sidebar from './components/Sidebar';
 import Topbar from './components/Topbar';
 import { useAuthStore } from './store/authStore';
@@ -56,6 +57,7 @@ const getAllowedTabs = (user?: User | null) => {
       'Bus admins',
       'User Directory',
       'Live Tracking',
+      'Documentation',
       'Support',
     ];
   }
@@ -129,7 +131,7 @@ const App: React.FC = () => {
     const role = user?.role;
     if (role === UserRole.ADMIN || role === UserRole.SUPER_ADMIN) {
       switch (activeTab) {
-        case 'Dashboard': return <AdminDashboard />;
+        case 'Dashboard': return <AdminDashboard onOpenDocumentation={() => setActiveTab('Documentation')} />;
         case 'Students': return <Students />;
         case 'Routes': return <Routes />;
         case 'Buses': return <Buses />;
@@ -142,8 +144,9 @@ const App: React.FC = () => {
         case 'Bus admins': return <AdminManagement />;
         case 'User Directory': return <UserDirectory />;
         case 'Live Tracking': return <LiveTracking />;
+        case 'Documentation': return <Documentation />;
         case 'Support': return <Support user={user!} />;
-        default: return <AdminDashboard />;
+        default: return <AdminDashboard onOpenDocumentation={() => setActiveTab('Documentation')} />;
       }
     } 
     
@@ -167,7 +170,7 @@ const App: React.FC = () => {
       }
     }
 
-    return <AdminDashboard />;
+    return <AdminDashboard onOpenDocumentation={() => setActiveTab('Documentation')} />;
   };
 
   return (

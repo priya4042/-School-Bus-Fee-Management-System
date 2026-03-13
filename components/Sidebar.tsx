@@ -29,6 +29,7 @@ const Sidebar: React.FC<SidebarProps> = ({ user, onLogout, activeTab, setActiveT
     { name: 'Live Tracking', icon: 'fa-location-dot' },
     { name: 'Payments', icon: 'fa-credit-card' },
     { name: 'Reports', icon: 'fa-file-alt' },
+    { name: 'Documentation', icon: 'fa-book-open' },
     { name: 'Notifications', icon: 'fa-bullhorn' },
     { name: 'Audit Logs', icon: 'fa-fingerprint' },
     ...(isSuperAdmin ? [{ name: 'Bus admins', icon: 'fa-user-shield' }] : []),

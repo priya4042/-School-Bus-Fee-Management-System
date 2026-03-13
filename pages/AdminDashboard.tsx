@@ -8,7 +8,11 @@ import { useBuses } from '../hooks/useBuses';
 import BusCameraModal from '../components/BusCameraModal';
 import GoogleMap from '../components/GoogleMap';
 
-const AdminDashboard: React.FC = () => {
+interface AdminDashboardProps {
+  onOpenDocumentation?: () => void;
+}
+
+const AdminDashboard: React.FC<AdminDashboardProps> = ({ onOpenDocumentation }) => {
   const [view, setView] = useState<'stats' | 'monitor'>('stats');
   const [stats, setStats] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -90,6 +94,13 @@ const AdminDashboard: React.FC = () => {
           <p className="text-slate-500 font-bold uppercase text-[10px] tracking-widest mt-1">Global Fleet Intelligence</p>
         </div>
         <div className="flex items-center gap-3 bg-white p-1 rounded-2xl border border-slate-200">
+          <button
+            onClick={onOpenDocumentation}
+            className="px-4 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all bg-primary text-white shadow-lg shadow-primary/20 flex items-center gap-2"
+          >
+            <i className="fas fa-book-open"></i>
+            Docs
+          </button>
           <button 
             onClick={() => setIsCameraOpen(true)}
             className="px-4 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all bg-slate-900 text-white shadow-lg flex items-center gap-2"
