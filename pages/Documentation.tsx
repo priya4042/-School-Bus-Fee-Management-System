@@ -40,6 +40,30 @@ const stackRows = [
   { area: 'Maps', used: 'Google Maps integration', pricing: 'Usage-based billing', buy: 'Billing account required beyond free credit' },
   { area: 'Alerts / UI', used: 'SweetAlert, custom notification UI', pricing: 'Free libraries', buy: 'No purchase needed' },
   { area: 'Build Tooling', used: 'Node.js, npm, ESLint, TypeScript', pricing: 'Free / Open source', buy: 'No purchase needed' },
+  { area: 'Mobile Wrapper', used: 'Capacitor for Android packaging', pricing: 'Free / Open source', buy: 'No purchase needed' },
+  { area: 'Play Store', used: 'Google Play Console account and app release management', pricing: 'One-time account fee', buy: 'Required to publish app' },
+  { area: 'Cloud Backend (Optional)', used: 'Render-hosted backend APIs if used in env config', pricing: 'Free tier + paid plans', buy: 'Upgrade for always-on and higher traffic' },
+];
+
+const playStoreChecklist = [
+  'Google Play Console account (one-time registration fee)',
+  'App signing key and upload key generated and stored securely',
+  'Android package ID and app name finalized',
+  'Capacitor Android project synced from web build',
+  'Production API endpoints configured in environment variables',
+  'Razorpay live keys and webhook URL configured',
+  'Supabase production project URL and anon key configured',
+  'Privacy policy URL and Terms URL publicly accessible',
+  'App icon, feature graphic, screenshots, and app description ready',
+  'Internal testing track release tested before production rollout',
+];
+
+const envItems = [
+  { key: 'VITE_SUPABASE_URL', purpose: 'Supabase project URL for auth and database access' },
+  { key: 'VITE_SUPABASE_ANON_KEY', purpose: 'Public anon key used by frontend Supabase client' },
+  { key: 'VITE_RAZORPAY_KEY_ID', purpose: 'Razorpay public key for checkout initialization' },
+  { key: 'VITE_API_BASE_URL', purpose: 'Optional backend API base URL if using external API server' },
+  { key: 'VITE_GOOGLE_MAPS_API_KEY', purpose: 'Google Maps key for live tracking map features' },
 ];
 
 const Documentation: React.FC = () => {
@@ -140,6 +164,60 @@ const Documentation: React.FC = () => {
           <div className="border border-slate-100 rounded-2xl p-4 bg-slate-50/50">
             <p className="font-black text-slate-800 uppercase tracking-wide mb-2">Governance</p>
             <p>Role-based permissions, audit review cadence, payment reconciliation, and monthly release checks.</p>
+          </div>
+        </div>
+      </section>
+
+      <section className="bg-white border border-slate-200 rounded-3xl p-8 shadow-sm">
+        <h3 className="text-xs font-black uppercase tracking-[0.2em] text-primary mb-5">Play Store Deployment: Complete Guide</h3>
+        <div className="space-y-4">
+          {playStoreChecklist.map((item) => (
+            <div key={item} className="flex items-start gap-3 border border-slate-100 rounded-2xl p-4 bg-slate-50/50">
+              <span className="mt-0.5 w-5 h-5 rounded-full bg-primary/10 text-primary text-[10px] font-black flex items-center justify-center">OK</span>
+              <p className="text-xs text-slate-700 leading-relaxed">{item}</p>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      <section className="bg-white border border-slate-200 rounded-3xl p-8 shadow-sm overflow-x-auto">
+        <h3 className="text-xs font-black uppercase tracking-[0.2em] text-primary mb-5">Environment Variables Used In Deployment</h3>
+        <table className="min-w-full text-left">
+          <thead>
+            <tr className="text-[10px] uppercase tracking-widest text-slate-500 border-b border-slate-100">
+              <th className="py-3 pr-4">Variable</th>
+              <th className="py-3 pr-4">Purpose</th>
+            </tr>
+          </thead>
+          <tbody>
+            {envItems.map((row) => (
+              <tr key={row.key} className="border-b border-slate-100 last:border-0">
+                <td className="py-4 pr-4 text-xs font-black text-slate-800">{row.key}</td>
+                <td className="py-4 pr-4 text-xs text-slate-700">{row.purpose}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </section>
+
+      <section className="bg-white border border-slate-200 rounded-3xl p-8 shadow-sm">
+        <h3 className="text-xs font-black uppercase tracking-[0.2em] text-primary mb-5">Play Store Release Flow</h3>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs text-slate-700">
+          <div className="border border-slate-100 rounded-2xl p-4 bg-slate-50/50">
+            <p className="font-black text-slate-800 uppercase tracking-wide mb-2">1. Build And Sync</p>
+            <p>Run web production build, sync with Capacitor Android, open Android Studio, and generate signed AAB.</p>
+          </div>
+          <div className="border border-slate-100 rounded-2xl p-4 bg-slate-50/50">
+            <p className="font-black text-slate-800 uppercase tracking-wide mb-2">2. Test Tracks</p>
+            <p>Upload to internal testing first, verify payment flow, notifications, and map permissions on real devices.</p>
+          </div>
+          <div className="border border-slate-100 rounded-2xl p-4 bg-slate-50/50">
+            <p className="font-black text-slate-800 uppercase tracking-wide mb-2">3. Store Listing</p>
+            <p>Complete app content, data safety, permissions declarations, privacy policy, screenshots, and app description.</p>
+          </div>
+          <div className="border border-slate-100 rounded-2xl p-4 bg-slate-50/50">
+            <p className="font-black text-slate-800 uppercase tracking-wide mb-2">4. Production Rollout</p>
+            <p>Promote tested release to production and monitor crash reports, payment success rates, and audit logs.</p>
           </div>
         </div>
       </section>

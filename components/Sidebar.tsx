@@ -46,6 +46,7 @@ const Sidebar: React.FC<SidebarProps> = ({ user, onLogout, activeTab, setActiveT
     ...(parentCameraEnabled ? [{ name: 'Bus Camera', icon: 'fa-video' }] : []),
     { name: 'Payments', icon: 'fa-credit-card' },
     { name: 'Notifications', icon: 'fa-bell' },
+    { name: 'Documentation', icon: 'fa-book-open' },
     { name: 'Profile', icon: 'fa-user' },
     { name: 'Settings', icon: 'fa-cog' },
     { name: 'Support', icon: 'fa-headset' },

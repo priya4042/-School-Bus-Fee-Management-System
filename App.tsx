@@ -78,6 +78,7 @@ const getAllowedTabs = (user?: User | null) => {
       'Profile',
       'Settings',
       'Student Profile',
+      'Documentation',
       'Support',
     ];
   }
@@ -165,6 +166,7 @@ const App: React.FC = () => {
         case 'Profile': return <Profile user={user!} />;
         case 'Settings': return <ParentSettings user={user!} />;
         case 'Student Profile': return <StudentProfile user={user!} />;
+        case 'Documentation': return <Documentation />;
         case 'Support': return <Support user={user!} />;
         default: return <ParentDashboard user={user!} />;
       }
