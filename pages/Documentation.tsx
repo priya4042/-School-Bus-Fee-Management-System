@@ -43,13 +43,32 @@ const stackRows = [
 ];
 
 const Documentation: React.FC = () => {
+  const handleDownloadPdf = () => {
+    // Uses browser print dialog where user can choose "Save as PDF".
+    window.print();
+  };
+
   return (
     <div className="space-y-8 pb-8">
       <div className="bg-white border border-slate-200 rounded-3xl p-8 shadow-sm">
-        <h2 className="text-2xl md:text-3xl font-black text-slate-800 tracking-tight uppercase">Platform Documentation Center</h2>
-        <p className="text-slate-500 text-sm mt-3 max-w-4xl leading-relaxed">
-          This page gives a complete product-level reference for Admin and Parent modules, architecture,
-          integrations, and what is free vs paid in your current application setup.
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+          <div>
+            <h2 className="text-2xl md:text-3xl font-black text-slate-800 tracking-tight uppercase">Platform Documentation Center</h2>
+            <p className="text-slate-500 text-sm mt-3 max-w-4xl leading-relaxed">
+              This page gives a complete product-level reference for Admin and Parent modules, architecture,
+              integrations, and what is free vs paid in your current application setup.
+            </p>
+          </div>
+          <button
+            onClick={handleDownloadPdf}
+            className="print:hidden inline-flex items-center gap-2 px-5 py-3 rounded-2xl bg-primary text-white text-[10px] font-black uppercase tracking-widest shadow-lg shadow-primary/20"
+          >
+            <i className="fas fa-file-pdf"></i>
+            Download PDF
+          </button>
+        </div>
+        <p className="print:hidden text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-4">
+          Tip: Browser will open print dialog. Choose Save as PDF.
         </p>
       </div>
 
