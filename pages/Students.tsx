@@ -163,13 +163,17 @@ const Students: React.FC = () => {
   };
 
   const handleDelete = async (id: string, name: string) => {
-    const confirmed = await showConfirm('Remove Student?', `Archive record for ${name}?`, 'Delete');
+    const confirmed = await showConfirm(
+      'Archive Student?',
+      `Archive ${name} and remove from active admin/parent modules? Historical records will remain available in Reports.`,
+      'Archive'
+    );
     if (confirmed) {
-      showLoading('Deleting...');
+      showLoading('Archiving Student...');
       const result = await deleteStudent(id);
       closeSwal();
-      if (result.success) showToast('Record deleted', 'info');
-      else showAlert('Error', result.error || 'Failed to delete record', 'error');
+      if (result.success) showToast('Student archived successfully', 'info');
+      else showAlert('Error', result.error || 'Failed to archive student record', 'error');
     }
   };
 
@@ -270,7 +274,7 @@ const Students: React.FC = () => {
                       <div className="flex justify-end gap-2">
                         <button onClick={() => handleViewFees(student)} className="w-9 h-9 flex items-center justify-center bg-white border border-slate-100 text-slate-400 hover:text-indigo-600 rounded-xl transition-all shadow-sm" title="View Yearly Fees"><i className="fas fa-receipt text-xs"></i></button>
                         <button onClick={() => handleEdit(student)} className="w-9 h-9 flex items-center justify-center bg-white border border-slate-100 text-slate-400 hover:text-primary rounded-xl transition-all shadow-sm" title="Edit Student"><i className="fas fa-edit text-xs"></i></button>
-                        <button onClick={() => handleDelete(student.id, student.full_name)} className="w-9 h-9 flex items-center justify-center bg-white border border-slate-100 text-slate-400 hover:text-danger rounded-xl transition-all shadow-sm" title="Delete Student"><i className="fas fa-trash-alt text-xs"></i></button>
+                        <button onClick={() => handleDelete(student.id, student.full_name)} className="w-9 h-9 flex items-center justify-center bg-white border border-slate-100 text-slate-400 hover:text-danger rounded-xl transition-all shadow-sm" title="Archive Student"><i className="fas fa-trash-alt text-xs"></i></button>
                       </div>
                     </td>
                   </tr>

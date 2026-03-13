@@ -62,13 +62,17 @@ export const useFees = () => {
     try {
       const { data, error } = await supabase
         .from('monthly_dues')
-        .select('*, students(full_name, admission_number, grade, section)')
+        .select('*, students(full_name, admission_number, grade, section, status)')
         .order('year', { ascending: false })
         .order('month', { ascending: false });
       if (error) throw error;
 
       const sourceDues = data || [];
-      const normalizedDues = sourceDues.map((due: any) => {
+      const activeSourceDues = sourceDues.filter((due: any) => {
+        const studentStatus = String(due?.students?.status || '').toLowerCase();
+        return studentStatus === '' || studentStatus === 'active';
+      });
+      const normalizedDues = activeSourceDues.map((due: any) => {
         const ledger = calculateDueLedger(due);
         return {
           ...due,

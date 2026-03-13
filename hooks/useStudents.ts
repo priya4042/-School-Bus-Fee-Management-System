@@ -13,6 +13,7 @@ export const useStudents = () => {
       const { data, error } = await supabase
         .from('students')
         .select('*, routes(route_name), buses(plate, bus_number), profiles(full_name, phone_number)')
+        .in('status', ['active', 'ACTIVE'])
         .order('full_name');
       if (error) throw error;
       setStudents(Array.isArray(data) ? data : []);
@@ -121,7 +122,16 @@ export const useStudents = () => {
 
   const deleteStudentById = async (id: string) => {
     try {
-      const { error } = await supabase.from('students').delete().eq('id', id);
+      const { error } = await supabase
+        .from('students')
+        .update({
+          status: 'inactive',
+          parent_id: null,
+          route_id: null,
+          bus_id: null,
+          boarding_point: null,
+        })
+        .eq('id', id);
       if (error) throw error;
       await fetchStudents();
       return { success: true };

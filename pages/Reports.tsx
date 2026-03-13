@@ -2,12 +2,14 @@
 import React, { useState, useEffect } from 'react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, Area, PieChart, Pie, Cell } from 'recharts';
 import api from '../lib/api';
+import { supabase } from '../lib/supabase';
 import { showToast, showAlert, showLoading, closeSwal } from '../lib/swal';
 
 const Reports: React.FC = () => {
   const [activeReport, setActiveReport] = useState('revenue');
   const [revenueData, setRevenueData] = useState<any[]>([]);
   const [defaulterData, setDefaulterData] = useState<any[]>([]);
+  const [archivedStudents, setArchivedStudents] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
   const routeDistribution = [
@@ -26,6 +28,50 @@ const Reports: React.FC = () => {
         
         const defRes = await api.get('/reports/defaulters');
         setDefaulterData(defRes.data || []);
+
+        const { data: studentsData } = await supabase
+          .from('students')
+          .select('id, full_name, admission_number, grade, section, parent_name, parent_phone, monthly_fee, status, created_at');
+
+        const archivedList = (studentsData || []).filter((student: any) => {
+          const status = String(student?.status || '').toLowerCase();
+          return status !== '' && status !== 'active';
+        });
+
+        if (archivedList.length > 0) {
+          const archivedIds = archivedList.map((student: any) => student.id);
+          const { data: duesData } = await supabase
+            .from('monthly_dues')
+            .select('student_id, status, total_due, amount')
+            .in('student_id', archivedIds);
+
+          const duesByStudent = new Map<string, any[]>();
+          (duesData || []).forEach((due: any) => {
+            const key = String(due.student_id);
+            if (!duesByStudent.has(key)) duesByStudent.set(key, []);
+            duesByStudent.get(key)?.push(due);
+          });
+
+          const withSummary = archivedList.map((student: any) => {
+            const studentDues = duesByStudent.get(String(student.id)) || [];
+            const totalRecords = studentDues.length;
+            const paidRecords = studentDues.filter((due) => String(due.status || '').toUpperCase() === 'PAID').length;
+            const outstanding = studentDues
+              .filter((due) => String(due.status || '').toUpperCase() !== 'PAID')
+              .reduce((sum, due) => sum + Number(due.total_due || due.amount || 0), 0);
+
+            return {
+              ...student,
+              totalRecords,
+              paidRecords,
+              outstanding,
+            };
+          });
+
+          setArchivedStudents(withSummary);
+        } else {
+          setArchivedStudents([]);
+        }
       } catch (err) {
         // Mock fallback
         setRevenueData([
@@ -36,6 +82,7 @@ const Reports: React.FC = () => {
           { month: 'Feb', revenue: 590000 },
           { month: 'Mar', revenue: 650000 },
         ]);
+        setArchivedStudents([]);
       } finally {
         setLoading(false);
       }
@@ -59,7 +106,7 @@ const Reports: React.FC = () => {
           <p className="text-slate-500 font-bold uppercase text-[10px] tracking-widest mt-2">Comprehensive Performance Analytics</p>
         </div>
         <div className="flex p-1.5 bg-white border border-slate-200 rounded-[1.5rem] shadow-sm">
-          {['revenue', 'routes', 'defaulters'].map(tab => (
+          {['revenue', 'routes', 'defaulters', 'history'].map(tab => (
             <button 
               key={tab}
               onClick={() => setActiveReport(tab)}
@@ -169,7 +216,7 @@ const Reports: React.FC = () => {
               </div>
            </div>
         </div>
-      ) : (
+      ) : activeReport === 'defaulters' ? (
         <div className="bg-white rounded-[3rem] border border-slate-200 overflow-hidden shadow-premium">
           <div className="p-8 bg-slate-50 border-b border-slate-100 flex items-center justify-between">
              <h3 className="font-black text-slate-800 uppercase tracking-widest text-[11px]">Fee Defaulter Ledger</h3>
@@ -211,6 +258,57 @@ const Reports: React.FC = () => {
                   <td colSpan={5} className="p-24 text-center">
                     <i className="fas fa-check-double text-5xl text-success/10 mb-6 block"></i>
                     <p className="text-slate-300 font-black uppercase text-xs tracking-[0.4em]">Zero Default Records</p>
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      ) : (
+        <div className="bg-white rounded-[3rem] border border-slate-200 overflow-hidden shadow-premium">
+          <div className="p-8 bg-slate-50 border-b border-slate-100 flex items-center justify-between">
+            <h3 className="font-black text-slate-800 uppercase tracking-widest text-[11px]">Historical Student Archive</h3>
+            <span className="px-4 py-1.5 bg-indigo-50 text-indigo-600 rounded-full text-[9px] font-black uppercase tracking-widest">
+              {archivedStudents.length} Archived Students
+            </span>
+          </div>
+          <table className="w-full text-left">
+            <thead>
+              <tr className="bg-slate-50/50 text-slate-400 text-[9px] font-black uppercase tracking-widest border-b border-slate-100">
+                <th className="px-8 py-5">Student</th>
+                <th className="px-8 py-5">Class</th>
+                <th className="px-8 py-5">Parent Snapshot</th>
+                <th className="px-8 py-5">Fee Records</th>
+                <th className="px-8 py-5 text-right">Outstanding</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-50">
+              {archivedStudents.length > 0 ? archivedStudents.map((student: any) => (
+                <tr key={student.id} className="hover:bg-slate-50/50 transition-colors">
+                  <td className="px-8 py-5">
+                    <p className="font-black text-slate-800 tracking-tight">{student.full_name}</p>
+                    <p className="text-[9px] text-slate-400 font-black uppercase tracking-widest mt-1">Adm: {student.admission_number}</p>
+                  </td>
+                  <td className="px-8 py-5">
+                    <p className="text-xs font-black text-slate-700 uppercase">{student.grade || '-'} {student.section ? `- ${student.section}` : ''}</p>
+                    <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mt-1">Status: {String(student.status || '').toUpperCase()}</p>
+                  </td>
+                  <td className="px-8 py-5">
+                    <p className="text-xs font-black text-slate-700">{student.parent_name || '-'}</p>
+                    <p className="text-[9px] font-bold text-slate-400 mt-1">{student.parent_phone || '-'}</p>
+                  </td>
+                  <td className="px-8 py-5">
+                    <p className="text-xs font-black text-slate-700 uppercase">{student.totalRecords} Total</p>
+                    <p className="text-[9px] font-bold text-emerald-600 uppercase tracking-widest mt-1">{student.paidRecords} Paid</p>
+                  </td>
+                  <td className="px-8 py-5 text-right">
+                    <p className="text-sm font-black text-amber-600">₹{Number(student.outstanding || 0).toLocaleString('en-IN')}</p>
+                  </td>
+                </tr>
+              )) : (
+                <tr>
+                  <td colSpan={5} className="p-20 text-center">
+                    <p className="text-slate-300 font-black uppercase text-xs tracking-[0.3em]">No Archived Students</p>
                   </td>
                 </tr>
               )}
