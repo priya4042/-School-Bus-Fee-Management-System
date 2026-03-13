@@ -2,8 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import Modal from './Modal';
 import { useReceipts } from '../hooks/useReceipts';
 import api from '../lib/api';
-
-const FEE_SETTINGS_KEY = 'busway_fee_settings_v1';
+import { FEE_SETTINGS_UPDATED_EVENT, loadFeeSettings } from '../lib/feeSettings';
 
 interface PaymentPortalProps {
   state: any;
@@ -27,14 +26,9 @@ const PaymentPortal: React.FC<PaymentPortalProps> = ({ state, onClose, onInitiat
 
   useEffect(() => {
     const fromLocal = () => {
-      try {
-        const localRaw = localStorage.getItem(FEE_SETTINGS_KEY);
-        if (!localRaw) return;
-        const local = JSON.parse(localRaw);
-        if (local?.adminPaymentQrUrl) setRuntimeQrUrl(String(local.adminPaymentQrUrl));
-        if (local?.adminUpiId) setRuntimeUpiId(String(local.adminUpiId));
-      } catch {
-      }
+      const local = loadFeeSettings();
+      setRuntimeQrUrl(String(local.adminPaymentQrUrl || ''));
+      setRuntimeUpiId(String(local.adminUpiId || ''));
     };
 
     const fromApi = async () => {
@@ -48,6 +42,18 @@ const PaymentPortal: React.FC<PaymentPortalProps> = ({ state, onClose, onInitiat
 
     fromLocal();
     fromApi();
+
+    const onSettingsUpdated = () => fromLocal();
+    const onStorage = (event: StorageEvent) => {
+      if (event.key === 'busway_fee_settings_v1') fromLocal();
+    };
+
+    window.addEventListener(FEE_SETTINGS_UPDATED_EVENT, onSettingsUpdated as EventListener);
+    window.addEventListener('storage', onStorage);
+    return () => {
+      window.removeEventListener(FEE_SETTINGS_UPDATED_EVENT, onSettingsUpdated as EventListener);
+      window.removeEventListener('storage', onStorage);
+    };
   }, []);
 
   const renderContent = () => {

@@ -5,8 +5,7 @@ import { MONTHS } from '../constants';
 import { useStudents } from '../hooks/useStudents';
 import { useFees } from '../hooks/useFees';
 import Modal from '../components/Modal';
-
-const FEE_SETTINGS_KEY = 'busway_fee_settings_v1';
+import { FEE_SETTINGS_UPDATED_EVENT, loadFeeSettings } from '../lib/feeSettings';
 
 const toISODate = (date: Date) => {
   const year = date.getFullYear();
@@ -79,18 +78,27 @@ const Fees: React.FC = () => {
   };
 
   useEffect(() => {
-    try {
-      const local = localStorage.getItem(FEE_SETTINGS_KEY);
-      if (local) {
-        const parsed = JSON.parse(local);
-        setPolicyDefaults({
-          cutoffDay: Number(parsed.cutoffDay || 10),
-          gracePeriod: Number(parsed.gracePeriod || 2),
-          dailyPenalty: Number(parsed.dailyPenalty || 50),
-        });
-      }
-    } catch {
-    }
+    const applyPolicy = () => {
+      const parsed = loadFeeSettings();
+      setPolicyDefaults({
+        cutoffDay: Number(parsed.cutoffDay || 10),
+        gracePeriod: Number(parsed.gracePeriod || 2),
+        dailyPenalty: Number(parsed.dailyPenalty || 50),
+      });
+    };
+
+    applyPolicy();
+    const onSettingsUpdated = () => applyPolicy();
+    const onStorage = (event: StorageEvent) => {
+      if (event.key === 'busway_fee_settings_v1') applyPolicy();
+    };
+
+    window.addEventListener(FEE_SETTINGS_UPDATED_EVENT, onSettingsUpdated as EventListener);
+    window.addEventListener('storage', onStorage);
+    return () => {
+      window.removeEventListener(FEE_SETTINGS_UPDATED_EVENT, onSettingsUpdated as EventListener);
+      window.removeEventListener('storage', onStorage);
+    };
   }, []);
 
   useEffect(() => {

@@ -904,3 +904,27 @@ Core parent/admin functionality, OTP/auth, boarding points, settings avatar uplo
   - how to enable/request Smart Collect/Dynamic QR
   - how to verify activation before go-live
   - non-Razorpay provider requirements for equivalent automation
+
+---
+
+## 35) Continuation update — 2026-03-13 (admin settings reliability fix across modules)
+
+### A) Issue
+- Admin reported Settings not working reliably across modules.
+
+### B) Fixes
+- Added shared settings utility: `lib/feeSettings.ts`
+  - defaults + validation (`normalizeFeeSettings`)
+  - robust load/save helpers
+  - cross-module update event (`busway:fee-settings-updated`)
+- Updated `pages/Settings.tsx`
+  - now uses shared settings helper for load/save
+  - avoids stale merge while reading API/local settings
+  - graceful message when backend settings endpoint is unavailable (local save still works)
+- Updated `pages/Fees.tsx`
+  - now reads validated settings and reacts to live updates via custom event + storage listener
+- Updated `components/PaymentPortal.tsx`
+  - now reads QR settings from shared helper and reacts to settings updates immediately
+
+### C) Validation
+- `npm run build` -> **PASS**

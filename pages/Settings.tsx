@@ -1,35 +1,24 @@
 import React, { useState, useEffect } from 'react';
 import api from '../lib/api';
 import { showToast, showLoading, closeSwal } from '../lib/swal';
-
-const FEE_SETTINGS_KEY = 'busway_fee_settings_v1';
+import { defaultFeeSettings, loadFeeSettings, normalizeFeeSettings, saveFeeSettings } from '../lib/feeSettings';
 
 const Settings: React.FC = () => {
   const [activeTab, setActiveTab] = useState('fees');
   const [loading, setLoading] = useState(true);
-  const [settings, setSettings] = useState({
-    cutoffDay: 10,
-    gracePeriod: 2,
-    dailyPenalty: 50,
-    maxPenalty: 500,
-    strictNoSkip: true,
-    enforce2FA: false,
-    adminPaymentQrUrl: '',
-    adminUpiId: ''
-  });
+  const [settings, setSettings] = useState({ ...defaultFeeSettings });
 
   useEffect(() => {
     const fetchSettings = async () => {
       try {
-        const local = localStorage.getItem(FEE_SETTINGS_KEY);
-        if (local) {
-          setSettings((prev) => ({ ...prev, ...JSON.parse(local) }));
-        }
+        const local = loadFeeSettings();
+        setSettings(local);
 
         const { data } = await api.get('settings/fees');
         if (data) {
-          setSettings((prev) => ({ ...prev, ...data }));
-          localStorage.setItem(FEE_SETTINGS_KEY, JSON.stringify({ ...settings, ...data }));
+          const merged = normalizeFeeSettings({ ...local, ...data });
+          setSettings(merged);
+          saveFeeSettings(merged);
         }
       } catch (err: any) {
         if (err?.message) {
@@ -45,13 +34,14 @@ const Settings: React.FC = () => {
   const handleSave = async () => {
     showLoading('Syncing Global Parameters...');
     try {
-      localStorage.setItem(FEE_SETTINGS_KEY, JSON.stringify(settings));
+      const normalized = saveFeeSettings(settings);
       try {
-        await api.post('settings/fees', settings);
+        await api.post('settings/fees', normalized);
+        showToast('Configuration updated successfully', 'success');
       } catch {
+        showToast('Settings saved locally. Backend settings endpoint unavailable.', 'info');
       }
       closeSwal();
-      showToast('Configuration updated successfully', 'success');
     } catch (err) {
       closeSwal();
       showToast('Failed to sync settings', 'error');
@@ -59,16 +49,7 @@ const Settings: React.FC = () => {
   };
 
   const handleResetDefaults = () => {
-     setSettings({
-        cutoffDay: 10,
-        gracePeriod: 2,
-        dailyPenalty: 50,
-        maxPenalty: 500,
-        strictNoSkip: true,
-        enforce2FA: false,
-        adminPaymentQrUrl: '',
-        adminUpiId: ''
-     });
+      setSettings({ ...defaultFeeSettings });
      showToast('Parameters reset to defaults locally. Click Save to commit.', 'info');
   };
 
