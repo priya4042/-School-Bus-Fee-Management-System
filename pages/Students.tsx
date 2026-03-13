@@ -288,10 +288,12 @@ const Students: React.FC = () => {
   return (
     <div className="space-y-6">
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
-        <div>
-          <h2 className="text-xl md:text-2xl font-black text-slate-800 tracking-tight uppercase">Student & Fee Management</h2>
-          <p className="text-secondary font-bold uppercase text-[10px] tracking-widest">Enrollment, Fleet Mapping, Monthly & Financial Year Fees</p>
-        </div>
+        {activeSection === 'students' ? (
+          <div>
+            <h2 className="text-xl md:text-2xl font-black text-slate-800 tracking-tight uppercase">Student & Fee Management</h2>
+            <p className="text-secondary font-bold uppercase text-[10px] tracking-widest">Enrollment, Fleet Mapping, Monthly & Financial Year Fees</p>
+          </div>
+        ) : <div />}
         <div className="flex gap-3">
           <div className="flex p-1 bg-white border border-slate-200 rounded-2xl shadow-sm">
             <button

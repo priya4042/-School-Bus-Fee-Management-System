@@ -89,10 +89,12 @@ const LiveTracking: React.FC = () => {
   return (
     <div className="space-y-6">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
-          <h2 className="text-3xl font-black text-slate-800 tracking-tighter uppercase">Live Tracking Hub</h2>
-          <p className="text-slate-500 font-bold uppercase text-[10px] tracking-widest mt-1">Tracking, Camera Monitoring & Parent Access Controls</p>
-        </div>
+        {activeTab === 'tracking' ? (
+          <div>
+            <h2 className="text-3xl font-black text-slate-800 tracking-tighter uppercase">Live Tracking Hub</h2>
+            <p className="text-slate-500 font-bold uppercase text-[10px] tracking-widest mt-1">Tracking, Camera Monitoring & Parent Access Controls</p>
+          </div>
+        ) : <div />}
         <div className="flex items-center gap-2 bg-white p-1 rounded-2xl border border-slate-200 w-fit">
           <button
             onClick={() => setActiveTab('tracking')}
