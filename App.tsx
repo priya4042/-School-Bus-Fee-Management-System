@@ -29,7 +29,6 @@ import Privacy from './pages/Privacy';
 import Terms from './pages/Terms';
 import ForgotPassword from './pages/ForgotPassword';
 
-import BoardingLocations from './pages/parent/BoardingLocations';
 import BusCamera from './pages/parent/BusCamera';
 import FeeHistory from './pages/parent/FeeHistory';
 import ParentNotifications from './pages/parent/Notifications';
@@ -68,7 +67,6 @@ const getAllowedTabs = (user?: User | null) => {
       'Dashboard',
       'Attendance History',
       'Routes',
-      'Boarding Points',
       ...(trackingEnabled ? ['Live Tracking'] : []),
       ...(cameraEnabled ? ['Bus Camera'] : []),
       'Payments',
@@ -156,7 +154,6 @@ const App: React.FC = () => {
         case 'Attendance History': return <AttendanceHistory user={user!} />;
         case 'Live Tracking': return trackingEnabled ? <ParentLiveTracking user={user!} /> : <ParentDashboard user={user!} />;
         case 'Routes': return <ParentRoutes user={user!} />;
-        case 'Boarding Points': return <BoardingLocations user={user!} />;
         case 'Bus Camera': return (user as any).preferences?.camera === true ? <BusCamera user={user!} /> : <ParentDashboard user={user!} />;
         case 'Payments': return <FeeHistory user={user!} />;
         case 'Fees': return <FeeHistory user={user!} />;
@@ -214,6 +211,7 @@ const App: React.FC = () => {
               <Topbar
                 user={user}
                 onMenuClick={() => setIsSidebarOpen(true)}
+                onNavigateTab={setActiveTab}
                 onOpenNotifications={(notificationId) => {
                   setSelectedNotificationId(notificationId);
                   setActiveTab('Notifications');

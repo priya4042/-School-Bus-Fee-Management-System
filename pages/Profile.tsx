@@ -7,6 +7,8 @@ import { showToast } from '../lib/swal';
 import api from '../lib/api';
 import { ENV } from '../config/env';
 
+const sanitizeMetaValue = (value: string) => String(value || '').replace(/[\[\]]/g, '').trim();
+
 const Profile: React.FC<{ user: User }> = ({ user }) => {
   const { setUser } = useAuthStore();
   const [preferences, setPreferences] = useState({
@@ -41,28 +43,67 @@ const Profile: React.FC<{ user: User }> = ({ user }) => {
     if (!user) return;
     setUpdating(true);
     try {
+      const currentName = (user.fullName || user.full_name || '').trim();
+      const requestedName = (profileData.fullName || '').trim();
+      const nameChanged = requestedName.length > 0 && requestedName !== currentName;
+
+      const profileUpdatePayload: Record<string, any> = {
+        phone_number: profileData.phoneNumber,
+        secondary_phone_number: profileData.secondaryPhoneNumber,
+        fleet_security_token: profileData.fleetSecurityToken,
+        location: profileData.location,
+      };
+
+      if (user.role !== UserRole.PARENT && nameChanged) {
+        profileUpdatePayload.full_name = requestedName;
+      }
+
       const { error } = await supabase
         .from('profiles')
-        .update({
-          full_name: profileData.fullName || user.fullName,
-          phone_number: profileData.phoneNumber,
-          secondary_phone_number: profileData.secondaryPhoneNumber,
-          fleet_security_token: profileData.fleetSecurityToken,
-          location: profileData.location
-        })
+        .update(profileUpdatePayload)
         .eq('id', user.id);
 
       if (error) throw error;
 
+      if (user.role === UserRole.PARENT && nameChanged) {
+        const { data: admins, error: adminError } = await supabase
+          .from('profiles')
+          .select('id')
+          .in('role', ['ADMIN', 'SUPER_ADMIN']);
+
+        if (adminError) throw adminError;
+
+        const adminNotifs = (admins || []).map((admin: any) => ({
+          user_id: admin.id,
+          title: 'Parent Name Change Request',
+          message: `[PROFILE_UPDATE_REQUEST][PARENT_ID:${sanitizeMetaValue(String(user.id))}][CURRENT_NAME:${sanitizeMetaValue(currentName || 'N/A')}][REQUESTED_NAME:${sanitizeMetaValue(requestedName)}][PARENT_EMAIL:${sanitizeMetaValue(user.email || '')}]`,
+          type: 'PROFILE_UPDATE_REQUEST',
+          is_read: false,
+        }));
+
+        if (adminNotifs.length > 0) {
+          const { error: notifError } = await supabase.from('notifications').insert(adminNotifs);
+          if (notifError) throw notifError;
+        }
+      }
+
       setUser({
         ...user,
+        full_name: user.role === UserRole.PARENT && nameChanged ? currentName : (requestedName || currentName),
+        fullName: user.role === UserRole.PARENT && nameChanged ? currentName : (requestedName || currentName),
         phoneNumber: profileData.phoneNumber,
+        phone_number: profileData.phoneNumber,
         secondaryPhoneNumber: profileData.secondaryPhoneNumber,
         fleetSecurityToken: profileData.fleetSecurityToken,
+        fleet_security_token: profileData.fleetSecurityToken,
         location: profileData.location
       });
 
-      setMessage('Profile updated successfully');
+      if (user.role === UserRole.PARENT && nameChanged) {
+        setMessage('Profile updated. Name change request sent to admin for approval.');
+      } else {
+        setMessage('Profile updated successfully');
+      }
       setTimeout(() => setMessage(''), 3000);
     } catch (err: any) {
       console.error(err);

@@ -42,7 +42,6 @@ const Sidebar: React.FC<SidebarProps> = ({ user, onLogout, activeTab, setActiveT
     { name: 'Attendance History', icon: 'fa-clipboard-check' },
     { name: 'Routes', icon: 'fa-route' },
     ...(parentTrackingEnabled ? [{ name: 'Live Tracking', icon: 'fa-location-dot' }] : []),
-    { name: 'Boarding Points', icon: 'fa-map-marker-alt' },
     ...(parentCameraEnabled ? [{ name: 'Bus Camera', icon: 'fa-video' }] : []),
     { name: 'Payments', icon: 'fa-credit-card' },
     { name: 'Notifications', icon: 'fa-bell' },

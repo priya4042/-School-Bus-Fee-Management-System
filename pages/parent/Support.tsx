@@ -15,6 +15,46 @@ const Support: React.FC<{ user: User }> = ({ user }) => {
   const [ticketPriority, setTicketPriority] = useState<'LOW' | 'MEDIUM' | 'HIGH'>('MEDIUM');
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
+  const [activeDocument, setActiveDocument] = useState<null | 'manual' | 'safety' | 'terms' | 'privacy'>(null);
+
+  const docDetails: Record<'manual' | 'safety' | 'terms' | 'privacy', { title: string; sections: Array<{ heading: string; body: string }> }> = {
+    manual: {
+      title: 'User Manual',
+      sections: [
+        { heading: 'Dashboard Basics', body: 'Open Dashboard to see family summary, live tracking status, and pending dues for linked children. Use child chips to switch context quickly.' },
+        { heading: 'Paying Fees', body: 'Go to Payments, select your child, review billing period and overdue months, then tap Pay Now for each unlocked due. Download receipt after success.' },
+        { heading: 'Attendance & Alerts', body: 'Attendance History shows pickup/drop records. Notifications panel shows school announcements, payment updates, and delay alerts.' },
+        { heading: 'Profile & Support', body: 'Use Profile to update contact details. Full name updates require admin approval. Use Support ticket form for route, payment, or access issues.' },
+      ],
+    },
+    safety: {
+      title: 'Safety Policy',
+      sections: [
+        { heading: 'Student Pickup Safety', body: 'Parents must be available at registered boarding points before scheduled arrival. Students should avoid road crossing without guardian supervision.' },
+        { heading: 'Transport Compliance', body: 'Only authorized drivers and assigned buses can operate active routes. Emergency alerts are prioritized and cannot be disabled from preferences.' },
+        { heading: 'Data & Access Safety', body: 'Do not share account credentials or security tokens. Report suspicious access immediately through support channels.' },
+        { heading: 'Incident Reporting', body: 'Any delay, route deviation, or safety concern should be reported via support ticket with child name, route, time, and incident details.' },
+      ],
+    },
+    terms: {
+      title: 'Terms of Service',
+      sections: [
+        { heading: 'Acceptance of Terms', body: 'By using BusWay Pro, you agree to platform policies and all applicable school transport regulations.' },
+        { heading: 'Use License', body: 'The app is intended for personal school transport and fee management use. Misuse or unauthorized access attempts are prohibited.' },
+        { heading: 'Payment Terms', body: 'Fees are processed via configured payment gateway. Late fees and due schedules are applied by system policy configured by school administration.' },
+        { heading: 'Termination', body: 'Access may be suspended for policy violations, safety threats, fraud attempts, or repeated misuse of notification/tracking systems.' },
+      ],
+    },
+    privacy: {
+      title: 'Privacy Policy',
+      sections: [
+        { heading: 'Information Collection', body: 'The platform stores parent profile details, student linkage data, payment records, and support interactions required for service delivery.' },
+        { heading: 'Location Data', body: 'Live route location is shown only to authorized users and used solely for school transport operations and safety awareness.' },
+        { heading: 'Data Security', body: 'Authentication, role controls, and secure transport methods are used to protect account and transaction data.' },
+        { heading: 'Deletion & Retention', body: 'Users can request account deletion. Mandatory school and compliance records may be retained as per institutional policies.' },
+      ],
+    },
+  };
 
   const faqs = [
     { q: 'How do I pay my fees online?', a: 'Go to "Fee History" in the sidebar and click "Pay Now" on any pending due. We support UPI, Cards, and Netbanking through our secure payment system.' },
@@ -310,13 +350,14 @@ const Support: React.FC<{ user: User }> = ({ user }) => {
       {/* Quick links */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
         {[
-          { title: 'User Manual', icon: <FileText />, color: 'text-blue-500' },
-          { title: 'Safety Policy', icon: <Shield />, color: 'text-emerald-500' },
-          { title: 'Terms of Service', icon: <Clock />, color: 'text-slate-500' },
-          { title: 'Privacy Policy', icon: <AlertCircle />, color: 'text-red-500' },
+          { id: 'manual', title: 'User Manual', icon: <FileText />, color: 'text-blue-500' },
+          { id: 'safety', title: 'Safety Policy', icon: <Shield />, color: 'text-emerald-500' },
+          { id: 'terms', title: 'Terms of Service', icon: <Clock />, color: 'text-slate-500' },
+          { id: 'privacy', title: 'Privacy Policy', icon: <AlertCircle />, color: 'text-red-500' },
         ].map((doc, idx) => (
           <button
             key={idx}
+            onClick={() => setActiveDocument(doc.id as 'manual' | 'safety' | 'terms' | 'privacy')}
             className="bg-white p-6 rounded-[2rem] border border-slate-100 shadow-sm flex items-center justify-between group hover:bg-slate-50 transition-all"
           >
             <div className="flex items-center gap-4">
@@ -329,6 +370,30 @@ const Support: React.FC<{ user: User }> = ({ user }) => {
           </button>
         ))}
       </div>
+
+      {activeDocument && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[2100] flex items-center justify-center p-4">
+          <div className="bg-white rounded-[2.5rem] p-8 md:p-10 max-w-3xl w-full max-h-[90vh] overflow-y-auto shadow-2xl">
+            <div className="flex items-center justify-between mb-6">
+              <h3 className="text-2xl font-black text-slate-900 uppercase tracking-tight">{docDetails[activeDocument].title}</h3>
+              <button
+                onClick={() => setActiveDocument(null)}
+                className="w-10 h-10 bg-slate-100 rounded-xl flex items-center justify-center text-slate-500 hover:bg-slate-200 transition-colors"
+              >
+                ✕
+              </button>
+            </div>
+            <div className="space-y-6">
+              {docDetails[activeDocument].sections.map((section) => (
+                <section key={section.heading} className="p-5 rounded-2xl border border-slate-100 bg-slate-50/60">
+                  <h4 className="text-sm font-black text-slate-800 uppercase tracking-widest mb-2">{section.heading}</h4>
+                  <p className="text-[12px] text-slate-600 font-semibold leading-relaxed">{section.body}</p>
+                </section>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

@@ -1,4 +1,5 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
+import { verifyWebhookSignature, recordSuccessfulPayment } from '../../../lib/server/payments/paymentCore';
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   res.setHeader('Access-Control-Allow-Credentials', 'true');
@@ -28,8 +29,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   try {
-    const { verifyWebhookSignature, recordSuccessfulPayment } = await import('../../../lib/server/payments/paymentCore');
-
     const valid = verifyWebhookSignature(payloadString, signature);
     if (!valid) {
       console.warn("[Razorpay Webhook] Invalid signature");

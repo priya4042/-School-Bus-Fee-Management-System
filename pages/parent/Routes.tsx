@@ -6,6 +6,7 @@ interface ParentRouteStudent {
   id: string;
   full_name: string;
   admission_number: string;
+  boarding_point?: string;
   route_id?: string;
   routes?: {
     route_name?: string;
@@ -29,7 +30,7 @@ const ParentRoutes: React.FC<{ user: User }> = ({ user }) => {
       try {
         const { data, error } = await supabase
           .from('students')
-          .select('id, full_name, admission_number, route_id, routes(route_name, code, start_point, end_point), buses(bus_number, plate)')
+          .select('id, full_name, admission_number, boarding_point, route_id, routes(route_name, code, start_point, end_point), buses(bus_number, plate)')
           .eq('parent_id', user.id)
           .order('full_name', { ascending: true });
 
@@ -112,6 +113,11 @@ const ParentRoutes: React.FC<{ user: User }> = ({ user }) => {
                     <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1">Plate</p>
                     <p className="text-xs font-bold text-slate-700 uppercase">{bus?.plate || 'N/A'}</p>
                   </div>
+                </div>
+
+                <div className="p-4 bg-blue-50 rounded-2xl border border-blue-100">
+                  <p className="text-[8px] font-black text-blue-400 uppercase tracking-widest mb-1">Boarding Point</p>
+                  <p className="text-xs font-bold text-blue-800">{student.boarding_point || 'Not Set'}</p>
                 </div>
               </div>
             </div>

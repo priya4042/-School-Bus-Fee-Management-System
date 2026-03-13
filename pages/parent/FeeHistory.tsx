@@ -10,7 +10,7 @@ import PaymentPortal from '../../components/PaymentPortal';
 const FeeHistory: React.FC<{ user: User }> = ({ user }) => {
   const [dues, setDues] = useState<MonthlyDue[]>([]);
   const [students, setStudents] = useState<Student[]>([]);
-  const [selectedStudent, setSelectedStudent] = useState<string>('all');
+  const [selectedStudent, setSelectedStudent] = useState<string>('');
   const [searchQuery, setSearchQuery] = useState('');
   const [loading, setLoading] = useState(true);
 
@@ -36,6 +36,9 @@ const FeeHistory: React.FC<{ user: User }> = ({ user }) => {
       if (studentsError) throw studentsError;
       const myStudents = studentsData || [];
       setStudents(myStudents);
+      if (!selectedStudent && myStudents.length > 0) {
+        setSelectedStudent(String(myStudents[0].id));
+      }
 
       if (myStudents.length === 0) {
         setDues([]);
@@ -64,10 +67,11 @@ const FeeHistory: React.FC<{ user: User }> = ({ user }) => {
     fetchData();
   }, [user.id, paymentState.step]);
 
-  const filteredDues = (selectedStudent === 'all'
-    ? dues
-    : dues.filter((d) => d.student_id === selectedStudent)
-  ).filter((d) => {
+  const studentFilteredDues = selectedStudent
+    ? dues.filter((d) => String(d.student_id) === String(selectedStudent))
+    : dues;
+
+  const filteredDues = studentFilteredDues.filter((d) => {
     if (!searchQuery) return true;
     const q = searchQuery.toLowerCase();
     const monthName = MONTHS[(d.month || 1) - 1]?.toLowerCase() || '';
@@ -77,6 +81,13 @@ const FeeHistory: React.FC<{ user: User }> = ({ user }) => {
     if (a.year !== b.year) return a.year - b.year;
     return a.month - b.month;
   });
+
+  const selectedStudentData = students.find((s) => String(s.id) === String(selectedStudent));
+  const selectedStudentDues = dues
+    .filter((d) => String(d.student_id) === String(selectedStudent))
+    .sort((a, b) => (a.year * 12 + a.month) - (b.year * 12 + b.month));
+  const billingStart = selectedStudentDues[0];
+  const billingEnd = selectedStudentDues[selectedStudentDues.length - 1];
 
   const stats = {
     totalPaid: dues
@@ -187,7 +198,6 @@ const FeeHistory: React.FC<{ user: User }> = ({ user }) => {
               onChange={(e) => setSelectedStudent(e.target.value)}
               className="bg-transparent border-none font-black text-xs uppercase tracking-widest focus:ring-0 cursor-pointer"
             >
-              <option value="all">All Students</option>
               {students.map((s) => (
                 <option key={s.id} value={s.id}>
                   {s.full_name}
@@ -209,6 +219,17 @@ const FeeHistory: React.FC<{ user: User }> = ({ user }) => {
             />
           </div>
         </div>
+
+        {selectedStudentData && (
+          <div className="px-8 py-5 border-b border-slate-50 bg-primary/5 flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+            <p className="text-[10px] font-black text-primary uppercase tracking-widest">
+              Child: {selectedStudentData.full_name}
+            </p>
+            <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">
+              Billing Period: {billingStart ? `${MONTHS[(billingStart.month || 1) - 1]} ${billingStart.year}` : 'N/A'} to {billingEnd ? `${MONTHS[(billingEnd.month || 1) - 1]} ${billingEnd.year}` : 'N/A'}
+            </p>
+          </div>
+        )}
 
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse">

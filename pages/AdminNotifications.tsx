@@ -17,6 +17,71 @@ const TITLE_MAP: Record<string, string> = {
   update: 'Route Update',
 };
 
+interface NameChangeRequest {
+  id: string;
+  parentId: string;
+  currentName: string;
+  requestedName: string;
+  parentEmail: string;
+  createdAt: string;
+}
+
+interface NameChangeReviewHistory {
+  id: string;
+  parentId: string;
+  currentName: string;
+  requestedName: string;
+  parentEmail: string;
+  action: 'APPROVED' | 'REJECTED';
+  reviewedAt: string;
+}
+
+const extractMeta = (message: string, key: string) => {
+  const match = message?.match(new RegExp(`\\[${key}:([^\\]]+)\\]`));
+  return match?.[1]?.trim() || '';
+};
+
+const parseNameChangeRequest = (row: any): NameChangeRequest | null => {
+  const message = String(row?.message || '');
+  if (!message.includes('[PROFILE_UPDATE_REQUEST]')) return null;
+
+  const parentId = extractMeta(message, 'PARENT_ID');
+  const requestedName = extractMeta(message, 'REQUESTED_NAME');
+  if (!parentId || !requestedName) return null;
+
+  return {
+    id: String(row.id),
+    parentId,
+    currentName: extractMeta(message, 'CURRENT_NAME') || 'N/A',
+    requestedName,
+    parentEmail: extractMeta(message, 'PARENT_EMAIL') || 'N/A',
+    createdAt: String(row.created_at || ''),
+  };
+};
+
+const parseNameChangeReviewHistory = (row: any): NameChangeReviewHistory | null => {
+  const message = String(row?.message || '');
+  if (!message.includes('[PROFILE_UPDATE_REVIEW]')) return null;
+
+  const parentId = extractMeta(message, 'PARENT_ID');
+  const requestedName = extractMeta(message, 'REQUESTED_NAME');
+  const action = extractMeta(message, 'ACTION').toUpperCase();
+
+  if (!parentId || !requestedName || (action !== 'APPROVED' && action !== 'REJECTED')) {
+    return null;
+  }
+
+  return {
+    id: String(row.id),
+    parentId,
+    currentName: extractMeta(message, 'CURRENT_NAME') || 'N/A',
+    requestedName,
+    parentEmail: extractMeta(message, 'PARENT_EMAIL') || 'N/A',
+    action: action as 'APPROVED' | 'REJECTED',
+    reviewedAt: String(row.created_at || ''),
+  };
+};
+
 const AdminNotifications: React.FC<{ focusNotificationId?: string; onFocusHandled?: () => void }> = ({ focusNotificationId, onFocusHandled }) => {
   const [msgType, setMsgType] = useState('announcement');
   const [message, setMessage] = useState('');
@@ -25,8 +90,19 @@ const AdminNotifications: React.FC<{ focusNotificationId?: string; onFocusHandle
   const [recentBroadcasts, setRecentBroadcasts] = useState<any[]>([]);
   const [paymentConfirmations, setPaymentConfirmations] = useState<any[]>([]);
   const [routes, setRoutes] = useState<any[]>([]);
+  const [currentAdminId, setCurrentAdminId] = useState<string>('');
+  const [nameChangeRequests, setNameChangeRequests] = useState<NameChangeRequest[]>([]);
+  const [nameChangeHistory, setNameChangeHistory] = useState<NameChangeReviewHistory[]>([]);
   const [highlightedId, setHighlightedId] = useState<string | null>(null);
   const { downloadReceipt, downloading } = useReceipts();
+
+  useEffect(() => {
+    const loadCurrentAdmin = async () => {
+      const { data } = await supabase.auth.getUser();
+      setCurrentAdminId(String(data?.user?.id || ''));
+    };
+    loadCurrentAdmin();
+  }, []);
 
   const extractReceiptMeta = (message: string) => {
     const dueMatch = message?.match(/\[DUE_ID:([^\]]+)\]/);
@@ -42,9 +118,9 @@ const AdminNotifications: React.FC<{ focusNotificationId?: string; onFocusHandle
       const [notifRes, routesRes] = await Promise.all([
         supabase
           .from('notifications')
-          .select('id, title, message, type, created_at')
+          .select('id, title, message, type, is_read, created_at')
           .order('created_at', { ascending: false })
-          .limit(80),
+          .limit(120),
         supabase.from('routes').select('id, route_name'),
       ]);
 
@@ -63,8 +139,21 @@ const AdminNotifications: React.FC<{ focusNotificationId?: string; onFocusHandle
         .filter(n => n.type === 'PAYMENT_SUCCESS' || n.title?.toLowerCase().includes('payment'))
         .slice(0, 10);
 
+      const profileRequests = source
+        .filter((n) => n.is_read === false)
+        .map(parseNameChangeRequest)
+        .filter(Boolean)
+        .slice(0, 20) as NameChangeRequest[];
+
+      const profileHistory = source
+        .map(parseNameChangeReviewHistory)
+        .filter(Boolean)
+        .slice(0, 20) as NameChangeReviewHistory[];
+
       setRecentBroadcasts(broadcasts);
       setPaymentConfirmations(confirmations);
+      setNameChangeRequests(profileRequests);
+      setNameChangeHistory(profileHistory);
       setRoutes(routesRes.data || []);
     };
     fetchData();
@@ -128,9 +217,9 @@ const AdminNotifications: React.FC<{ focusNotificationId?: string; onFocusHandle
       // Refresh recent broadcasts
       const { data: fresh } = await supabase
         .from('notifications')
-        .select('id, title, message, type, created_at')
+        .select('id, title, message, type, is_read, created_at')
         .order('created_at', { ascending: false })
-        .limit(80);
+        .limit(120);
       const seen = new Set<string>();
       const allFresh = fresh || [];
       const updated = allFresh.filter(n => {
@@ -142,8 +231,19 @@ const AdminNotifications: React.FC<{ focusNotificationId?: string; onFocusHandle
       const confirmations = allFresh
         .filter(n => n.type === 'PAYMENT_SUCCESS' || n.title?.toLowerCase().includes('payment'))
         .slice(0, 10);
+      const profileRequests = allFresh
+        .filter((n) => n.is_read === false)
+        .map(parseNameChangeRequest)
+        .filter(Boolean)
+        .slice(0, 20) as NameChangeRequest[];
+      const profileHistory = allFresh
+        .map(parseNameChangeReviewHistory)
+        .filter(Boolean)
+        .slice(0, 20) as NameChangeReviewHistory[];
       setRecentBroadcasts(updated);
       setPaymentConfirmations(confirmations);
+      setNameChangeRequests(profileRequests);
+      setNameChangeHistory(profileHistory);
     } catch (err: any) {
       closeSwal();
       showAlert('Broadcast Failed', err.message || 'Failed to send broadcast. Please try again.', 'error');
@@ -159,6 +259,73 @@ const AdminNotifications: React.FC<{ focusNotificationId?: string; onFocusHandle
     WARNING: 'text-amber-500',
     DANGER: 'text-red-500',
     SUCCESS: 'text-emerald-500',
+  };
+
+  const handleResolveNameRequest = async (request: NameChangeRequest, action: 'approve' | 'reject') => {
+    try {
+      showLoading(action === 'approve' ? 'Approving name update...' : 'Rejecting request...');
+
+      if (action === 'approve') {
+        const { error: updateError } = await supabase
+          .from('profiles')
+          .update({ full_name: request.requestedName })
+          .eq('id', request.parentId);
+
+        if (updateError) throw updateError;
+
+        await supabase.from('notifications').insert({
+          user_id: request.parentId,
+          title: 'Profile Name Update Approved',
+          message: `Your requested name update is approved. New name: ${request.requestedName}`,
+          type: 'SUCCESS',
+          is_read: false,
+        });
+      } else {
+        await supabase.from('notifications').insert({
+          user_id: request.parentId,
+          title: 'Profile Name Update Rejected',
+          message: `Your requested name update to "${request.requestedName}" was rejected. Please contact admin support if needed.`,
+          type: 'WARNING',
+          is_read: false,
+        });
+      }
+
+      if (currentAdminId) {
+        await supabase.from('notifications').insert({
+          user_id: currentAdminId,
+          title: 'Parent Name Request Reviewed',
+          message: `[PROFILE_UPDATE_REVIEW][ACTION:${action === 'approve' ? 'APPROVED' : 'REJECTED'}][PARENT_ID:${request.parentId}][CURRENT_NAME:${request.currentName}][REQUESTED_NAME:${request.requestedName}][PARENT_EMAIL:${request.parentEmail}]`,
+          type: 'INFO',
+          is_read: false,
+        });
+      }
+
+      await supabase
+        .from('notifications')
+        .update({ is_read: true })
+        .eq('id', request.id as any);
+
+      setNameChangeRequests((prev) => prev.filter((item) => item.id !== request.id));
+      const resolvedAction: 'APPROVED' | 'REJECTED' = action === 'approve' ? 'APPROVED' : 'REJECTED';
+
+      setNameChangeHistory((prev) => [
+        {
+          id: `local-${request.id}`,
+          parentId: request.parentId,
+          currentName: request.currentName,
+          requestedName: request.requestedName,
+          parentEmail: request.parentEmail,
+          action: resolvedAction,
+          reviewedAt: new Date().toISOString(),
+        },
+        ...prev,
+      ].slice(0, 20));
+      closeSwal();
+      showToast(action === 'approve' ? 'Name updated successfully.' : 'Request rejected.', action === 'approve' ? 'success' : 'info');
+    } catch (err: any) {
+      closeSwal();
+      showAlert('Action Failed', err?.message || 'Unable to process name update request.', 'error');
+    }
   };
 
   return (
@@ -237,6 +404,71 @@ const AdminNotifications: React.FC<{ focusNotificationId?: string; onFocusHandle
         </div>
 
         <div className="space-y-8">
+          <div className="bg-white p-8 rounded-[2.5rem] border border-slate-200 shadow-sm">
+            <h4 className="font-black text-slate-800 uppercase tracking-widest text-[10px] mb-8 flex items-center gap-3">
+              <i className="fas fa-user-check text-primary"></i>
+              Parent Name Requests
+            </h4>
+            {nameChangeRequests.length === 0 ? (
+              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest text-center py-6">No pending name requests</p>
+            ) : (
+              <div className="space-y-6">
+                {nameChangeRequests.map((item) => (
+                  <div key={item.id} className="pb-6 border-b border-slate-50 last:border-0 last:pb-0 rounded-2xl px-3 py-2 -mx-3">
+                    <p className="text-xs font-black text-slate-800 tracking-tight leading-snug">{item.currentName} → {item.requestedName}</p>
+                    <p className="text-[10px] text-slate-500 font-bold mt-2 leading-relaxed">{item.parentEmail}</p>
+                    <div className="flex items-center justify-between mt-3 gap-3">
+                      <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest">
+                        {new Date(item.createdAt).toLocaleString('en-IN', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })}
+                      </span>
+                      <div className="flex items-center gap-2">
+                        <button
+                          onClick={() => handleResolveNameRequest(item, 'reject')}
+                          className="text-[9px] font-black uppercase tracking-widest px-3 py-2 rounded-lg border border-red-100 text-red-600 hover:bg-red-50"
+                        >
+                          Reject
+                        </button>
+                        <button
+                          onClick={() => handleResolveNameRequest(item, 'approve')}
+                          className="text-[9px] font-black uppercase tracking-widest px-3 py-2 rounded-lg bg-primary text-white hover:bg-blue-800"
+                        >
+                          Confirm
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          <div className="bg-white p-8 rounded-[2.5rem] border border-slate-200 shadow-sm">
+            <h4 className="font-black text-slate-800 uppercase tracking-widest text-[10px] mb-8 flex items-center gap-3">
+              <i className="fas fa-clipboard-check text-primary"></i>
+              Name Request History
+            </h4>
+            {nameChangeHistory.length === 0 ? (
+              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest text-center py-6">No reviewed requests yet</p>
+            ) : (
+              <div className="space-y-6">
+                {nameChangeHistory.map((item) => (
+                  <div key={item.id} className="pb-6 border-b border-slate-50 last:border-0 last:pb-0 rounded-2xl px-3 py-2 -mx-3">
+                    <p className="text-xs font-black text-slate-800 tracking-tight leading-snug">{item.currentName} → {item.requestedName}</p>
+                    <div className="flex items-center gap-2 mt-2">
+                      <span className={`text-[8px] font-black uppercase tracking-widest px-2 py-1 rounded-full ${item.action === 'APPROVED' ? 'bg-emerald-50 text-emerald-600' : 'bg-red-50 text-red-600'}`}>
+                        {item.action}
+                      </span>
+                      <span className="text-[9px] text-slate-500 font-bold">{item.parentEmail}</span>
+                    </div>
+                    <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest mt-2 inline-block">
+                      {new Date(item.reviewedAt).toLocaleString('en-IN', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
           <div className="bg-white p-8 rounded-[2.5rem] border border-slate-200 shadow-sm">
             <h4 className="font-black text-slate-800 uppercase tracking-widest text-[10px] mb-8 flex items-center gap-3">
               <i className="fas fa-receipt text-primary"></i>

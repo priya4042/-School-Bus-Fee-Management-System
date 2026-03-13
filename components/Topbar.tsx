@@ -9,17 +9,24 @@ interface TopbarProps {
   user: User;
   onMenuClick?: () => void;
   onOpenNotifications?: (notificationId?: string) => void;
+  onNavigateTab?: (tab: string) => void;
 }
 
-const Topbar: React.FC<TopbarProps> = ({ user, onMenuClick, onOpenNotifications }) => {
+const Topbar: React.FC<TopbarProps> = ({ user, onMenuClick, onOpenNotifications, onNavigateTab }) => {
+  const { setUser } = useAuthStore();
   const [showNotifications, setShowNotifications] = useState(false);
+  const [showUserMenu, setShowUserMenu] = useState(false);
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const modalRef = useRef<HTMLDivElement>(null);
+  const userMenuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
       if (modalRef.current && !modalRef.current.contains(event.target as Node)) {
         setShowNotifications(false);
+      }
+      if (userMenuRef.current && !userMenuRef.current.contains(event.target as Node)) {
+        setShowUserMenu(false);
       }
     }
 
@@ -100,12 +107,37 @@ const Topbar: React.FC<TopbarProps> = ({ user, onMenuClick, onOpenNotifications 
     };
     window.addEventListener(PAYMENT_EVENT, handlePayment);
 
+    const profileChannel = supabase
+      .channel(`topbar-profile-${user?.id}`)
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'profiles',
+          filter: `id=eq.${user?.id}`,
+        },
+        (payload: any) => {
+          if (!payload?.new) return;
+          setUser({
+            ...user,
+            full_name: payload.new.full_name,
+            fullName: payload.new.full_name,
+            phone_number: payload.new.phone_number,
+            phoneNumber: payload.new.phone_number,
+            location: payload.new.location,
+          });
+        }
+      )
+      .subscribe();
+
     return () => {
       supabase.removeChannel(channel);
+      supabase.removeChannel(profileChannel);
         window.removeEventListener(ARRIVAL_EVENT, handleArrival);
         window.removeEventListener(PAYMENT_EVENT, handlePayment);
     };
-  }, [user?.id]);
+  }, [user?.id, user?.full_name, user?.fullName, user?.phone_number, user?.phoneNumber, user?.location, setUser]);
 
   const unreadCount = notifications.filter(n => !n.read).length;
 
@@ -123,6 +155,11 @@ const Topbar: React.FC<TopbarProps> = ({ user, onMenuClick, onOpenNotifications 
 
     setShowNotifications(false);
     onOpenNotifications?.(String(notification.id));
+  };
+
+  const handleNavigate = (tab: string) => {
+    setShowUserMenu(false);
+    onNavigateTab?.(tab);
   };
 
   const getDisplayName = () => {
@@ -204,16 +241,37 @@ const Topbar: React.FC<TopbarProps> = ({ user, onMenuClick, onOpenNotifications 
         
         <div className="h-10 w-px bg-slate-100 hidden md:block"></div>
         
-        <div className="flex items-center gap-3">
+        <div ref={userMenuRef} className="flex items-center gap-3 relative">
           <div className="text-right hidden md:block">
             <p className="text-xs font-black text-slate-800 leading-none">{getDisplayName()}</p>
             <p className="text-[9px] text-primary font-black uppercase tracking-widest mt-1.5">
               {user?.role === UserRole.ADMIN || user?.role === UserRole.SUPER_ADMIN ? 'Bus admin' : user?.role?.replace('_', ' ')}
             </p>
           </div>
-          <div className="w-10 h-10 md:w-12 md:h-12 bg-slate-900 text-white rounded-2xl flex items-center justify-center font-black text-sm shadow-xl hover:rotate-6 transition-transform cursor-pointer">
+          <button
+            onClick={() => setShowUserMenu((prev) => !prev)}
+            className="w-10 h-10 md:w-12 md:h-12 bg-slate-900 text-white rounded-2xl flex items-center justify-center font-black text-sm shadow-xl hover:rotate-6 transition-transform cursor-pointer"
+          >
             {getDisplayName().charAt(0)}
-          </div>
+          </button>
+          {showUserMenu && (
+            <div className="absolute right-0 top-14 md:top-16 w-56 bg-white rounded-2xl border border-slate-100 shadow-2xl p-2 z-50">
+              {user?.role === UserRole.PARENT && (
+                <button
+                  onClick={() => handleNavigate('Profile')}
+                  className="w-full text-left px-4 py-3 rounded-xl hover:bg-slate-50 text-[11px] font-black uppercase tracking-widest text-slate-700"
+                >
+                  My Profile
+                </button>
+              )}
+              <button
+                onClick={() => handleNavigate('Notifications')}
+                className="w-full text-left px-4 py-3 rounded-xl hover:bg-slate-50 text-[11px] font-black uppercase tracking-widest text-slate-700"
+              >
+                Notifications
+              </button>
+            </div>
+          )}
         </div>
       </div>
     </header>

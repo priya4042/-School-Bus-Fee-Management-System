@@ -71,6 +71,8 @@
 
     const normalizeBase = (value: string) => String(value || '').trim().replace(/\/+$/, '');
 
+    const isHttpUrl = (value: string) => /^https?:\/\//i.test(String(value || '').trim());
+
     const isPlaceholderBase = (value: string) => {
       const normalized = normalizeBase(value).toLowerCase();
       if (!normalized) return false;
@@ -89,10 +91,11 @@
       const explicitPaymentApi = isPlaceholderBase(explicitPaymentApiRaw)
         ? ''
         : explicitPaymentApiRaw;
+      const knownProd = 'https://school-bus-fee-management-system.vercel.app';
 
-      const ordered = [runtimeOrigin, explicitPaymentApi, appUrl]
+      const ordered = [runtimeOrigin, explicitPaymentApi, appUrl, knownProd]
         .map(normalizeBase)
-        .filter((base) => Boolean(base) && !isPlaceholderBase(base));
+        .filter((base) => Boolean(base) && isHttpUrl(base) && !isPlaceholderBase(base));
 
       return [...new Set(ordered)];
     };
@@ -143,11 +146,15 @@
       const parts = [message];
       if (code) parts.push(`Code: ${code}`);
       if (status) parts.push(`Status: ${status}`);
+      if (Array.isArray(err?.attemptedUrls) && err.attemptedUrls.length > 0) {
+        parts.push(`Tried: ${err.attemptedUrls.join(', ')}`);
+      }
       return parts.join(' | ');
     };
 
     const createOrder = async (dueId: string, amount: number, context: any) => {
       let lastError: any;
+      const attemptedUrls: string[] = [];
 
       const paymentBases = getPaymentApiBases();
       const payloadVariants = [
@@ -172,6 +179,7 @@
         for (const path of endpointPaths) {
           for (const payload of payloadVariants) {
             try {
+              attemptedUrls.push(`${normalizeBase(base)}${path}`);
               const order = await postPaymentApi(base, path, payload);
               if ((order as any)?.id) return order;
             } catch (err: any) {
@@ -181,6 +189,9 @@
         }
       }
 
+      if (lastError) {
+        (lastError as any).attemptedUrls = attemptedUrls;
+      }
       throw lastError || new Error('Unable to initialize payment order.');
     };
 
@@ -192,6 +203,7 @@
       };
 
       let lastError: any;
+      const attemptedUrls: string[] = [];
 
       const paymentBases = getPaymentApiBases();
       const endpointPaths = [
@@ -201,6 +213,7 @@
       for (const base of paymentBases) {
         for (const path of endpointPaths) {
           try {
+            attemptedUrls.push(`${normalizeBase(base)}${path}`);
             const response: any = await postPaymentApi(base, path, payload);
             const ok = response?.success === true || response?.status === 'ok' || response?.status === 'success';
             if (ok) return response;
@@ -210,6 +223,9 @@
         }
       }
 
+      if (lastError) {
+        (lastError as any).attemptedUrls = attemptedUrls;
+      }
       throw lastError || new Error('Payment verification failed.');
     };
 

@@ -1,4 +1,5 @@
 import { VercelRequest, VercelResponse } from '@vercel/node';
+import { verifyCheckoutSignature, recordSuccessfulPayment } from '../../../lib/server/payments/paymentCore';
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   res.setHeader('Access-Control-Allow-Credentials', 'true');
@@ -34,8 +35,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   try {
-    const { verifyCheckoutSignature, recordSuccessfulPayment } = await import('../../../lib/server/payments/paymentCore');
-
     const valid = verifyCheckoutSignature({
       razorpayOrderId: String(razorpay_order_id),
       razorpayPaymentId: String(razorpay_payment_id),
