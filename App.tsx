@@ -63,6 +63,7 @@ const getAllowedTabs = (user?: User | null) => {
       'Permissions',
       'Live Tracking',
       'Bus Camera',
+      'Support',
     ];
   }
 
@@ -152,6 +153,7 @@ const App: React.FC = () => {
         case 'Permissions': return <Permissions />;
         case 'Live Tracking': return <LiveTracking />;
         case 'Bus Camera': return <BusCameraAdmin />;
+        case 'Support': return <Support user={user!} />;
         default: return <AdminDashboard />;
       }
     } 
