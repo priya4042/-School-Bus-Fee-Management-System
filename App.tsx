@@ -7,7 +7,6 @@ import Register from './pages/Register';
 import AdminDashboard from './pages/AdminDashboard';
 import ParentDashboard from './pages/ParentDashboard';
 import Students from './pages/Students';
-import Fees from './pages/Fees';
 import Reports from './pages/Reports';
 import Routes from './pages/Routes';
 import Buses from './pages/Buses';
@@ -51,7 +50,6 @@ const getAllowedTabs = (user?: User | null) => {
       'Students',
       'Routes',
       'Buses',
-      'Fees',
       'Payments',
       'Reports',
       'Settings',
@@ -141,7 +139,6 @@ const App: React.FC = () => {
         case 'Students': return <Students />;
         case 'Routes': return <Routes />;
         case 'Buses': return <Buses />;
-        case 'Fees': return <Fees />;
         case 'Payments': return <AdminPayments />;
         case 'Reports': return <Reports />;
         case 'Settings': return <Settings />;

@@ -1,9 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import Modal from '../components/Modal.tsx';
 import { useStudents } from '../hooks/useStudents.ts';
 import { useRoutes } from '../hooks/useRoutes.ts';
 import { useBuses } from '../hooks/useBuses.ts';
 import { useFees } from '../hooks/useFees.ts';
+import FeeManagement from './Fees.tsx';
 import { MONTHS } from '../constants.ts';
 import { showConfirm, showToast, showAlert, showLoading, closeSwal } from '../lib/swal.ts';
 
@@ -13,18 +14,36 @@ const toMonthInputValue = (date: Date) => {
   return `${year}-${month}`;
 };
 
+const parseMonthInput = (value: string) => {
+  const [yearStr, monthStr] = String(value || '').split('-');
+  const year = Number(yearStr);
+  const month = Number(monthStr);
+  if (!year || !month || month < 1 || month > 12) return null;
+  return { year, month };
+};
+
+const buildDateFromPeriod = (period: string, day: number) => {
+  const parsed = parseMonthInput(period);
+  if (!parsed) return null;
+  const maxDay = new Date(parsed.year, parsed.month, 0).getDate();
+  const safeDay = Math.min(Math.max(1, day), maxDay);
+  const month = String(parsed.month).padStart(2, '0');
+  const dayStr = String(safeDay).padStart(2, '0');
+  return `${parsed.year}-${month}-${dayStr}`;
+};
+
 const Students: React.FC = () => {
   const { students, loading, addStudent, updateStudent, deleteStudent } = useStudents();
   const { routes } = useRoutes();
   const { buses } = useBuses();
-  const { dues, createFeesForYear } = useFees();
+  const { dues, createFee, createFeesForYear } = useFees();
   
   const [searchTerm, setSearchTerm] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isFeeModalOpen, setIsFeeModalOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [selectedStudentForFees, setSelectedStudentForFees] = useState<any>(null);
-  const [parents, setParents] = useState<any[]>([]);
+  const [activeSection, setActiveSection] = useState<'students' | 'fees'>('students');
   
   const [formData, setFormData] = useState({
     full_name: '',
@@ -42,7 +61,9 @@ const Students: React.FC = () => {
 
   const [feeSetupData, setFeeSetupData] = useState({
     enabled: true,
+    billingMode: 'yearly' as 'monthly' | 'yearly',
     amount: 0,
+    monthlyPeriod: toMonthInputValue(new Date()),
     startPeriod: toMonthInputValue(new Date()),
     endPeriod: toMonthInputValue(new Date(new Date().getFullYear(), new Date().getMonth() + 11, 1)),
     due_date_day: 10,
@@ -74,9 +95,60 @@ const Students: React.FC = () => {
     }
 
     if (result.success && !editingId && feeSetupData.enabled) {
+      if (!result.studentId) {
+        closeSwal();
+        resetForm();
+        showAlert('Student Added, Fee Setup Failed', 'Could not resolve student ID for automatic fee setup.', 'warning');
+        return;
+      }
+
+      const feeAmount = Number(feeSetupData.amount || formData.monthly_fee || 0);
+      if (feeSetupData.billingMode === 'monthly') {
+        const dueDate = buildDateFromPeriod(feeSetupData.monthlyPeriod, Number(feeSetupData.due_date_day || 10));
+        const lastDate = buildDateFromPeriod(feeSetupData.monthlyPeriod, Number(feeSetupData.last_date_day || 12));
+        const parsed = parseMonthInput(feeSetupData.monthlyPeriod);
+
+        if (!dueDate || !lastDate || !parsed) {
+          closeSwal();
+          resetForm();
+          showAlert('Student Added, Fee Setup Failed', 'Invalid monthly billing period selected.', 'warning');
+          return;
+        }
+
+        const monthlySuccess = await createFee({
+          student_id: result.studentId,
+          month: parsed.month,
+          year: parsed.year,
+          amount: feeAmount,
+          due_date: dueDate,
+          last_date: lastDate,
+          fine_after_days: Number(feeSetupData.fine_after_days || 5),
+          fine_per_day: Number(feeSetupData.fine_per_day || 50),
+        });
+
+        closeSwal();
+        resetForm();
+
+        if (!monthlySuccess) {
+          showAlert(
+            'Student Added, Monthly Fee Failed',
+            `${formData.full_name} was added, but monthly fee creation failed. You can create it from Students -> Fee Management.`,
+            'warning'
+          );
+          return;
+        }
+
+        showAlert(
+          'Success',
+          `${formData.full_name} added and monthly fee created for ${feeSetupData.monthlyPeriod}.`,
+          'success'
+        );
+        return;
+      }
+
       const feeResult = await createFeesForYear({
         student_id: result.studentId,
-        amount: Number(feeSetupData.amount || formData.monthly_fee || 0),
+        amount: feeAmount,
         due_date_day: Number(feeSetupData.due_date_day || 10),
         last_date_day: Number(feeSetupData.last_date_day || 12),
         fine_after_days: Number(feeSetupData.fine_after_days || 5),
@@ -133,7 +205,9 @@ const Students: React.FC = () => {
     });
     setFeeSetupData({
       enabled: true,
+      billingMode: 'yearly',
       amount: 0,
+      monthlyPeriod: toMonthInputValue(new Date()),
       startPeriod: toMonthInputValue(new Date()),
       endPeriod: toMonthInputValue(new Date(new Date().getFullYear(), new Date().getMonth() + 11, 1)),
       due_date_day: 10,
@@ -204,17 +278,41 @@ const Students: React.FC = () => {
     <div className="space-y-6">
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
         <div>
-          <h2 className="text-xl md:text-2xl font-black text-slate-800 tracking-tight uppercase">Student Directory</h2>
-          <p className="text-secondary font-bold uppercase text-[10px] tracking-widest">Global Enrollment & Fleet Mapping</p>
+          <h2 className="text-xl md:text-2xl font-black text-slate-800 tracking-tight uppercase">Student & Fee Management</h2>
+          <p className="text-secondary font-bold uppercase text-[10px] tracking-widest">Enrollment, Fleet Mapping, Monthly & Financial Year Fees</p>
         </div>
-        <button 
-          onClick={() => { resetForm(); setIsModalOpen(true); }}
-          className="bg-primary text-white px-8 py-3 rounded-2xl font-black text-[10px] uppercase tracking-widest flex items-center justify-center gap-3 hover:bg-blue-700 transition-all shadow-xl shadow-primary/20"
-        >
-          <i className="fas fa-plus"></i>
-          Register Student
-        </button>
+        <div className="flex gap-3">
+          <div className="flex p-1 bg-white border border-slate-200 rounded-2xl shadow-sm">
+            <button
+              onClick={() => setActiveSection('students')}
+              className={`px-5 py-2.5 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all ${activeSection === 'students' ? 'bg-primary text-white shadow-lg shadow-primary/20' : 'text-slate-500'}`}
+            >
+              Students
+            </button>
+            <button
+              onClick={() => setActiveSection('fees')}
+              className={`px-5 py-2.5 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all ${activeSection === 'fees' ? 'bg-primary text-white shadow-lg shadow-primary/20' : 'text-slate-500'}`}
+            >
+              Fee Management
+            </button>
+          </div>
+          {activeSection === 'students' && (
+            <button 
+              onClick={() => { resetForm(); setIsModalOpen(true); }}
+              className="bg-primary text-white px-8 py-3 rounded-2xl font-black text-[10px] uppercase tracking-widest flex items-center justify-center gap-3 hover:bg-blue-700 transition-all shadow-xl shadow-primary/20"
+            >
+              <i className="fas fa-plus"></i>
+              Register Student
+            </button>
+          )}
+        </div>
       </div>
+
+      {activeSection === 'fees' ? (
+        <div className="bg-white rounded-2xl md:rounded-[2.5rem] border border-slate-200 shadow-premium p-2 md:p-4">
+          <FeeManagement />
+        </div>
+      ) : (
 
       <div className="bg-white rounded-2xl md:rounded-[2.5rem] border border-slate-200 shadow-premium overflow-hidden">
         <div className="p-6 bg-slate-50/50 border-b border-slate-100">
@@ -284,6 +382,7 @@ const Students: React.FC = () => {
           )}
         </div>
       </div>
+      )}
 
       <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title={editingId ? "Edit Student" : "Register New Student"}>
         <form onSubmit={handleSubmit} className="space-y-6">
@@ -371,6 +470,38 @@ const Students: React.FC = () => {
 
               {feeSetupData.enabled && (
                 <>
+                  <div>
+                    <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5 ml-1">Billing Mode</label>
+                    <div className="grid grid-cols-2 gap-3">
+                      <button
+                        type="button"
+                        onClick={() => setFeeSetupData({ ...feeSetupData, billingMode: 'monthly' })}
+                        className={`py-3 rounded-xl text-[10px] font-black uppercase tracking-widest border transition-all ${feeSetupData.billingMode === 'monthly' ? 'bg-primary text-white border-primary' : 'bg-white text-slate-500 border-slate-200'}`}
+                      >
+                        Monthly
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setFeeSetupData({ ...feeSetupData, billingMode: 'yearly' })}
+                        className={`py-3 rounded-xl text-[10px] font-black uppercase tracking-widest border transition-all ${feeSetupData.billingMode === 'yearly' ? 'bg-primary text-white border-primary' : 'bg-white text-slate-500 border-slate-200'}`}
+                      >
+                        Financial Year
+                      </button>
+                    </div>
+                  </div>
+
+                  {feeSetupData.billingMode === 'monthly' ? (
+                    <div>
+                      <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5 ml-1">Billing Month</label>
+                      <input
+                        type="month"
+                        className={inputClass}
+                        value={feeSetupData.monthlyPeriod}
+                        onChange={(e) => setFeeSetupData({ ...feeSetupData, monthlyPeriod: e.target.value })}
+                        required={feeSetupData.enabled}
+                      />
+                    </div>
+                  ) : (
                   <div className="grid grid-cols-2 gap-4">
                     <div>
                       <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5 ml-1">Start Month</label>
@@ -393,6 +524,7 @@ const Students: React.FC = () => {
                       />
                     </div>
                   </div>
+                  )}
                   <div className="grid grid-cols-2 gap-4">
                     <div>
                       <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5 ml-1">Due Date Day</label>
@@ -438,7 +570,9 @@ const Students: React.FC = () => {
                     </div>
                   </div>
                   <p className="text-[9px] text-slate-400 font-bold uppercase tracking-widest">
-                    Auto plan: monthly dues from {feeSetupData.startPeriod} to {feeSetupData.endPeriod} at ₹{Number(feeSetupData.amount || formData.monthly_fee || 0)} per month.
+                    {feeSetupData.billingMode === 'monthly'
+                      ? `Auto plan: create one due for ${feeSetupData.monthlyPeriod} at ₹${Number(feeSetupData.amount || formData.monthly_fee || 0)}.`
+                      : `Auto plan: monthly dues from ${feeSetupData.startPeriod} to ${feeSetupData.endPeriod} at ₹${Number(feeSetupData.amount || formData.monthly_fee || 0)} per month.`}
                   </p>
                 </>
               )}

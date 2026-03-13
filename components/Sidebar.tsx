@@ -29,7 +29,6 @@ const Sidebar: React.FC<SidebarProps> = ({ user, onLogout, activeTab, setActiveT
     { name: 'Live Tracking', icon: 'fa-location-dot' },
     { name: 'Bus Camera', icon: 'fa-video' },
     { name: 'Payments', icon: 'fa-credit-card' },
-    { name: 'Fees', icon: 'fa-file-invoice-dollar' },
     { name: 'Reports', icon: 'fa-file-alt' },
     { name: 'Notifications', icon: 'fa-bullhorn' },
     { name: 'Audit Logs', icon: 'fa-fingerprint' },
