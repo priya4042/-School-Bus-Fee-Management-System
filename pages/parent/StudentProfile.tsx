@@ -6,6 +6,14 @@ import {
   CreditCard, AlertCircle, CheckCircle2, Bus, BookOpen,
 } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
+import Modal from '../../components/Modal';
+import { showAlert, showLoading, showToast, closeSwal } from '../../lib/swal';
+
+const buildProvisionalAdmissionNumber = () => {
+  const now = new Date();
+  const stamp = `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}${String(now.getDate()).padStart(2, '0')}${String(now.getHours()).padStart(2, '0')}${String(now.getMinutes()).padStart(2, '0')}${String(now.getSeconds()).padStart(2, '0')}`;
+  return `PARENT-${stamp}`;
+};
 
 const StudentProfile: React.FC<{ user: User }> = ({ user }) => {
   const [students, setStudents] = useState<Student[]>([]);
@@ -13,23 +21,121 @@ const StudentProfile: React.FC<{ user: User }> = ({ user }) => {
   const [dues, setDues] = useState<MonthlyDue[]>([]);
   const [recentAttendance, setRecentAttendance] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [isAddChildModalOpen, setIsAddChildModalOpen] = useState(false);
+  const [newChildForm, setNewChildForm] = useState({
+    full_name: '',
+    admission_number: '',
+    grade: '',
+    section: '',
+  });
+
+  const loadMyStudents = async (keepSelected = true) => {
+    const { data, error } = await supabase
+      .from('students')
+      .select('*, routes(route_name), buses(bus_number, plate)')
+      .eq('parent_id', user.id)
+      .in('status', ['active', 'ACTIVE'])
+      .order('full_name', { ascending: true });
+
+    if (error) {
+      console.error('Failed to load students:', error);
+      return [];
+    }
+
+    const myStudents = (data || []) as Student[];
+    setStudents(myStudents);
+
+    if (myStudents.length === 0) {
+      setSelectedStudent(null);
+      return myStudents;
+    }
+
+    if (keepSelected && selectedStudent) {
+      const stillExists = myStudents.find((student) => String(student.id) === String(selectedStudent.id));
+      if (stillExists) {
+        setSelectedStudent(stillExists);
+        return myStudents;
+      }
+    }
+
+    setSelectedStudent(myStudents[0]);
+    return myStudents;
+  };
 
   useEffect(() => {
     const fetchStudents = async () => {
       setLoading(true);
-      const { data, error } = await supabase
-        .from('students')
-        .select('*, routes(route_name), buses(bus_number, plate)')
-        .eq('parent_id', user.id);
-
-      if (error) console.error('Failed to load students:', error);
-      const myStudents = data || [];
-      setStudents(myStudents);
-      if (myStudents.length > 0) setSelectedStudent(myStudents[0]);
+      await loadMyStudents(false);
       setLoading(false);
     };
     fetchStudents();
   }, [user.id]);
+
+  const handleAddChild = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const childName = newChildForm.full_name.trim();
+    if (!childName) {
+      showToast('Child name is required', 'error');
+      return;
+    }
+
+    const admissionNumber = (newChildForm.admission_number || '').trim() || buildProvisionalAdmissionNumber();
+
+    showLoading('Adding Child Profile...');
+    try {
+      const { data: insertedStudent, error: insertError } = await supabase
+        .from('students')
+        .insert({
+          full_name: childName,
+          admission_number: admissionNumber,
+          grade: newChildForm.grade.trim() || 'Pending',
+          section: newChildForm.section.trim() || 'A',
+          parent_id: user.id,
+          parent_name: user.full_name || null,
+          parent_phone: user.phone_number || null,
+          monthly_fee: 0,
+          status: 'active',
+          route_id: null,
+          bus_id: null,
+          boarding_point: null,
+        })
+        .select('id, full_name')
+        .single();
+
+      if (insertError) throw insertError;
+
+      const { data: admins } = await supabase
+        .from('profiles')
+        .select('id')
+        .in('role', ['ADMIN', 'SUPER_ADMIN']);
+
+      const adminNotifications = (admins || []).map((admin: any) => ({
+        user_id: admin.id,
+        title: 'Parent Added New Child',
+        message: `${user.full_name || user.email} added ${insertedStudent?.full_name || childName}. Please complete route/bus/fee profile setup from Students module.`,
+        type: 'INFO',
+        is_read: false,
+      }));
+
+      if (adminNotifications.length > 0) {
+        await supabase.from('notifications').insert(adminNotifications as any);
+      }
+
+      await loadMyStudents(false);
+      setNewChildForm({ full_name: '', admission_number: '', grade: '', section: '' });
+      setIsAddChildModalOpen(false);
+      closeSwal();
+      showAlert('Child Added', 'Child profile created successfully. Admin has been notified to complete full profile details.', 'success');
+    } catch (err: any) {
+      closeSwal();
+      const message = String(err?.message || 'Failed to add child profile.');
+      if (message.toLowerCase().includes('duplicate') || message.toLowerCase().includes('admission_number')) {
+        showAlert('Duplicate Admission Number', 'This admission number already exists. Please enter a different one or leave it blank for auto-generated provisional number.', 'error');
+      } else {
+        showAlert('Error', message, 'error');
+      }
+    }
+  };
 
   useEffect(() => {
     if (!selectedStudent) return;
@@ -99,22 +205,100 @@ const StudentProfile: React.FC<{ user: User }> = ({ user }) => {
             Official Academic & Transit Profile
           </p>
         </div>
-        {students.length > 1 && (
-          <div className="flex gap-2 p-1.5 bg-slate-100 rounded-2xl border border-slate-200/50">
-            {students.map((s) => (
-              <button
-                key={s.id}
-                onClick={() => setSelectedStudent(s)}
-                className={`px-6 py-3 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all ${
-                  selectedStudent.id === s.id ? 'bg-white text-primary shadow-sm' : 'text-slate-400 hover:text-slate-600'
-                }`}
-              >
-                {s.full_name.split(' ')[0]}
-              </button>
-            ))}
-          </div>
-        )}
+        <div className="flex flex-col md:flex-row gap-3 md:items-center">
+          {students.length > 1 && (
+            <div className="flex gap-2 p-1.5 bg-slate-100 rounded-2xl border border-slate-200/50">
+              {students.map((s) => (
+                <button
+                  key={s.id}
+                  onClick={() => setSelectedStudent(s)}
+                  className={`px-6 py-3 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all ${
+                    selectedStudent.id === s.id ? 'bg-white text-primary shadow-sm' : 'text-slate-400 hover:text-slate-600'
+                  }`}
+                >
+                  {s.full_name.split(' ')[0]}
+                </button>
+              ))}
+            </div>
+          )}
+          <button
+            onClick={() => setIsAddChildModalOpen(true)}
+            className="bg-primary text-white px-6 py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest shadow-lg shadow-primary/20 hover:bg-blue-800 transition-all"
+          >
+            Add Child
+          </button>
+        </div>
       </div>
+
+      <Modal isOpen={isAddChildModalOpen} onClose={() => setIsAddChildModalOpen(false)} title="Add Child Profile">
+        <form onSubmit={handleAddChild} className="space-y-4">
+          <div>
+            <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5 ml-1">Child Name</label>
+            <input
+              type="text"
+              required
+              value={newChildForm.full_name}
+              onChange={(e) => setNewChildForm({ ...newChildForm, full_name: e.target.value })}
+              className="w-full px-5 py-4 rounded-2xl bg-primary/5 border border-primary/20 focus:border-primary focus:ring-4 focus:ring-primary/10 outline-none font-bold text-sm"
+              placeholder="e.g. Aarav Sharma"
+            />
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5 ml-1">Admission Number (Optional)</label>
+              <input
+                type="text"
+                value={newChildForm.admission_number}
+                onChange={(e) => setNewChildForm({ ...newChildForm, admission_number: e.target.value })}
+                className="w-full px-5 py-4 rounded-2xl bg-primary/5 border border-primary/20 focus:border-primary focus:ring-4 focus:ring-primary/10 outline-none font-bold text-sm"
+                placeholder="Leave blank for provisional"
+              />
+            </div>
+            <div>
+              <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5 ml-1">Grade (Optional)</label>
+              <input
+                type="text"
+                value={newChildForm.grade}
+                onChange={(e) => setNewChildForm({ ...newChildForm, grade: e.target.value })}
+                className="w-full px-5 py-4 rounded-2xl bg-primary/5 border border-primary/20 focus:border-primary focus:ring-4 focus:ring-primary/10 outline-none font-bold text-sm"
+                placeholder="e.g. 3rd"
+              />
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5 ml-1">Section (Optional)</label>
+            <input
+              type="text"
+              value={newChildForm.section}
+              onChange={(e) => setNewChildForm({ ...newChildForm, section: e.target.value })}
+              className="w-full px-5 py-4 rounded-2xl bg-primary/5 border border-primary/20 focus:border-primary focus:ring-4 focus:ring-primary/10 outline-none font-bold text-sm uppercase"
+              placeholder="e.g. A"
+            />
+          </div>
+
+          <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">
+            Admin will receive a notification to complete this child profile (route, bus, fees, and other details).
+          </p>
+
+          <div className="pt-3 flex gap-3">
+            <button
+              type="button"
+              onClick={() => setIsAddChildModalOpen(false)}
+              className="flex-1 py-3 rounded-2xl bg-slate-100 text-slate-600 text-[10px] font-black uppercase tracking-widest"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              className="flex-1 py-3 rounded-2xl bg-primary text-white text-[10px] font-black uppercase tracking-widest shadow-lg shadow-primary/20"
+            >
+              Add Child
+            </button>
+          </div>
+        </form>
+      </Modal>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Left column */}
