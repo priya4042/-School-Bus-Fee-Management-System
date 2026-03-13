@@ -416,50 +416,77 @@ export const useFees = () => {
 
   const createFeesForYear = async (feeData: {
     student_id: string;
-    year: number;
     amount: number;
     due_date_day: number;
     last_date_day: number;
     fine_after_days: number;
     fine_per_day: number;
+    year?: number;
     startMonth?: number;
     endMonth?: number;
+    startYear?: number;
+    endYear?: number;
+    startPeriod?: string;
+    endPeriod?: string;
   }) => {
     try {
-      const startMonth = feeData.startMonth || 1;
-      const endMonth = feeData.endMonth || 12;
+      const parsePeriod = (value?: string) => {
+        if (!value) return null;
+        const [yearStr, monthStr] = value.split('-');
+        const year = Number(yearStr);
+        const month = Number(monthStr);
+        if (!year || !month || month < 1 || month > 12) return null;
+        return { year, month };
+      };
+
+      const periodStart = parsePeriod(feeData.startPeriod);
+      const periodEnd = parsePeriod(feeData.endPeriod);
+
+      const startYear = Number(periodStart?.year ?? feeData.startYear ?? feeData.year ?? new Date().getFullYear());
+      const endYear = Number(periodEnd?.year ?? feeData.endYear ?? feeData.year ?? new Date().getFullYear());
+      const startMonth = Number(periodStart?.month ?? feeData.startMonth ?? 1);
+      const endMonth = Number(periodEnd?.month ?? feeData.endMonth ?? 12);
+
+      const startIndex = startYear * 12 + (startMonth - 1);
+      const endIndex = endYear * 12 + (endMonth - 1);
 
       if (!feeData.student_id) throw new Error('Student ID is required');
       if (feeData.amount <= 0) throw new Error('Amount must be greater than 0');
-      if (startMonth < 1 || startMonth > 12 || endMonth < 1 || endMonth > 12 || startMonth > endMonth) {
+      if (startMonth < 1 || startMonth > 12 || endMonth < 1 || endMonth > 12 || endIndex < startIndex) {
         throw new Error('Invalid month range');
       }
 
-      // Get existing fees for this student and year to avoid duplicates
+      // Get existing fees for this student to avoid duplicates across financial-year ranges.
       const { data: existingFees, error: existingError } = await supabase
         .from('monthly_dues')
-        .select('month')
-        .eq('student_id', feeData.student_id)
-        .eq('year', feeData.year);
+        .select('month, year')
+        .eq('student_id', feeData.student_id);
 
       if (existingError) throw existingError;
 
-      const existingMonths = new Set((existingFees || []).map(f => f.month));
+      const existingMonths = new Set((existingFees || []).map(f => `${f.year}-${f.month}`));
       const feesToCreate = [];
 
-      for (let month = startMonth; month <= endMonth; month++) {
-        if (existingMonths.has(month)) {
-          console.warn(`[Bulk Fee Creation] Fee already exists for student ${feeData.student_id} in month ${month}/${feeData.year}, skipping...`);
+      for (let index = startIndex; index <= endIndex; index++) {
+        const year = Math.floor(index / 12);
+        const month = (index % 12) + 1;
+        const monthKey = `${year}-${month}`;
+
+        if (existingMonths.has(monthKey)) {
+          console.warn(`[Bulk Fee Creation] Fee already exists for student ${feeData.student_id} in month ${month}/${year}, skipping...`);
           continue;
         }
 
-        const dueDate = new Date(feeData.year, month - 1, feeData.due_date_day);
-        const lastDate = new Date(feeData.year, month - 1, feeData.last_date_day);
+        const maxDayForMonth = new Date(year, month, 0).getDate();
+        const dueDay = Math.min(Math.max(1, Number(feeData.due_date_day)), maxDayForMonth);
+        const lastDay = Math.min(Math.max(1, Number(feeData.last_date_day)), maxDayForMonth);
+        const dueDate = new Date(year, month - 1, dueDay);
+        const lastDate = new Date(year, month - 1, lastDay);
 
         feesToCreate.push({
           student_id: feeData.student_id,
           month,
-          year: feeData.year,
+          year,
           amount: feeData.amount,
           late_fee: 0,
           due_date: toISODate(dueDate),
@@ -475,7 +502,7 @@ export const useFees = () => {
         return {
           success: true,
           created: 0,
-          skipped: endMonth - startMonth + 1,
+          skipped: endIndex - startIndex + 1,
           message: 'All months already have fees, no new fees created.'
         };
       }
@@ -489,11 +516,14 @@ export const useFees = () => {
 
       await fetchDues();
       
+      const startLabel = `${MONTHS[startMonth - 1]} ${startYear}`;
+      const endLabel = `${MONTHS[endMonth - 1]} ${endYear}`;
+
       return {
         success: true,
         created: feesToCreate.length,
-        skipped: (endMonth - startMonth + 1) - feesToCreate.length,
-        message: `Successfully created ${feesToCreate.length} fee(s) for ${MONTHS[startMonth - 1]} - ${MONTHS[endMonth - 1]} ${feeData.year}`
+        skipped: (endIndex - startIndex + 1) - feesToCreate.length,
+        message: `Successfully created ${feesToCreate.length} fee(s) for ${startLabel} - ${endLabel}`
       };
     } catch (err: any) {
       console.error('[createFeesForYear] Error:', err.message || err);

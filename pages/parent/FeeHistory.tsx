@@ -17,6 +17,13 @@ const FeeHistory: React.FC<{ user: User }> = ({ user }) => {
   const { paymentState, openPortal, closePortal, initiateRazorpay } = usePayments();
   const { downloadReceipt, downloading } = useReceipts();
 
+  const getFinancialYearLabel = (month: number, year: number) => {
+    const startsInCurrentYear = month >= 3;
+    const fyStart = startsInCurrentYear ? year : year - 1;
+    const fyEndShort = String((fyStart + 1) % 100).padStart(2, '0');
+    return `FY ${fyStart}-${fyEndShort}`;
+  };
+
   const fetchData = async () => {
     setLoading(true);
     try {
@@ -66,6 +73,9 @@ const FeeHistory: React.FC<{ user: User }> = ({ user }) => {
     const monthName = MONTHS[(d.month || 1) - 1]?.toLowerCase() || '';
     const studentName = students.find((s) => s.id === d.student_id)?.full_name?.toLowerCase() || '';
     return monthName.includes(q) || String(d.year).includes(q) || studentName.includes(q);
+  }).sort((a, b) => {
+    if (a.year !== b.year) return a.year - b.year;
+    return a.month - b.month;
   });
 
   const stats = {
@@ -227,6 +237,9 @@ const FeeHistory: React.FC<{ user: User }> = ({ user }) => {
                     <td className="px-8 py-6">
                       <p className="text-sm font-black text-slate-800 uppercase tracking-tight">
                         {MONTHS[(due.month || 1) - 1]} {due.year}
+                      </p>
+                      <p className="text-[9px] font-bold text-indigo-500 uppercase tracking-widest mt-1">
+                        {getFinancialYearLabel(Number(due.month || 1), Number(due.year || 0))}
                       </p>
                       {due.due_date && (
                         <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mt-1">

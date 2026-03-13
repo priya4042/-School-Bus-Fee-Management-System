@@ -14,6 +14,36 @@ const toISODate = (date: Date) => {
   return `${year}-${month}-${day}`;
 };
 
+const toMonthInputValue = (date: Date) => {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  return `${year}-${month}`;
+};
+
+const parseMonthInput = (value: string) => {
+  const [yearStr, monthStr] = value.split('-');
+  const year = Number(yearStr);
+  const month = Number(monthStr);
+  if (!year || !month || month < 1 || month > 12) return null;
+  return { year, month };
+};
+
+const monthSequenceCount = (startPeriod: string, endPeriod: string) => {
+  const start = parseMonthInput(startPeriod);
+  const end = parseMonthInput(endPeriod);
+  if (!start || !end) return 0;
+  const startIndex = start.year * 12 + (start.month - 1);
+  const endIndex = end.year * 12 + (end.month - 1);
+  if (endIndex < startIndex) return 0;
+  return endIndex - startIndex + 1;
+};
+
+const formatPeriodLabel = (period: string) => {
+  const parsed = parseMonthInput(period);
+  if (!parsed) return period;
+  return `${MONTHS[parsed.month - 1]} ${parsed.year}`;
+};
+
 const Fees: React.FC = () => {
   const { dues, loading: duesLoading, fetchDues, markAsPaid, sendNotification, createFee, createFeesForYear, updateFee, waiveLateFee } = useFees();
   const { students } = useStudents();
@@ -37,14 +67,13 @@ const Fees: React.FC = () => {
 
   const [bulkYearFormData, setBulkYearFormData] = useState({
     student_id: '',
-    year: new Date().getFullYear(),
     amount: 0,
     due_date_day: 10,
     last_date_day: 12,
     fine_after_days: 5,
     fine_per_day: 50,
-    startMonth: 1,
-    endMonth: 12,
+    startPeriod: toMonthInputValue(new Date()),
+    endPeriod: toMonthInputValue(new Date(new Date().getFullYear(), new Date().getMonth() + 11, 1)),
   });
 
   const [statusFilter, setStatusFilter] = useState('ALL');
@@ -282,8 +311,8 @@ const Fees: React.FC = () => {
       showAlert('Error', 'Fee amount must be greater than 0', 'error');
       return;
     }
-    if (bulkYearFormData.startMonth > bulkYearFormData.endMonth) {
-      showAlert('Error', 'Start month cannot be after end month', 'error');
+    if (monthSequenceCount(bulkYearFormData.startPeriod, bulkYearFormData.endPeriod) <= 0) {
+      showAlert('Error', 'End period must be on or after start period', 'error');
       return;
     }
 
@@ -300,14 +329,13 @@ const Fees: React.FC = () => {
       setIsBulkYearModalOpen(false);
       setBulkYearFormData({
         student_id: '',
-        year: new Date().getFullYear(),
         amount: 0,
         due_date_day: 10,
         last_date_day: 12,
         fine_after_days: 5,
         fine_per_day: 50,
-        startMonth: 1,
-        endMonth: 12,
+        startPeriod: toMonthInputValue(new Date()),
+        endPeriod: toMonthInputValue(new Date(new Date().getFullYear(), new Date().getMonth() + 11, 1)),
       });
       fetchDues();
     } else {
@@ -635,42 +663,28 @@ const Fees: React.FC = () => {
             </select>
           </div>
 
-          <div>
-            <label className={labelClass}>Year</label>
-            <input 
-              type="number" 
-              value={bulkYearFormData.year}
-              onChange={(e) => setBulkYearFormData({...bulkYearFormData, year: Number(e.target.value)})}
-              className={inputClass}
-              required
-            />
-            <p className="text-[9px] text-slate-400 mt-1 italic">Will create fees for all selected months in this year</p>
-          </div>
-
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className={labelClass}>Start Month</label>
-              <select 
-                value={bulkYearFormData.startMonth}
-                onChange={(e) => setBulkYearFormData({...bulkYearFormData, startMonth: Number(e.target.value)})}
+              <input
+                type="month"
+                value={bulkYearFormData.startPeriod}
+                onChange={(e) => setBulkYearFormData({ ...bulkYearFormData, startPeriod: e.target.value })}
                 className={inputClass}
-              >
-                {MONTHS.map((m, i) => (
-                  <option key={m} value={i + 1}>{m}</option>
-                ))}
-              </select>
+                required
+              />
+              <p className="text-[9px] text-slate-400 mt-1 italic">Pick first billing month (for example March 2026)</p>
             </div>
             <div>
               <label className={labelClass}>End Month</label>
-              <select 
-                value={bulkYearFormData.endMonth}
-                onChange={(e) => setBulkYearFormData({...bulkYearFormData, endMonth: Number(e.target.value)})}
+              <input
+                type="month"
+                value={bulkYearFormData.endPeriod}
+                onChange={(e) => setBulkYearFormData({ ...bulkYearFormData, endPeriod: e.target.value })}
                 className={inputClass}
-              >
-                {MONTHS.map((m, i) => (
-                  <option key={m} value={i + 1}>{m}</option>
-                ))}
-              </select>
+                required
+              />
+              <p className="text-[9px] text-slate-400 mt-1 italic">Can be next year (for example February 2027)</p>
             </div>
           </div>
 
@@ -738,16 +752,16 @@ const Fees: React.FC = () => {
           <div className="p-4 bg-indigo-50 border border-indigo-100 rounded-2xl space-y-2">
             <p className="text-[10px] font-black text-indigo-600 uppercase tracking-widest">Summary</p>
             <p className="text-[10px] font-bold text-slate-600 uppercase tracking-wider">
-              Creating fees for <span className="text-slate-900 text-sm">{bulkYearFormData.endMonth - bulkYearFormData.startMonth + 1} months</span>
+              Creating fees for <span className="text-slate-900 text-sm">{monthSequenceCount(bulkYearFormData.startPeriod, bulkYearFormData.endPeriod)} months</span>
             </p>
             <p className="text-[10px] font-bold text-slate-600 uppercase tracking-wider">
-              Range: <span className="text-slate-900">{MONTHS[bulkYearFormData.startMonth - 1]} - {MONTHS[bulkYearFormData.endMonth - 1]} {bulkYearFormData.year}</span>
+              Range: <span className="text-slate-900">{formatPeriodLabel(bulkYearFormData.startPeriod)} - {formatPeriodLabel(bulkYearFormData.endPeriod)}</span>
             </p>
             <p className="text-[10px] font-bold text-slate-600 uppercase tracking-wider">
               Fee per month: <span className="text-slate-900">₹{bulkYearFormData.amount}</span>
             </p>
             <p className="text-[10px] font-bold text-slate-600 uppercase tracking-wider">
-              Total amount: <span className="text-slate-900 text-sm">₹{bulkYearFormData.amount * (bulkYearFormData.endMonth - bulkYearFormData.startMonth + 1)}</span>
+              Total amount: <span className="text-slate-900 text-sm">₹{bulkYearFormData.amount * monthSequenceCount(bulkYearFormData.startPeriod, bulkYearFormData.endPeriod)}</span>
             </p>
           </div>
 
@@ -763,7 +777,7 @@ const Fees: React.FC = () => {
               type="submit"
               className="flex-1 bg-indigo-600 text-white py-3 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-indigo-700 transition-all shadow-xl shadow-indigo-600/20"
             >
-              Create {bulkYearFormData.endMonth - bulkYearFormData.startMonth + 1} Fees
+              Create {monthSequenceCount(bulkYearFormData.startPeriod, bulkYearFormData.endPeriod)} Fees
             </button>
           </div>
         </form>
