@@ -49,15 +49,11 @@ const getAllowedTabs = (user?: User | null) => {
       'Routes',
       'Buses',
       'Payments',
-      'Reports',
       'Settings',
       'Attendance',
       'Notifications',
-      'Audit Logs',
       'Bus admins',
-      'User Directory',
       'Live Tracking',
-      'Documentation',
       'Support',
     ];
   }
@@ -132,22 +128,38 @@ const App: React.FC = () => {
     const role = user?.role;
     if (role === UserRole.ADMIN || role === UserRole.SUPER_ADMIN) {
       switch (activeTab) {
-        case 'Dashboard': return <AdminDashboard onOpenDocumentation={() => setActiveTab('Documentation')} />;
+        case 'Dashboard': return <AdminDashboard onOpenDocumentation={() => setActiveTab('Routes')} />;
         case 'Students': return <Students />;
-        case 'Routes': return <Routes />;
+        case 'Routes': return (
+          <div className="space-y-8">
+            <Routes />
+            <Documentation />
+          </div>
+        );
         case 'Buses': return <Buses />;
-        case 'Payments': return <AdminPayments />;
-        case 'Reports': return <Reports />;
-        case 'Settings': return <Settings />;
+        case 'Payments': return (
+          <div className="space-y-8">
+            <AdminPayments />
+            <Reports />
+          </div>
+        );
+        case 'Settings': return (
+          <div className="space-y-8">
+            <Settings />
+            <UserDirectory />
+          </div>
+        );
         case 'Attendance': return <Attendance />;
-        case 'Notifications': return <AdminNotifications focusNotificationId={selectedNotificationId} onFocusHandled={() => setSelectedNotificationId(undefined)} />;
-        case 'Audit Logs': return <AuditLogs />;
+        case 'Notifications': return (
+          <div className="space-y-8">
+            <AdminNotifications focusNotificationId={selectedNotificationId} onFocusHandled={() => setSelectedNotificationId(undefined)} />
+            <AuditLogs />
+          </div>
+        );
         case 'Bus admins': return <AdminManagement />;
-        case 'User Directory': return <UserDirectory />;
         case 'Live Tracking': return <LiveTracking />;
-        case 'Documentation': return <Documentation />;
         case 'Support': return <Support user={user!} />;
-        default: return <AdminDashboard onOpenDocumentation={() => setActiveTab('Documentation')} />;
+        default: return <AdminDashboard onOpenDocumentation={() => setActiveTab('Routes')} />;
       }
     } 
     
@@ -172,7 +184,7 @@ const App: React.FC = () => {
       }
     }
 
-    return <AdminDashboard onOpenDocumentation={() => setActiveTab('Documentation')} />;
+    return <AdminDashboard onOpenDocumentation={() => setActiveTab('Routes')} />;
   };
 
   return (
