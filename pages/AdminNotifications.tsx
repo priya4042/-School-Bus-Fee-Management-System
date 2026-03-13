@@ -401,10 +401,12 @@ const AdminNotifications: React.FC<{ focusNotificationId?: string; onFocusHandle
 
   return (
     <div className="max-w-5xl space-y-8 pb-10">
-      <div>
-        <h2 className="text-3xl font-black text-slate-800 tracking-tight uppercase">Notification Center</h2>
-        <p className="text-slate-500 font-bold uppercase text-[10px] tracking-[0.3em] mt-2">Broadcast to Parents</p>
-      </div>
+      {view === 'notifications' ? (
+        <div>
+          <h2 className="text-3xl font-black text-slate-800 tracking-tight uppercase">Notification Center</h2>
+          <p className="text-slate-500 font-bold uppercase text-[10px] tracking-[0.3em] mt-2">Broadcast to Parents</p>
+        </div>
+      ) : <div />}
 
       <div className="flex bg-white p-1 rounded-xl border border-slate-200 w-fit">
         <button onClick={() => setView('notifications')} className={`px-4 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest ${view === 'notifications' ? 'bg-primary text-white' : 'text-slate-500'}`}>Notifications</button>

@@ -22,7 +22,7 @@ const AdminPayments: React.FC = () => {
       // Fetch dues without embedded join to avoid PostgREST 400
       const { data: dues, error: duesError } = await supabase
         .from('monthly_dues')
-        .select('id, student_id, month, year, amount, base_fee, due_date, last_date, status, paid_at, total_due, transaction_id')
+        .select('id, student_id, month, year, amount, due_date, last_date, status, paid_at')
         .order('year', { ascending: false });
 
       if (duesError) throw duesError;
@@ -48,7 +48,7 @@ const AdminPayments: React.FC = () => {
           student_name: student.full_name || 'Unknown',
           admission_number: student.admission_number || 'N/A',
           late_fee: ledger.lateFee,
-          total_due: ledger.total,
+          total_due: Number(ledger.total || due.amount || 0),
         };
       });
 
@@ -97,10 +97,12 @@ const AdminPayments: React.FC = () => {
   return (
     <div className="space-y-6">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
-          <h2 className="text-3xl font-black text-slate-800 tracking-tighter uppercase">Payment Hub</h2>
-          <p className="text-slate-500 font-bold uppercase text-[10px] tracking-widest mt-1">System-Wide Payment Tracking</p>
-        </div>
+        {view === 'payments' ? (
+          <div>
+            <h2 className="text-3xl font-black text-slate-800 tracking-tighter uppercase">Payment Hub</h2>
+            <p className="text-slate-500 font-bold uppercase text-[10px] tracking-widest mt-1">System-Wide Payment Tracking</p>
+          </div>
+        ) : <div />}
         <div className="flex bg-white p-1 rounded-xl border border-slate-200">
           <button onClick={() => setView('payments')} className={`px-4 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest ${view === 'payments' ? 'bg-primary text-white' : 'text-slate-500'}`}>Payments</button>
           <button onClick={() => setView('reports')} className={`px-4 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest ${view === 'reports' ? 'bg-primary text-white' : 'text-slate-500'}`}>Reports</button>

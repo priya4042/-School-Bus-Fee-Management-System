@@ -12,11 +12,17 @@ const Settings: React.FC = () => {
 
   useEffect(() => {
     const fetchSettings = async () => {
-      try {
-        const local = loadFeeSettings();
-        setSettings(local);
+      const local = loadFeeSettings();
+      setSettings(local);
+      setLoading(false);
 
-        const { data } = await api.get('settings/fees');
+      try {
+        const remotePromise = api.get('settings/fees');
+        const timeoutPromise = new Promise((_, reject) => {
+          setTimeout(() => reject(new Error('Settings timeout')), 4000);
+        });
+
+        const { data } = await Promise.race([remotePromise, timeoutPromise]) as any;
         if (data) {
           const merged = normalizeFeeSettings({ ...local, ...data });
           setSettings(merged);

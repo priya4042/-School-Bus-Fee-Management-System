@@ -105,10 +105,12 @@ const Buses: React.FC = () => {
   return (
     <div className="space-y-6">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
-          <h2 className="text-2xl font-black text-slate-800 tracking-tight uppercase">Fleet Asset Control</h2>
-          <p className="text-slate-500 font-bold uppercase text-[10px] tracking-widest">Active vehicle inventory and monitoring</p>
-        </div>
+        {view === 'buses' ? (
+          <div>
+            <h2 className="text-2xl font-black text-slate-800 tracking-tight uppercase">Fleet Asset Control</h2>
+            <p className="text-slate-500 font-bold uppercase text-[10px] tracking-widest">Active vehicle inventory and monitoring</p>
+          </div>
+        ) : <div />}
         <div className="flex items-center gap-3">
           <div className="flex bg-white p-1 rounded-xl border border-slate-200">
             <button onClick={() => setView('buses')} className={`px-4 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest ${view === 'buses' ? 'bg-primary text-white' : 'text-slate-500'}`}>Buses</button>
