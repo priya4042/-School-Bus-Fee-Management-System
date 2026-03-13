@@ -165,7 +165,7 @@ const AdminPayments: React.FC = () => {
                   <th className="px-8 py-6 text-right">Late Fee</th>
                   <th className="px-8 py-6 text-right">Total</th>
                   <th className="px-8 py-6 text-center">Status</th>
-                  <th className="px-8 py-6">Due Date</th>
+                  <th className="px-8 py-6">Paid / Due Date</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-50">

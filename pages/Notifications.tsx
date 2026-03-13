@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { User } from '../types';
 import api from '../lib/api';
+import { formatNotificationMessage } from '../utils/notificationMessage';
 
 const Notifications: React.FC<{ user: User }> = ({ user }) => {
   const [notifications, setNotifications] = useState<any[]>([]);
@@ -59,7 +60,7 @@ const Notifications: React.FC<{ user: User }> = ({ user }) => {
                   <h4 className="font-black text-slate-800 tracking-tight">{n.title}</h4>
                   <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">{n.date}</span>
                 </div>
-                <p className="text-sm text-slate-500 font-medium leading-relaxed">{n.message}</p>
+                <p className="text-sm text-slate-500 font-medium leading-relaxed">{formatNotificationMessage(n.message)}</p>
               </div>
             </div>
           ))
