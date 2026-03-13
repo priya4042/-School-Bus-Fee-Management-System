@@ -7,11 +7,17 @@ import { useFees } from '../hooks/useFees.ts';
 import { MONTHS } from '../constants.ts';
 import { showConfirm, showToast, showAlert, showLoading, closeSwal } from '../lib/swal.ts';
 
+const toMonthInputValue = (date: Date) => {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  return `${year}-${month}`;
+};
+
 const Students: React.FC = () => {
   const { students, loading, addStudent, updateStudent, deleteStudent } = useStudents();
   const { routes } = useRoutes();
   const { buses } = useBuses();
-  const { dues } = useFees();
+  const { dues, createFeesForYear } = useFees();
   
   const [searchTerm, setSearchTerm] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -32,6 +38,17 @@ const Students: React.FC = () => {
     boarding_point: '',
     monthly_fee: 0,
     status: 'active' as any
+  });
+
+  const [feeSetupData, setFeeSetupData] = useState({
+    enabled: true,
+    amount: 0,
+    startPeriod: toMonthInputValue(new Date()),
+    endPeriod: toMonthInputValue(new Date(new Date().getFullYear(), new Date().getMonth() + 11, 1)),
+    due_date_day: 10,
+    last_date_day: 12,
+    fine_after_days: 5,
+    fine_per_day: 50,
   });
 
   // Removed fetchParents useEffect as it's no longer needed
@@ -55,9 +72,42 @@ const Students: React.FC = () => {
     } else {
       result = await addStudent(formData);
     }
-    
+
+    if (result.success && !editingId && feeSetupData.enabled) {
+      const feeResult = await createFeesForYear({
+        student_id: result.studentId,
+        amount: Number(feeSetupData.amount || formData.monthly_fee || 0),
+        due_date_day: Number(feeSetupData.due_date_day || 10),
+        last_date_day: Number(feeSetupData.last_date_day || 12),
+        fine_after_days: Number(feeSetupData.fine_after_days || 5),
+        fine_per_day: Number(feeSetupData.fine_per_day || 50),
+        startPeriod: feeSetupData.startPeriod,
+        endPeriod: feeSetupData.endPeriod,
+      });
+
+      closeSwal();
+
+      if (!feeResult.success) {
+        resetForm();
+        showAlert(
+          'Student Added, Fee Setup Failed',
+          `${formData.full_name} was added successfully, but initial fee generation failed: ${feeResult.message}`,
+          'warning'
+        );
+        return;
+      }
+
+      resetForm();
+      showAlert(
+        'Success',
+        `${formData.full_name} added and fee records generated successfully. ${feeResult.message}`,
+        'success'
+      );
+      return;
+    }
+
     closeSwal();
-    
+
     if (result.success) {
       resetForm();
       showToast(editingId ? 'Student updated' : 'Student registered', 'success');
@@ -80,6 +130,16 @@ const Students: React.FC = () => {
       boarding_point: '',
       monthly_fee: 0,
       status: 'active'
+    });
+    setFeeSetupData({
+      enabled: true,
+      amount: 0,
+      startPeriod: toMonthInputValue(new Date()),
+      endPeriod: toMonthInputValue(new Date(new Date().getFullYear(), new Date().getMonth() + 11, 1)),
+      due_date_day: 10,
+      last_date_day: 12,
+      fine_after_days: 5,
+      fine_per_day: 50,
     });
     setEditingId(null);
   };
@@ -236,7 +296,18 @@ const Students: React.FC = () => {
               </div>
               <div>
                 <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5 ml-1">Monthly Fee (₹)</label>
-                <input type="number" required className={inputClass} placeholder="Fee" value={formData.monthly_fee} onChange={(e) => setFormData({...formData, monthly_fee: Number(e.target.value)})} />
+                <input
+                  type="number"
+                  required
+                  className={inputClass}
+                  placeholder="Fee"
+                  value={formData.monthly_fee}
+                  onChange={(e) => {
+                    const monthlyFee = Number(e.target.value);
+                    setFormData({ ...formData, monthly_fee: monthlyFee });
+                    setFeeSetupData((prev) => ({ ...prev, amount: monthlyFee }));
+                  }}
+                />
               </div>
             </div>
             <div className="grid grid-cols-2 gap-4">
@@ -278,6 +349,97 @@ const Students: React.FC = () => {
               <input type="text" className={inputClass} placeholder="e.g. Main Gate, Sector 4" value={formData.boarding_point} onChange={(e) => setFormData({...formData, boarding_point: e.target.value})} />
             </div>
           </div>
+
+          {!editingId && (
+            <div className="space-y-4">
+              <h4 className="text-[10px] font-black text-indigo-600 uppercase tracking-[0.2em] border-b border-indigo-100 pb-2">Initial Fee Setup</h4>
+              <label className="flex items-center gap-3 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={feeSetupData.enabled}
+                  onChange={(e) => setFeeSetupData({ ...feeSetupData, enabled: e.target.checked })}
+                  className="w-4 h-4 text-primary rounded border-slate-300 focus:ring-primary"
+                />
+                <span className="text-[10px] font-black text-slate-600 uppercase tracking-widest">
+                  Generate fee records during student registration
+                </span>
+              </label>
+
+              {feeSetupData.enabled && (
+                <>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5 ml-1">Start Month</label>
+                      <input
+                        type="month"
+                        className={inputClass}
+                        value={feeSetupData.startPeriod}
+                        onChange={(e) => setFeeSetupData({ ...feeSetupData, startPeriod: e.target.value })}
+                        required={feeSetupData.enabled}
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5 ml-1">End Month</label>
+                      <input
+                        type="month"
+                        className={inputClass}
+                        value={feeSetupData.endPeriod}
+                        onChange={(e) => setFeeSetupData({ ...feeSetupData, endPeriod: e.target.value })}
+                        required={feeSetupData.enabled}
+                      />
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5 ml-1">Due Date Day</label>
+                      <input
+                        type="number"
+                        min="1"
+                        max="31"
+                        className={inputClass}
+                        value={feeSetupData.due_date_day}
+                        onChange={(e) => setFeeSetupData({ ...feeSetupData, due_date_day: Number(e.target.value) })}
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5 ml-1">Last Date Day</label>
+                      <input
+                        type="number"
+                        min="1"
+                        max="31"
+                        className={inputClass}
+                        value={feeSetupData.last_date_day}
+                        onChange={(e) => setFeeSetupData({ ...feeSetupData, last_date_day: Number(e.target.value) })}
+                      />
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5 ml-1">Fine After Days</label>
+                      <input
+                        type="number"
+                        className={inputClass}
+                        value={feeSetupData.fine_after_days}
+                        onChange={(e) => setFeeSetupData({ ...feeSetupData, fine_after_days: Number(e.target.value) })}
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5 ml-1">Fine Per Day (₹)</label>
+                      <input
+                        type="number"
+                        className={inputClass}
+                        value={feeSetupData.fine_per_day}
+                        onChange={(e) => setFeeSetupData({ ...feeSetupData, fine_per_day: Number(e.target.value) })}
+                      />
+                    </div>
+                  </div>
+                  <p className="text-[9px] text-slate-400 font-bold uppercase tracking-widest">
+                    Auto plan: monthly dues from {feeSetupData.startPeriod} to {feeSetupData.endPeriod} at ₹{Number(feeSetupData.amount || formData.monthly_fee || 0)} per month.
+                  </p>
+                </>
+              )}
+            </div>
+          )}
 
           <div className="pt-4 flex gap-3">
             <button type="button" onClick={() => setIsModalOpen(false)} className="flex-1 py-4 bg-slate-100 text-slate-500 font-black uppercase text-[10px] tracking-widest rounded-2xl transition-all active:scale-95">Cancel</button>

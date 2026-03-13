@@ -39,23 +39,40 @@ export const useStudents = () => {
         if (profileData) parent_id = profileData.id;
       }
 
-      const { error } = await supabase.from('students').insert({
-        full_name: studentData.full_name,
-        admission_number: studentData.admission_number,
-        grade: studentData.grade,
-        section: studentData.section,
-        route_id: studentData.route_id || null,
-        bus_id: studentData.bus_id || null,
-        boarding_point: studentData.boarding_point || null,
-        monthly_fee: studentData.monthly_fee || 0,
-        status: studentData.status || 'active',
-        parent_name: studentData.parent_name || null,
-        parent_phone: studentData.parent_phone || null,
-        parent_id,
-      });
+      const { data, error } = await supabase
+        .from('students')
+        .insert({
+          full_name: studentData.full_name,
+          admission_number: studentData.admission_number,
+          grade: studentData.grade,
+          section: studentData.section,
+          route_id: studentData.route_id || null,
+          bus_id: studentData.bus_id || null,
+          boarding_point: studentData.boarding_point || null,
+          monthly_fee: studentData.monthly_fee || 0,
+          status: studentData.status || 'active',
+          parent_name: studentData.parent_name || null,
+          parent_phone: studentData.parent_phone || null,
+          parent_id,
+        })
+        .select('id')
+        .single();
       if (error) throw error;
+      let studentId = data?.id as string | undefined;
+      if (!studentId) {
+        const { data: fallbackStudent } = await supabase
+          .from('students')
+          .select('id')
+          .eq('admission_number', studentData.admission_number)
+          .eq('full_name', studentData.full_name)
+          .order('created_at', { ascending: false })
+          .limit(1)
+          .maybeSingle();
+        studentId = fallbackStudent?.id;
+      }
+
       await fetchStudents();
-      return { success: true };
+      return { success: true, studentId };
     } catch (err: any) {
       console.error('Student registration failed:', err);
       return { success: false, error: err.message };
