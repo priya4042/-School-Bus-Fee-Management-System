@@ -1,7 +1,7 @@
 import crypto from 'crypto';
 import { createClient } from '@supabase/supabase-js';
 import type { SupabaseClient } from '@supabase/supabase-js';
-import { sendPaymentEmails } from './emailService';
+import { sendPaymentEmails } from './emailService.js';
 
 const cleanEnv = (value: string) => String(value || '').trim().replace(/^['\"]|['\"]$/g, '');
 
