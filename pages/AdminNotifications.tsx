@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
 import { showToast, showAlert, showLoading, closeSwal } from '../lib/swal';
 import { useReceipts } from '../hooks/useReceipts';
+import { formatNotificationMessage } from '../utils/notificationMessage';
 
 const TYPE_MAP: Record<string, string> = {
   emergency: 'DANGER',
@@ -273,10 +274,16 @@ const AdminNotifications: React.FC<{ focusNotificationId?: string; onFocusHandle
 
         if (updateError) throw updateError;
 
+        // Keep student records aligned with approved parent profile name.
+        await supabase
+          .from('students')
+          .update({ parent_name: request.requestedName } as any)
+          .eq('parent_id', request.parentId);
+
         await supabase.from('notifications').insert({
           user_id: request.parentId,
           title: 'Profile Name Update Approved',
-          message: `Your requested name update is approved. New name: ${request.requestedName}`,
+          message: `Admin confirmed your name change. Your profile name is now ${request.requestedName}.`,
           type: 'SUCCESS',
           is_read: false,
         });
@@ -487,7 +494,7 @@ const AdminNotifications: React.FC<{ focusNotificationId?: string; onFocusHandle
                       className={`pb-6 border-b border-slate-50 last:border-0 last:pb-0 rounded-2xl px-3 py-2 -mx-3 ${highlightedId === String(item.id) ? 'ring-2 ring-primary/20 border-primary/30' : ''}`}
                     >
                       <p className="text-xs font-black text-slate-800 tracking-tight leading-snug">{item.title}</p>
-                      <p className="text-[10px] text-slate-500 font-bold mt-2 leading-relaxed">{item.message}</p>
+                      <p className="text-[10px] text-slate-500 font-bold mt-2 leading-relaxed">{formatNotificationMessage(item.message || '')}</p>
                       <div className="flex items-center justify-between mt-3 gap-3">
                         <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest">
                           {new Date(item.created_at).toLocaleString('en-IN', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })}

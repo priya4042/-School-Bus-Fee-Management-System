@@ -4,6 +4,7 @@ import { useAuthStore } from '../store/authStore';
 import { ARRIVAL_EVENT, PAYMENT_EVENT } from '../lib/telemetry';
 import { showToast } from '../lib/swal';
 import { supabase } from '../lib/supabase';
+import { formatNotificationMessage } from '../utils/notificationMessage';
 
 interface TopbarProps {
   user: User;
@@ -226,7 +227,7 @@ const Topbar: React.FC<TopbarProps> = ({ user, onMenuClick, onOpenNotifications,
                       </div>
                       <div className="flex-1">
                         <p className="text-xs font-black text-slate-800 group-hover:text-primary transition-colors">{n.title}</p>
-                        <p className="text-[11px] text-slate-500 font-medium mt-1 leading-relaxed">{n.message}</p>
+                        <p className="text-[11px] text-slate-500 font-medium mt-1 leading-relaxed">{formatNotificationMessage(n.message)}</p>
                         <p className="text-[9px] text-slate-300 font-bold uppercase mt-2 tracking-widest">{n.timestamp ? new Date(n.timestamp).toLocaleString('en-IN') : ''}</p>
                       </div>
                     </div>

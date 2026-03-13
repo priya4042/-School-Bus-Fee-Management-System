@@ -83,6 +83,16 @@ const StudentProfile: React.FC<{ user: User }> = ({ user }) => {
 
     showLoading('Adding Child Profile...');
     try {
+      const { data: parentProfile } = await supabase
+        .from('profiles')
+        .select('full_name, email')
+        .eq('id', user.id)
+        .maybeSingle();
+
+      const parentDisplayName = String(
+        parentProfile?.full_name || user.full_name || user.fullName || user.email || 'Parent'
+      ).trim();
+
       const { data: insertedStudent, error: insertError } = await supabase
         .from('students')
         .insert({
@@ -91,7 +101,7 @@ const StudentProfile: React.FC<{ user: User }> = ({ user }) => {
           grade: newChildForm.grade.trim() || 'Pending',
           section: newChildForm.section.trim() || 'A',
           parent_id: user.id,
-          parent_name: user.full_name || null,
+          parent_name: parentDisplayName,
           parent_phone: user.phone_number || null,
           monthly_fee: 0,
           status: 'active',
@@ -112,7 +122,7 @@ const StudentProfile: React.FC<{ user: User }> = ({ user }) => {
       const adminNotifications = (admins || []).map((admin: any) => ({
         user_id: admin.id,
         title: 'Parent Added New Child',
-        message: `${user.full_name || user.email} added ${insertedStudent?.full_name || childName}. Please complete route/bus/fee profile setup from Students module.`,
+        message: `${parentDisplayName} added ${insertedStudent?.full_name || childName}. Please complete route/bus/fee profile setup from Students module.`,
         type: 'INFO',
         is_read: false,
       }));

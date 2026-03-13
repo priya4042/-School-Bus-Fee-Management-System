@@ -3,6 +3,7 @@ import { User } from '../../types';
 import { Bell, Info, AlertTriangle, CheckCircle2, Clock, Trash2, Mail, MessageSquare } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { showToast } from '../../lib/swal';
+import { formatNotificationMessage } from '../../utils/notificationMessage';
 
 interface Notification {
   id: string;
@@ -236,7 +237,7 @@ const Notifications: React.FC<{ user: User; focusNotificationId?: string; onFocu
                     </div>
                   </div>
                   <p className={`text-sm font-medium leading-relaxed ${notif.is_read ? 'text-slate-400' : 'text-slate-600'}`}>
-                    {notif.message}
+                    {formatNotificationMessage(notif.message)}
                   </p>
                   {!notif.is_read && (
                     <button
