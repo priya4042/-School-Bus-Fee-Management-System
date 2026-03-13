@@ -16,27 +16,42 @@ const AdminPayments: React.FC = () => {
   const fetchPayments = async () => {
     try {
       setLoading(true);
-      const { data: dues, error } = await supabase
-        .from('monthly_dues')
-        .select('id, student_id, month, year, amount, base_fee, due_date, last_date, status, paid_at, total_due, transaction_id, students(id, full_name, admission_number)')
-        .order('year', { ascending: false })
-        .order('month', { ascending: false });
 
-      if (error) throw error;
+      // Fetch dues without embedded join to avoid PostgREST 400
+      const { data: dues, error: duesError } = await supabase
+        .from('monthly_dues')
+        .select('id, student_id, month, year, amount, base_fee, due_date, last_date, status, paid_at, total_due, transaction_id')
+        .order('year', { ascending: false });
+
+      if (duesError) throw duesError;
+
+      // Fetch students separately and merge
+      const studentIds = [...new Set((dues || []).map((d: any) => d.student_id).filter(Boolean))];
+      let studentsMap: Record<string, any> = {};
+      if (studentIds.length > 0) {
+        const { data: students } = await supabase
+          .from('students')
+          .select('id, full_name, admission_number')
+          .in('id', studentIds);
+        (students || []).forEach((s: any) => { studentsMap[s.id] = s; });
+      }
 
       const enrichedDues = (dues || []).map((due: any) => {
+        const student = studentsMap[due.student_id] || {};
         const ledger = calculateCurrentLedger(due);
         const normalizedStatus = String(due.status || '').toUpperCase() || 'PENDING';
         return {
           ...due,
           status: normalizedStatus,
-          student_name: due?.students?.full_name || 'Unknown',
-          admission_number: due?.students?.admission_number || 'N/A',
+          student_name: student.full_name || 'Unknown',
+          admission_number: student.admission_number || 'N/A',
           late_fee: ledger.lateFee,
           total_due: ledger.total,
         };
       });
 
+      // Sort by month descending after merging
+      enrichedDues.sort((a: any, b: any) => b.month - a.month);
       setPayments(enrichedDues);
     } catch (err) {
       console.error('Failed to fetch payments:', err);

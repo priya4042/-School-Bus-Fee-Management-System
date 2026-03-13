@@ -1,6 +1,14 @@
-
+﻿
 import React, { useState, useEffect } from 'react';
-import api from '../lib/api';
+import { supabase } from '../lib/supabase';
+
+const deriveCategory = (action: string): string => {
+  const a = String(action).toUpperCase();
+  if (a.includes('PAYMENT') || a.includes('FEE') || a.includes('DUE')) return 'FINANCE';
+  if (a.includes('DELETE') || a.includes('DROP') || a.includes('CRITICAL')) return 'CRITICAL';
+  if (a.includes('STUDENT') || a.includes('PARENT') || a.includes('PROFILE')) return 'DATA';
+  return 'SYSTEM';
+};
 
 const AuditLogs: React.FC = () => {
   const [logs, setLogs] = useState<any[]>([]);
@@ -10,8 +18,24 @@ const AuditLogs: React.FC = () => {
   useEffect(() => {
     const fetchLogs = async () => {
       try {
-        const { data } = await api.get('audit-logs');
-        setLogs(data);
+        const { data, error } = await supabase
+          .from('audit_logs')
+          .select('id, action, entity_type, entity_id, created_at, user_id, profiles(full_name)')
+          .order('created_at', { ascending: false })
+          .limit(200);
+
+        if (error) throw error;
+
+        const mapped = (data || []).map((row: any) => ({
+          id: row.id,
+          action: row.action || 'UNKNOWN',
+          entity: `${row.entity_type || 'Unknown'} — ${String(row.entity_id || '').slice(0, 8)}`,
+          user: row.profiles?.full_name || row.user_id?.slice(0, 8) || 'System',
+          date: row.created_at ? new Date(row.created_at).toLocaleString('en-IN') : '—',
+          status: deriveCategory(row.action),
+        }));
+
+        setLogs(mapped);
       } catch (err) {
         console.error("Failed to fetch audit stream:", err);
       } finally {
@@ -126,3 +150,5 @@ const AuditLogs: React.FC = () => {
 };
 
 export default AuditLogs;
+
+
