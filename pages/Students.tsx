@@ -14,6 +14,17 @@ const toMonthInputValue = (date: Date) => {
   return `${year}-${month}`;
 };
 
+const getCurrentFinancialYearRange = () => {
+  const now = new Date();
+  const currentYear = now.getFullYear();
+  const currentMonth = now.getMonth() + 1;
+  const startYear = currentMonth >= 3 ? currentYear : currentYear - 1;
+  return {
+    startPeriod: `${startYear}-03`,
+    endPeriod: `${startYear + 1}-02`,
+  };
+};
+
 const parseMonthInput = (value: string) => {
   const [yearStr, monthStr] = String(value || '').split('-');
   const year = Number(yearStr);
@@ -502,26 +513,42 @@ const Students: React.FC = () => {
                       />
                     </div>
                   ) : (
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5 ml-1">Start Month</label>
-                      <input
-                        type="month"
-                        className={inputClass}
-                        value={feeSetupData.startPeriod}
-                        onChange={(e) => setFeeSetupData({ ...feeSetupData, startPeriod: e.target.value })}
-                        required={feeSetupData.enabled}
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5 ml-1">End Month</label>
-                      <input
-                        type="month"
-                        className={inputClass}
-                        value={feeSetupData.endPeriod}
-                        onChange={(e) => setFeeSetupData({ ...feeSetupData, endPeriod: e.target.value })}
-                        required={feeSetupData.enabled}
-                      />
+                  <div className="space-y-3">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const fy = getCurrentFinancialYearRange();
+                        setFeeSetupData({
+                          ...feeSetupData,
+                          startPeriod: fy.startPeriod,
+                          endPeriod: fy.endPeriod,
+                        });
+                      }}
+                      className="w-full py-3 rounded-xl bg-indigo-50 text-indigo-700 border border-indigo-100 text-[10px] font-black uppercase tracking-widest hover:bg-indigo-100 transition-all"
+                    >
+                      Use Current Financial Year (Mar-Feb)
+                    </button>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5 ml-1">Start Month</label>
+                        <input
+                          type="month"
+                          className={inputClass}
+                          value={feeSetupData.startPeriod}
+                          onChange={(e) => setFeeSetupData({ ...feeSetupData, startPeriod: e.target.value })}
+                          required={feeSetupData.enabled}
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5 ml-1">End Month</label>
+                        <input
+                          type="month"
+                          className={inputClass}
+                          value={feeSetupData.endPeriod}
+                          onChange={(e) => setFeeSetupData({ ...feeSetupData, endPeriod: e.target.value })}
+                          required={feeSetupData.enabled}
+                        />
+                      </div>
                     </div>
                   </div>
                   )}
