@@ -233,7 +233,6 @@
       const now = new Date().toISOString();
       const totalAmount = Number(context?.total_due || context?.amount || paymentState.amount || 0);
       const studentName = context?.students?.full_name || paymentState.studentName || 'Student';
-      const parentId = context?.students?.parent_id;
 
       await supabase
         .from('monthly_dues')
@@ -262,35 +261,6 @@
             transaction_id: paymentId,
             created_at: now,
           } as any);
-      }
-
-      if (parentId) {
-        await supabase
-          .from('notifications')
-          .insert({
-            user_id: parentId,
-            title: 'Fee Payment Successful',
-            message: `Payment of ₹${totalAmount.toLocaleString('en-IN')} successful for ${studentName}. Receipt ref ${paymentId}. [DUE_ID:${dueId}] [TXN:${paymentId}]`,
-            type: 'PAYMENT_SUCCESS',
-            is_read: false,
-          } as any);
-      }
-
-      const { data: admins } = await supabase
-        .from('profiles')
-        .select('id')
-        .in('role', ['ADMIN', 'SUPER_ADMIN']);
-
-      const adminIds = (admins || []).map((admin: any) => admin.id).filter(Boolean);
-      if (adminIds.length > 0) {
-        const adminNotifications = adminIds.map((adminId: string) => ({
-          user_id: adminId,
-          title: 'Parent Fee Payment Confirmed',
-          message: `Parent payment received: ${studentName}, ₹${totalAmount.toLocaleString('en-IN')}, ${context?.month}/${context?.year}. Receipt ref ${paymentId}. [DUE_ID:${dueId}] [TXN:${paymentId}]`,
-          type: 'PAYMENT_SUCCESS',
-          is_read: false,
-        }));
-        await supabase.from('notifications').insert(adminNotifications as any);
       }
 
       window.dispatchEvent(new CustomEvent(PAYMENT_EVENT, {

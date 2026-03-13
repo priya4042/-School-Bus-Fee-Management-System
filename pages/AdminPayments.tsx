@@ -1,8 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { usePayments } from '../hooks/usePayments';
 import { supabase } from '../lib/supabase';
 import { calculateCurrentLedger } from '../utils/feeCalculator';
-import api from '../lib/api';
 import { MONTHS } from '../constants';
 
 const AdminPayments: React.FC = () => {
@@ -18,18 +16,22 @@ const AdminPayments: React.FC = () => {
   const fetchPayments = async () => {
     try {
       setLoading(true);
-      const { data: dues } = await api.get('dues');
-      
-      // Fetch student details for each due
-      const { data: students } = await supabase.from('students').select('id, full_name, admission_number');
+      const { data: dues, error } = await supabase
+        .from('monthly_dues')
+        .select('id, student_id, month, year, amount, base_fee, due_date, last_date, status, paid_at, total_due, transaction_id, students(id, full_name, admission_number)')
+        .order('year', { ascending: false })
+        .order('month', { ascending: false });
+
+      if (error) throw error;
 
       const enrichedDues = (dues || []).map((due: any) => {
-        const student = (students || []).find((s: any) => s.id === due.student_id);
         const ledger = calculateCurrentLedger(due);
+        const normalizedStatus = String(due.status || '').toUpperCase() || 'PENDING';
         return {
           ...due,
-          student_name: student?.full_name || 'Unknown',
-          admission_number: student?.admission_number || 'N/A',
+          status: normalizedStatus,
+          student_name: due?.students?.full_name || 'Unknown',
+          admission_number: due?.students?.admission_number || 'N/A',
           late_fee: ledger.lateFee,
           total_due: ledger.total,
         };
@@ -44,10 +46,11 @@ const AdminPayments: React.FC = () => {
   };
 
   const filteredPayments = payments.filter(payment => {
-    const matchesStatus = filterStatus === 'all' || payment.status.toLowerCase() === filterStatus;
+    const normalizedStatus = String(payment.status || '').toLowerCase();
+    const matchesStatus = filterStatus === 'all' || normalizedStatus === filterStatus;
     const matchesSearch = 
-      payment.student_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      payment.admission_number.toLowerCase().includes(searchTerm.toLowerCase());
+      String(payment.student_name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+      String(payment.admission_number || '').toLowerCase().includes(searchTerm.toLowerCase());
     return matchesStatus && matchesSearch;
   });
 
@@ -196,7 +199,7 @@ const AdminPayments: React.FC = () => {
                       </span>
                     </td>
                     <td className="px-8 py-6">
-                      <p className="text-[10px] text-slate-500 uppercase tracking-widest">{payment.due_date}</p>
+                      <p className="text-[10px] text-slate-500 uppercase tracking-widest">{payment.paid_at || payment.due_date}</p>
                     </td>
                   </tr>
                 ))}

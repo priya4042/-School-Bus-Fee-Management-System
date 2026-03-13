@@ -95,6 +95,7 @@ const AdminNotifications: React.FC<{ focusNotificationId?: string; onFocusHandle
   const [nameChangeRequests, setNameChangeRequests] = useState<NameChangeRequest[]>([]);
   const [nameChangeHistory, setNameChangeHistory] = useState<NameChangeReviewHistory[]>([]);
   const [highlightedId, setHighlightedId] = useState<string | null>(null);
+  const [paymentMetaByDueId, setPaymentMetaByDueId] = useState<Record<string, { paidAt?: string; studentName?: string; month?: number; year?: number; amount?: number }>>({});
   const { downloadReceipt, downloading } = useReceipts();
 
   useEffect(() => {
@@ -114,16 +115,18 @@ const AdminNotifications: React.FC<{ focusNotificationId?: string; onFocusHandle
     };
   };
 
-  useEffect(() => {
-    const fetchData = async () => {
-      const [notifRes, routesRes] = await Promise.all([
-        supabase
-          .from('notifications')
-          .select('id, title, message, type, is_read, created_at')
-          .order('created_at', { ascending: false })
-          .limit(120),
-        supabase.from('routes').select('id, route_name'),
-      ]);
+  const fetchData = async () => {
+    if (!currentAdminId) return;
+
+    const [notifRes, routesRes] = await Promise.all([
+      supabase
+        .from('notifications')
+        .select('id, title, message, type, is_read, created_at')
+        .eq('user_id', currentAdminId)
+        .order('created_at', { ascending: false })
+        .limit(120),
+      supabase.from('routes').select('id, route_name'),
+    ]);
 
       // Deduplicate — same second = same broadcast
       const seen = new Set<string>();
@@ -136,9 +139,32 @@ const AdminNotifications: React.FC<{ focusNotificationId?: string; onFocusHandle
         return true;
       }).slice(0, 5);
 
-      const confirmations = source
-        .filter(n => n.type === 'PAYMENT_SUCCESS' || n.title?.toLowerCase().includes('payment'))
-        .slice(0, 10);
+    const confirmations = source
+      .filter(n => n.type === 'PAYMENT_SUCCESS' || n.title?.toLowerCase().includes('payment'))
+      .slice(0, 10);
+
+    const dueIds = confirmations
+      .map((n) => extractReceiptMeta(String(n.message || '')).dueId)
+      .filter(Boolean) as string[];
+
+    const paymentMetaMap: Record<string, { paidAt?: string; studentName?: string; month?: number; year?: number; amount?: number }> = {};
+    if (dueIds.length > 0) {
+      const uniqueDueIds = [...new Set(dueIds)];
+      const { data: dueRows } = await supabase
+        .from('monthly_dues')
+        .select('id, paid_at, month, year, total_due, amount, students(full_name)')
+        .in('id', uniqueDueIds as any);
+
+      (dueRows || []).forEach((row: any) => {
+        paymentMetaMap[String(row.id)] = {
+          paidAt: row.paid_at || undefined,
+          studentName: row?.students?.full_name || undefined,
+          month: row.month,
+          year: row.year,
+          amount: Number(row.total_due || row.amount || 0),
+        };
+      });
+    }
 
       const profileRequests = source
         .filter((n) => n.is_read === false)
@@ -151,14 +177,17 @@ const AdminNotifications: React.FC<{ focusNotificationId?: string; onFocusHandle
         .filter(Boolean)
         .slice(0, 20) as NameChangeReviewHistory[];
 
-      setRecentBroadcasts(broadcasts);
-      setPaymentConfirmations(confirmations);
-      setNameChangeRequests(profileRequests);
-      setNameChangeHistory(profileHistory);
-      setRoutes(routesRes.data || []);
-    };
+    setRecentBroadcasts(broadcasts);
+    setPaymentConfirmations(confirmations);
+    setNameChangeRequests(profileRequests);
+    setNameChangeHistory(profileHistory);
+    setRoutes(routesRes.data || []);
+    setPaymentMetaByDueId(paymentMetaMap);
+  };
+
+  useEffect(() => {
     fetchData();
-  }, []);
+  }, [currentAdminId]);
 
   useEffect(() => {
     if (!focusNotificationId) return;
@@ -219,6 +248,7 @@ const AdminNotifications: React.FC<{ focusNotificationId?: string; onFocusHandle
       const { data: fresh } = await supabase
         .from('notifications')
         .select('id, title, message, type, is_read, created_at')
+        .eq('user_id', currentAdminId)
         .order('created_at', { ascending: false })
         .limit(120);
       const seen = new Set<string>();
@@ -245,6 +275,7 @@ const AdminNotifications: React.FC<{ focusNotificationId?: string; onFocusHandle
       setPaymentConfirmations(confirmations);
       setNameChangeRequests(profileRequests);
       setNameChangeHistory(profileHistory);
+      await fetchData();
     } catch (err: any) {
       closeSwal();
       showAlert('Broadcast Failed', err.message || 'Failed to send broadcast. Please try again.', 'error');
@@ -260,6 +291,37 @@ const AdminNotifications: React.FC<{ focusNotificationId?: string; onFocusHandle
     WARNING: 'text-amber-500',
     DANGER: 'text-red-500',
     SUCCESS: 'text-emerald-500',
+  };
+
+  const handlePaymentDetails = async (dueId: string | null, txnId: string | null, fallbackMessage: string) => {
+    if (!dueId) {
+      showAlert('Payment Details', formatNotificationMessage(fallbackMessage), 'info');
+      return;
+    }
+
+    const { data: dueRow } = await supabase
+      .from('monthly_dues')
+      .select('id, paid_at, month, year, total_due, amount, payment_method, transaction_id, students(full_name)')
+      .eq('id', dueId)
+      .maybeSingle();
+
+    if (!dueRow) {
+      showAlert('Payment Details', formatNotificationMessage(fallbackMessage), 'info');
+      return;
+    }
+
+    const paidAt = dueRow.paid_at ? new Date(dueRow.paid_at).toLocaleString('en-IN') : 'Not available';
+    const amount = Number(dueRow.total_due || dueRow.amount || 0).toLocaleString('en-IN');
+    const details = [
+      `Student: ${dueRow?.students?.full_name || 'N/A'}`,
+      `Month: ${dueRow.month}/${dueRow.year}`,
+      `Amount: ₹${amount}`,
+      `Paid At: ${paidAt}`,
+      `Transaction: ${txnId || dueRow.transaction_id || 'N/A'}`,
+      `Method: ${dueRow.payment_method || 'ONLINE'}`,
+    ].join('\n');
+
+    showAlert('Payment Details', details, 'info');
   };
 
   const handleResolveNameRequest = async (request: NameChangeRequest, action: 'approve' | 'reject') => {
@@ -487,21 +549,29 @@ const AdminNotifications: React.FC<{ focusNotificationId?: string; onFocusHandle
               <div className="space-y-6">
                 {paymentConfirmations.map((item) => {
                   const meta = extractReceiptMeta(item.message || '');
+                  const dueMeta = meta.dueId ? paymentMetaByDueId[String(meta.dueId)] : undefined;
+                  const paidAtLabel = dueMeta?.paidAt
+                    ? new Date(String(dueMeta.paidAt)).toLocaleString('en-IN', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })
+                    : new Date(item.created_at).toLocaleString('en-IN', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
                   return (
                     <div
                       id={`admin-notif-${item.id}`}
                       key={item.id}
-                      className={`pb-6 border-b border-slate-50 last:border-0 last:pb-0 rounded-2xl px-3 py-2 -mx-3 ${highlightedId === String(item.id) ? 'ring-2 ring-primary/20 border-primary/30' : ''}`}
+                      onClick={() => handlePaymentDetails(meta.dueId, meta.txnId, item.message || '')}
+                      className={`pb-6 border-b border-slate-50 last:border-0 last:pb-0 rounded-2xl px-3 py-2 -mx-3 cursor-pointer ${highlightedId === String(item.id) ? 'ring-2 ring-primary/20 border-primary/30' : ''}`}
                     >
                       <p className="text-xs font-black text-slate-800 tracking-tight leading-snug">{item.title}</p>
                       <p className="text-[10px] text-slate-500 font-bold mt-2 leading-relaxed">{formatNotificationMessage(item.message || '')}</p>
                       <div className="flex items-center justify-between mt-3 gap-3">
                         <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest">
-                          {new Date(item.created_at).toLocaleString('en-IN', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })}
+                          {paidAtLabel}
                         </span>
                         {meta.dueId && (
                           <button
-                            onClick={() => downloadReceipt(meta.dueId as string, (meta.txnId || meta.dueId) as string)}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              downloadReceipt(meta.dueId as string, (meta.txnId || meta.dueId) as string);
+                            }}
                             disabled={downloading === String(meta.dueId)}
                             className="text-[9px] font-black text-primary uppercase tracking-widest hover:underline disabled:opacity-50"
                           >
