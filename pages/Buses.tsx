@@ -1,12 +1,14 @@
 import React, { useState } from 'react';
 import { useBuses } from '../hooks/useBuses';
 import { useRoutes } from '../hooks/useRoutes';
+import Routes from './Routes';
 import Modal from '../components/Modal';
 import { showConfirm, showToast, showLoading, closeSwal, showAlert } from '../lib/swal';
 
 const Buses: React.FC = () => {
   const { buses, loading, registerBus, updateBus, deleteBus } = useBuses();
   const { routes } = useRoutes();
+  const [view, setView] = useState<'buses' | 'routes'>('buses');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   
@@ -107,14 +109,27 @@ const Buses: React.FC = () => {
           <h2 className="text-2xl font-black text-slate-800 tracking-tight uppercase">Fleet Asset Control</h2>
           <p className="text-slate-500 font-bold uppercase text-[10px] tracking-widest">Active vehicle inventory and monitoring</p>
         </div>
-        <button 
-          onClick={() => { resetForm(); setIsModalOpen(true); }}
-          className="bg-primary text-white px-8 py-3 rounded-2xl font-black text-[10px] uppercase tracking-widest flex items-center gap-3 hover:bg-blue-700 transition-all shadow-xl shadow-primary/20"
-        >
-          <i className="fas fa-bus-alt"></i>
-          Register Fleet Asset
-        </button>
+        <div className="flex items-center gap-3">
+          <div className="flex bg-white p-1 rounded-xl border border-slate-200">
+            <button onClick={() => setView('buses')} className={`px-4 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest ${view === 'buses' ? 'bg-primary text-white' : 'text-slate-500'}`}>Buses</button>
+            <button onClick={() => setView('routes')} className={`px-4 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest ${view === 'routes' ? 'bg-primary text-white' : 'text-slate-500'}`}>Routes</button>
+          </div>
+          {view === 'buses' && (
+            <button 
+              onClick={() => { resetForm(); setIsModalOpen(true); }}
+              className="bg-primary text-white px-8 py-3 rounded-2xl font-black text-[10px] uppercase tracking-widest flex items-center gap-3 hover:bg-blue-700 transition-all shadow-xl shadow-primary/20"
+            >
+              <i className="fas fa-bus-alt"></i>
+              Register Fleet Asset
+            </button>
+          )}
+        </div>
       </div>
+
+      {view === 'routes' ? (
+        <Routes />
+      ) : (
+        <>
 
       <div className="bg-white rounded-[2.5rem] border border-slate-200 overflow-hidden shadow-premium">
         <div className="overflow-x-auto min-h-[400px]">
@@ -316,6 +331,8 @@ const Buses: React.FC = () => {
           </div>
         </form>
       </Modal>
+        </>
+      )}
     </div>
   );
 };

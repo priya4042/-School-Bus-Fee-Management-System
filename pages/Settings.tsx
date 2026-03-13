@@ -2,8 +2,10 @@ import React, { useState, useEffect } from 'react';
 import api from '../lib/api';
 import { showToast, showLoading, closeSwal } from '../lib/swal';
 import { defaultFeeSettings, loadFeeSettings, normalizeFeeSettings, saveFeeSettings } from '../lib/feeSettings';
+import UserDirectory from './UserDirectory';
 
 const Settings: React.FC = () => {
+  const [view, setView] = useState<'settings' | 'users'>('settings');
   const [activeTab, setActiveTab] = useState('fees');
   const [loading, setLoading] = useState(true);
   const [settings, setSettings] = useState({ ...defaultFeeSettings });
@@ -64,6 +66,18 @@ const Settings: React.FC = () => {
 
   const themedInputClass = "w-full px-6 py-4 rounded-2xl bg-primary/5 border border-primary/20 focus:border-primary focus:ring-4 focus:ring-primary/10 outline-none font-black transition-all text-slate-800";
 
+  if (view === 'users') {
+    return (
+      <div className="space-y-6">
+        <div className="flex bg-white p-1.5 rounded-[1.5rem] border border-slate-200 shadow-sm w-fit">
+          <button onClick={() => setView('settings')} className="px-8 py-2.5 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all text-slate-400">System Settings</button>
+          <button onClick={() => setView('users')} className="px-8 py-2.5 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all bg-primary text-white shadow-lg shadow-primary/20">User Directory</button>
+        </div>
+        <UserDirectory />
+      </div>
+    );
+  }
+
   return (
     <div className="max-w-5xl space-y-10 pb-20">
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
@@ -71,9 +85,15 @@ const Settings: React.FC = () => {
           <h2 className="text-3xl font-black text-slate-800 tracking-tight">System Core Configuration</h2>
           <p className="text-slate-500 font-bold uppercase text-[10px] tracking-[0.2em]">Manage Financial Rules & Fleet Policies</p>
         </div>
-        <div className="flex bg-white p-1.5 rounded-[1.5rem] border border-slate-200 shadow-sm">
+        <div className="flex flex-wrap gap-2">
+          <div className="flex bg-white p-1.5 rounded-[1.5rem] border border-slate-200 shadow-sm">
+            <button onClick={() => setView('settings')} className={`px-8 py-2.5 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all ${view === 'settings' ? 'bg-primary text-white shadow-lg shadow-primary/20' : 'text-slate-400'}`}>System Settings</button>
+            <button onClick={() => setView('users')} className={`px-8 py-2.5 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all ${view === 'users' ? 'bg-primary text-white shadow-lg shadow-primary/20' : 'text-slate-400'}`}>User Directory</button>
+          </div>
+          <div className="flex bg-white p-1.5 rounded-[1.5rem] border border-slate-200 shadow-sm">
            <button onClick={() => setActiveTab('fees')} className={`px-8 py-2.5 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all ${activeTab === 'fees' ? 'bg-primary text-white shadow-lg shadow-primary/20' : 'text-slate-400'}`}>Fee Engine</button>
            <button onClick={() => setActiveTab('security')} className={`px-8 py-2.5 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all ${activeTab === 'security' ? 'bg-primary text-white shadow-lg shadow-primary/20' : 'text-slate-400'}`}>Security</button>
+          </div>
         </div>
       </div>
 

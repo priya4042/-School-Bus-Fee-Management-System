@@ -3,6 +3,7 @@ import { supabase } from '../lib/supabase';
 import { showToast, showAlert, showLoading, closeSwal } from '../lib/swal';
 import { useReceipts } from '../hooks/useReceipts';
 import { formatNotificationMessage } from '../utils/notificationMessage';
+import AuditLogs from './AuditLogs';
 
 const TYPE_MAP: Record<string, string> = {
   emergency: 'DANGER',
@@ -84,6 +85,7 @@ const parseNameChangeReviewHistory = (row: any): NameChangeReviewHistory | null 
 };
 
 const AdminNotifications: React.FC<{ focusNotificationId?: string; onFocusHandled?: () => void }> = ({ focusNotificationId, onFocusHandled }) => {
+  const [view, setView] = useState<'notifications' | 'audit'>('notifications');
   const [msgType, setMsgType] = useState('announcement');
   const [message, setMessage] = useState('');
   const [target, setTarget] = useState('all');
@@ -404,6 +406,15 @@ const AdminNotifications: React.FC<{ focusNotificationId?: string; onFocusHandle
         <p className="text-slate-500 font-bold uppercase text-[10px] tracking-[0.3em] mt-2">Broadcast to Parents</p>
       </div>
 
+      <div className="flex bg-white p-1 rounded-xl border border-slate-200 w-fit">
+        <button onClick={() => setView('notifications')} className={`px-4 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest ${view === 'notifications' ? 'bg-primary text-white' : 'text-slate-500'}`}>Notifications</button>
+        <button onClick={() => setView('audit')} className={`px-4 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest ${view === 'audit' ? 'bg-primary text-white' : 'text-slate-500'}`}>Audit Logs</button>
+      </div>
+
+      {view === 'audit' ? (
+        <AuditLogs />
+      ) : (
+
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         <div className="lg:col-span-2">
           <form onSubmit={handleBroadcast} className="bg-white rounded-[2.5rem] border border-slate-200 shadow-premium overflow-hidden">
@@ -616,6 +627,7 @@ const AdminNotifications: React.FC<{ focusNotificationId?: string; onFocusHandle
           </div>
         </div>
       </div>
+      )}
     </div>
   );
 };

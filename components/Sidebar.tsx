@@ -23,7 +23,6 @@ const Sidebar: React.FC<SidebarProps> = ({ user, onLogout, activeTab, setActiveT
     { name: 'Dashboard', icon: 'fa-chart-pie' },
     { name: 'Students', icon: 'fa-user-graduate' },
     { name: 'Attendance', icon: 'fa-clipboard-check' },
-    { name: 'Routes', icon: 'fa-route' },
     { name: 'Buses', icon: 'fa-bus' },
     { name: 'Live Tracking', icon: 'fa-location-dot' },
     { name: 'Payments', icon: 'fa-credit-card' },

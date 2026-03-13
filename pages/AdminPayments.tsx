@@ -2,8 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
 import { calculateCurrentLedger } from '../utils/feeCalculator';
 import { MONTHS } from '../constants';
+import Reports from './Reports';
 
 const AdminPayments: React.FC = () => {
+  const [view, setView] = useState<'payments' | 'reports'>('payments');
   const [payments, setPayments] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [filterStatus, setFilterStatus] = useState<'all' | 'paid' | 'pending' | 'overdue'>('all');
@@ -99,7 +101,16 @@ const AdminPayments: React.FC = () => {
           <h2 className="text-3xl font-black text-slate-800 tracking-tighter uppercase">Payment Hub</h2>
           <p className="text-slate-500 font-bold uppercase text-[10px] tracking-widest mt-1">System-Wide Payment Tracking</p>
         </div>
+        <div className="flex bg-white p-1 rounded-xl border border-slate-200">
+          <button onClick={() => setView('payments')} className={`px-4 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest ${view === 'payments' ? 'bg-primary text-white' : 'text-slate-500'}`}>Payments</button>
+          <button onClick={() => setView('reports')} className={`px-4 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest ${view === 'reports' ? 'bg-primary text-white' : 'text-slate-500'}`}>Reports</button>
+        </div>
       </div>
+
+      {view === 'reports' ? (
+        <Reports />
+      ) : (
+        <>
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
@@ -223,6 +234,8 @@ const AdminPayments: React.FC = () => {
           )}
         </div>
       </div>
+        </>
+      )}
     </div>
   );
 };
