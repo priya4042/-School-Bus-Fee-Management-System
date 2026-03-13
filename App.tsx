@@ -19,9 +19,7 @@ import Notifications from './pages/Notifications';
 import AuditLogs from './pages/AuditLogs';
 import AdminManagement from './pages/AdminManagement';
 import UserDirectory from './pages/UserDirectory';
-import Permissions from './pages/Permissions';
 import LiveTracking from './pages/LiveTracking';
-import BusCameraAdmin from './pages/BusCameraAdmin';
 import Sidebar from './components/Sidebar';
 import Topbar from './components/Topbar';
 import { useAuthStore } from './store/authStore';
@@ -58,9 +56,7 @@ const getAllowedTabs = (user?: User | null) => {
       'Audit Logs',
       'Bus admins',
       'User Directory',
-      'Permissions',
       'Live Tracking',
-      'Bus Camera',
       'Support',
     ];
   }
@@ -147,9 +143,7 @@ const App: React.FC = () => {
         case 'Audit Logs': return <AuditLogs />;
         case 'Bus admins': return <AdminManagement />;
         case 'User Directory': return <UserDirectory />;
-        case 'Permissions': return <Permissions />;
         case 'Live Tracking': return <LiveTracking />;
-        case 'Bus Camera': return <BusCameraAdmin />;
         case 'Support': return <Support user={user!} />;
         default: return <AdminDashboard />;
       }

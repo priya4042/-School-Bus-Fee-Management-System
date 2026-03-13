@@ -2,10 +2,13 @@ import React, { useState, useEffect } from 'react';
 import GoogleMap from '../components/GoogleMap';
 import { useTracking } from '../hooks/useTracking';
 import { useBuses } from '../hooks/useBuses';
+import BusCameraAdmin from './BusCameraAdmin';
+import Permissions from './Permissions';
 
 const LiveTracking: React.FC = () => {
   const { buses } = useBuses();
   const [activeBusId, setActiveBusId] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState<'tracking' | 'camera' | 'permissions'>('tracking');
   const { location } = useTracking(activeBusId || undefined);
 
   useEffect(() => {
@@ -14,15 +17,11 @@ const LiveTracking: React.FC = () => {
     }
   }, [buses, activeBusId]);
 
-  return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between mb-8">
-        <div>
-          <h2 className="text-3xl font-black text-slate-800 tracking-tighter uppercase">Live Tracking</h2>
-          <p className="text-slate-500 font-bold uppercase text-[10px] tracking-widest mt-1">Real-Time Fleet Monitoring</p>
-        </div>
+  const renderTrackingPanel = () => (
+    <>
+      <div className="flex items-center justify-end">
         <div className="flex items-center gap-3 bg-white p-1 rounded-2xl border border-slate-200">
-          <button 
+          <button
             onClick={() => setActiveBusId(activeBusId === buses?.[0]?.id ? buses?.[1]?.id || buses?.[0]?.id : buses?.[0]?.id || null)}
             className="px-6 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all bg-primary text-white shadow-lg"
           >
@@ -83,6 +82,42 @@ const LiveTracking: React.FC = () => {
           ))}
         </div>
       </div>
+
+    </>
+  );
+
+  return (
+    <div className="space-y-6">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+          <h2 className="text-3xl font-black text-slate-800 tracking-tighter uppercase">Live Tracking Hub</h2>
+          <p className="text-slate-500 font-bold uppercase text-[10px] tracking-widest mt-1">Tracking, Camera Monitoring & Parent Access Controls</p>
+        </div>
+        <div className="flex items-center gap-2 bg-white p-1 rounded-2xl border border-slate-200 w-fit">
+          <button
+            onClick={() => setActiveTab('tracking')}
+            className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === 'tracking' ? 'bg-primary text-white' : 'text-slate-500'}`}
+          >
+            Tracking
+          </button>
+          <button
+            onClick={() => setActiveTab('camera')}
+            className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === 'camera' ? 'bg-primary text-white' : 'text-slate-500'}`}
+          >
+            Bus Camera
+          </button>
+          <button
+            onClick={() => setActiveTab('permissions')}
+            className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === 'permissions' ? 'bg-primary text-white' : 'text-slate-500'}`}
+          >
+            Permissions
+          </button>
+        </div>
+      </div>
+
+      {activeTab === 'tracking' && renderTrackingPanel()}
+      {activeTab === 'camera' && <BusCameraAdmin />}
+      {activeTab === 'permissions' && <Permissions />}
     </div>
   );
 };
