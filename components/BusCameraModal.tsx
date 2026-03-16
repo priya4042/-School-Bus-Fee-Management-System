@@ -33,7 +33,7 @@ const BusCameraModal: React.FC<BusCameraModalProps> = ({ isOpen, onClose, busId 
   }, [isOpen, user, busId]);
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title="Live Fleet Surveillance">
+    <Modal isOpen={isOpen} onClose={onClose} title="Live Fleet Surveillance" maxWidthClass="max-w-5xl" bodyClassName="p-6 md:p-8">
       <div className="space-y-6">
         <div className="aspect-video bg-slate-900 rounded-3xl overflow-hidden relative group border-4 border-slate-800 shadow-2xl">
           {isAuthorized && streamUrl ? (

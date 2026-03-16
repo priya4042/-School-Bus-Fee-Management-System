@@ -217,9 +217,9 @@ const Buses: React.FC = () => {
         </div>
       </div>
 
-      <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title={editingId ? "Edit Fleet Asset" : "Register Fleet Asset"}>
+      <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title={editingId ? "Edit Fleet Asset" : "Register Fleet Asset"} maxWidthClass="max-w-4xl" bodyClassName="p-6 md:p-8">
         <form onSubmit={handleSubmit} className="space-y-5">
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Bus Number</label>
               <input 
@@ -244,7 +244,7 @@ const Buses: React.FC = () => {
             </div>
           </div>
           
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Driver Name</label>
               <input 
@@ -267,7 +267,7 @@ const Buses: React.FC = () => {
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Seating Capacity</label>
               <input 
@@ -290,7 +290,7 @@ const Buses: React.FC = () => {
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Assigned Route</label>
               <select 
@@ -316,7 +316,7 @@ const Buses: React.FC = () => {
             </div>
           </div>
 
-          <div className="pt-6 flex gap-3">
+          <div className="pt-6 flex flex-col md:flex-row gap-3">
             <button 
               type="button" 
               onClick={() => setIsModalOpen(false)}

@@ -145,10 +145,10 @@ const UserDirectory: React.FC = () => {
         </div>
       </div>
 
-      <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title="Family Intelligence Detail">
+      <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title="Family Intelligence Detail" maxWidthClass="max-w-5xl" bodyClassName="p-6 md:p-8">
         {selectedUser && (
           <div className="space-y-8">
-             <div className="p-8 bg-primary/5 rounded-[2.5rem] border border-primary/10 flex items-center justify-between">
+             <div className="p-8 bg-primary/5 rounded-[2.5rem] border border-primary/10 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
                 <div>
                    <h3 className="text-2xl font-black text-slate-800 tracking-tighter uppercase">{selectedUser.fullName || selectedUser.full_name}</h3>
                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mt-1">{selectedUser.email}</p>

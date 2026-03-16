@@ -130,7 +130,7 @@ const AdminManagement: React.FC = () => {
         </div>
       </div>
 
-      <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title="Provision Bus admin">
+      <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title="Provision Bus admin" maxWidthClass="max-w-2xl" bodyClassName="p-6 md:p-8">
         <form onSubmit={handleSubmit} className="space-y-5">
           <div>
             <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Full Name</label>
@@ -151,7 +151,7 @@ const AdminManagement: React.FC = () => {
             <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Initial Password</label>
             <input type="password" required className={inputClass} placeholder="••••••••" value={formData.password} onChange={(e) => setFormData({...formData, password: e.target.value})} />
           </div>
-          <div className="pt-6 flex gap-3">
+          <div className="pt-6 flex flex-col md:flex-row gap-3">
             <button type="button" onClick={() => setIsModalOpen(false)} className="flex-1 py-4 bg-slate-100 text-slate-600 font-black uppercase text-[10px] tracking-widest rounded-2xl hover:bg-slate-200 transition-all active:scale-95">Cancel</button>
             <button type="submit" className="flex-1 py-4 bg-primary text-white font-black uppercase text-[10px] tracking-widest rounded-2xl shadow-xl shadow-primary/20 transition-all active:scale-95">Create Account</button>
           </div>

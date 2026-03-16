@@ -33,3 +33,6 @@ Thumbs.db
 
 # Build
 build/
+
+.vercel
+.env*.local

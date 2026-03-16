@@ -500,7 +500,7 @@ const Fees: React.FC = () => {
         </div>
       </div>
 
-      <Modal isOpen={isModalOpen} onClose={() => { setIsModalOpen(false); setEditingDue(null); }} title={editingDue ? "Edit Fee Record" : "Generate Monthly Due"}>
+      <Modal isOpen={isModalOpen} onClose={() => { setIsModalOpen(false); setEditingDue(null); }} title={editingDue ? "Edit Fee Record" : "Generate Monthly Due"} maxWidthClass="max-w-3xl" bodyClassName="p-6 md:p-8">
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label className={labelClass}>Select Student</label>
@@ -518,7 +518,7 @@ const Fees: React.FC = () => {
             </select>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label className={labelClass}>Month</label>
               <select 
@@ -565,7 +565,7 @@ const Fees: React.FC = () => {
             />
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label className={labelClass}>Due Date</label>
               <input 
@@ -588,7 +588,7 @@ const Fees: React.FC = () => {
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label className={labelClass}>Fine After Days</label>
               <input 
@@ -646,7 +646,7 @@ const Fees: React.FC = () => {
         </form>
       </Modal>
 
-      <Modal isOpen={isBulkYearModalOpen} onClose={() => setIsBulkYearModalOpen(false)} title="Generate Fees for Complete Year">
+      <Modal isOpen={isBulkYearModalOpen} onClose={() => setIsBulkYearModalOpen(false)} title="Generate Fees for Complete Year" maxWidthClass="max-w-4xl" bodyClassName="p-6 md:p-8">
         <form onSubmit={handleBulkYearSubmit} className="space-y-4">
           <div>
             <label className={labelClass}>Select Student</label>
@@ -663,7 +663,7 @@ const Fees: React.FC = () => {
             </select>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label className={labelClass}>Start Month</label>
               <input
@@ -699,7 +699,7 @@ const Fees: React.FC = () => {
             />
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label className={labelClass}>Due Date Day (e.g., 10)</label>
               <input 
@@ -728,7 +728,7 @@ const Fees: React.FC = () => {
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label className={labelClass}>Fine After Days</label>
               <input 
@@ -765,7 +765,7 @@ const Fees: React.FC = () => {
             </p>
           </div>
 
-          <div className="pt-4 flex gap-3">
+          <div className="pt-4 flex flex-col md:flex-row gap-3">
             <button 
               type="button"
               onClick={() => setIsBulkYearModalOpen(false)}
@@ -783,11 +783,11 @@ const Fees: React.FC = () => {
         </form>
       </Modal>
 
-      <Modal isOpen={isStudentFeesModalOpen} onClose={() => setIsStudentFeesModalOpen(false)} title={selectedStudentForFeesView ? `All Monthly Fees - ${selectedStudentForFeesView.full_name}` : "Student Fees"}>
+      <Modal isOpen={isStudentFeesModalOpen} onClose={() => setIsStudentFeesModalOpen(false)} title={selectedStudentForFeesView ? `All Monthly Fees - ${selectedStudentForFeesView.full_name}` : "Student Fees"} maxWidthClass="max-w-6xl" bodyClassName="p-6 md:p-8">
         {selectedStudentForFeesView && (
           <div className="space-y-6">
             {/* Summary Cards */}
-            <div className="grid grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div className="bg-primary/5 border border-primary/10 rounded-2xl p-4">
                 <p className="text-[9px] font-black text-primary uppercase tracking-widest mb-2">Total Due</p>
                 <p className="text-2xl font-black text-slate-800">₹{getStudentTotalDue(selectedStudentForFeesView.studentDues).toLocaleString('en-IN')}</p>

@@ -240,7 +240,7 @@ const StudentProfile: React.FC<{ user: User }> = ({ user }) => {
         </div>
       </div>
 
-      <Modal isOpen={isAddChildModalOpen} onClose={() => setIsAddChildModalOpen(false)} title="Add Child Profile">
+      <Modal isOpen={isAddChildModalOpen} onClose={() => setIsAddChildModalOpen(false)} title="Add Child Profile" maxWidthClass="max-w-2xl" bodyClassName="p-6 md:p-8">
         <form onSubmit={handleAddChild} className="space-y-4">
           <div>
             <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5 ml-1">Child Name</label>
@@ -254,7 +254,7 @@ const StudentProfile: React.FC<{ user: User }> = ({ user }) => {
             />
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5 ml-1">Admission Number (Optional)</label>
               <input

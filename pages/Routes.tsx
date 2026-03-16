@@ -152,7 +152,7 @@ const Routes: React.FC = () => {
         </div>
       </div>
 
-      <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title={editingId ? "Edit Route" : "Provision New Route"}>
+      <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title={editingId ? "Edit Route" : "Provision New Route"} maxWidthClass="max-w-4xl" bodyClassName="p-6 md:p-8">
         <form onSubmit={handleSubmit} className="space-y-5">
           <div>
             <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Route Identifier (Name)</label>
@@ -165,7 +165,7 @@ const Routes: React.FC = () => {
               onChange={(e) => setFormData({...formData, route_name: e.target.value})}
             />
           </div>
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Internal Code</label>
               <input 
@@ -189,7 +189,7 @@ const Routes: React.FC = () => {
               />
             </div>
           </div>
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Start Point</label>
               <input 
@@ -222,7 +222,7 @@ const Routes: React.FC = () => {
               onChange={(e) => setFormData({...formData, base_fee: Number(e.target.value)})}
             />
           </div>
-          <div className="pt-6 flex gap-3">
+          <div className="pt-6 flex flex-col md:flex-row gap-3">
             <button 
               type="button" 
               onClick={() => setIsModalOpen(false)}

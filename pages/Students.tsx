@@ -397,7 +397,7 @@ const Students: React.FC = () => {
       </div>
       )}
 
-      <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title={editingId ? "Edit Student" : "Register New Student"}>
+      <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title={editingId ? "Edit Student" : "Register New Student"} maxWidthClass="max-w-5xl" bodyClassName="p-6 md:p-8">
         <form onSubmit={handleSubmit} className="space-y-6">
           <div className="space-y-4">
             <h4 className="text-[10px] font-black text-primary uppercase tracking-[0.2em] border-b border-primary/10 pb-2">Academic Profile</h4>
@@ -405,7 +405,7 @@ const Students: React.FC = () => {
               <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5 ml-1">Student Legal Name</label>
               <input type="text" required className={inputClass} placeholder="e.g. Rahul Verma" value={formData.full_name} onChange={(e) => setFormData({...formData, full_name: e.target.value})} />
             </div>
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5 ml-1">Admission Number</label>
                 <input type="text" required className={inputClass} placeholder="Adm No" value={formData.admission_number} onChange={(e) => setFormData({...formData, admission_number: e.target.value})} />
@@ -426,7 +426,7 @@ const Students: React.FC = () => {
                 />
               </div>
             </div>
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <input type="text" required className={inputClass} placeholder="Grade (e.g. 5th)" value={formData.grade} onChange={(e) => setFormData({...formData, grade: e.target.value})} />
               <input type="text" required className={inputClass + " uppercase"} placeholder="Section" value={formData.section} onChange={(e) => setFormData({...formData, section: e.target.value})} />
             </div>
@@ -434,7 +434,7 @@ const Students: React.FC = () => {
 
           <div className="space-y-4">
             <h4 className="text-[10px] font-black text-success uppercase tracking-[0.2em] border-b border-success/10 pb-2">Fleet Mapping</h4>
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5 ml-1">Parent Name</label>
                 <input type="text" className={inputClass} placeholder="Parent Full Name" value={formData.parent_name} onChange={(e) => setFormData({...formData, parent_name: e.target.value})} />
@@ -444,7 +444,7 @@ const Students: React.FC = () => {
                 <input type="tel" className={inputClass} placeholder="Phone Number" value={formData.parent_phone} onChange={(e) => setFormData({...formData, parent_phone: e.target.value})} />
               </div>
             </div>
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5 ml-1">Assigned Route</label>
                 <select required className={selectClass} value={formData.route_id} onChange={(e) => setFormData({...formData, route_id: e.target.value})}>
@@ -485,7 +485,7 @@ const Students: React.FC = () => {
                 <>
                   <div>
                     <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5 ml-1">Billing Mode</label>
-                    <div className="grid grid-cols-2 gap-3">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                       <button
                         type="button"
                         onClick={() => setFeeSetupData({ ...feeSetupData, billingMode: 'monthly' })}
@@ -530,7 +530,7 @@ const Students: React.FC = () => {
                     >
                       Use Current Financial Year (Mar-Feb)
                     </button>
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div>
                         <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5 ml-1">Start Month</label>
                         <input
@@ -554,7 +554,7 @@ const Students: React.FC = () => {
                     </div>
                   </div>
                   )}
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                       <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5 ml-1">Due Date Day</label>
                       <input
@@ -578,7 +578,7 @@ const Students: React.FC = () => {
                       />
                     </div>
                   </div>
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                       <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5 ml-1">Fine After Days</label>
                       <input
@@ -608,7 +608,7 @@ const Students: React.FC = () => {
             </div>
           )}
 
-          <div className="pt-4 flex gap-3">
+          <div className="pt-4 flex flex-col md:flex-row gap-3">
             <button type="button" onClick={() => setIsModalOpen(false)} className="flex-1 py-4 bg-slate-100 text-slate-500 font-black uppercase text-[10px] tracking-widest rounded-2xl transition-all active:scale-95">Cancel</button>
             <button type="submit" className="flex-1 py-4 bg-primary text-white font-black uppercase text-[10px] tracking-widest rounded-2xl shadow-xl shadow-primary/20 transition-all active:scale-95">
               {editingId ? 'Update Record' : 'Authorize Entry'}
@@ -617,11 +617,11 @@ const Students: React.FC = () => {
         </form>
       </Modal>
 
-      <Modal isOpen={isFeeModalOpen} onClose={() => setIsFeeModalOpen(false)} title={selectedStudentForFees ? `Yearly Fees - ${selectedStudentForFees.full_name} (Adm: ${selectedStudentForFees.admission_number})` : "Yearly Fees"}>
+      <Modal isOpen={isFeeModalOpen} onClose={() => setIsFeeModalOpen(false)} title={selectedStudentForFees ? `Yearly Fees - ${selectedStudentForFees.full_name} (Adm: ${selectedStudentForFees.admission_number})` : "Yearly Fees"} maxWidthClass="max-w-6xl" bodyClassName="p-6 md:p-8">
         {selectedStudentForFees && (
           <div className="space-y-6">
             {/* Summary Cards */}
-            <div className="grid grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div className="bg-primary/5 border border-primary/10 rounded-2xl p-4">
                 <p className="text-[9px] font-black text-primary uppercase tracking-widest mb-2">Total Due</p>
                 <p className="text-2xl font-black text-slate-800">₹{calculateTotalDue(getStudentFees(selectedStudentForFees.id)).toLocaleString('en-IN')}</p>
