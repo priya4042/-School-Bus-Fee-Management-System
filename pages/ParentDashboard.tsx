@@ -21,6 +21,7 @@ const ParentDashboard: React.FC<{ user: User }> = ({ user }) => {
   const [trackingActive, setTrackingActive] = useState(false);
   const [isCameraOpen, setIsCameraOpen] = useState(false);
   const [isPickerOpen, setIsPickerOpen] = useState(false);
+  const [showFutureScheduled, setShowFutureScheduled] = useState(false);
   const [loading, setLoading] = useState(true);
   
   const { location, hasArrived } = useTracking(selectedStudent?.bus_id || undefined);
@@ -74,22 +75,29 @@ const ParentDashboard: React.FC<{ user: User }> = ({ user }) => {
      </div>
   );
 
-  const now = new Date();
-  const currentPeriod = now.getFullYear() * 12 + (now.getMonth() + 1);
   const toPeriod = (due: MonthlyDue) => Number(due.year || 0) * 12 + Number(due.month || 0);
-  const isActionableOrPaid = (due: MonthlyDue) => due.status === PaymentStatus.PAID || toPeriod(due) <= currentPeriod;
+  const selectedStudentAllDues = dues
+    .filter((d) => String(d.student_id) === String(selectedStudent.id))
+    .sort((a, b) => toPeriod(a) - toPeriod(b));
 
-  const studentDues = dues
-                         .filter(d => String(d.student_id) === String(selectedStudent.id))
-                         .filter(isActionableOrPaid)
-                         .sort((a, b) => (a.year * 12 + a.month) - (b.year * 12 + b.month));
+  const selectedFirstUnpaidDue = selectedStudentAllDues.find((d) => d.status !== PaymentStatus.PAID) || null;
+
+  const studentDues = selectedStudentAllDues.filter(
+    (d) => d.status === PaymentStatus.PAID || String(d.id) === String(selectedFirstUnpaidDue?.id || '')
+  );
+
+  const futureScheduledDues = selectedStudentAllDues.filter(
+    (d) => d.status !== PaymentStatus.PAID && String(d.id) !== String(selectedFirstUnpaidDue?.id || '')
+  );
 
   // Use feeCalculator for all outstanding calculations
   const totalFamilyDue = familyStudents.reduce((acc, s) => {
-    const studentDuesAll = dues.filter(
-      d => String(d.student_id) === String(s.id) && d.status !== PaymentStatus.PAID && toPeriod(d) <= currentPeriod
-    );
-    return acc + studentDuesAll.reduce((sum, d) => sum + calculateCurrentLedger(d).total, 0);
+    const studentDuesAll = dues
+      .filter((d) => String(d.student_id) === String(s.id))
+      .sort((a, b) => toPeriod(a) - toPeriod(b));
+    const firstUnpaidDue = studentDuesAll.find((d) => d.status !== PaymentStatus.PAID);
+    if (!firstUnpaidDue) return acc;
+    return acc + calculateCurrentLedger(firstUnpaidDue).total;
   }, 0);
 
   const handleLocationSave = (data: any) => {
@@ -282,6 +290,40 @@ const ParentDashboard: React.FC<{ user: User }> = ({ user }) => {
             {studentDues.length === 0 && (
               <div className="p-20 text-center">
                  <p className="text-[9px] font-black text-slate-300 uppercase tracking-widest">No fee records found</p>
+              </div>
+            )}
+
+            {futureScheduledDues.length > 0 && (
+              <div className="p-6 md:p-8 bg-slate-50/60">
+                <button
+                  onClick={() => setShowFutureScheduled((prev) => !prev)}
+                  className="w-full flex items-center justify-between px-4 py-3 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 transition-all"
+                >
+                  <span className="text-[9px] md:text-[10px] font-black uppercase tracking-widest text-slate-600">
+                    Future Scheduled ({futureScheduledDues.length})
+                  </span>
+                  <i className={`fas ${showFutureScheduled ? 'fa-chevron-up' : 'fa-chevron-down'} text-slate-400 text-xs`}></i>
+                </button>
+
+                {showFutureScheduled && (
+                  <div className="mt-3 space-y-2">
+                    {futureScheduledDues.map((due) => (
+                      <div key={`future-${due.id}`} className="p-4 rounded-xl border border-slate-200 bg-white flex items-center justify-between">
+                        <div>
+                          <p className="text-[10px] font-black text-slate-700 uppercase tracking-widest">
+                            {MONTHS[(due.month || 1) - 1]} {due.year}
+                          </p>
+                          <p className="text-[8px] font-bold text-slate-400 uppercase tracking-widest mt-1">
+                            Scheduled • locked until prior dues are cleared
+                          </p>
+                        </div>
+                        <p className="text-sm font-black text-slate-600 tracking-tight">
+                          ₹{Number(due.total_due || 0).toLocaleString('en-IN')}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
             )}
           </div>

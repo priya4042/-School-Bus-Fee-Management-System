@@ -20,6 +20,7 @@ const StudentProfile: React.FC<{ user: User }> = ({ user }) => {
   const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
   const [dues, setDues] = useState<MonthlyDue[]>([]);
   const [recentAttendance, setRecentAttendance] = useState<any[]>([]);
+  const [showFutureScheduled, setShowFutureScheduled] = useState(false);
   const [loading, setLoading] = useState(true);
   const [isAddChildModalOpen, setIsAddChildModalOpen] = useState(false);
   const [newChildForm, setNewChildForm] = useState({
@@ -194,18 +195,17 @@ const StudentProfile: React.FC<{ user: User }> = ({ user }) => {
     .filter((d) => d.status === PaymentStatus.PAID)
     .reduce((sum, d) => sum + (d.total_due || 0), 0);
 
-  const now = new Date();
-  const currentPeriod = now.getFullYear() * 12 + (now.getMonth() + 1);
   const toPeriod = (due: MonthlyDue) => Number(due.year || 0) * 12 + Number(due.month || 0);
 
-  const actionableUnpaidDues = dues
-    .filter((d) => d.status !== PaymentStatus.PAID && toPeriod(d) <= currentPeriod)
-    .sort((a, b) => toPeriod(a) - toPeriod(b));
+  const chronologicalDues = [...dues].sort((a, b) => toPeriod(a) - toPeriod(b));
+  const actionableUnpaidDues = chronologicalDues.filter((d) => d.status !== PaymentStatus.PAID);
+  const firstUnpaidDue = actionableUnpaidDues[0] || null;
 
-  const totalDue = actionableUnpaidDues
-    .reduce((sum, d) => sum + (d.total_due || 0), 0);
+  const totalDue = Number(firstUnpaidDue?.total_due || firstUnpaidDue?.amount || 0);
 
-  const nextDue = actionableUnpaidDues[0];
+  const nextDue = firstUnpaidDue;
+
+  const futureScheduledDues = actionableUnpaidDues.filter((d) => String(d.id) !== String(firstUnpaidDue?.id || ''));
 
   const enrolledDate = selectedStudent.created_at
     ? new Date(selectedStudent.created_at).toLocaleDateString('en-IN', { month: 'long', year: 'numeric' })
@@ -474,6 +474,35 @@ const StudentProfile: React.FC<{ user: User }> = ({ user }) => {
                 )}
               </div>
             </div>
+
+            {futureScheduledDues.length > 0 && (
+              <div className="mt-6 p-5 rounded-2xl border border-slate-100 bg-slate-50">
+                <button
+                  onClick={() => setShowFutureScheduled((prev) => !prev)}
+                  className="w-full flex items-center justify-between px-4 py-3 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 transition-all"
+                >
+                  <span className="text-[9px] font-black text-slate-600 uppercase tracking-widest">
+                    Future Scheduled Months ({futureScheduledDues.length})
+                  </span>
+                  <i className={`fas ${showFutureScheduled ? 'fa-chevron-up' : 'fa-chevron-down'} text-slate-400 text-xs`}></i>
+                </button>
+
+                {showFutureScheduled && (
+                  <div className="mt-3 space-y-2">
+                    {futureScheduledDues.map((due) => (
+                      <div key={`future-${due.id}`} className="p-3 rounded-xl border border-slate-200 bg-white flex items-center justify-between">
+                        <p className="text-[9px] font-black text-slate-700 uppercase tracking-widest">
+                          {MONTHS[(due.month || 1) - 1]} {due.year}
+                        </p>
+                        <p className="text-xs font-black text-slate-600 tracking-tight">
+                          ₹{Number(due.total_due || due.amount || 0).toLocaleString('en-IN')}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
           </div>
 
           {/* Recent Attendance */}

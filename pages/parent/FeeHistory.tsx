@@ -13,6 +13,7 @@ const FeeHistory: React.FC<{ user: User }> = ({ user }) => {
   const [students, setStudents] = useState<Student[]>([]);
   const [selectedStudent, setSelectedStudent] = useState<string>('');
   const [searchQuery, setSearchQuery] = useState('');
+  const [showFutureScheduled, setShowFutureScheduled] = useState(false);
   const [loading, setLoading] = useState(true);
 
   const { paymentState, openPortal, closePortal, initiateRazorpay } = usePayments();
@@ -68,12 +69,31 @@ const FeeHistory: React.FC<{ user: User }> = ({ user }) => {
     fetchData();
   }, [user.id, paymentState.step]);
 
-  const now = new Date();
-  const currentPeriod = now.getFullYear() * 12 + (now.getMonth() + 1);
   const toPeriod = (due: MonthlyDue) => Number(due.year || 0) * 12 + Number(due.month || 0);
-  const isActionableOrPaid = (due: MonthlyDue) => due.status === PaymentStatus.PAID || toPeriod(due) <= currentPeriod;
+  const sortedDues = [...dues].sort((a, b) => {
+    if (a.student_id !== b.student_id) return Number(a.student_id) - Number(b.student_id);
+    return toPeriod(a) - toPeriod(b);
+  });
 
-  const visibleDues = dues.filter(isActionableOrPaid);
+  const firstUnpaidByStudent = new Map<string, string>();
+  sortedDues.forEach((due) => {
+    const studentKey = String(due.student_id);
+    if (due.status === PaymentStatus.PAID) return;
+    if (!firstUnpaidByStudent.has(studentKey)) {
+      firstUnpaidByStudent.set(studentKey, String(due.id));
+    }
+  });
+
+  const visibleDues = dues.filter((due) => {
+    if (due.status === PaymentStatus.PAID) return true;
+    return firstUnpaidByStudent.get(String(due.student_id)) === String(due.id);
+  });
+
+  const futureScheduledDues = dues
+    .filter((d) => d.status !== PaymentStatus.PAID)
+    .filter((d) => firstUnpaidByStudent.get(String(d.student_id)) !== String(d.id))
+    .filter((d) => (selectedStudent ? String(d.student_id) === String(selectedStudent) : true))
+    .sort((a, b) => toPeriod(a) - toPeriod(b));
 
   const studentFilteredDues = selectedStudent
     ? visibleDues.filter((d) => String(d.student_id) === String(selectedStudent))
@@ -369,6 +389,43 @@ const FeeHistory: React.FC<{ user: User }> = ({ user }) => {
           </div>
         )}
       </div>
+
+      {futureScheduledDues.length > 0 && (
+        <div className="bg-white rounded-[2.5rem] border border-slate-100 shadow-sm p-6 md:p-8">
+          <button
+            onClick={() => setShowFutureScheduled((prev) => !prev)}
+            className="w-full flex items-center justify-between px-4 py-3 rounded-xl border border-slate-200 bg-slate-50 hover:bg-slate-100 transition-all"
+          >
+            <span className="text-[10px] font-black text-slate-600 uppercase tracking-widest">
+              Future Scheduled Months ({futureScheduledDues.length})
+            </span>
+            <i className={`fas ${showFutureScheduled ? 'fa-chevron-up' : 'fa-chevron-down'} text-slate-400 text-xs`}></i>
+          </button>
+
+          {showFutureScheduled && (
+            <div className="mt-4 space-y-2">
+              {futureScheduledDues.map((due) => {
+                const student = students.find((s) => s.id === due.student_id);
+                return (
+                  <div key={`future-${due.id}`} className="p-4 rounded-xl border border-slate-200 bg-white flex items-center justify-between">
+                    <div>
+                      <p className="text-[10px] font-black text-slate-700 uppercase tracking-widest">
+                        {MONTHS[(due.month || 1) - 1]} {due.year}
+                      </p>
+                      <p className="text-[8px] font-bold text-slate-400 uppercase tracking-widest mt-1">
+                        {student?.full_name || due.student_name || 'Student'} • scheduled
+                      </p>
+                    </div>
+                    <p className="text-sm font-black text-slate-600 tracking-tight">
+                      ₹{Number(due.total_due || due.amount || 0).toLocaleString('en-IN')}
+                    </p>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 };
