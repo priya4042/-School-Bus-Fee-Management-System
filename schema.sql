@@ -214,6 +214,31 @@ CREATE TABLE public.otps (
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
+CREATE TABLE public.otp_logs (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  phone_number TEXT NOT NULL,
+  otp_code TEXT NOT NULL,
+  is_verified BOOLEAN DEFAULT false,
+  expires_at TIMESTAMPTZ NOT NULL,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_otp_logs_phone ON public.otp_logs (phone_number);
+CREATE INDEX IF NOT EXISTS idx_otp_logs_expires ON public.otp_logs (expires_at);
+
+CREATE TABLE public.audit_logs (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  action TEXT NOT NULL,
+  entity_type TEXT,
+  entity_id TEXT,
+  user_id UUID REFERENCES public.profiles(id) ON DELETE SET NULL,
+  metadata JSONB DEFAULT '{}'::JSONB,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_audit_logs_created ON public.audit_logs (created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_audit_logs_user ON public.audit_logs (user_id);
+
 -- 3. REALTIME CONFIG
 -- (These might fail if publication already exists, so we wrap or ignore)
 DO $$ BEGIN

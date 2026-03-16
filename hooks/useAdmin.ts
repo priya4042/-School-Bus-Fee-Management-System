@@ -25,9 +25,41 @@ export const useAdmin = () => {
 
   const createAdmin = async (adminData: any) => {
     try {
-      setAdmins(prev => [...prev, { ...adminData, id: Math.random(), is_active: true }]);
+      // Create the auth user (keeps current session intact if email confirmation required)
+      const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
+        email: adminData.email,
+        password: adminData.password,
+        options: {
+          data: {
+            full_name: adminData.fullName,
+            role: adminData.role || 'ADMIN',
+          },
+        },
+      });
+
+      if (signUpError) throw signUpError;
+
+      const userId = signUpData?.user?.id;
+
+      if (userId) {
+        // Upsert profile with admin role
+        const { error: profileError } = await supabase.from('profiles').upsert({
+          id: userId,
+          full_name: adminData.fullName,
+          email: adminData.email,
+          role: adminData.role || 'ADMIN',
+          is_active: true,
+        }, { onConflict: 'id' });
+
+        if (profileError) {
+          console.error('Failed to upsert admin profile:', profileError);
+        }
+      }
+
+      await fetchAdmins();
       return true;
-    } catch (err) {
+    } catch (err: any) {
+      console.error('Failed to create admin:', err);
       return false;
     }
   };

@@ -15,7 +15,6 @@ import Profile from './pages/Profile';
 import Attendance from './pages/Attendance';
 import AdminPayments from './pages/AdminPayments';
 import AdminNotifications from './pages/AdminNotifications';
-import Notifications from './pages/Notifications';
 import AuditLogs from './pages/AuditLogs';
 import AdminManagement from './pages/AdminManagement';
 import UserDirectory from './pages/UserDirectory';
@@ -142,7 +141,7 @@ const App: React.FC = () => {
         case 'User Directory': return <Settings />;
         case 'Live Tracking': return <LiveTracking />;
         case 'Documentation': return <Documentation />;
-        case 'Support': return <Support user={user!} />;
+        case 'Support': return <Support user={user!} onOpenDocumentation={() => setActiveTab('Documentation')} />;
         default: return <AdminDashboard onOpenDocumentation={() => setActiveTab('Documentation')} />;
       }
     } 
