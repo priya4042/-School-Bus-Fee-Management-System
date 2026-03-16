@@ -18,6 +18,9 @@ const AdminPayments: React.FC = () => {
   const fetchPayments = async () => {
     try {
       setLoading(true);
+      const now = new Date();
+      const currentPeriod = now.getFullYear() * 12 + (now.getMonth() + 1);
+      const toPeriod = (due: any) => Number(due.year || 0) * 12 + Number(due.month || 0);
 
       // Fetch dues without embedded join to avoid PostgREST 400
       const { data: dues, error: duesError } = await supabase
@@ -41,10 +44,19 @@ const AdminPayments: React.FC = () => {
       const enrichedDues = (dues || []).map((due: any) => {
         const student = studentsMap[due.student_id] || {};
         const ledger = calculateCurrentLedger(due);
-        const normalizedStatus = String(due.status || '').toUpperCase() || 'PENDING';
+        const rawStatus = String(due.status || '').toUpperCase() || 'PENDING';
+        const monthStarted = toPeriod(due) <= currentPeriod;
+        const effectiveStatus = rawStatus === 'PAID'
+          ? 'PAID'
+          : !monthStarted
+            ? 'FUTURE'
+            : rawStatus === 'OVERDUE'
+              ? 'OVERDUE'
+              : 'PENDING';
+
         return {
           ...due,
-          status: normalizedStatus,
+          status: effectiveStatus,
           student_name: student.full_name || 'Unknown',
           admission_number: student.admission_number || 'N/A',
           late_fee: ledger.lateFee,
@@ -76,6 +88,7 @@ const AdminPayments: React.FC = () => {
     totalPaid: payments.filter(p => p.status === 'PAID').length,
     totalPending: payments.filter(p => p.status === 'PENDING').length,
     totalOverdue: payments.filter(p => p.status === 'OVERDUE').length,
+    totalFuture: payments.filter(p => p.status === 'FUTURE').length,
     totalRevenue: payments
       .filter(p => p.status === 'PAID')
       .reduce((sum, p) => sum + Number(p.total_due || p.amount || 0), 0),
@@ -89,6 +102,8 @@ const AdminPayments: React.FC = () => {
         return 'bg-danger/10 text-danger border-danger/10';
       case 'PENDING':
         return 'bg-amber-50 text-amber-600 border-amber-100';
+      case 'FUTURE':
+        return 'bg-slate-100 text-slate-500 border-slate-200';
       default:
         return 'bg-slate-100 text-slate-600 border-slate-100';
     }
@@ -115,7 +130,7 @@ const AdminPayments: React.FC = () => {
         <>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-4">
         <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm">
           <p className="text-slate-500 font-black uppercase text-[9px] tracking-widest mb-2">Total Dues</p>
           <p className="text-3xl font-black text-slate-800">{stats.totalDues}</p>
@@ -131,6 +146,10 @@ const AdminPayments: React.FC = () => {
         <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm">
           <p className="text-slate-500 font-black uppercase text-[9px] tracking-widest mb-2">Overdue</p>
           <p className="text-3xl font-black text-danger">{stats.totalOverdue}</p>
+        </div>
+        <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm">
+          <p className="text-slate-500 font-black uppercase text-[9px] tracking-widest mb-2">Future</p>
+          <p className="text-3xl font-black text-slate-500">{stats.totalFuture}</p>
         </div>
         <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm">
           <p className="text-slate-500 font-black uppercase text-[9px] tracking-widest mb-2">Total Revenue</p>
