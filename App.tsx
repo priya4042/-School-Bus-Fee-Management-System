@@ -163,7 +163,7 @@ const App: React.FC = () => {
         case 'Settings': return <ParentSettings user={user!} />;
         case 'Student Profile': return <StudentProfile user={user!} />;
         case 'Documentation': return <Documentation />;
-        case 'Support': return <Support user={user!} />;
+        case 'Support': return <Support user={user!} onOpenDocumentation={() => setActiveTab('Documentation')} />;
         default: return <ParentDashboard user={user!} />;
       }
     }
