@@ -1,5 +1,6 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { verifyWebhookSignature, recordSuccessfulPayment } from '../../../lib/server/payments/paymentCore.js';
+import { verifyWebhookSignature } from '../../../lib/server/payments/paymentCore.js';
+import { recordSuccessfulPayment } from '../../../lib/server/payments/recordSuccessfulPayment';
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   res.setHeader('Access-Control-Allow-Credentials', 'true');

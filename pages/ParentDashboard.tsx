@@ -4,7 +4,7 @@ import { MONTHS } from '../constants';
 import { usePayments } from '../hooks/usePayments';
 import PaymentPortal from '../components/PaymentPortal';
 import { useTracking } from '../hooks/useTracking';
-import { isMonthPayable } from '../utils/feeCalculator';
+import { isMonthPayable, calculateCurrentLedger } from '../utils/feeCalculator';
 import BusCameraModal from '../components/BusCameraModal';
 import BoardingLocationPicker from '../components/Location/BoardingLocationPicker';
 import { useReceipts } from '../hooks/useReceipts';
@@ -76,10 +76,11 @@ const ParentDashboard: React.FC<{ user: User }> = ({ user }) => {
 
   const studentDues = dues.filter(d => String(d.student_id) === String(selectedStudent.id))
                          .sort((a, b) => (a.year * 12 + a.month) - (b.year * 12 + b.month));
-                         
+
+  // Use feeCalculator for all outstanding calculations
   const totalFamilyDue = familyStudents.reduce((acc, s) => {
     const studentDuesAll = dues.filter(d => String(d.student_id) === String(s.id) && d.status !== PaymentStatus.PAID);
-    return acc + studentDuesAll.reduce((sum, d) => sum + d.total_due, 0);
+    return acc + studentDuesAll.reduce((sum, d) => sum + calculateCurrentLedger(d).total, 0);
   }, 0);
 
   const handleLocationSave = (data: any) => {

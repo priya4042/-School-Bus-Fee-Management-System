@@ -94,7 +94,7 @@ const Settings: React.FC = () => {
         <div className="flex flex-wrap gap-2">
           <div className="flex bg-white p-1.5 rounded-[1.5rem] border border-slate-200 shadow-sm">
             <button onClick={() => setView('settings')} className={`px-8 py-2.5 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all ${view === 'settings' ? 'bg-primary text-white shadow-lg shadow-primary/20' : 'text-slate-400'}`}>System Settings</button>
-            <button onClick={() => setView('users')} className={`px-8 py-2.5 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all ${view === 'users' ? 'bg-primary text-white shadow-lg shadow-primary/20' : 'text-slate-400'}`}>User Directory</button>
+            <button onClick={() => setView('users')} className="px-8 py-2.5 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all text-slate-400">User Directory</button>
           </div>
           <div className="flex bg-white p-1.5 rounded-[1.5rem] border border-slate-200 shadow-sm">
            <button onClick={() => setActiveTab('fees')} className={`px-8 py-2.5 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all ${activeTab === 'fees' ? 'bg-primary text-white shadow-lg shadow-primary/20' : 'text-slate-400'}`}>Fee Engine</button>

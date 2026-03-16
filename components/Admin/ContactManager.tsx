@@ -165,6 +165,7 @@ const ContactManager: React.FC<ContactManagerProps> = ({ contacts, onAdd, onDele
             </div>
           </div>
         </div>
+        </div>
       )}
     </div>
   );

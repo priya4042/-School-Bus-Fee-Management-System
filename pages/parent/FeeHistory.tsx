@@ -3,6 +3,7 @@ import { User, MonthlyDue, PaymentStatus, Student } from '../../types';
 import { MONTHS } from '../../constants';
 import { Download, CheckCircle2, AlertCircle, Filter, Search, FileText } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
+import { calculateCurrentLedger } from '../../utils/feeCalculator';
 import { usePayments } from '../../hooks/usePayments';
 import { useReceipts } from '../../hooks/useReceipts';
 import PaymentPortal from '../../components/PaymentPortal';
@@ -89,13 +90,14 @@ const FeeHistory: React.FC<{ user: User }> = ({ user }) => {
   const billingStart = selectedStudentDues[0];
   const billingEnd = selectedStudentDues[selectedStudentDues.length - 1];
 
+  // Always recalculate using feeCalculator for consistency
   const stats = {
     totalPaid: dues
       .filter((d) => d.status === PaymentStatus.PAID)
-      .reduce((acc, d) => acc + (d.total_due || 0), 0),
+      .reduce((acc, d) => acc + calculateCurrentLedger(d).total, 0),
     pending: dues
       .filter((d) => d.status !== PaymentStatus.PAID)
-      .reduce((acc, d) => acc + (d.total_due || 0), 0),
+      .reduce((acc, d) => acc + calculateCurrentLedger(d).total, 0),
     overdue: dues.filter(
       (d) => d.status !== PaymentStatus.PAID && d.due_date && new Date() > new Date(d.due_date)
     ).length,

@@ -84,6 +84,14 @@ const parseNameChangeReviewHistory = (row: any): NameChangeReviewHistory | null 
   };
 };
 
+const pickStudentName = (studentsRelation: any): string | undefined => {
+  if (!studentsRelation) return undefined;
+  if (Array.isArray(studentsRelation)) {
+    return studentsRelation[0]?.full_name || undefined;
+  }
+  return studentsRelation.full_name || undefined;
+};
+
 const AdminNotifications: React.FC<{ focusNotificationId?: string; onFocusHandled?: () => void }> = ({ focusNotificationId, onFocusHandled }) => {
   const [view, setView] = useState<'notifications' | 'audit'>('notifications');
   const [msgType, setMsgType] = useState('announcement');
@@ -160,7 +168,7 @@ const AdminNotifications: React.FC<{ focusNotificationId?: string; onFocusHandle
       (dueRows || []).forEach((row: any) => {
         paymentMetaMap[String(row.id)] = {
           paidAt: row.paid_at || undefined,
-          studentName: row?.students?.full_name || undefined,
+          studentName: pickStudentName(row?.students),
           month: row.month,
           year: row.year,
           amount: Number(row.total_due || row.amount || 0),
@@ -315,7 +323,7 @@ const AdminNotifications: React.FC<{ focusNotificationId?: string; onFocusHandle
     const paidAt = dueRow.paid_at ? new Date(dueRow.paid_at).toLocaleString('en-IN') : 'Not available';
     const amount = Number(dueRow.total_due || dueRow.amount || 0).toLocaleString('en-IN');
     const details = [
-      `Student: ${dueRow?.students?.full_name || 'N/A'}`,
+      `Student: ${pickStudentName(dueRow?.students) || 'N/A'}`,
       `Month: ${dueRow.month}/${dueRow.year}`,
       `Amount: ₹${amount}`,
       `Paid At: ${paidAt}`,
