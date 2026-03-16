@@ -210,8 +210,9 @@ const Support: React.FC<{ user: User }> = ({ user }) => {
 
       {/* Ticket Form Modal */}
       {showTicketForm && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[2000] flex items-center justify-center p-4">
-          <div className="bg-white rounded-[3rem] p-10 max-w-lg w-full shadow-2xl animate-in fade-in zoom-in duration-300">
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[2000] overflow-y-auto">
+          <div className="flex min-h-full items-start justify-center p-4 pt-20 pb-6 md:pt-24">
+          <div className="bg-white rounded-[3rem] p-10 max-w-lg w-full shadow-2xl animate-in fade-in zoom-in duration-300 max-h-[calc(100vh-6rem)] overflow-y-auto">
             <div className="flex items-center justify-between mb-8">
               <h2 className="text-2xl font-black text-slate-900 uppercase tracking-tight">Submit Support Ticket</h2>
               <button
@@ -289,6 +290,7 @@ const Support: React.FC<{ user: User }> = ({ user }) => {
                 </button>
               </div>
             </div>
+          </div>
           </div>
         </div>
       )}
@@ -372,8 +374,9 @@ const Support: React.FC<{ user: User }> = ({ user }) => {
       </div>
 
       {activeDocument && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[2100] flex items-center justify-center p-4">
-          <div className="bg-white rounded-[2.5rem] p-8 md:p-10 max-w-3xl w-full max-h-[90vh] overflow-y-auto shadow-2xl">
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[2100] overflow-y-auto">
+          <div className="flex min-h-full items-start justify-center p-4 pt-20 pb-6 md:pt-24">
+          <div className="bg-white rounded-[2.5rem] p-8 md:p-10 max-w-3xl w-full max-h-[calc(100vh-6rem)] overflow-y-auto shadow-2xl">
             <div className="flex items-center justify-between mb-6">
               <h3 className="text-2xl font-black text-slate-900 uppercase tracking-tight">{docDetails[activeDocument].title}</h3>
               <button
@@ -391,6 +394,7 @@ const Support: React.FC<{ user: User }> = ({ user }) => {
                 </section>
               ))}
             </div>
+          </div>
           </div>
         </div>
       )}

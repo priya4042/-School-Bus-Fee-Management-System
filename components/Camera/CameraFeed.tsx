@@ -38,8 +38,9 @@ const CameraFeed: React.FC<CameraFeedProps> = ({ streamUrl, cameraName, busName,
   }, [streamUrl]);
 
   return (
-    <div className="fixed inset-0 z-[100] bg-black/95 flex items-center justify-center p-4 md:p-8">
-      <div className="w-full max-w-5xl bg-slate-900 rounded-[2.5rem] overflow-hidden shadow-2xl border border-slate-800 flex flex-col">
+    <div className="fixed inset-0 z-[100] bg-black/95 overflow-y-auto">
+      <div className="flex min-h-full items-start justify-center p-4 pt-20 pb-6 md:p-8 md:pt-24">
+      <div className="w-full max-w-5xl bg-slate-900 rounded-[2.5rem] overflow-hidden shadow-2xl border border-slate-800 flex flex-col max-h-[calc(100vh-6rem)]">
         <div className="p-6 flex justify-between items-center bg-slate-900/50 backdrop-blur-md border-b border-slate-800">
           <div className="flex items-center gap-4">
             <div className="w-12 h-12 bg-primary/10 rounded-2xl flex items-center justify-center text-primary">
@@ -58,7 +59,7 @@ const CameraFeed: React.FC<CameraFeedProps> = ({ streamUrl, cameraName, busName,
           </button>
         </div>
 
-        <div className="relative flex-1 bg-black group">
+        <div className="relative flex-1 bg-black group min-h-[320px] overflow-hidden">
           <video ref={videoRef} className="video-js vjs-big-play-centered w-full h-full" />
           
           {/* Overlays */}
@@ -94,6 +95,7 @@ const CameraFeed: React.FC<CameraFeedProps> = ({ streamUrl, cameraName, busName,
           </div>
           <p className="text-slate-500 text-[10px] font-black uppercase tracking-widest">Encrypted End-to-End</p>
         </div>
+      </div>
       </div>
     </div>
   );

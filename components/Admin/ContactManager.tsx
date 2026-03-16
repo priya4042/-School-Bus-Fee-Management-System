@@ -97,8 +97,9 @@ const ContactManager: React.FC<ContactManagerProps> = ({ contacts, onAdd, onDele
       </div>
 
       {isAdding && (
-        <div className="fixed inset-0 z-[110] bg-slate-950/20 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-white w-full max-w-md rounded-[2.5rem] p-8 shadow-2xl border border-slate-100">
+        <div className="fixed inset-0 z-[110] bg-slate-950/20 backdrop-blur-sm overflow-y-auto">
+          <div className="flex min-h-full items-start justify-center p-4 pt-20 pb-6 md:pt-24">
+            <div className="bg-white w-full max-w-md rounded-[2.5rem] p-8 shadow-2xl border border-slate-100 max-h-[calc(100vh-6rem)] overflow-y-auto">
             <h3 className="text-2xl font-black text-slate-900 tracking-tight mb-6">Add Contact</h3>
             
             <div className="space-y-6">

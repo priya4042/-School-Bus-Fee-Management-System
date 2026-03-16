@@ -31,9 +31,10 @@ const ReceiptTemplate: React.FC<ReceiptProps> = ({ receipt, onClose }) => {
   }, [receipt.receiptNumber]);
 
   return (
-    <div className="fixed inset-0 z-[110] bg-slate-950/40 backdrop-blur-md flex items-center justify-center p-4 overflow-y-auto">
-      <div className="bg-white w-full max-w-2xl rounded-[3rem] shadow-2xl overflow-hidden my-8">
-        <div className="p-12">
+    <div className="fixed inset-0 z-[110] bg-slate-950/40 backdrop-blur-md overflow-y-auto">
+      <div className="flex min-h-full items-start justify-center p-4 pt-20 pb-6 md:pt-24">
+      <div className="bg-white w-full max-w-2xl rounded-[3rem] shadow-2xl overflow-hidden max-h-[calc(100vh-6rem)] flex flex-col">
+        <div className="p-12 overflow-y-auto flex-1">
           {/* Header */}
           <div className="flex justify-between items-start mb-12">
             <div>
@@ -132,6 +133,7 @@ const ReceiptTemplate: React.FC<ReceiptProps> = ({ receipt, onClose }) => {
             Close
           </button>
         </div>
+      </div>
       </div>
     </div>
   );
