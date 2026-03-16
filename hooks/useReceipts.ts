@@ -5,6 +5,20 @@ import { showAlert } from '../lib/swal';
 import jsPDF from 'jspdf';
 
 const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+const RECEIPT_API_TIMEOUT_MS = 2500;
+
+const triggerBlobDownload = (blob: Blob, fileName: string) => {
+  const url = window.URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.setAttribute('download', fileName);
+  document.body.appendChild(link);
+  link.click();
+  setTimeout(() => {
+    link.remove();
+    window.URL.revokeObjectURL(url);
+  }, 100);
+};
 
 const generateReceiptPDF = (due: any) => {
   const doc = new jsPDF();
@@ -147,18 +161,15 @@ export const useReceipts = () => {
     try {
       // 1. Try backend PDF endpoint first
       try {
-        const response = await api.get(`/receipts/${paymentId}/download`, { responseType: 'blob' });
+        const response = await api.get(`/receipts/${paymentId}/download`, {
+          responseType: 'blob',
+          timeout: RECEIPT_API_TIMEOUT_MS,
+        });
         const blob = response.data instanceof Blob
           ? response.data
           : new Blob([response.data], { type: 'application/pdf' });
         if (blob.size > 100) {
-          const url = window.URL.createObjectURL(blob);
-          const link = document.createElement('a');
-          link.href = url;
-          link.setAttribute('download', `Receipt_${txnId || paymentId}.pdf`);
-          document.body.appendChild(link);
-          link.click();
-          setTimeout(() => { link.remove(); window.URL.revokeObjectURL(url); }, 100);
+          triggerBlobDownload(blob, `Receipt_${txnId || paymentId}.pdf`);
           return;
         }
       } catch {
@@ -174,7 +185,13 @@ export const useReceipts = () => {
 
       if (error || !due) throw new Error('Receipt data not found. Please contact admin.');
 
-      generateReceiptPDF(due);
+      // Normalize relation shape for compatibility when students is returned as an array.
+      const normalizedDue = {
+        ...due,
+        students: Array.isArray((due as any).students) ? (due as any).students[0] : (due as any).students,
+      };
+
+      generateReceiptPDF(normalizedDue);
     } catch (err: any) {
       console.error('Receipt download failed:', err);
       showAlert('Receipt Error', err?.message || 'Could not generate receipt. Please try again.', 'error');
