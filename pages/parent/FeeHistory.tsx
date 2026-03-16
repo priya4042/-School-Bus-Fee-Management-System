@@ -69,7 +69,10 @@ const FeeHistory: React.FC<{ user: User }> = ({ user }) => {
     fetchData();
   }, [user.id, paymentState.step]);
 
+  const now = new Date();
+  const currentPeriod = now.getFullYear() * 12 + (now.getMonth() + 1);
   const toPeriod = (due: MonthlyDue) => Number(due.year || 0) * 12 + Number(due.month || 0);
+  const isMonthStarted = (due: MonthlyDue) => toPeriod(due) <= currentPeriod;
   const sortedDues = [...dues].sort((a, b) => {
     if (a.student_id !== b.student_id) return Number(a.student_id) - Number(b.student_id);
     return toPeriod(a) - toPeriod(b);
@@ -78,7 +81,7 @@ const FeeHistory: React.FC<{ user: User }> = ({ user }) => {
   const firstUnpaidByStudent = new Map<string, string>();
   sortedDues.forEach((due) => {
     const studentKey = String(due.student_id);
-    if (due.status === PaymentStatus.PAID) return;
+    if (due.status === PaymentStatus.PAID || !isMonthStarted(due)) return;
     if (!firstUnpaidByStudent.has(studentKey)) {
       firstUnpaidByStudent.set(studentKey, String(due.id));
     }

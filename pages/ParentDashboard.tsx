@@ -75,12 +75,17 @@ const ParentDashboard: React.FC<{ user: User }> = ({ user }) => {
      </div>
   );
 
+  const now = new Date();
+  const currentPeriod = now.getFullYear() * 12 + (now.getMonth() + 1);
   const toPeriod = (due: MonthlyDue) => Number(due.year || 0) * 12 + Number(due.month || 0);
+  const isMonthStarted = (due: MonthlyDue) => toPeriod(due) <= currentPeriod;
   const selectedStudentAllDues = dues
     .filter((d) => String(d.student_id) === String(selectedStudent.id))
     .sort((a, b) => toPeriod(a) - toPeriod(b));
 
-  const selectedFirstUnpaidDue = selectedStudentAllDues.find((d) => d.status !== PaymentStatus.PAID) || null;
+  const selectedFirstUnpaidDue = selectedStudentAllDues.find(
+    (d) => d.status !== PaymentStatus.PAID && isMonthStarted(d)
+  ) || null;
 
   const studentDues = selectedStudentAllDues.filter(
     (d) => d.status === PaymentStatus.PAID || String(d.id) === String(selectedFirstUnpaidDue?.id || '')
@@ -95,7 +100,9 @@ const ParentDashboard: React.FC<{ user: User }> = ({ user }) => {
     const studentDuesAll = dues
       .filter((d) => String(d.student_id) === String(s.id))
       .sort((a, b) => toPeriod(a) - toPeriod(b));
-    const firstUnpaidDue = studentDuesAll.find((d) => d.status !== PaymentStatus.PAID);
+    const firstUnpaidDue = studentDuesAll.find(
+      (d) => d.status !== PaymentStatus.PAID && isMonthStarted(d)
+    );
     if (!firstUnpaidDue) return acc;
     return acc + calculateCurrentLedger(firstUnpaidDue).total;
   }, 0);

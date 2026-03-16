@@ -195,17 +195,24 @@ const StudentProfile: React.FC<{ user: User }> = ({ user }) => {
     .filter((d) => d.status === PaymentStatus.PAID)
     .reduce((sum, d) => sum + (d.total_due || 0), 0);
 
+  const now = new Date();
+  const currentPeriod = now.getFullYear() * 12 + (now.getMonth() + 1);
   const toPeriod = (due: MonthlyDue) => Number(due.year || 0) * 12 + Number(due.month || 0);
+  const isMonthStarted = (due: MonthlyDue) => toPeriod(due) <= currentPeriod;
 
   const chronologicalDues = [...dues].sort((a, b) => toPeriod(a) - toPeriod(b));
-  const actionableUnpaidDues = chronologicalDues.filter((d) => d.status !== PaymentStatus.PAID);
+  const actionableUnpaidDues = chronologicalDues.filter(
+    (d) => d.status !== PaymentStatus.PAID && isMonthStarted(d)
+  );
   const firstUnpaidDue = actionableUnpaidDues[0] || null;
 
   const totalDue = Number(firstUnpaidDue?.total_due || firstUnpaidDue?.amount || 0);
 
   const nextDue = firstUnpaidDue;
 
-  const futureScheduledDues = actionableUnpaidDues.filter((d) => String(d.id) !== String(firstUnpaidDue?.id || ''));
+  const futureScheduledDues = chronologicalDues.filter(
+    (d) => d.status !== PaymentStatus.PAID && String(d.id) !== String(firstUnpaidDue?.id || '')
+  );
 
   const enrolledDate = selectedStudent.created_at
     ? new Date(selectedStudent.created_at).toLocaleDateString('en-IN', { month: 'long', year: 'numeric' })
