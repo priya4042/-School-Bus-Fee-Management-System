@@ -44,7 +44,10 @@ export const updateStudent = async (id: string, studentData: any) => {
 };
 
 export const deleteStudent = async (id: string) => {
-  const { error } = await supabase.from('students').delete().eq('id', id);
+  const { error } = await supabase.rpc('archive_and_delete_student', {
+    p_student_id: id,
+    p_deleted_reason: 'Deleted from admin module',
+  });
   if (error) throw error;
   return true;
 };

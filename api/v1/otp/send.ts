@@ -32,17 +32,22 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   try {
-    const { data: profile, error: profileError } = await supabase
-      .from('profiles')
-      .select('id, role')
+    const normalizedAdmissionNumber = admissionNumber.trim();
+
+    const { data: student, error: studentError } = await supabase
+      .from('students')
+      .select('id, parent_id')
       .eq('admission_number', admissionNumber.trim())
-      .eq('role', 'PARENT')
       .maybeSingle();
 
-    if (profileError) throw profileError;
-    if (!profile) {
-      console.warn(`[OTP Send] Profile not found for admission: ${admissionNumber}`);
+    if (studentError) throw studentError;
+    if (!student) {
+      console.warn(`[OTP Send] Student not found for admission: ${admissionNumber}`);
       return res.status(404).json({ error: 'Invalid admission number' });
+    }
+
+    if (student.parent_id) {
+      return res.status(409).json({ error: 'This admission number is already linked to a parent account.' });
     }
 
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
@@ -75,23 +80,17 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       return res.status(500).json({ error: 'Failed to send SMS via Twilio. Please check phone number format.' });
     }
 
-    const { error: updateError } = await supabase
-      .from('profiles')
-      .update({
-        preferences: { 
-          otp, 
-          otp_expiry: Date.now() + 5 * 60 * 1000,
-          temp_phone: formattedPhone
-        }
-      })
-      .eq('admission_number', admissionNumber.trim());
+    const expiresAt = new Date(Date.now() + 5 * 60 * 1000).toISOString();
+    const { error: otpLogError } = await supabase.from('otp_logs').insert({
+      phone_number: formattedPhone,
+      otp_code: otp,
+      is_verified: false,
+      expires_at: expiresAt,
+    });
 
-    if (updateError) {
-      console.error(`[OTP Send] Supabase Update Error:`, updateError);
-      throw updateError;
-    }
+    if (otpLogError) throw otpLogError;
 
-    console.log(`[OTP Send] Success for ${formattedPhone}`);
+    console.log(`[OTP Send] Success for ${formattedPhone} and admission ${normalizedAdmissionNumber}`);
     res.status(200).json({ success: true, message: 'OTP sent successfully' });
   } catch (error: any) {
     console.error('[OTP Send] Unexpected Error:', error);

@@ -63,14 +63,18 @@ export const apiPost = async (
     const { data: { session } } = await supabase.auth.getSession();
     const token = session?.access_token;
 
+    const controller = new AbortController();
+    const timeoutId = window.setTimeout(() => controller.abort(), 12000);
+
     const response = await fetch(url, {
       method,
       headers: {
         'Content-Type': 'application/json',
         ...(token ? { Authorization: `Bearer ${token}` } : {}),
       },
+      signal: controller.signal,
       body: method !== 'GET' ? JSON.stringify(body) : undefined,
-    });
+    }).finally(() => window.clearTimeout(timeoutId));
 
     let data: any;
     const contentType = response.headers.get('content-type');
@@ -93,6 +97,9 @@ export const apiPost = async (
 
     return data;
   } catch (error: any) {
+    if (error.name === 'AbortError') {
+      throw new Error('Request timed out. Please try again.');
+    }
     if (error.message === 'Failed to fetch') {
       throw new Error('Unable to connect to the server. Check CORS or server status.');
     }

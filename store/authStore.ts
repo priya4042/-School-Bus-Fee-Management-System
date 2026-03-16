@@ -254,13 +254,25 @@ loginWithCredentials: async (identifier: string, password?: string, type?: 'EMAI
         userId = authData.user.id;
       }
 
+      const normalizedAdmissionNumber = data.admissionNumber?.trim();
+
+      if (normalizedAdmissionNumber) {
+        const { error: clearStaleAdmissionError } = await supabase
+          .from('profiles')
+          .update({ admission_number: null })
+          .eq('admission_number', normalizedAdmissionNumber)
+          .neq('id', userId);
+
+        if (clearStaleAdmissionError) throw clearStaleAdmissionError;
+      }
+
       // 2. Upsert profile row
       const { error: profileError } = await supabase.from('profiles').upsert({
         id: userId,
         email: data.email.toLowerCase(),
         full_name: data.fullName,
         phone_number: data.phone,
-        admission_number: data.admissionNumber?.trim(),
+        admission_number: normalizedAdmissionNumber,
         role: 'PARENT',
       });
       if (profileError) throw profileError;
@@ -269,7 +281,7 @@ loginWithCredentials: async (identifier: string, password?: string, type?: 'EMAI
       const { data: linkedStudents, error: linkError } = await supabase
         .from('students')
         .update({ parent_id: userId })
-        .eq('admission_number', data.admissionNumber?.trim())
+        .eq('admission_number', normalizedAdmissionNumber)
         .select('id, parent_id');
 
       if (linkError) throw linkError;
@@ -284,8 +296,8 @@ loginWithCredentials: async (identifier: string, password?: string, type?: 'EMAI
         fullName: data.fullName,
         phone_number: data.phone,
         phoneNumber: data.phone,
-        admission_number: data.admissionNumber?.trim(),
-        admissionNumber: data.admissionNumber?.trim(),
+        admission_number: normalizedAdmissionNumber,
+        admissionNumber: normalizedAdmissionNumber,
         role: UserRole.PARENT,
       } as unknown as User;
 

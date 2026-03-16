@@ -38,30 +38,49 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   try {
-    const { data: profile, error: profileError } = await supabase
-      .from('profiles')
-      .select('preferences')
+    const normalizedAdmissionNumber = admissionNumber.trim();
+
+    const { data: student, error: studentError } = await supabase
+      .from('students')
+      .select('id, parent_id')
       .eq('admission_number', admissionNumber.trim())
       .maybeSingle();
 
-    if (profileError) throw profileError;
-    if (!profile) {
-      console.warn(`[OTP Verify] Profile not found for admission: ${admissionNumber}`);
-      return res.status(404).json({ error: 'Profile not found' });
+    if (studentError) throw studentError;
+    if (!student) {
+      console.warn(`[OTP Verify] Student not found for admission: ${admissionNumber}`);
+      return res.status(404).json({ error: 'Admission number not found' });
     }
 
-    const prefs = profile.preferences as any;
-    if (!prefs || prefs.otp !== otp || prefs.temp_phone !== formattedPhone) {
-      console.warn(`[OTP Verify] Invalid OTP or phone mismatch for ${formattedPhone}`);
+    if (student.parent_id) {
+      return res.status(409).json({ error: 'This admission number is already linked to a parent account.' });
+    }
+
+    const now = new Date().toISOString();
+    const { data: otpLogs, error: otpError } = await supabase
+      .from('otp_logs')
+      .select('id')
+      .eq('phone_number', formattedPhone)
+      .eq('otp_code', otp.trim())
+      .eq('is_verified', false)
+      .gte('expires_at', now)
+      .order('created_at', { ascending: false })
+      .limit(1);
+
+    if (otpError) throw otpError;
+    if (!otpLogs || otpLogs.length === 0) {
+      console.warn(`[OTP Verify] Invalid or expired OTP for ${formattedPhone}`);
       return res.status(400).json({ error: 'Invalid OTP or phone number' });
     }
 
-    if (Date.now() > prefs.otp_expiry) {
-      console.warn(`[OTP Verify] Expired OTP for ${phone}`);
-      return res.status(400).json({ error: 'OTP expired' });
-    }
+    const { error: verifyError } = await supabase
+      .from('otp_logs')
+      .update({ is_verified: true })
+      .eq('id', otpLogs[0].id);
 
-    console.log(`[OTP Verify] Success for ${phone}`);
+    if (verifyError) throw verifyError;
+
+    console.log(`[OTP Verify] Success for ${phone} and admission ${normalizedAdmissionNumber}`);
     res.status(200).json({ success: true, message: 'OTP verified' });
   } catch (error: any) {
     console.error('[OTP Verify] Error:', error);

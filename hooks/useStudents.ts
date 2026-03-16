@@ -27,6 +27,8 @@ export const useStudents = () => {
 
   const addStudent = async (studentData: any) => {
     try {
+      const normalizedAdmissionNumber = String(studentData.admission_number || '').trim();
+
       // Resolve parent_id from phone number if provided
       let parent_id: string | null = null;
       if (studentData.parent_phone) {
@@ -44,7 +46,7 @@ export const useStudents = () => {
         .from('students')
         .insert({
           full_name: studentData.full_name,
-          admission_number: studentData.admission_number,
+          admission_number: normalizedAdmissionNumber,
           grade: studentData.grade,
           section: studentData.section,
           route_id: studentData.route_id || null,
@@ -64,7 +66,7 @@ export const useStudents = () => {
         const { data: fallbackStudent } = await supabase
           .from('students')
           .select('id')
-          .eq('admission_number', studentData.admission_number)
+          .eq('admission_number', normalizedAdmissionNumber)
           .eq('full_name', studentData.full_name)
           .order('created_at', { ascending: false })
           .limit(1)
@@ -82,6 +84,8 @@ export const useStudents = () => {
 
   const updateStudentById = async (id: string, studentData: any) => {
     try {
+      const normalizedAdmissionNumber = String(studentData.admission_number || '').trim();
+
       // Resolve parent_id from phone number if provided
       let parent_id: string | undefined = undefined;
       if (studentData.parent_phone) {
@@ -97,7 +101,7 @@ export const useStudents = () => {
 
       const updatePayload: any = {
         full_name: studentData.full_name,
-        admission_number: studentData.admission_number,
+        admission_number: normalizedAdmissionNumber,
         grade: studentData.grade,
         section: studentData.section,
         route_id: studentData.route_id || null,
@@ -122,16 +126,10 @@ export const useStudents = () => {
 
   const deleteStudentById = async (id: string) => {
     try {
-      const { error } = await supabase
-        .from('students')
-        .update({
-          status: 'inactive',
-          parent_id: null,
-          route_id: null,
-          bus_id: null,
-          boarding_point: null,
-        })
-        .eq('id', id);
+      const { error } = await supabase.rpc('archive_and_delete_student', {
+        p_student_id: id,
+        p_deleted_reason: 'Deleted from admin module',
+      });
       if (error) throw error;
       await fetchStudents();
       return { success: true };

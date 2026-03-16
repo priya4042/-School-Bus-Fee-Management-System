@@ -29,49 +29,21 @@ const Reports: React.FC = () => {
         const defRes = await api.get('/reports/defaulters');
         setDefaulterData(defRes.data || []);
 
-        const { data: studentsData } = await supabase
-          .from('students')
-          .select('id, full_name, admission_number, grade, section, parent_name, parent_phone, monthly_fee, status, created_at');
+        const { data: deletedStudentsData } = await supabase
+          .from('deleted_students')
+          .select('id, full_name, admission_number, grade, section, parent_name, parent_phone, student_status, fee_record_count, paid_fee_record_count, outstanding_amount, original_created_at, deleted_at')
+          .order('deleted_at', { ascending: false });
 
-        const archivedList = (studentsData || []).filter((student: any) => {
-          const status = String(student?.status || '').toLowerCase();
-          return status !== '' && status !== 'active';
-        });
+        const withSummary = (deletedStudentsData || []).map((student: any) => ({
+          ...student,
+          status: student.student_status,
+          totalRecords: Number(student.fee_record_count || 0),
+          paidRecords: Number(student.paid_fee_record_count || 0),
+          outstanding: Number(student.outstanding_amount || 0),
+          created_at: student.original_created_at,
+        }));
 
-        if (archivedList.length > 0) {
-          const archivedIds = archivedList.map((student: any) => student.id);
-          const { data: duesData } = await supabase
-            .from('monthly_dues')
-            .select('student_id, status, total_due, amount')
-            .in('student_id', archivedIds);
-
-          const duesByStudent = new Map<string, any[]>();
-          (duesData || []).forEach((due: any) => {
-            const key = String(due.student_id);
-            if (!duesByStudent.has(key)) duesByStudent.set(key, []);
-            duesByStudent.get(key)?.push(due);
-          });
-
-          const withSummary = archivedList.map((student: any) => {
-            const studentDues = duesByStudent.get(String(student.id)) || [];
-            const totalRecords = studentDues.length;
-            const paidRecords = studentDues.filter((due) => String(due.status || '').toUpperCase() === 'PAID').length;
-            const outstanding = studentDues
-              .filter((due) => String(due.status || '').toUpperCase() !== 'PAID')
-              .reduce((sum, due) => sum + Number(due.total_due || due.amount || 0), 0);
-
-            return {
-              ...student,
-              totalRecords,
-              paidRecords,
-              outstanding,
-            };
-          });
-
-          setArchivedStudents(withSummary);
-        } else {
-          setArchivedStudents([]);
-        }
+        setArchivedStudents(withSummary);
       } catch (err) {
         // Mock fallback
         setRevenueData([
@@ -267,7 +239,7 @@ const Reports: React.FC = () => {
       ) : (
         <div className="bg-white rounded-[3rem] border border-slate-200 overflow-hidden shadow-premium">
           <div className="p-8 bg-slate-50 border-b border-slate-100 flex items-center justify-between">
-            <h3 className="font-black text-slate-800 uppercase tracking-widest text-[11px]">Historical Student Archive</h3>
+            <h3 className="font-black text-slate-800 uppercase tracking-widest text-[11px]">Deleted Student Archive</h3>
             <span className="px-4 py-1.5 bg-indigo-50 text-indigo-600 rounded-full text-[9px] font-black uppercase tracking-widest">
               {archivedStudents.length} Archived Students
             </span>

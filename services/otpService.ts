@@ -32,6 +32,44 @@ const isTwilioUnverifiedError = (message?: string) => {
   return text.includes('trial accounts cannot send messages to unverified numbers') || text.includes('unverified');
 };
 
+const isTwilioConfigurationError = (message?: string) => {
+  const text = (message || '').toLowerCase();
+  return text.includes('not fully configured') || text.includes('sms service not configured') || text.includes('missing environment variables');
+};
+
+const fetchWithTimeout = async (input: RequestInfo | URL, init: RequestInit, timeoutMs = 12000) => {
+  const controller = new AbortController();
+  const timeoutId = window.setTimeout(() => controller.abort(), timeoutMs);
+
+  try {
+    return await fetch(input, {
+      ...init,
+      signal: controller.signal,
+    });
+  } finally {
+    window.clearTimeout(timeoutId);
+  }
+};
+
+const callOtpEndpoint = async (path: string, payload: Record<string, unknown>) => {
+  const response = await fetchWithTimeout(path, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  });
+
+  const contentType = response.headers.get('content-type') || '';
+  const data = contentType.includes('application/json')
+    ? await response.json()
+    : { error: `Server returned non-JSON response: ${response.status}` };
+
+  if (!response.ok) {
+    throw new Error(data?.error || data?.message || `OTP request failed (${response.status})`);
+  }
+
+  return data;
+};
+
 const sendViaTwilio = async (formattedPhone: string, otp: string): Promise<void> => {
   const accountSid = import.meta.env.VITE_TWILIO_ACCOUNT_SID;
   const authToken = import.meta.env.VITE_TWILIO_AUTH_TOKEN;
@@ -112,48 +150,59 @@ export const otpService = {
       }
 
       try {
-        await apiPost('v1/otp', 'send', {
+        await callOtpEndpoint('/api/v1/otp/send', {
           phone: recipient.actual,
           admissionNumber: admissionNo.trim(),
-        }, 'POST');
-        if (recipient.forced) {
-          showToast(`OTP sent to test number ${recipient.actual}`, 'success');
-        }
-        return { success: true, error: null as string | null };
-      } catch (_apiError) {
-        const otp = Math.floor(100000 + Math.random() * 900000).toString();
-        const formattedPhone = recipient.actual;
-        const expiresAt = new Date(Date.now() + 5 * 60 * 1000).toISOString();
-
-        const { error: dbError } = await supabase.from('otp_logs').insert({
-          phone_number: formattedPhone,
-          otp_code: otp,
-          is_verified: false,
-          expires_at: expiresAt,
         });
-        if (dbError) throw dbError;
-
-        try {
-          await sendViaTwilio(formattedPhone, otp);
-        } catch (twilioError: any) {
-          if (isDevMode && isTwilioUnverifiedError(twilioError?.message)) {
-            showToast(`DEV OTP: ${otp}`, 'success');
-            console.warn('[OTP][DEV] Twilio trial restriction detected, using dev OTP fallback:', otp);
-            return {
-              success: true,
-              error: null as string | null,
-              warning: 'Twilio trial restriction; using DEV OTP fallback',
-              devOtp: otp,
-            };
-          }
-          throw twilioError;
-        }
-
         if (recipient.forced) {
           showToast(`OTP sent to test number ${recipient.actual}`, 'success');
         }
-
         return { success: true, error: null as string | null };
+      } catch (_internalApiError) {
+        try {
+          await apiPost('v1/otp', 'send', {
+            phone: recipient.actual,
+            admissionNumber: admissionNo.trim(),
+          }, 'POST');
+          if (recipient.forced) {
+            showToast(`OTP sent to test number ${recipient.actual}`, 'success');
+          }
+          return { success: true, error: null as string | null };
+        } catch (_apiError) {
+          const otp = Math.floor(100000 + Math.random() * 900000).toString();
+          const formattedPhone = recipient.actual;
+          const expiresAt = new Date(Date.now() + 5 * 60 * 1000).toISOString();
+
+          const { error: dbError } = await supabase.from('otp_logs').insert({
+            phone_number: formattedPhone,
+            otp_code: otp,
+            is_verified: false,
+            expires_at: expiresAt,
+          });
+          if (dbError) throw dbError;
+
+          try {
+            await sendViaTwilio(formattedPhone, otp);
+          } catch (twilioError: any) {
+            if (isDevMode || isTwilioUnverifiedError(twilioError?.message) || isTwilioConfigurationError(twilioError?.message)) {
+              showToast(`DEV OTP: ${otp}`, 'success');
+              console.warn('[OTP][FALLBACK] Using OTP log fallback:', otp);
+              return {
+                success: true,
+                error: null as string | null,
+                warning: 'Using OTP fallback mode',
+                devOtp: otp,
+              };
+            }
+            throw twilioError;
+          }
+
+          if (recipient.forced) {
+            showToast(`OTP sent to test number ${recipient.actual}`, 'success');
+          }
+
+          return { success: true, error: null as string | null };
+        }
       }
     } catch (error: any) {
       console.error('Failed to send OTP:', error);
@@ -167,16 +216,27 @@ export const otpService = {
 
       if (admissionNo?.trim()) {
         try {
-          const data = await apiPost('v1/otp', 'verify', {
+          const data = await callOtpEndpoint('/api/v1/otp/verify', {
             phone: recipient.actual,
             otp: otp.trim(),
             admissionNumber: admissionNo.trim(),
-          }, 'POST');
+          });
 
           showToast('Phone verified successfully', 'success');
           return { success: true, data, error: null as string | null };
-        } catch (_apiError) {
-          // fall through to DB verification fallback
+        } catch (_internalApiError) {
+          try {
+            const data = await apiPost('v1/otp', 'verify', {
+              phone: recipient.actual,
+              otp: otp.trim(),
+              admissionNumber: admissionNo.trim(),
+            }, 'POST');
+
+            showToast('Phone verified successfully', 'success');
+            return { success: true, data, error: null as string | null };
+          } catch (_apiError) {
+            // fall through to DB verification fallback
+          }
         }
       }
 
