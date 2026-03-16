@@ -98,8 +98,10 @@ const BoardingLocationPicker: React.FC<BoardingLocationPickerProps> = ({ onSave,
   };
 
   return createPortal(
-    <div className="fixed inset-0 z-[10000] bg-white flex flex-col md:flex-row">
-      <div className="flex-1 relative h-[50vh] md:h-full">
+    <div className="fixed inset-0 z-[10000] bg-slate-950/50 backdrop-blur-sm overflow-y-auto">
+      <div className="flex min-h-full items-start justify-center p-4 pt-20 pb-6 md:pt-24">
+      <div className="w-full max-w-6xl bg-white rounded-[2.5rem] shadow-2xl overflow-hidden border border-slate-100 flex flex-col md:flex-row max-h-[calc(100vh-6rem)]">
+      <div className="flex-1 relative h-[40vh] md:h-auto min-h-[320px]">
         {/* @ts-ignore */}
         <MapContainer center={position} zoom={15} style={{ height: '100%', width: '100%' }}>
           <TileLayer
@@ -209,6 +211,8 @@ const BoardingLocationPicker: React.FC<BoardingLocationPickerProps> = ({ onSave,
             </button>
           </div>
         </div>
+      </div>
+      </div>
       </div>
     </div>,
     document.body

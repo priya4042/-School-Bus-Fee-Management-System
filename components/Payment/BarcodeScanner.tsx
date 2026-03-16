@@ -19,15 +19,17 @@ const BarcodeScanner: React.FC<BarcodeScannerProps> = ({ onScan, onClose }) => {
   };
 
   return createPortal(
-    <div className="fixed inset-0 z-[10000] bg-black flex flex-col">
-      <div className="p-4 flex justify-between items-center bg-slate-900 text-white">
+    <div className="fixed inset-0 z-[10000] bg-black/95 overflow-y-auto">
+      <div className="flex min-h-full items-start justify-center p-4 pt-20 pb-6 md:pt-24">
+      <div className="w-full max-w-5xl bg-black rounded-[2.5rem] overflow-hidden border border-slate-800 flex flex-col max-h-[calc(100vh-6rem)]">
+      <div className="p-4 flex justify-between items-center bg-slate-900 text-white shrink-0">
         <h2 className="text-lg font-bold">Scan Fee Barcode</h2>
         <button onClick={onClose} className="p-2 hover:bg-slate-800 rounded-full">
           <X size={24} />
         </button>
       </div>
 
-      <div className="flex-1 relative flex items-center justify-center overflow-hidden">
+      <div className="flex-1 relative flex items-center justify-center overflow-hidden min-h-[320px]">
         {!showManual ? (
           <>
             <div className="w-full h-full">
@@ -45,7 +47,7 @@ const BarcodeScanner: React.FC<BarcodeScannerProps> = ({ onScan, onClose }) => {
             </div>
           </>
         ) : (
-          <div className="p-8 w-full max-w-md bg-slate-900 rounded-3xl border border-slate-800">
+          <div className="p-8 w-full max-w-md bg-slate-900 rounded-3xl border border-slate-800 max-h-full overflow-y-auto">
             <label className="block text-slate-400 text-xs font-bold uppercase tracking-widest mb-2">
               Enter Barcode Manually
             </label>
@@ -67,7 +69,7 @@ const BarcodeScanner: React.FC<BarcodeScannerProps> = ({ onScan, onClose }) => {
         )}
       </div>
 
-      <div className="p-8 bg-slate-900 flex justify-center gap-4">
+      <div className="p-8 bg-slate-900 flex justify-center gap-4 shrink-0">
         <button
           onClick={() => setShowManual(!showManual)}
           className="flex items-center gap-2 px-6 py-3 rounded-full bg-slate-800 text-white font-bold hover:bg-slate-700 transition-colors"
@@ -75,6 +77,8 @@ const BarcodeScanner: React.FC<BarcodeScannerProps> = ({ onScan, onClose }) => {
           {showManual ? <Camera size={20} /> : <Keyboard size={20} />}
           {showManual ? 'Switch to Camera' : 'Manual Entry'}
         </button>
+      </div>
+      </div>
       </div>
     </div>,
     document.body
