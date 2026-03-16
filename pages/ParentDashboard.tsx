@@ -270,7 +270,7 @@ const ParentDashboard: React.FC<{ user: User }> = ({ user }) => {
                         <div className="flex flex-col items-end gap-2">
                            <i className="fas fa-check-circle text-success text-lg"></i>
                            <button
-                             onClick={() => downloadReceipt(due.id, due.transaction_id || due.id)}
+                             onClick={() => downloadReceipt(due.id, due.transaction_id || due.id, due)}
                              className="text-[7px] font-black text-primary uppercase tracking-widest hover:underline flex items-center gap-1"
                            >
                              <i className="fas fa-download"></i>

@@ -149,7 +149,14 @@ const PaymentPortal: React.FC<PaymentPortalProps> = ({ state, onClose, onInitiat
            
            <div className="w-full space-y-3 pt-6 border-t border-slate-100">
               <button 
-                onClick={() => downloadReceipt(state.dueId || state.transactionId, state.transactionId)}
+                onClick={() => downloadReceipt(state.dueId || state.transactionId, state.transactionId, {
+                  id: state.dueId || state.transactionId,
+                  transaction_id: state.transactionId,
+                  total_due: state.amount,
+                  amount: state.amount,
+                  paid_at: new Date().toISOString(),
+                  students: { full_name: state.studentName || 'Student' },
+                })}
                 disabled={!!downloading}
                 className="w-full py-4 bg-primary text-white font-black uppercase text-[10px] tracking-widest rounded-2xl shadow-xl shadow-primary/20 hover:bg-blue-800 transition-all flex items-center justify-center gap-3 active:scale-95"
               >

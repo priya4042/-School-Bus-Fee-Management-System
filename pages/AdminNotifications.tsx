@@ -591,7 +591,16 @@ const AdminNotifications: React.FC<{ focusNotificationId?: string; onFocusHandle
                           <button
                             onClick={(e) => {
                               e.stopPropagation();
-                              downloadReceipt(meta.dueId as string, (meta.txnId || meta.dueId) as string);
+                              downloadReceipt(meta.dueId as string, (meta.txnId || meta.dueId) as string, {
+                                id: meta.dueId,
+                                transaction_id: meta.txnId || meta.dueId,
+                                month: dueMeta?.month,
+                                year: dueMeta?.year,
+                                amount: dueMeta?.amount,
+                                total_due: dueMeta?.amount,
+                                paid_at: dueMeta?.paidAt,
+                                students: { full_name: dueMeta?.studentName || 'Student' },
+                              });
                             }}
                             disabled={downloading === String(meta.dueId)}
                             className="text-[9px] font-black text-primary uppercase tracking-widest hover:underline disabled:opacity-50"

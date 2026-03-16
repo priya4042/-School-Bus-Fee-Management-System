@@ -349,7 +349,7 @@ const FeeHistory: React.FC<{ user: User }> = ({ user }) => {
                     <td className="px-8 py-6">
                       {isPaid ? (
                         <button
-                          onClick={() => downloadReceipt(due.id, due.transaction_id || due.id)}
+                          onClick={() => downloadReceipt(due.id, due.transaction_id || due.id, due)}
                           disabled={downloading === due.id}
                           className="p-3 bg-white text-primary rounded-xl border border-slate-100 shadow-sm hover:bg-primary hover:text-white transition-all disabled:opacity-50 flex items-center gap-2"
                           title="Download Receipt"

@@ -124,7 +124,7 @@ const Receipts: React.FC<{ user: User }> = ({ user }) => {
                     </td>
                     <td className="px-8 py-5 text-right">
                       <button 
-                        onClick={() => downloadReceipt(rec.due_id || rec.id, rec.transaction_id)}
+                        onClick={() => downloadReceipt(rec.due_id || rec.id, rec.transaction_id, rec)}
                         disabled={downloading === String(rec.due_id || rec.id)}
                         className="w-10 h-10 bg-primary/10 text-primary hover:bg-primary hover:text-white rounded-xl transition-all flex items-center justify-center shadow-sm ml-auto"
                         title="Download PDF"

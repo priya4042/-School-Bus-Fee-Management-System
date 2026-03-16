@@ -147,7 +147,7 @@ const Payments: React.FC<{ user: User }> = ({ user }) => {
                          <div className="flex flex-col items-center gap-2">
                             <i className="fas fa-check-circle text-success text-xl"></i>
                             <button 
-                              onClick={() => downloadReceipt(due.id, due.id)}
+                              onClick={() => downloadReceipt(due.id, due.id, due)}
                               className="text-[8px] font-black text-primary uppercase tracking-widest hover:underline flex items-center gap-1"
                             >
                               <i className="fas fa-download"></i>
