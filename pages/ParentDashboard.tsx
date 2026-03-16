@@ -74,12 +74,21 @@ const ParentDashboard: React.FC<{ user: User }> = ({ user }) => {
      </div>
   );
 
-  const studentDues = dues.filter(d => String(d.student_id) === String(selectedStudent.id))
+  const now = new Date();
+  const currentPeriod = now.getFullYear() * 12 + (now.getMonth() + 1);
+  const toPeriod = (due: MonthlyDue) => Number(due.year || 0) * 12 + Number(due.month || 0);
+  const isActionableOrPaid = (due: MonthlyDue) => due.status === PaymentStatus.PAID || toPeriod(due) <= currentPeriod;
+
+  const studentDues = dues
+                         .filter(d => String(d.student_id) === String(selectedStudent.id))
+                         .filter(isActionableOrPaid)
                          .sort((a, b) => (a.year * 12 + a.month) - (b.year * 12 + b.month));
 
   // Use feeCalculator for all outstanding calculations
   const totalFamilyDue = familyStudents.reduce((acc, s) => {
-    const studentDuesAll = dues.filter(d => String(d.student_id) === String(s.id) && d.status !== PaymentStatus.PAID);
+    const studentDuesAll = dues.filter(
+      d => String(d.student_id) === String(s.id) && d.status !== PaymentStatus.PAID && toPeriod(d) <= currentPeriod
+    );
     return acc + studentDuesAll.reduce((sum, d) => sum + calculateCurrentLedger(d).total, 0);
   }, 0);
 

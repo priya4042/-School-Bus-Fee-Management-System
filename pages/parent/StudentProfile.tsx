@@ -194,11 +194,18 @@ const StudentProfile: React.FC<{ user: User }> = ({ user }) => {
     .filter((d) => d.status === PaymentStatus.PAID)
     .reduce((sum, d) => sum + (d.total_due || 0), 0);
 
-  const totalDue = dues
-    .filter((d) => d.status !== PaymentStatus.PAID)
+  const now = new Date();
+  const currentPeriod = now.getFullYear() * 12 + (now.getMonth() + 1);
+  const toPeriod = (due: MonthlyDue) => Number(due.year || 0) * 12 + Number(due.month || 0);
+
+  const actionableUnpaidDues = dues
+    .filter((d) => d.status !== PaymentStatus.PAID && toPeriod(d) <= currentPeriod)
+    .sort((a, b) => toPeriod(a) - toPeriod(b));
+
+  const totalDue = actionableUnpaidDues
     .reduce((sum, d) => sum + (d.total_due || 0), 0);
 
-  const nextDue = dues.find((d) => d.status !== PaymentStatus.PAID);
+  const nextDue = actionableUnpaidDues[0];
 
   const enrolledDate = selectedStudent.created_at
     ? new Date(selectedStudent.created_at).toLocaleDateString('en-IN', { month: 'long', year: 'numeric' })

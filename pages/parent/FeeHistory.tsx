@@ -68,9 +68,16 @@ const FeeHistory: React.FC<{ user: User }> = ({ user }) => {
     fetchData();
   }, [user.id, paymentState.step]);
 
+  const now = new Date();
+  const currentPeriod = now.getFullYear() * 12 + (now.getMonth() + 1);
+  const toPeriod = (due: MonthlyDue) => Number(due.year || 0) * 12 + Number(due.month || 0);
+  const isActionableOrPaid = (due: MonthlyDue) => due.status === PaymentStatus.PAID || toPeriod(due) <= currentPeriod;
+
+  const visibleDues = dues.filter(isActionableOrPaid);
+
   const studentFilteredDues = selectedStudent
-    ? dues.filter((d) => String(d.student_id) === String(selectedStudent))
-    : dues;
+    ? visibleDues.filter((d) => String(d.student_id) === String(selectedStudent))
+    : visibleDues;
 
   const filteredDues = studentFilteredDues.filter((d) => {
     if (!searchQuery) return true;
@@ -84,7 +91,7 @@ const FeeHistory: React.FC<{ user: User }> = ({ user }) => {
   });
 
   const selectedStudentData = students.find((s) => String(s.id) === String(selectedStudent));
-  const selectedStudentDues = dues
+  const selectedStudentDues = visibleDues
     .filter((d) => String(d.student_id) === String(selectedStudent))
     .sort((a, b) => (a.year * 12 + a.month) - (b.year * 12 + b.month));
   const billingStart = selectedStudentDues[0];
@@ -92,13 +99,13 @@ const FeeHistory: React.FC<{ user: User }> = ({ user }) => {
 
   // Always recalculate using feeCalculator for consistency
   const stats = {
-    totalPaid: dues
+    totalPaid: visibleDues
       .filter((d) => d.status === PaymentStatus.PAID)
       .reduce((acc, d) => acc + calculateCurrentLedger(d).total, 0),
-    pending: dues
+    pending: visibleDues
       .filter((d) => d.status !== PaymentStatus.PAID)
       .reduce((acc, d) => acc + calculateCurrentLedger(d).total, 0),
-    overdue: dues.filter(
+    overdue: visibleDues.filter(
       (d) => d.status !== PaymentStatus.PAID && d.due_date && new Date() > new Date(d.due_date)
     ).length,
   };
