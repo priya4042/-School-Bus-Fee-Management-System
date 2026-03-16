@@ -117,16 +117,25 @@ const FeeHistory: React.FC<{ user: User }> = ({ user }) => {
   const billingStart = selectedStudentDues[0];
   const billingEnd = selectedStudentDues[selectedStudentDues.length - 1];
 
+  const selectedStudentScopeDues = selectedStudent
+    ? visibleDues.filter((d) => String(d.student_id) === String(selectedStudent))
+    : visibleDues;
+
+  const selectedStudentActionableUnpaid = selectedStudent
+    ? dues
+        .filter((d) => String(d.student_id) === String(selectedStudent))
+        .filter((d) => firstUnpaidByStudent.get(String(d.student_id)) === String(d.id))
+    : dues.filter((d) => firstUnpaidByStudent.get(String(d.student_id)) === String(d.id));
+
   // Always recalculate using feeCalculator for consistency
   const stats = {
-    totalPaid: visibleDues
+    totalPaid: selectedStudentScopeDues
       .filter((d) => d.status === PaymentStatus.PAID)
       .reduce((acc, d) => acc + calculateCurrentLedger(d).total, 0),
-    pending: visibleDues
-      .filter((d) => d.status !== PaymentStatus.PAID)
+    pending: selectedStudentActionableUnpaid
       .reduce((acc, d) => acc + calculateCurrentLedger(d).total, 0),
-    overdue: visibleDues.filter(
-      (d) => d.status !== PaymentStatus.PAID && d.due_date && new Date() > new Date(d.due_date)
+    overdue: selectedStudentActionableUnpaid.filter(
+      (d) => d.due_date && new Date() > new Date(d.due_date)
     ).length,
   };
 
