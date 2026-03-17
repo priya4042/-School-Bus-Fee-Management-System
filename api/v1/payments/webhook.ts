@@ -67,6 +67,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     const result = await recordSuccessfulPayment({
       dueId,
+      dueIds: [dueId],
       razorpayOrderId,
       razorpayPaymentId,
       source: 'webhook',

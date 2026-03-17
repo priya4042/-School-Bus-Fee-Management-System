@@ -9,6 +9,7 @@
   interface PaymentState {
     isOpen: boolean;
     dueId: string | null;
+    dueIds: string[];
     amount: number;
     studentName: string;
     step: 'SELECT' | 'PROCESSING' | 'SUCCESS';
@@ -20,6 +21,7 @@
     const [paymentState, setPaymentState] = useState<PaymentState>({
       isOpen: false,
       dueId: null,
+      dueIds: [],
       amount: 0,
       studentName: '',
       step: 'SELECT',
@@ -27,10 +29,12 @@
       loading: false
     });
 
-    const openPortal = (dueId: string, amount: number, studentName: string) => {
+    const openPortal = (dueId: string, amount: number, studentName: string, dueIds?: Array<string | number>) => {
+      const normalizedDueIds = (dueIds || [dueId]).map((id) => String(id));
       setPaymentState({
         isOpen: true,
         dueId,
+        dueIds: normalizedDueIds,
         amount,
         studentName,
         step: 'SELECT',
@@ -152,7 +156,7 @@
       return parts.join(' | ');
     };
 
-    const createOrder = async (dueId: string, amount: number, context: any) => {
+    const createOrder = async (dueId: string, amount: number, context: any, dueIds: string[]) => {
       let lastError: any;
       const attemptedUrls: string[] = [];
 
@@ -162,12 +166,14 @@
           amount,
           dueId,
           due_id: dueId,
+          due_ids: dueIds,
           studentId: context?.student_id,
           month: context?.month,
         },
         {
           amount,
           due_id: dueId,
+          due_ids: dueIds,
         },
       ];
 
@@ -195,11 +201,12 @@
       throw lastError || new Error('Unable to initialize payment order.');
     };
 
-    const verifyPayment = async (paymentResult: any, dueId: string) => {
+    const verifyPayment = async (paymentResult: any, dueId: string, dueIds: string[]) => {
       const payload = {
         ...paymentResult,
         dueId,
         due_id: dueId,
+        due_ids: dueIds,
       };
 
       let lastError: any;
@@ -298,7 +305,7 @@
         }
 
         const dueContext = await fetchDueContext(String(paymentState.dueId));
-        const order = await createOrder(String(paymentState.dueId), paymentState.amount, dueContext);
+        const order = await createOrder(String(paymentState.dueId), paymentState.amount, dueContext, paymentState.dueIds || [String(paymentState.dueId)]);
 
         const isLoaded = await loadRazorpay();
         if (!isLoaded || !(window as any).Razorpay) {
@@ -329,7 +336,7 @@
           handler: async (paymentResult: any) => {
             try {
               setPaymentState(prev => ({ ...prev, step: 'PROCESSING' }));
-              await verifyPayment(paymentResult, String(paymentState.dueId));
+              await verifyPayment(paymentResult, String(paymentState.dueId), paymentState.dueIds || [String(paymentState.dueId)]);
 
               window.dispatchEvent(new CustomEvent(PAYMENT_EVENT, {
                 detail: {

@@ -25,6 +25,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     razorpay_signature,
     dueId,
     due_id,
+    due_ids,
   } = req.body;
 
   const finalDueId = String(dueId || due_id || '').trim();
@@ -50,6 +51,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     console.log(`[Razorpay Verify] Signature valid for payment: ${razorpay_payment_id}`);
     const result = await recordSuccessfulPayment({
       dueId: finalDueId,
+      dueIds: Array.isArray(due_ids) ? due_ids.map((id: any) => String(id)) : [],
       razorpayOrderId: String(razorpay_order_id),
       razorpayPaymentId: String(razorpay_payment_id),
       source: 'verify',

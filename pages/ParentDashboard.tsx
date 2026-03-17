@@ -95,6 +95,23 @@ const ParentDashboard: React.FC<{ user: User }> = ({ user }) => {
     (d) => d.status !== PaymentStatus.PAID && String(d.id) !== String(selectedFirstUnpaidDue?.id || '')
   );
 
+  const buildYearlyPayBundle = (targetDue: MonthlyDue) => {
+    const studentDueRows = dues
+      .filter((d) => String(d.student_id) === String(targetDue.student_id))
+      .sort((a, b) => toPeriod(a) - toPeriod(b));
+
+    const targetPeriod = toPeriod(targetDue);
+    const bundleDues = studentDueRows.filter((d) => {
+      if (d.status === PaymentStatus.PAID) return false;
+      if (Number(d.year) !== Number(targetDue.year)) return false;
+      return toPeriod(d) <= targetPeriod;
+    });
+
+    const dueIds = bundleDues.map((d) => String(d.id));
+    const amount = bundleDues.reduce((sum, d) => sum + Number(d.total_due || d.amount || 0), 0);
+    return { dueIds, amount };
+  };
+
   // Use feeCalculator for all outstanding calculations
   const totalFamilyDue = familyStudents.reduce((acc, s) => {
     const studentDuesAll = dues
@@ -281,9 +298,10 @@ const ParentDashboard: React.FC<{ user: User }> = ({ user }) => {
                        <button 
                          disabled={isLocked}
                          onClick={() => {
+                         const payBundle = buildYearlyPayBundle(due);
                          const childIndex = familyStudents.findIndex(s => s.id === selectedStudent.id) + 1;
                          const ordinal = childIndex === 1 ? '1st' : childIndex === 2 ? '2nd' : childIndex === 3 ? '3rd' : `${childIndex}th`;
-                         openPortal(due.id, due.total_due, `${selectedStudent.full_name} (${ordinal} Child)`);
+                         openPortal(due.id, payBundle.amount || Number(due.total_due || due.amount || 0), `${selectedStudent.full_name} (${ordinal} Child)`, payBundle.dueIds);
                        }}
                          className={`px-4 md:px-6 py-2 text-[8px] md:text-[9px] font-black uppercase tracking-widest rounded-lg md:rounded-xl transition-all ${isLocked ? 'bg-slate-100 text-slate-400 cursor-not-allowed' : 'bg-primary text-white hover:bg-blue-800 shadow-xl shadow-primary/20'}`}
                        >
@@ -324,9 +342,22 @@ const ParentDashboard: React.FC<{ user: User }> = ({ user }) => {
                             Scheduled • locked until prior dues are cleared
                           </p>
                         </div>
-                        <p className="text-sm font-black text-slate-600 tracking-tight">
-                          ₹{Number(due.total_due || 0).toLocaleString('en-IN')}
-                        </p>
+                        <div className="flex items-center gap-3">
+                          <p className="text-sm font-black text-slate-600 tracking-tight">
+                            ₹{Number(due.total_due || 0).toLocaleString('en-IN')}
+                          </p>
+                          <button
+                            onClick={() => {
+                              const payBundle = buildYearlyPayBundle(due);
+                              const childIndex = familyStudents.findIndex(s => s.id === selectedStudent.id) + 1;
+                              const ordinal = childIndex === 1 ? '1st' : childIndex === 2 ? '2nd' : childIndex === 3 ? '3rd' : `${childIndex}th`;
+                              openPortal(due.id, payBundle.amount || Number(due.total_due || due.amount || 0), `${selectedStudent.full_name} (${ordinal} Child)`, payBundle.dueIds);
+                            }}
+                            className="px-3 py-2 rounded-lg bg-primary text-white text-[8px] font-black uppercase tracking-widest hover:bg-blue-800 transition-all"
+                          >
+                            Pay
+                          </button>
+                        </div>
                       </div>
                     ))}
                   </div>

@@ -155,6 +155,23 @@ const FeeHistory: React.FC<{ user: User }> = ({ user }) => {
     return !previousUnpaid;
   };
 
+  const buildYearlyPayBundle = (targetDue: MonthlyDue) => {
+    const studentDueRows = dues
+      .filter((d) => String(d.student_id) === String(targetDue.student_id))
+      .sort((a, b) => toPeriod(a) - toPeriod(b));
+
+    const targetPeriod = toPeriod(targetDue);
+    const bundleDues = studentDueRows.filter((d) => {
+      if (d.status === PaymentStatus.PAID) return false;
+      if (Number(d.year) !== Number(targetDue.year)) return false;
+      return toPeriod(d) <= targetPeriod;
+    });
+
+    const dueIds = bundleDues.map((d) => String(d.id));
+    const amount = bundleDues.reduce((sum, d) => sum + Number(d.total_due || d.amount || 0), 0);
+    return { dueIds, amount };
+  };
+
   const handleExport = () => {
     const rows = [
       ['Period', 'Student', 'Base Fee', 'Late Fee', 'Total', 'Status', 'Paid On'],
@@ -367,13 +384,15 @@ const FeeHistory: React.FC<{ user: User }> = ({ user }) => {
                         </div>
                       ) : (
                         <button
-                          onClick={() =>
+                          onClick={() => {
+                            const payBundle = buildYearlyPayBundle(due);
                             openPortal(
                               due.id,
-                              due.total_due || due.amount,
-                              student?.full_name || due.student_name || 'Student'
-                            )
-                          }
+                              payBundle.amount || Number(due.total_due || due.amount || 0),
+                              student?.full_name || due.student_name || 'Student',
+                              payBundle.dueIds
+                            );
+                          }}
                           className="bg-primary text-white px-6 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest shadow-lg shadow-primary/20 hover:bg-blue-800 transition-all"
                         >
                           Pay Now
@@ -428,9 +447,25 @@ const FeeHistory: React.FC<{ user: User }> = ({ user }) => {
                         {student?.full_name || due.student_name || 'Student'} • scheduled
                       </p>
                     </div>
-                    <p className="text-sm font-black text-slate-600 tracking-tight">
-                      ₹{Number(due.total_due || due.amount || 0).toLocaleString('en-IN')}
-                    </p>
+                    <div className="flex items-center gap-3">
+                      <p className="text-sm font-black text-slate-600 tracking-tight">
+                        ₹{Number(due.total_due || due.amount || 0).toLocaleString('en-IN')}
+                      </p>
+                      <button
+                        onClick={() => {
+                          const payBundle = buildYearlyPayBundle(due);
+                          openPortal(
+                            due.id,
+                            payBundle.amount || Number(due.total_due || due.amount || 0),
+                            student?.full_name || due.student_name || 'Student',
+                            payBundle.dueIds
+                          );
+                        }}
+                        className="px-3 py-2 rounded-lg bg-primary text-white text-[8px] font-black uppercase tracking-widest hover:bg-blue-800 transition-all"
+                      >
+                        Pay
+                      </button>
+                    </div>
                   </div>
                 );
               })}
