@@ -57,6 +57,9 @@ const requiredKeys = [
   'VITE_APP_URL',
   'VITE_AUTH_REDIRECT_URL',
   'VITE_RAZORPAY_KEY_ID',
+];
+
+const optionalKeys = [
   'VITE_GOOGLE_MAPS_API_KEY',
 ];
 
@@ -151,4 +154,17 @@ if (issues.length > 0) {
 console.log('\nRelease precheck passed.');
 if (warnings.length > 0) {
   console.log('Warnings remain, but they do not block the web build step.');
+}
+
+for (const key of optionalKeys) {
+  const value = String(envValues[key] || '').trim();
+  if (!value) {
+    warnings.push(`Optional variable is empty: ${key}. Map features may be disabled until this is configured.`);
+    continue;
+  }
+
+  const normalized = value.toLowerCase();
+  if (placeholderPatterns.some((pattern) => normalized.includes(pattern))) {
+    warnings.push(`Optional variable still looks like a placeholder: ${key}=${value}`);
+  }
 }
