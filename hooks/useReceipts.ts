@@ -6,6 +6,49 @@ import jsPDF from 'jspdf';
 const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
 const RECEIPT_FETCH_TIMEOUT_MS = 1500;
 
+const pickFirst = (...values: any[]) => {
+  for (const value of values) {
+    if (value === null || value === undefined) continue;
+    const text = String(value).trim();
+    if (text && text.toLowerCase() !== 'null' && text.toLowerCase() !== 'undefined') {
+      return value;
+    }
+  }
+  return '';
+};
+
+const normalizeStudentInfo = (due: any) => {
+  const rawStudent = Array.isArray(due?.students) ? due.students[0] : due?.students;
+  const student = rawStudent || due?.student || {};
+  const nestedBus = Array.isArray(student?.buses) ? student.buses[0] : student?.buses;
+
+  const fullName = pickFirst(student?.full_name, due?.student_name, due?.studentName, 'Student');
+  const admissionNumber = pickFirst(student?.admission_number, due?.admission_number, due?.admissionNumber, 'N/A');
+  const grade = pickFirst(student?.grade, student?.class, student?.class_name, due?.grade, due?.class, due?.class_name, 'N/A');
+  const section = pickFirst(student?.section, due?.section, due?.division, 'N/A');
+  const busNumber = pickFirst(
+    due?.bus_number,
+    student?.bus_number,
+    student?.bus_no,
+    nestedBus?.bus_number,
+    nestedBus?.plate,
+    due?.bus_no,
+    'N/A'
+  );
+
+  return {
+    student: {
+      ...student,
+      full_name: String(fullName || 'Student'),
+      admission_number: String(admissionNumber || 'N/A'),
+      grade: String(grade || 'N/A'),
+      section: String(section || 'N/A'),
+      bus_number: String(busNumber || 'N/A'),
+    },
+    busNumber: String(busNumber || 'N/A'),
+  };
+};
+
 const formatDateTime = (value?: string) => {
   if (!value) return 'N/A';
   return new Date(value).toLocaleString('en-IN', {
@@ -54,8 +97,7 @@ const extractReceiptMonths = (due: any) => {
 const buildReceiptAggregate = (rows: any[], paymentId: string | number, txnId?: string) => {
   const orderedRows = [...(rows || [])].sort((left, right) => getPeriodValue(left) - getPeriodValue(right));
   const primary = orderedRows[0] || { id: paymentId, transaction_id: txnId };
-  const students = Array.isArray(primary.students) ? primary.students[0] : primary.students;
-  const nestedBus = Array.isArray(students?.buses) ? students?.buses[0] : students?.buses;
+  const normalized = normalizeStudentInfo(primary);
   const paymentMonths = orderedRows.map((row) => ({
     label: getMonthLabel(row.month, row.year),
     month: Number(row.month || 0),
@@ -82,13 +124,8 @@ const buildReceiptAggregate = (rows: any[], paymentId: string | number, txnId?: 
     month: Number(primary.month || new Date().getMonth() + 1),
     year: Number(primary.year || new Date().getFullYear()),
     paid_at: primary.paid_at || primary.date || primary.payment_date || new Date().toISOString(),
-    students: students || {
-      full_name: primary.student_name || primary.studentName || 'Student',
-      admission_number: primary.admission_number || 'N/A',
-      grade: primary.grade || '',
-      section: primary.section || '',
-    },
-    bus_number: primary.bus_number || students?.bus_number || nestedBus?.bus_number || nestedBus?.plate || 'N/A',
+    students: normalized.student,
+    bus_number: normalized.busNumber,
     payment_months: paymentMonths,
     billing_period_label: paymentMonths.length > 1 ? `${firstMonth} to ${lastMonth}` : firstMonth,
   };
@@ -96,14 +133,15 @@ const buildReceiptAggregate = (rows: any[], paymentId: string | number, txnId?: 
 
 const generateReceiptPDF = (due: any) => {
   const doc = new jsPDF();
-  const student = due.students || {};
+  const normalized = normalizeStudentInfo(due);
+  const student = normalized.student || {};
   const txnId = due.transaction_id || due.id;
   const paidDateTime = formatDateTime(due.paid_at || new Date().toISOString());
   const receiptNo = `RCP-${String(txnId).slice(-8).toUpperCase()}`;
   const paymentMethod = String(due.payment_method || due.method || 'ONLINE').toUpperCase();
-  const busNumber = student.bus_number || student.bus_no || student?.buses?.bus_number || student?.buses?.plate || 'N/A';
-  const grade = student.grade || due.grade || 'N/A';
-  const section = student.section || due.section || 'N/A';
+  const busNumber = normalized.busNumber;
+  const grade = student.grade || 'N/A';
+  const section = student.section || 'N/A';
   const baseFee = Number(due.amount || 0);
   const lateFee = Number(due.late_fee || 0);
   const discount = Number(due.discount || 0);
@@ -115,6 +153,8 @@ const generateReceiptPDF = (due: any) => {
   // Header background
   doc.setFillColor(30, 64, 175);
   doc.rect(0, 0, 210, 45, 'F');
+  doc.setFillColor(15, 23, 42);
+  doc.rect(0, 37, 210, 8, 'F');
   doc.setTextColor(255, 255, 255);
   doc.setFontSize(22);
   doc.setFont('helvetica', 'bold');
@@ -139,6 +179,14 @@ const generateReceiptPDF = (due: any) => {
   doc.setDrawColor(226, 232, 240);
   doc.line(20, 55, 190, 55);
 
+  doc.setFillColor(236, 253, 245);
+  doc.setDrawColor(52, 211, 153);
+  doc.roundedRect(20, 60, 50, 9, 2, 2, 'FD');
+  doc.setTextColor(5, 150, 105);
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(8);
+  doc.text('PAID - VERIFIED', 25, 66.2);
+
   // Section: Receipt Details
   doc.setFontSize(10);
   doc.setFont('helvetica', 'bold');
@@ -157,7 +205,7 @@ const generateReceiptPDF = (due: any) => {
     ['Payment Status', 'PAID ✓'],
   ];
 
-  let y = 75;
+  let y = 78;
   rows.forEach(([label, value]) => {
     doc.setFont('helvetica', 'bold');
     doc.setTextColor(100, 116, 139);
@@ -175,14 +223,17 @@ const generateReceiptPDF = (due: any) => {
   y += 12;
 
   // Section: Student Details
+  doc.setFillColor(248, 250, 252);
+  doc.setDrawColor(226, 232, 240);
+  doc.roundedRect(20, y - 4, 170, 58, 4, 4, 'FD');
   doc.setFontSize(10);
   doc.setFont('helvetica', 'bold');
   doc.setTextColor(71, 85, 105);
-  doc.text('STUDENT DETAILS', 20, y);
-  y += 10;
+  doc.text('STUDENT DETAILS', 28, y + 4);
+  y += 14;
 
   const studentRows: [string, string][] = [
-    ['Full Name', student.full_name || due.student_name || 'N/A'],
+    ['Full Name', student.full_name || 'N/A'],
     ['Admission Number', student.admission_number || due.admission_number || 'N/A'],
     ['Class', String(grade)],
     ['Section', String(section)],
@@ -200,6 +251,8 @@ const generateReceiptPDF = (due: any) => {
     doc.text(String(value), 90, y);
     y += 11;
   });
+
+  y += 3;
 
   // Divider
   doc.line(20, y + 3, 190, y + 3);
@@ -285,8 +338,7 @@ export const useReceipts = () => {
       return buildReceiptAggregate([raw], paymentId, txnId);
     }
 
-    const students = Array.isArray(raw.students) ? raw.students[0] : raw.students;
-    const nestedBus = Array.isArray(students?.buses) ? students?.buses[0] : students?.buses;
+    const normalized = normalizeStudentInfo(raw);
     return {
       ...raw,
       id: raw.id || paymentId,
@@ -301,16 +353,18 @@ export const useReceipts = () => {
       month: Number(raw.month || new Date().getMonth() + 1),
       year: Number(raw.year || new Date().getFullYear()),
       paid_at: raw.paid_at || raw.date || raw.payment_date || new Date().toISOString(),
-      students: students || {
-        full_name: raw.student_name || raw.studentName || 'Student',
-        admission_number: raw.admission_number || 'N/A',
-        grade: raw.grade || '',
-        section: raw.section || '',
-      },
-      bus_number: raw.bus_number || students?.bus_number || nestedBus?.bus_number || nestedBus?.plate || 'N/A',
+      students: normalized.student,
+      bus_number: normalized.busNumber,
       payment_months: Array.isArray(raw.payment_months) ? raw.payment_months : undefined,
       billing_period_label: raw.billing_period_label,
     };
+  };
+
+  const hasCoreStudentFields = (due: any) => {
+    const student = Array.isArray(due?.students) ? due.students[0] : due?.students;
+    const fullName = String(student?.full_name || due?.student_name || due?.studentName || '').trim();
+    const admission = String(student?.admission_number || due?.admission_number || '').trim();
+    return Boolean(fullName && fullName.toLowerCase() !== 'student' && admission && admission.toLowerCase() !== 'n/a');
   };
 
   const fetchDueWithTimeout = async (paymentId: string | number, txnId?: string) => {
@@ -345,9 +399,9 @@ export const useReceipts = () => {
   const downloadReceipt = async (paymentId: string | number, txnId?: string, dueSnapshot?: any) => {
     setDownloading(String(paymentId));
     try {
-      // Generate immediately if caller already has due/receipt details.
+      // Generate immediately only when snapshot already has core student details.
       const immediateDue = normalizeDueShape(dueSnapshot, paymentId, txnId);
-      if (immediateDue) {
+      if (immediateDue && hasCoreStudentFields(immediateDue)) {
         generateReceiptPDF(immediateDue);
         return;
       }
@@ -365,7 +419,7 @@ export const useReceipts = () => {
       const normalizedDue = Array.isArray(due)
         ? buildReceiptAggregate(due, paymentId, txnId)
         : normalizeDueShape(due, paymentId, txnId);
-      generateReceiptPDF(normalizedDue);
+      generateReceiptPDF(normalizedDue || immediateDue);
     } catch (err: any) {
       // Last-resort fallback still generates a receipt skeleton instantly.
       try {
