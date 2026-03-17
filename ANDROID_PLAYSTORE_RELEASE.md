@@ -153,3 +153,74 @@ Google will review and roll out within a few hours to a few days.
 - [ ] Add screenshots (phone + 7-inch tablet)
 - [ ] Add feature graphic (1024×500 px)
 - [ ] Add short description and full description
+
+---
+
+## COPY-PASTE PROMPT FOR CHATGPT (HOME LAPTOP)
+
+Copy everything below and paste into ChatGPT when you are at home:
+
+```text
+You are my release assistant. I am on Windows and I need exact copy-paste terminal commands.
+
+Goal:
+1) Prepare this project for Play Store upload.
+2) Build a signed Android AAB.
+3) Tell me exactly where the final AAB is.
+4) Then guide me to upload in Play Console.
+
+Project info:
+- App name: BusWay Pro
+- Package name: com.buswaypro.app
+- Repo: https://github.com/priya4042/-School-Bus-Fee-Management-System.git
+- I already have these 2 signing files from my old laptop:
+	- android/buswaypro-upload-key.jks
+	- android/keystore.properties
+
+Rules for your response:
+- Give one command block at a time.
+- Wait for my output before the next step.
+- If any command fails, debug it and give a fixed command.
+- Do not skip prerequisites.
+- Use PowerShell commands only.
+- Keep commands safe and non-destructive.
+
+Please follow this sequence and verify each step with me:
+
+Step A: Check tools
+- Check Node, npm, Java, and Android SDK availability.
+
+Step B: Install/fix missing prerequisites
+- Install Java 21 if missing.
+- Configure JAVA_HOME, ANDROID_HOME, ANDROID_SDK_ROOT.
+- Ensure Android SDK has platform-tools, build-tools;36.0.0, platforms;android-36.
+
+Step C: Get code and dependencies
+- Clone repo (or pull latest if already cloned).
+- Run npm ci.
+
+Step D: Ensure signing files
+- Confirm these files exist:
+	- android/buswaypro-upload-key.jks
+	- android/keystore.properties
+- Create android/local.properties with:
+	sdk.dir=C\:\\Android\\Sdk
+
+Step E: Build release bundle
+- Run release checks.
+- Run npm run android:bundle.
+- Confirm build success.
+- Confirm output file exists at:
+	android/app/build/outputs/bundle/release/app-release.aab
+
+Step F: Play Console upload guidance
+- Give exact click path for first upload and later updates.
+- Remind me that for every update I must increase BUSWAY_VERSION_CODE in android/gradle.properties.
+
+Important reminders:
+- Never delete or lose keystore files.
+- If version code conflict happens, tell me exact edit needed.
+- If Play Console rejects upload, troubleshoot with me step by step.
+```
+
+Tip: If ChatGPT asks for terminal output, paste full output so it can fix issues quickly.
