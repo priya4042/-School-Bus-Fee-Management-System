@@ -147,191 +147,139 @@ const generateReceiptPDF = (due: any) => {
   const discount = Number(due.discount || 0);
   const totalPaid = Number(due.total_due || due.amount || 0);
   const monthsCovered = extractReceiptMonths(due);
-  const monthsCoveredRows = Math.ceil(monthsCovered.length / 2);
-  const monthsSectionHeight = 20 + (monthsCoveredRows * 9);
+  const billingPeriod = due.billing_period_label || `${MONTHS[(due.month || 1) - 1]} ${due.year}`;
+  const margin = 14;
+  const pageWidth = 210;
+  const contentWidth = pageWidth - margin * 2;
 
-  // Header background
+  // Header band (invoice style)
   doc.setFillColor(30, 64, 175);
-  doc.rect(0, 0, 210, 45, 'F');
-  doc.setFillColor(15, 23, 42);
-  doc.rect(0, 37, 210, 8, 'F');
+  doc.rect(0, 0, pageWidth, 30, 'F');
   doc.setTextColor(255, 255, 255);
-  doc.setFontSize(22);
   doc.setFont('helvetica', 'bold');
-  doc.text('School Bus WayPro', 20, 20);
-  doc.setFontSize(10);
+  doc.setFontSize(18);
+  doc.text('School Bus WayPro', margin, 13);
   doc.setFont('helvetica', 'normal');
-  doc.text('Official Bus Fee Payment Receipt', 20, 32);
+  doc.setFontSize(9);
+  doc.text('Bus Fee Payment Invoice', margin, 20);
 
-  // Receipt number badge
-  doc.setFillColor(255, 255, 255);
-  doc.setDrawColor(255, 255, 255);
-  doc.roundedRect(135, 10, 65, 25, 4, 4, 'F');
-  doc.setTextColor(30, 64, 175);
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(14);
+  doc.text('INVOICE', pageWidth - margin, 13, { align: 'right' });
+  doc.setFont('helvetica', 'normal');
   doc.setFontSize(8);
-  doc.setFont('helvetica', 'bold');
-  doc.text('RECEIPT NO.', 140, 20);
-  doc.setFontSize(11);
-  doc.text(receiptNo, 140, 30);
+  doc.text(`Invoice No: ${receiptNo}`, pageWidth - margin, 20, { align: 'right' });
 
-  // Divider
-  doc.setTextColor(0, 0, 0);
-  doc.setDrawColor(226, 232, 240);
-  doc.line(20, 55, 190, 55);
-
-  doc.setFillColor(236, 253, 245);
-  doc.setDrawColor(52, 211, 153);
-  doc.roundedRect(136, 58, 54, 9, 2, 2, 'FD');
-  doc.setTextColor(5, 150, 105);
-  doc.setFont('helvetica', 'bold');
-  doc.setFontSize(8);
-  doc.text('PAID - VERIFIED', 141, 64.2);
-
-  // Section: Receipt Details
-  doc.setFontSize(10);
-  doc.setFont('helvetica', 'bold');
-  doc.setTextColor(71, 85, 105);
-  doc.text('PAYMENT DETAILS', 20, 66);
-
-  const rows: [string, string][] = [
-    ['Receipt No', receiptNo],
-    ['Transaction ID', txnId],
-    ['Payment Date & Time', paidDateTime],
-    ['Payment Method', paymentMethod],
-    ['Billing Period', due.billing_period_label || `${MONTHS[(due.month || 1) - 1]} ${due.year}`],
-    ['Months Covered', String(monthsCovered.length)],
-    ['Due Date', formatDateOnly(due.due_date)],
-    ['Fine Cutoff Date', formatDateOnly(due.last_date)],
-    ['Payment Status', 'PAID ✓'],
-  ];
-
-  let y = 76;
-  rows.forEach(([label, value]) => {
-    doc.setFont('helvetica', 'bold');
-    doc.setTextColor(100, 116, 139);
-    doc.setFontSize(9);
-    doc.text(label, 20, y);
-    doc.setFont('helvetica', 'normal');
-    doc.setTextColor(15, 23, 42);
-    doc.setFontSize(10);
-    doc.text(String(value), 90, y);
-    y += 11;
-  });
-
-  // Divider
-  doc.line(20, y + 3, 190, y + 3);
-  y += 12;
-
-  // Section: Student Details
+  // Summary cards
   doc.setFillColor(248, 250, 252);
   doc.setDrawColor(226, 232, 240);
-  doc.roundedRect(20, y - 4, 170, 58, 4, 4, 'FD');
-  doc.setFontSize(10);
-  doc.setFont('helvetica', 'bold');
-  doc.setTextColor(71, 85, 105);
-  doc.text('STUDENT DETAILS', 28, y + 4);
-  y += 14;
+  doc.roundedRect(margin, 36, 88, 40, 2.5, 2.5, 'FD');
+  doc.roundedRect(pageWidth - margin - 88, 36, 88, 40, 2.5, 2.5, 'FD');
 
-  const studentRows: [string, string][] = [
-    ['Full Name', student.full_name || 'N/A'],
-    ['Admission Number', student.admission_number || due.admission_number || 'N/A'],
-    ['Class', String(grade)],
-    ['Section', String(section)],
-    ['Bus Number', String(busNumber)],
+  doc.setTextColor(71, 85, 105);
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(8);
+  doc.text('BILL TO', margin + 4, 42);
+  doc.text('PAYMENT DETAILS', pageWidth - margin - 84, 42);
+
+  doc.setTextColor(15, 23, 42);
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(8.5);
+  const billToRows = [
+    String(student.full_name || 'Student'),
+    `Admission: ${String(student.admission_number || due.admission_number || 'N/A')}`,
+    `Class: ${String(grade)}   Section: ${String(section)}`,
+    `Bus: ${String(busNumber)}`,
   ];
+  billToRows.forEach((line, index) => doc.text(line, margin + 4, 49 + index * 6));
 
-  studentRows.forEach(([label, value]) => {
-    doc.setFont('helvetica', 'bold');
-    doc.setTextColor(100, 116, 139);
-    doc.setFontSize(9);
-    doc.text(label, 28, y);
-    doc.setFont('helvetica', 'normal');
-    doc.setTextColor(15, 23, 42);
-    doc.setFontSize(10);
-    doc.text(String(value), 98, y);
-    y += 11;
-  });
+  const paymentRows = [
+    `Txn: ${String(txnId)}`,
+    `Date: ${paidDateTime}`,
+    `Method: ${paymentMethod}`,
+    `Status: PAID - VERIFIED`,
+  ];
+  paymentRows.forEach((line, index) => doc.text(line, pageWidth - margin - 84, 49 + index * 6));
 
-  y += 3;
-
-  // Divider
-  doc.line(20, y + 3, 190, y + 3);
-  y += 12;
-
-  doc.setFillColor(248, 250, 252);
-  doc.setDrawColor(226, 232, 240);
-  doc.roundedRect(20, y, 170, monthsSectionHeight, 4, 4, 'FD');
-
+  // Line-items table
+  let y = 84;
+  doc.setFillColor(30, 64, 175);
+  doc.rect(margin, y, contentWidth, 8, 'F');
+  doc.setTextColor(255, 255, 255);
   doc.setFont('helvetica', 'bold');
-  doc.setTextColor(71, 85, 105);
-  doc.setFontSize(10);
-  doc.text('MONTHS COVERED', 30, y + 12);
+  doc.setFontSize(8);
+  doc.text('#', margin + 3, y + 5.2);
+  doc.text('DESCRIPTION', margin + 12, y + 5.2);
+  doc.text('PERIOD', margin + 88, y + 5.2);
+  doc.text('AMOUNT', pageWidth - margin - 3, y + 5.2, { align: 'right' });
 
-  let monthsY = y + 22;
+  y += 8;
+  doc.setTextColor(15, 23, 42);
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(8);
+
+  const rowHeight = 6;
   monthsCovered.forEach((item: any, index: number) => {
-    const labelX = index % 2 === 0 ? 30 : 112;
-    const amountX = index % 2 === 0 ? 104 : 186;
-    if (index > 0 && index % 2 === 0) {
-      monthsY += 9;
+    if (index % 2 === 0) {
+      doc.setFillColor(248, 250, 252);
+      doc.rect(margin, y, contentWidth, rowHeight, 'F');
     }
 
-    doc.setFont('helvetica', 'normal');
-    doc.setTextColor(15, 23, 42);
-    doc.setFontSize(9);
-    doc.text(`• ${String(item.label)}`, labelX, monthsY);
-
+    doc.text(String(index + 1), margin + 3, y + 4.3);
+    doc.text('School Bus Fee', margin + 12, y + 4.3);
+    doc.text(String(item.label), margin + 88, y + 4.3);
     doc.setFont('helvetica', 'bold');
-    doc.text(`Rs. ${Number(item.amount || 0).toLocaleString('en-IN')}`, amountX, monthsY, { align: 'right' });
+    doc.text(`Rs. ${Number(item.amount || 0).toLocaleString('en-IN')}`, pageWidth - margin - 3, y + 4.3, { align: 'right' });
+    doc.setFont('helvetica', 'normal');
+    y += rowHeight;
   });
 
-  y += monthsSectionHeight + 12;
-
-  // Prevent clipped content at the bottom for larger receipts.
-  if (y + 92 > 287) {
-    doc.addPage();
-    y = 20;
-  }
-
-  // Fee Breakdown box
-  doc.setFillColor(248, 250, 252);
   doc.setDrawColor(226, 232, 240);
-  doc.roundedRect(20, y, 170, 68, 4, 4, 'FD');
+  doc.rect(margin, 84, contentWidth, y - 84);
 
-  doc.setFont('helvetica', 'bold');
+  // Summary box
+  y += 6;
+  const summaryX = pageWidth - margin - 84;
+  doc.setFillColor(248, 250, 252);
+  doc.roundedRect(summaryX, y, 84, 38, 2.5, 2.5, 'FD');
   doc.setTextColor(71, 85, 105);
-  doc.setFontSize(10);
-  doc.text('FEE BREAKDOWN', 30, y + 12);
-
-  doc.setFont('helvetica', 'normal');
-  doc.setTextColor(15, 23, 42);
-  doc.setFontSize(10);
-  doc.text('Base Fee', 30, y + 25);
-  doc.text(`Rs. ${baseFee.toLocaleString('en-IN')}`, 160, y + 25, { align: 'right' });
-
-  doc.text('Late Fee', 30, y + 37);
-  doc.text(`Rs. ${lateFee.toLocaleString('en-IN')}`, 160, y + 37, { align: 'right' });
-
-  doc.text('Discount', 30, y + 49);
-  doc.text(`Rs. ${discount.toLocaleString('en-IN')}`, 160, y + 49, { align: 'right' });
-
-  // Total
-  doc.setFillColor(30, 64, 175);
-  doc.rect(20, y + 55, 170, 13, 'F');
   doc.setFont('helvetica', 'bold');
-  doc.setTextColor(255, 255, 255);
-  doc.setFontSize(11);
-  doc.text('TOTAL PAID', 30, y + 64);
-  doc.text(`Rs. ${totalPaid.toLocaleString('en-IN')}`, 160, y + 64, { align: 'right' });
-
-  // Footer
-  doc.setTextColor(148, 163, 184);
-  doc.setFont('helvetica', 'normal');
   doc.setFontSize(8);
-  const footerStartY = Math.min(283, y + 82);
-  doc.text('This is a computer-generated receipt and does not require a physical signature.', 20, footerStartY);
-  doc.text('For queries, contact Bus Administration.', 20, footerStartY + 7);
-  doc.text(`Generated on ${new Date().toLocaleString('en-IN')}`, 20, footerStartY + 14);
-  doc.text(`System Reference: ${due.id || 'N/A'}`, 20, footerStartY + 21);
+  doc.text('INVOICE SUMMARY', summaryX + 4, y + 6);
+
+  const summaryRows: Array<[string, number]> = [
+    ['Base Fee', baseFee],
+    ['Late Fee', lateFee],
+    ['Discount', discount],
+  ];
+  let summaryY = y + 12;
+  doc.setTextColor(15, 23, 42);
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(8.5);
+  summaryRows.forEach(([label, value]) => {
+    doc.text(label, summaryX + 4, summaryY);
+    doc.text(`Rs. ${Number(value || 0).toLocaleString('en-IN')}`, summaryX + 80, summaryY, { align: 'right' });
+    summaryY += 6.2;
+  });
+
+  doc.setFillColor(30, 64, 175);
+  doc.rect(summaryX, y + 26, 84, 12, 'F');
+  doc.setTextColor(255, 255, 255);
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(9.5);
+  doc.text('TOTAL PAID', summaryX + 4, y + 33.5);
+  doc.text(`Rs. ${totalPaid.toLocaleString('en-IN')}`, summaryX + 80, y + 33.5, { align: 'right' });
+
+  // Billing period and footer note
+  doc.setTextColor(100, 116, 139);
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(8);
+  doc.text(`Billing Period: ${billingPeriod} (${monthsCovered.length} month${monthsCovered.length > 1 ? 's' : ''})`, margin, y + 8);
+
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(7.5);
+  doc.text('This is a computer-generated invoice and does not require a physical signature.', margin, 285);
+  doc.text(`Generated on ${new Date().toLocaleString('en-IN')} | Reference: ${due.id || 'N/A'}`, margin, 289);
 
   doc.save(`Receipt_${txnId}.pdf`);
 };
