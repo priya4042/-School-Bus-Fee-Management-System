@@ -115,14 +115,25 @@
     };
 
     const postPaymentApi = async (base: string, path: string, payload: any) => {
-      const { data: { session } } = await supabase.auth.getSession();
+      let accessToken: string | null = null;
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        accessToken = session?.access_token || null;
+      } catch (sessionError: any) {
+        const raw = String(sessionError?.message || sessionError || '').toLowerCase();
+        if (raw.includes('invalid refresh token') || raw.includes('refresh token not found')) {
+          console.warn('[Payments] Supabase refresh token is invalid. Proceeding without auth header and asking user to re-login.');
+        } else {
+          console.warn('[Payments] Unable to fetch Supabase session. Proceeding without auth header.', sessionError);
+        }
+      }
       const url = `${normalizeBase(base)}${path.startsWith('/') ? path : `/${path}`}`;
 
       const response = await fetch(url, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          ...(session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : {}),
+          ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
         },
         body: JSON.stringify(payload || {}),
       });

@@ -1,5 +1,5 @@
 import { VercelRequest, VercelResponse } from '@vercel/node';
-import { verifyCheckoutSignature } from '../../../lib/server/payments/paymentCore.js';
+import { verifyCheckoutSignature } from '../../../lib/server/payments/paymentCore';
 import { recordSuccessfulPayment } from '../../../lib/server/payments/recordSuccessfulPayment';
 
 const classifyVerifyFailure = (error: any): 'CONFIG' | 'DATA' | 'RUNTIME' => {
