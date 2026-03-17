@@ -1,4 +1,5 @@
   import { useState } from 'react';
+  import type { PaymentBundle } from '../utils/feeCalculator';
   import { showToast, showAlert } from '../lib/swal';
   import { loadRazorpay } from '../lib/razorpay';
   import { supabase } from '../lib/supabase';
@@ -12,6 +13,7 @@
     dueIds: string[];
     amount: number;
     studentName: string;
+    breakdown: PaymentBundle | null;
     step: 'SELECT' | 'PROCESSING' | 'SUCCESS';
     transactionId: string | null;
     loading: boolean;
@@ -24,12 +26,19 @@
       dueIds: [],
       amount: 0,
       studentName: '',
+      breakdown: null,
       step: 'SELECT',
       transactionId: null,
       loading: false
     });
 
-    const openPortal = (dueId: string, amount: number, studentName: string, dueIds?: Array<string | number>) => {
+    const openPortal = (
+      dueId: string,
+      amount: number,
+      studentName: string,
+      dueIds?: Array<string | number>,
+      breakdown?: PaymentBundle | null
+    ) => {
       const normalizedDueIds = (dueIds || [dueId]).map((id) => String(id));
       setPaymentState({
         isOpen: true,
@@ -37,6 +46,7 @@
         dueIds: normalizedDueIds,
         amount,
         studentName,
+        breakdown: breakdown || null,
         step: 'SELECT',
         transactionId: null,
         loading: false
@@ -341,7 +351,7 @@
               window.dispatchEvent(new CustomEvent(PAYMENT_EVENT, {
                 detail: {
                   studentName: dueContext?.students?.full_name || paymentState.studentName,
-                  amount: Number(dueContext?.total_due || dueContext?.amount || paymentState.amount || 0),
+                  amount: Number(paymentState.amount || dueContext?.total_due || dueContext?.amount || 0),
                   txnId: paymentResult.razorpay_payment_id,
                   dueId: String(paymentState.dueId),
                   timestamp: Date.now(),

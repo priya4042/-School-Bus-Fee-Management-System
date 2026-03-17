@@ -6,6 +6,7 @@ Use this checklist before every Play Store release.
 - [ ] `npm run lint` passes
 - [ ] `npm run build` passes
 - [ ] `npx cap sync android` completed
+- [ ] `android/keystore.properties` configured for release signing
 - [ ] Release `AAB` generated from Android Studio
 - [ ] App tested on at least 2 real Android devices (small + large screen)
 
@@ -124,3 +125,4 @@ Use/adapt these in Play Console policy forms and store listing.
 - Release date: `<YYYY-MM-DD>`
 - Testers validated by: `<name>`
 - Final approval by: `<name>`
+- Android package name: `com.buswaypro.app`

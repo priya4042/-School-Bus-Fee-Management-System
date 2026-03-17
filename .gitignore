@@ -36,3 +36,8 @@ build/
 
 .vercel
 .env*.local
+
+# Android local signing and machine-specific files
+android/keystore.properties
+android/local.properties
+*.jks

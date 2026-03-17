@@ -3,7 +3,6 @@
   "description": "Enterprise school bus management platform with real-time tracking and fee management.",
   "requestFramePermissions": [
     "camera",
-    "geolocation",
-    "microphone"
+    "geolocation"
   ]
 }

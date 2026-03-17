@@ -4,7 +4,7 @@ import { MONTHS } from '../constants';
 import { usePayments } from '../hooks/usePayments';
 import PaymentPortal from '../components/PaymentPortal';
 import { useTracking } from '../hooks/useTracking';
-import { isMonthPayable, calculateCurrentLedger } from '../utils/feeCalculator';
+import { isMonthPayable, calculateCurrentLedger, buildPaymentBundle } from '../utils/feeCalculator';
 import BusCameraModal from '../components/BusCameraModal';
 import BoardingLocationPicker from '../components/Location/BoardingLocationPicker';
 import { useReceipts } from '../hooks/useReceipts';
@@ -94,23 +94,6 @@ const ParentDashboard: React.FC<{ user: User }> = ({ user }) => {
   const futureScheduledDues = selectedStudentAllDues.filter(
     (d) => d.status !== PaymentStatus.PAID && String(d.id) !== String(selectedFirstUnpaidDue?.id || '')
   );
-
-  const buildYearlyPayBundle = (targetDue: MonthlyDue) => {
-    const studentDueRows = dues
-      .filter((d) => String(d.student_id) === String(targetDue.student_id))
-      .sort((a, b) => toPeriod(a) - toPeriod(b));
-
-    const targetPeriod = toPeriod(targetDue);
-    const bundleDues = studentDueRows.filter((d) => {
-      if (d.status === PaymentStatus.PAID) return false;
-      if (Number(d.year) !== Number(targetDue.year)) return false;
-      return toPeriod(d) <= targetPeriod;
-    });
-
-    const dueIds = bundleDues.map((d) => String(d.id));
-    const amount = bundleDues.reduce((sum, d) => sum + Number(d.total_due || d.amount || 0), 0);
-    return { dueIds, amount };
-  };
 
   // Use feeCalculator for all outstanding calculations
   const totalFamilyDue = familyStudents.reduce((acc, s) => {
@@ -298,10 +281,10 @@ const ParentDashboard: React.FC<{ user: User }> = ({ user }) => {
                        <button 
                          disabled={isLocked}
                          onClick={() => {
-                         const payBundle = buildYearlyPayBundle(due);
+                         const payBundle = buildPaymentBundle(due, selectedStudentAllDues);
                          const childIndex = familyStudents.findIndex(s => s.id === selectedStudent.id) + 1;
                          const ordinal = childIndex === 1 ? '1st' : childIndex === 2 ? '2nd' : childIndex === 3 ? '3rd' : `${childIndex}th`;
-                         openPortal(due.id, payBundle.amount || Number(due.total_due || due.amount || 0), `${selectedStudent.full_name} (${ordinal} Child)`, payBundle.dueIds);
+                         openPortal(due.id, payBundle.amount || Number(due.total_due || due.amount || 0), `${selectedStudent.full_name} (${ordinal} Child)`, payBundle.dueIds, payBundle);
                        }}
                          className={`px-4 md:px-6 py-2 text-[8px] md:text-[9px] font-black uppercase tracking-widest rounded-lg md:rounded-xl transition-all ${isLocked ? 'bg-slate-100 text-slate-400 cursor-not-allowed' : 'bg-primary text-white hover:bg-blue-800 shadow-xl shadow-primary/20'}`}
                        >
@@ -348,10 +331,10 @@ const ParentDashboard: React.FC<{ user: User }> = ({ user }) => {
                           </p>
                           <button
                             onClick={() => {
-                              const payBundle = buildYearlyPayBundle(due);
+                              const payBundle = buildPaymentBundle(due, selectedStudentAllDues);
                               const childIndex = familyStudents.findIndex(s => s.id === selectedStudent.id) + 1;
                               const ordinal = childIndex === 1 ? '1st' : childIndex === 2 ? '2nd' : childIndex === 3 ? '3rd' : `${childIndex}th`;
-                              openPortal(due.id, payBundle.amount || Number(due.total_due || due.amount || 0), `${selectedStudent.full_name} (${ordinal} Child)`, payBundle.dueIds);
+                              openPortal(due.id, payBundle.amount || Number(due.total_due || due.amount || 0), `${selectedStudent.full_name} (${ordinal} Child)`, payBundle.dueIds, payBundle);
                             }}
                             className="px-3 py-2 rounded-lg bg-primary text-white text-[8px] font-black uppercase tracking-widest hover:bg-blue-800 transition-all"
                           >

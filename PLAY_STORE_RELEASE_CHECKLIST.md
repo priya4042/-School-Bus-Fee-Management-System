@@ -13,14 +13,12 @@ npm run build
 ```
 
 ## 3) Add/sync Android project
-If `android/` does not exist:
-```bash
-npx cap add android
-```
 Always sync after code/config updates:
 ```bash
 npx cap sync android
 ```
+
+This repo now includes the `android/` project.
 
 ## 4) Open Android project
 ```bash
@@ -40,6 +38,11 @@ Store this file safely. Never lose it.
 - Choose **Android App Bundle (AAB)**.
 - Select keystore (`buswaypro-upload-key.jks`), alias, and passwords.
 - Build `release` bundle.
+
+Alternative CLI path after configuring `android/keystore.properties`:
+```bash
+npm run android:bundle
+```
 
 Output should be:
 - `app-release.aab`
@@ -81,3 +84,4 @@ Output should be:
 - Keep `allowMixedContent` disabled.
 - Avoid shipping `.env.local` with secrets.
 - Ensure backend CORS and auth are restricted to production domains.
+- Replace the generated Android launcher icon before production upload.

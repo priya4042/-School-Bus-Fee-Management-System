@@ -26,6 +26,74 @@ const formatDateOnly = (value?: string) => {
   });
 };
 
+const getMonthLabel = (month?: number, year?: number) => {
+  const monthIndex = Math.max(0, Number(month || 1) - 1);
+  return `${MONTHS[monthIndex] || 'Month'} ${year || ''}`.trim();
+};
+
+const getPeriodValue = (due: any) => Number(due?.year || 0) * 12 + Number(due?.month || 0);
+
+const extractReceiptMonths = (due: any) => {
+  if (Array.isArray(due?.payment_months) && due.payment_months.length > 0) {
+    return due.payment_months.map((item: any) => ({
+      label: String(item?.label || getMonthLabel(item?.month, item?.year)),
+      amount: Number(item?.amount || item?.total || 0),
+      baseAmount: Number(item?.baseAmount || item?.base_amount || 0),
+      lateFee: Number(item?.lateFee || item?.late_fee || 0),
+    }));
+  }
+
+  return [{
+    label: getMonthLabel(due?.month, due?.year),
+    amount: Number(due?.total_due || due?.amount || 0),
+    baseAmount: Number(due?.amount || due?.base_fee || due?.total_due || 0),
+    lateFee: Number(due?.late_fee || 0),
+  }];
+};
+
+const buildReceiptAggregate = (rows: any[], paymentId: string | number, txnId?: string) => {
+  const orderedRows = [...(rows || [])].sort((left, right) => getPeriodValue(left) - getPeriodValue(right));
+  const primary = orderedRows[0] || { id: paymentId, transaction_id: txnId };
+  const students = Array.isArray(primary.students) ? primary.students[0] : primary.students;
+  const nestedBus = Array.isArray(students?.buses) ? students?.buses[0] : students?.buses;
+  const paymentMonths = orderedRows.map((row) => ({
+    label: getMonthLabel(row.month, row.year),
+    month: Number(row.month || 0),
+    year: Number(row.year || 0),
+    amount: Number(row.total_due || row.amount || 0),
+    baseAmount: Number(row.amount || row.base_fee || row.total_due || 0),
+    lateFee: Number(row.late_fee || 0),
+  }));
+
+  const firstMonth = paymentMonths[0]?.label || getMonthLabel(primary.month, primary.year);
+  const lastMonth = paymentMonths[paymentMonths.length - 1]?.label || firstMonth;
+
+  return {
+    ...primary,
+    id: primary.id || paymentId,
+    transaction_id: primary.transaction_id || txnId || primary.id || paymentId,
+    total_due: paymentMonths.reduce((sum, item) => sum + Number(item.amount || 0), 0),
+    amount: paymentMonths.reduce((sum, item) => sum + Number(item.baseAmount || 0), 0),
+    late_fee: paymentMonths.reduce((sum, item) => sum + Number(item.lateFee || 0), 0),
+    discount: Number(primary.discount || 0),
+    due_date: primary.due_date,
+    last_date: primary.last_date,
+    payment_method: primary.payment_method || primary.method || 'ONLINE',
+    month: Number(primary.month || new Date().getMonth() + 1),
+    year: Number(primary.year || new Date().getFullYear()),
+    paid_at: primary.paid_at || primary.date || primary.payment_date || new Date().toISOString(),
+    students: students || {
+      full_name: primary.student_name || primary.studentName || 'Student',
+      admission_number: primary.admission_number || 'N/A',
+      grade: primary.grade || '',
+      section: primary.section || '',
+    },
+    bus_number: primary.bus_number || students?.bus_number || nestedBus?.bus_number || nestedBus?.plate || 'N/A',
+    payment_months: paymentMonths,
+    billing_period_label: paymentMonths.length > 1 ? `${firstMonth} to ${lastMonth}` : firstMonth,
+  };
+};
+
 const generateReceiptPDF = (due: any) => {
   const doc = new jsPDF();
   const student = due.students || {};
@@ -40,6 +108,9 @@ const generateReceiptPDF = (due: any) => {
   const lateFee = Number(due.late_fee || 0);
   const discount = Number(due.discount || 0);
   const totalPaid = Number(due.total_due || due.amount || 0);
+  const monthsCovered = extractReceiptMonths(due);
+  const monthsCoveredRows = Math.ceil(monthsCovered.length / 2);
+  const monthsSectionHeight = 18 + (monthsCoveredRows * 10);
 
   // Header background
   doc.setFillColor(30, 64, 175);
@@ -79,7 +150,8 @@ const generateReceiptPDF = (due: any) => {
     ['Transaction ID', txnId],
     ['Payment Date & Time', paidDateTime],
     ['Payment Method', paymentMethod],
-    ['Billing Period', `${MONTHS[(due.month || 1) - 1]} ${due.year}`],
+    ['Billing Period', due.billing_period_label || `${MONTHS[(due.month || 1) - 1]} ${due.year}`],
+    ['Months Covered', String(monthsCovered.length)],
     ['Due Date', formatDateOnly(due.due_date)],
     ['Fine Cutoff Date', formatDateOnly(due.last_date)],
     ['Payment Status', 'PAID ✓'],
@@ -133,6 +205,33 @@ const generateReceiptPDF = (due: any) => {
   doc.line(20, y + 3, 190, y + 3);
   y += 12;
 
+  doc.setFillColor(248, 250, 252);
+  doc.setDrawColor(226, 232, 240);
+  doc.roundedRect(20, y, 170, monthsSectionHeight, 4, 4, 'FD');
+
+  doc.setFont('helvetica', 'bold');
+  doc.setTextColor(71, 85, 105);
+  doc.setFontSize(10);
+  doc.text('MONTHS COVERED', 30, y + 12);
+
+  let monthsY = y + 22;
+  monthsCovered.forEach((item: any, index: number) => {
+    const columnX = index % 2 === 0 ? 30 : 112;
+    if (index > 0 && index % 2 === 0) {
+      monthsY += 10;
+    }
+
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(15, 23, 42);
+    doc.setFontSize(9);
+    doc.text(`• ${String(item.label)}`, columnX, monthsY);
+
+    doc.setFont('helvetica', 'bold');
+    doc.text(`Rs. ${Number(item.amount || 0).toLocaleString('en-IN')}`, columnX + 50, monthsY, { align: 'right', maxWidth: 28 });
+  });
+
+  y += monthsSectionHeight + 12;
+
   // Fee Breakdown box
   doc.setFillColor(248, 250, 252);
   doc.setDrawColor(226, 232, 240);
@@ -168,10 +267,11 @@ const generateReceiptPDF = (due: any) => {
   doc.setTextColor(148, 163, 184);
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(8);
-  doc.text('This is a computer-generated receipt and does not require a physical signature.', 20, 262);
-  doc.text('For queries, contact Bus Administration.', 20, 269);
-  doc.text(`Generated on ${new Date().toLocaleString('en-IN')}`, 20, 276);
-  doc.text(`System Reference: ${due.id || 'N/A'}`, 20, 283);
+  const footerStartY = Math.min(283, y + 82);
+  doc.text('This is a computer-generated receipt and does not require a physical signature.', 20, footerStartY);
+  doc.text('For queries, contact Bus Administration.', 20, footerStartY + 7);
+  doc.text(`Generated on ${new Date().toLocaleString('en-IN')}`, 20, footerStartY + 14);
+  doc.text(`System Reference: ${due.id || 'N/A'}`, 20, footerStartY + 21);
 
   doc.save(`Receipt_${txnId}.pdf`);
 };
@@ -181,6 +281,10 @@ export const useReceipts = () => {
 
   const normalizeDueShape = (raw: any, paymentId: string | number, txnId?: string) => {
     if (!raw) return null;
+    if (Array.isArray(raw.payment_months) && raw.payment_months.length > 0) {
+      return buildReceiptAggregate([raw], paymentId, txnId);
+    }
+
     const students = Array.isArray(raw.students) ? raw.students[0] : raw.students;
     const nestedBus = Array.isArray(students?.buses) ? students?.buses[0] : students?.buses;
     return {
@@ -204,15 +308,32 @@ export const useReceipts = () => {
         section: raw.section || '',
       },
       bus_number: raw.bus_number || students?.bus_number || nestedBus?.bus_number || nestedBus?.plate || 'N/A',
+      payment_months: Array.isArray(raw.payment_months) ? raw.payment_months : undefined,
+      billing_period_label: raw.billing_period_label,
     };
   };
 
-  const fetchDueWithTimeout = async (paymentId: string | number) => {
-    const fetchPromise = supabase
-      .from('monthly_dues')
-      .select('*, students(full_name, admission_number, grade, section, buses(bus_number, plate))')
-      .eq('id', String(paymentId))
-      .single();
+  const fetchDueWithTimeout = async (paymentId: string | number, txnId?: string) => {
+    const fetchPromise = (async () => {
+      if (txnId) {
+        const multiResult = await supabase
+          .from('monthly_dues')
+          .select('*, students(full_name, admission_number, grade, section, buses(bus_number, plate))')
+          .eq('transaction_id', String(txnId))
+          .order('year', { ascending: true })
+          .order('month', { ascending: true });
+
+        if (!multiResult.error && Array.isArray(multiResult.data) && multiResult.data.length > 0) {
+          return multiResult;
+        }
+      }
+
+      return supabase
+        .from('monthly_dues')
+        .select('*, students(full_name, admission_number, grade, section, buses(bus_number, plate))')
+        .eq('id', String(paymentId))
+        .single();
+    })();
 
     const timeoutPromise = new Promise((_, reject) => {
       setTimeout(() => reject(new Error('Receipt fetch timeout')), RECEIPT_FETCH_TIMEOUT_MS);
@@ -232,7 +353,7 @@ export const useReceipts = () => {
       }
 
       // Fallback: short timed fetch for missing details.
-      const result = await fetchDueWithTimeout(paymentId);
+      const result = await fetchDueWithTimeout(paymentId, txnId);
       const due = (result as any)?.data;
       const error = (result as any)?.error;
       if (error || !due) {
@@ -241,7 +362,9 @@ export const useReceipts = () => {
         return;
       }
 
-      const normalizedDue = normalizeDueShape(due, paymentId, txnId);
+      const normalizedDue = Array.isArray(due)
+        ? buildReceiptAggregate(due, paymentId, txnId)
+        : normalizeDueShape(due, paymentId, txnId);
       generateReceiptPDF(normalizedDue);
     } catch (err: any) {
       // Last-resort fallback still generates a receipt skeleton instantly.
