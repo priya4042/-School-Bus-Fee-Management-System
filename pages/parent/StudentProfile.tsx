@@ -33,7 +33,7 @@ const StudentProfile: React.FC<{ user: User }> = ({ user }) => {
   const loadMyStudents = async (keepSelected = true) => {
     const { data, error } = await supabase
       .from('students')
-      .select('*, routes(route_name), buses(bus_number, plate)')
+      .select('*, routes(route_name), buses(bus_number, vehicle_number, plate)')
       .eq('parent_id', user.id)
       .in('status', ['active', 'ACTIVE'])
       .order('full_name', { ascending: true });
@@ -240,7 +240,10 @@ const StudentProfile: React.FC<{ user: User }> = ({ user }) => {
                     selectedStudent.id === s.id ? 'bg-white text-primary shadow-sm' : 'text-slate-400 hover:text-slate-600'
                   }`}
                 >
-                  {s.full_name.split(' ')[0]}
+                  <span className="block">{s.full_name.split(' ')[0]}</span>
+                  <span className="block text-[8px] font-bold tracking-normal normal-case mt-1 opacity-80">
+                    {(s as any)?.buses?.bus_number || (s as any)?.buses?.vehicle_number || (s as any)?.buses?.plate || 'No Bus'}
+                  </span>
                 </button>
               ))}
             </div>
@@ -405,7 +408,7 @@ const StudentProfile: React.FC<{ user: User }> = ({ user }) => {
                 <div>
                   <p className="text-[8px] font-black text-white/40 uppercase tracking-widest mb-1">Bus Assigned</p>
                   <p className="text-xs font-black uppercase">
-                    {(selectedStudent as any).buses?.bus_number || 'Not Assigned'}
+                    {(selectedStudent as any).buses?.bus_number || (selectedStudent as any).buses?.vehicle_number || (selectedStudent as any).buses?.plate || 'Not Assigned'}
                   </p>
                 </div>
               </div>

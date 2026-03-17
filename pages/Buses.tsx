@@ -173,7 +173,7 @@ const Buses: React.FC = () => {
                       </div>
                     </td>
                     <td className="px-8 py-5">
-                      <p className="text-xs font-black text-slate-600 uppercase tracking-tight">{bus.routes?.route_name || 'Unassigned'}</p>
+                      <p className="text-xs font-black text-slate-600 uppercase tracking-tight">{bus.route?.route_name || bus.routes?.route_name || 'Unassigned'}</p>
                     </td>
                     <td className="px-8 py-5">
                       <div className="flex items-center gap-2">

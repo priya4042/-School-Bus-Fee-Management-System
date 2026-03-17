@@ -16,12 +16,23 @@ const toDbStatus = (uiStatus: string) => {
   return 'IDLE';
 };
 
-const mapDbBusToUi = (bus: any) => ({
+const mapDbBusToUi = (bus: any) => {
+  const routeRelation = Array.isArray(bus?.route)
+    ? bus.route[0]
+    : Array.isArray(bus?.routes)
+      ? bus.routes[0]
+      : bus?.route || bus?.routes || null;
+
+  return {
   ...bus,
   plate: bus?.vehicle_number || bus?.plate || '',
   vehicle_number: bus?.vehicle_number || bus?.plate || '',
+  route_id: bus?.route_id || bus?.routeId || '',
+  routes: routeRelation,
+  route: routeRelation,
   status: toUiStatus(bus?.status),
-});
+  };
+};
 
 const mapUiBusToDb = (busData: any) => ({
   bus_number: String(busData?.bus_number || '').trim(),
@@ -30,7 +41,7 @@ const mapUiBusToDb = (busData: any) => ({
   capacity: Number(busData?.capacity || 0) || 40,
   driver_name: String(busData?.driver_name || '').trim() || null,
   driver_phone: String(busData?.driver_phone || '').trim() || null,
-  route_id: busData?.route_id ? String(busData.route_id) : null,
+  route_id: busData?.route_id || busData?.routeId ? String(busData?.route_id || busData?.routeId) : null,
   status: toDbStatus(busData?.status),
 });
 
@@ -43,7 +54,7 @@ export const useBuses = () => {
     try {
       const { data, error } = await supabase
         .from('buses')
-        .select('*, routes(route_name)')
+        .select('*, route:routes!buses_route_id_fkey(id, route_name)')
         .order('bus_number');
       if (error) throw error;
       setBuses((data || []).map(mapDbBusToUi));
