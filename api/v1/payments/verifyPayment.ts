@@ -1,6 +1,4 @@
 import { VercelRequest, VercelResponse } from '@vercel/node';
-import { verifyCheckoutSignature } from '../../../lib/server/payments/paymentCore.js';
-import { recordSuccessfulPayment } from '../../../lib/server/payments/recordSuccessfulPayment.js';
 
 const classifyVerifyFailure = (error: any): 'CONFIG' | 'DATA' | 'RUNTIME' => {
   const raw = String(error?.message || error || '').toLowerCase();
@@ -65,6 +63,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   try {
+    const [{ verifyCheckoutSignature }, { recordSuccessfulPayment }] = await Promise.all([
+      import('../../../lib/server/payments/paymentCore.js'),
+      import('../../../lib/server/payments/recordSuccessfulPayment.js'),
+    ]);
+
     const valid = verifyCheckoutSignature({
       razorpayOrderId: String(razorpay_order_id),
       razorpayPaymentId: String(razorpay_payment_id),
