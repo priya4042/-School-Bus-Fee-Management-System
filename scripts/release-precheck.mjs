@@ -4,6 +4,38 @@ import { spawnSync } from 'node:child_process';
 
 const projectRoot = process.cwd();
 
+const findWindowsJavaExe = () => {
+  if (process.platform !== 'win32') return '';
+
+  const candidates = [
+    'C:\\Program Files\\Microsoft',
+    'C:\\Program Files\\Java',
+    'C:\\Program Files (x86)\\Java',
+  ];
+
+  for (const base of candidates) {
+    if (!fs.existsSync(base)) continue;
+
+    try {
+      const entries = fs
+        .readdirSync(base, { withFileTypes: true })
+        .filter((entry) => entry.isDirectory())
+        .map((entry) => entry.name)
+        .filter((name) => /^(jdk-?17|jre-?17)/i.test(name))
+        .sort((a, b) => b.localeCompare(a));
+
+      for (const dirName of entries) {
+        const javaExe = path.join(base, dirName, 'bin', 'java.exe');
+        if (fs.existsSync(javaExe)) return javaExe;
+      }
+    } catch {
+      // Ignore filesystem permission issues and continue fallback search.
+    }
+  }
+
+  return '';
+};
+
 const parseEnvFile = (filePath) => {
   if (!fs.existsSync(filePath)) return {};
 
@@ -113,9 +145,20 @@ if (!fs.existsSync(keystorePropertiesPath)) {
 }
 
 const javaHome = String(process.env.JAVA_HOME || '').trim();
+const javaFromHome = javaHome ? path.join(javaHome, 'bin', process.platform === 'win32' ? 'java.exe' : 'java') : '';
+const hasJavaFromHome = javaFromHome ? fs.existsSync(javaFromHome) : false;
+
 const javaCheck = spawnSync('java', ['-version'], { encoding: 'utf8', shell: true });
-if (!javaHome && javaCheck.status !== 0) {
+const hasJavaFromPath = javaCheck.status === 0;
+
+const javaFromWindowsScan = findWindowsJavaExe();
+const hasJava = hasJavaFromHome || hasJavaFromPath || Boolean(javaFromWindowsScan);
+
+if (!hasJava) {
   issues.push('Java is not available. Install Java 17 and set JAVA_HOME before release build.');
+} else if (!hasJavaFromHome && !hasJavaFromPath && javaFromWindowsScan) {
+  warnings.push(`Java was detected at ${javaFromWindowsScan}, but JAVA_HOME/PATH is not active in this shell.`);
+  warnings.push('Open a new terminal or run: setx JAVA_HOME "<detected-jdk-path>" and add %JAVA_HOME%\\bin to PATH.');
 }
 
 const androidDir = path.join(projectRoot, 'android');
