@@ -1,6 +1,6 @@
 import { VercelRequest, VercelResponse } from '@vercel/node';
 import { verifyCheckoutSignature } from '../../../lib/server/payments/paymentCore.js';
-import { recordSuccessfulPayment } from '../../../lib/server/payments/recordSuccessfulPayment';
+import { recordSuccessfulPayment } from '../../../lib/server/payments/recordSuccessfulPayment.js';
 
 const classifyVerifyFailure = (error: any): 'CONFIG' | 'DATA' | 'RUNTIME' => {
   const raw = String(error?.message || error || '').toLowerCase();
@@ -45,6 +45,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
+  const body = (req.body || {}) as any;
   const {
     razorpay_order_id,
     razorpay_payment_id,
@@ -52,7 +53,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     dueId,
     due_id,
     due_ids,
-  } = req.body;
+  } = body;
   const traceId = `verify-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
 
   const finalDueId = String(dueId || due_id || '').trim();
