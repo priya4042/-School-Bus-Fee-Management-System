@@ -132,7 +132,7 @@ const buildReceiptAggregate = (rows: any[], paymentId: string | number, txnId?: 
 };
 
 const generateReceiptPDF = (due: any) => {
-  const doc = new jsPDF();
+  const doc = new jsPDF({ orientation: 'p', unit: 'mm', format: 'a4' });
   const normalized = normalizeStudentInfo(due);
   const student = normalized.student || {};
   const txnId = due.transaction_id || due.id;
@@ -148,7 +148,7 @@ const generateReceiptPDF = (due: any) => {
   const totalPaid = Number(due.total_due || due.amount || 0);
   const monthsCovered = extractReceiptMonths(due);
   const monthsCoveredRows = Math.ceil(monthsCovered.length / 2);
-  const monthsSectionHeight = 18 + (monthsCoveredRows * 10);
+  const monthsSectionHeight = 20 + (monthsCoveredRows * 9);
 
   // Header background
   doc.setFillColor(30, 64, 175);
@@ -181,17 +181,17 @@ const generateReceiptPDF = (due: any) => {
 
   doc.setFillColor(236, 253, 245);
   doc.setDrawColor(52, 211, 153);
-  doc.roundedRect(20, 60, 50, 9, 2, 2, 'FD');
+  doc.roundedRect(136, 58, 54, 9, 2, 2, 'FD');
   doc.setTextColor(5, 150, 105);
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(8);
-  doc.text('PAID - VERIFIED', 25, 66.2);
+  doc.text('PAID - VERIFIED', 141, 64.2);
 
   // Section: Receipt Details
   doc.setFontSize(10);
   doc.setFont('helvetica', 'bold');
   doc.setTextColor(71, 85, 105);
-  doc.text('PAYMENT DETAILS', 20, 65);
+  doc.text('PAYMENT DETAILS', 20, 66);
 
   const rows: [string, string][] = [
     ['Receipt No', receiptNo],
@@ -205,7 +205,7 @@ const generateReceiptPDF = (due: any) => {
     ['Payment Status', 'PAID ✓'],
   ];
 
-  let y = 78;
+  let y = 76;
   rows.forEach(([label, value]) => {
     doc.setFont('helvetica', 'bold');
     doc.setTextColor(100, 116, 139);
@@ -244,11 +244,11 @@ const generateReceiptPDF = (due: any) => {
     doc.setFont('helvetica', 'bold');
     doc.setTextColor(100, 116, 139);
     doc.setFontSize(9);
-    doc.text(label, 20, y);
+    doc.text(label, 28, y);
     doc.setFont('helvetica', 'normal');
     doc.setTextColor(15, 23, 42);
     doc.setFontSize(10);
-    doc.text(String(value), 90, y);
+    doc.text(String(value), 98, y);
     y += 11;
   });
 
@@ -269,21 +269,28 @@ const generateReceiptPDF = (due: any) => {
 
   let monthsY = y + 22;
   monthsCovered.forEach((item: any, index: number) => {
-    const columnX = index % 2 === 0 ? 30 : 112;
+    const labelX = index % 2 === 0 ? 30 : 112;
+    const amountX = index % 2 === 0 ? 104 : 186;
     if (index > 0 && index % 2 === 0) {
-      monthsY += 10;
+      monthsY += 9;
     }
 
     doc.setFont('helvetica', 'normal');
     doc.setTextColor(15, 23, 42);
     doc.setFontSize(9);
-    doc.text(`• ${String(item.label)}`, columnX, monthsY);
+    doc.text(`• ${String(item.label)}`, labelX, monthsY);
 
     doc.setFont('helvetica', 'bold');
-    doc.text(`Rs. ${Number(item.amount || 0).toLocaleString('en-IN')}`, columnX + 50, monthsY, { align: 'right', maxWidth: 28 });
+    doc.text(`Rs. ${Number(item.amount || 0).toLocaleString('en-IN')}`, amountX, monthsY, { align: 'right' });
   });
 
   y += monthsSectionHeight + 12;
+
+  // Prevent clipped content at the bottom for larger receipts.
+  if (y + 92 > 287) {
+    doc.addPage();
+    y = 20;
+  }
 
   // Fee Breakdown box
   doc.setFillColor(248, 250, 252);
