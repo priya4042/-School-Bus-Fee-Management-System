@@ -67,6 +67,11 @@ const PaymentPortal: React.FC<PaymentPortalProps> = ({ state, onClose, onInitiat
             <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Amount to Settle</p>
             <p className="text-4xl font-black text-slate-800 tracking-tighter">₹{Number(state.amount || 0).toLocaleString()}</p>
             <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mt-2">{state.studentName}</p>
+            {!!state?.studentMeta?.busNumber && (
+              <p className="text-[9px] font-black text-primary uppercase tracking-widest mt-2">
+                Bus Number: {String(state.studentMeta.busNumber)}
+              </p>
+            )}
           </div>
 
           {bundle && (
@@ -228,7 +233,14 @@ const PaymentPortal: React.FC<PaymentPortalProps> = ({ state, onClose, onInitiat
                   billing_period_label: state.breakdown?.monthsCount > 1
                     ? `${state.breakdown?.firstMonthLabel} to ${state.breakdown?.targetMonthLabel}`
                     : state.breakdown?.targetMonthLabel,
-                  students: { full_name: state.studentName || 'Student' },
+                  students: {
+                    full_name: state.studentName || 'Student',
+                    admission_number: state?.studentMeta?.admissionNumber || 'N/A',
+                    grade: state?.studentMeta?.grade || 'N/A',
+                    section: state?.studentMeta?.section || 'N/A',
+                    bus_number: state?.studentMeta?.busNumber || 'N/A',
+                    plate: state?.studentMeta?.busNumber || 'N/A',
+                  },
                 })}
                 disabled={!!downloading}
                 className="w-full py-4 bg-primary text-white font-black uppercase text-[10px] tracking-widest rounded-2xl shadow-xl shadow-primary/20 hover:bg-blue-800 transition-all flex items-center justify-center gap-3 active:scale-95"

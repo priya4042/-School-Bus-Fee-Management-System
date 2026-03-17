@@ -27,11 +27,12 @@ const normalizeStudentInfo = (due: any) => {
   const grade = pickFirst(student?.grade, student?.class, student?.class_name, due?.grade, due?.class, due?.class_name, 'N/A');
   const section = pickFirst(student?.section, due?.section, due?.division, 'N/A');
   const busNumber = pickFirst(
+    nestedBus?.plate,
+    student?.plate,
     due?.bus_number,
     student?.bus_number,
     student?.bus_no,
     nestedBus?.bus_number,
-    nestedBus?.plate,
     due?.bus_no,
     'N/A'
   );

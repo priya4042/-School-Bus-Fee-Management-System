@@ -13,6 +13,12 @@
     dueIds: string[];
     amount: number;
     studentName: string;
+    studentMeta: {
+      admissionNumber?: string;
+      grade?: string;
+      section?: string;
+      busNumber?: string;
+    } | null;
     breakdown: PaymentBundle | null;
     step: 'SELECT' | 'PROCESSING' | 'SUCCESS';
     transactionId: string | null;
@@ -26,6 +32,7 @@
       dueIds: [],
       amount: 0,
       studentName: '',
+      studentMeta: null,
       breakdown: null,
       step: 'SELECT',
       transactionId: null,
@@ -46,6 +53,7 @@
         dueIds: normalizedDueIds,
         amount,
         studentName,
+        studentMeta: null,
         breakdown: breakdown || null,
         step: 'SELECT',
         transactionId: null,
@@ -72,7 +80,7 @@
     const fetchDueContext = async (dueId: string) => {
       const { data, error } = await supabase
         .from('monthly_dues')
-        .select('id, student_id, month, year, amount, total_due, students(id, full_name, admission_number, parent_id)')
+        .select('id, student_id, month, year, amount, total_due, students(id, full_name, admission_number, grade, section, parent_id, buses(bus_number, plate))')
         .eq('id', String(dueId))
         .maybeSingle();
 
@@ -326,6 +334,24 @@
         }
 
         const dueContext = await fetchDueContext(String(paymentState.dueId));
+        const dueStudent = Array.isArray((dueContext as any)?.students)
+          ? (dueContext as any).students[0]
+          : (dueContext as any)?.students;
+        const dueBus = Array.isArray(dueStudent?.buses) ? dueStudent.buses[0] : dueStudent?.buses;
+        const resolvedBusNumber = String(
+          dueBus?.plate || dueStudent?.plate || dueStudent?.bus_number || dueBus?.bus_number || ''
+        ).trim();
+
+        setPaymentState(prev => ({
+          ...prev,
+          studentMeta: {
+            admissionNumber: dueStudent?.admission_number || '',
+            grade: dueStudent?.grade || '',
+            section: dueStudent?.section || '',
+            busNumber: resolvedBusNumber || 'N/A',
+          }
+        }));
+
         const order = await createOrder(String(paymentState.dueId), paymentState.amount, dueContext, paymentState.dueIds || [String(paymentState.dueId)]);
 
         const isLoaded = await loadRazorpay();
