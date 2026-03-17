@@ -17,8 +17,8 @@
     "cap:open": "npx cap open android",
     "cap:add": "npx cap add android",
     "android:build": "npm run build && npx cap sync && npx cap open android",
-    "android:bundle": "npm run release:check && npm run build && npx cap sync android && cd android && gradlew.bat bundleRelease",
-    "android:apk": "npm run release:check && npm run build && npx cap sync android && cd android && gradlew.bat assembleRelease"
+    "android:bundle": "node scripts/android-release.mjs bundle",
+    "android:apk": "node scripts/android-release.mjs apk"
   },
   "dependencies": {
     "@capacitor/android": "^8.1.0",

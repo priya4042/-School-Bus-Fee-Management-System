@@ -21,7 +21,7 @@ const findWindowsJavaExe = () => {
         .readdirSync(base, { withFileTypes: true })
         .filter((entry) => entry.isDirectory())
         .map((entry) => entry.name)
-        .filter((name) => /^(jdk-?17|jre-?17)/i.test(name))
+        .filter((name) => /^(jdk-?21|jdk-?20|jdk-?19|jdk-?18|jdk-?17|jre-?21|jre-?17)/i.test(name))
         .sort((a, b) => b.localeCompare(a));
 
       for (const dirName of entries) {
@@ -155,7 +155,7 @@ const javaFromWindowsScan = findWindowsJavaExe();
 const hasJava = hasJavaFromHome || hasJavaFromPath || Boolean(javaFromWindowsScan);
 
 if (!hasJava) {
-  issues.push('Java is not available. Install Java 17 and set JAVA_HOME before release build.');
+  issues.push('Java is not available. Install Java 21 and set JAVA_HOME before release build.');
 } else if (!hasJavaFromHome && !hasJavaFromPath && javaFromWindowsScan) {
   warnings.push(`Java was detected at ${javaFromWindowsScan}, but JAVA_HOME/PATH is not active in this shell.`);
   warnings.push('Open a new terminal or run: setx JAVA_HOME "<detected-jdk-path>" and add %JAVA_HOME%\\bin to PATH.');
