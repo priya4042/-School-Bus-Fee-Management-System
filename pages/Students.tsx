@@ -284,6 +284,18 @@ const Students: React.FC = () => {
 
   const inputClass = "w-full px-5 py-4 rounded-2xl bg-primary/5 border border-primary/20 focus:border-primary focus:ring-4 focus:ring-primary/10 outline-none font-bold text-sm transition-all text-slate-800 placeholder-slate-400";
   const selectClass = "w-full px-5 py-4 rounded-2xl bg-primary/5 border border-primary/20 focus:border-primary focus:ring-4 focus:ring-primary/10 outline-none font-bold text-sm bg-white transition-all text-slate-800 cursor-pointer";
+  const getBusDisplay = (student: any) => {
+    const bus = student?.buses;
+    if (!bus) return 'No Bus';
+
+    const busNumber = String(bus.bus_number || '').trim();
+    const vehicleNumber = String(bus.vehicle_number || bus.plate || '').trim();
+
+    if (busNumber && vehicleNumber) return `${busNumber} (${vehicleNumber})`;
+    if (busNumber) return busNumber;
+    if (vehicleNumber) return vehicleNumber;
+    return 'No Bus';
+  };
 
   return (
     <div className="space-y-6">
@@ -372,7 +384,7 @@ const Students: React.FC = () => {
                     </td>
                     <td className="px-8 py-5">
                       <p className="text-xs font-black text-slate-600 uppercase tracking-tight">{student.routes?.route_name || 'No Route'}</p>
-                      <p className="text-[10px] text-slate-400 font-bold uppercase">{student.buses?.plate || 'No Bus'}</p>
+                      <p className="text-[10px] text-slate-400 font-bold uppercase">{getBusDisplay(student)}</p>
                     </td>
                     <td className="px-8 py-5">
                       <p className="text-xs font-bold text-slate-700">{student.profiles?.full_name || student.parent_name || 'Unassigned'}</p>
@@ -620,6 +632,17 @@ const Students: React.FC = () => {
       <Modal isOpen={isFeeModalOpen} onClose={() => setIsFeeModalOpen(false)} title={selectedStudentForFees ? `Yearly Fees - ${selectedStudentForFees.full_name} (Adm: ${selectedStudentForFees.admission_number})` : "Yearly Fees"} maxWidthClass="max-w-6xl" bodyClassName="p-6 md:p-8">
         {selectedStudentForFees && (
           <div className="space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="bg-slate-50 border border-slate-200 rounded-2xl p-4">
+                <p className="text-[9px] font-black text-slate-500 uppercase tracking-widest mb-1">Assigned Route</p>
+                <p className="text-sm font-black text-slate-800 uppercase">{selectedStudentForFees.routes?.route_name || 'No Route Assigned'}</p>
+              </div>
+              <div className="bg-slate-50 border border-slate-200 rounded-2xl p-4">
+                <p className="text-[9px] font-black text-slate-500 uppercase tracking-widest mb-1">Assigned Bus</p>
+                <p className="text-sm font-black text-slate-800 uppercase">{getBusDisplay(selectedStudentForFees)}</p>
+              </div>
+            </div>
+
             {/* Summary Cards */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div className="bg-primary/5 border border-primary/10 rounded-2xl p-4">
