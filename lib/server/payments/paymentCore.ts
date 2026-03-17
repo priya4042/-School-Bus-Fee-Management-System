@@ -1,7 +1,7 @@
 import crypto from 'crypto';
 import { createClient } from '@supabase/supabase-js';
 import type { SupabaseClient } from '@supabase/supabase-js';
-import { sendPaymentEmails } from './emailService';
+import { sendPaymentEmails } from './emailService.js';
 
 const cleanEnv = (value: string) => String(value || '').trim().replace(/^['\"]|['\"]$/g, '');
 
@@ -184,6 +184,18 @@ const insertEmailLogs = async (supabase: SupabaseClient, rows: any[]) => {
   }
 };
 
+const withTimeout = async <T>(promise: Promise<T>, ms: number, label: string): Promise<T> => {
+  let timeoutHandle: ReturnType<typeof setTimeout> | null = null;
+  try {
+    const timeoutPromise = new Promise<never>((_, reject) => {
+      timeoutHandle = setTimeout(() => reject(new Error(`${label} timed out after ${ms}ms`)), ms);
+    });
+    return await Promise.race([promise, timeoutPromise]);
+  } finally {
+    if (timeoutHandle) clearTimeout(timeoutHandle);
+  }
+};
+
 const ensureReceipt = async (
   supabase: SupabaseClient,
   dueId: string,
@@ -299,17 +311,21 @@ export const recordSuccessfulPayment = async (input: RecordPaymentInput): Promis
     const parentProfiles = await fetchProfileEmails(supabase, parentId ? [parentId] : []);
     const parentEmail = parentProfiles[0]?.email || null;
 
-    const emailResult = await sendPaymentEmails({
-      parentEmail,
-      adminEmails: adminContacts.emails,
-      context: {
-        transactionId: input.razorpayPaymentId,
-        dueId: input.dueId,
-        studentName,
-        monthLabel,
-        amountPaid,
-      },
-    });
+    const emailResult = await withTimeout(
+      sendPaymentEmails({
+        parentEmail,
+        adminEmails: adminContacts.emails,
+        context: {
+          transactionId: input.razorpayPaymentId,
+          dueId: input.dueId,
+          studentName,
+          monthLabel,
+          amountPaid,
+        },
+      }),
+      4500,
+      'sendPaymentEmails'
+    );
 
     const emailLogs: any[] = [];
     const provider = String((emailResult as any)?.provider || 'resend').toUpperCase();

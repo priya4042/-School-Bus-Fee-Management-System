@@ -1,5 +1,5 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { verifyWebhookSignature } from '../../../lib/server/payments/paymentCore';
+import { verifyWebhookSignature } from '../../../lib/server/payments/paymentCore.js';
 import { recordSuccessfulPayment } from '../../../lib/server/payments/recordSuccessfulPayment';
 
 const classifyWebhookFailure = (error: any): 'CONFIG' | 'DATA' | 'RUNTIME' => {
