@@ -2,6 +2,32 @@ import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { verifyWebhookSignature } from '../../../lib/server/payments/paymentCore.js';
 import { recordSuccessfulPayment } from '../../../lib/server/payments/recordSuccessfulPayment';
 
+const classifyWebhookFailure = (error: any): 'CONFIG' | 'DATA' | 'RUNTIME' => {
+  const raw = String(error?.message || error || '').toLowerCase();
+
+  if (
+    raw.includes('supabase_url') ||
+    raw.includes('supabase_service_role_key') ||
+    raw.includes('razorpay_webhook_secret') ||
+    raw.includes('not configured') ||
+    raw.includes('missing')
+  ) {
+    return 'CONFIG';
+  }
+
+  if (
+    raw.includes('due not found') ||
+    raw.includes('failed to mark dues paid') ||
+    raw.includes('failed to update monthly due') ||
+    raw.includes('duplicate key') ||
+    raw.includes('violates')
+  ) {
+    return 'DATA';
+  }
+
+  return 'RUNTIME';
+};
+
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   res.setHeader('Access-Control-Allow-Credentials', 'true');
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -21,23 +47,24 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   const signature = String(req.headers['x-razorpay-signature'] || '');
   const payloadString = JSON.stringify(req.body || {});
+  const traceId = `webhook-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
 
-  console.log('[Razorpay Webhook] Received webhook event');
+  console.log(`[Razorpay Webhook][${traceId}] Received webhook event`);
 
   if (!signature) {
-    console.warn('[Razorpay Webhook] Missing secret or signature');
-    return res.status(400).json({ error: "Missing secret or signature" });
+    console.warn(`[Razorpay Webhook][${traceId}] Missing secret or signature`);
+    return res.status(400).json({ error: 'Missing secret or signature', traceId });
   }
 
   try {
     const valid = verifyWebhookSignature(payloadString, signature);
     if (!valid) {
-      console.warn("[Razorpay Webhook] Invalid signature");
-      return res.status(400).json({ error: 'Invalid signature' });
+      console.warn(`[Razorpay Webhook][${traceId}] Invalid signature`);
+      return res.status(400).json({ error: 'Invalid signature', traceId });
     }
 
     const event = String(req.body?.event || '');
-    console.log('[Razorpay Webhook] Signature valid. Event:', event);
+    console.log(`[Razorpay Webhook][${traceId}] Signature valid. Event: ${event}`);
 
     const paymentEntity = req.body?.payload?.payment?.entity || null;
     const orderEntity = req.body?.payload?.order?.entity || null;
@@ -54,14 +81,15 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     const isPaymentSuccessEvent = event === 'payment.captured' || event === 'order.paid';
     if (!isPaymentSuccessEvent) {
-      return res.status(200).json({ status: 'ignored', event });
+      return res.status(200).json({ status: 'ignored', event, traceId });
     }
 
     if (!dueId || !razorpayOrderId || !razorpayPaymentId) {
-      console.warn('[Razorpay Webhook] Missing due/order/payment identifiers in payload');
+      console.warn(`[Razorpay Webhook][${traceId}] Missing due/order/payment identifiers in payload`);
       return res.status(202).json({
         status: 'accepted_without_sync',
         reason: 'missing_due_or_payment_identifiers',
+        traceId,
       });
     }
 
@@ -77,12 +105,29 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(200).json({
       status: 'ok',
       event,
+      traceId,
       dueId: result.dueId,
       transactionId: result.transactionId,
       alreadyProcessed: result.alreadyProcessed,
     });
   } catch (error: any) {
-    console.error('[Razorpay Webhook] Processing failed:', error);
-    return res.status(500).json({ error: error?.message || 'Webhook processing failed' });
+    const failureType = classifyWebhookFailure(error);
+    const event = String(req.body?.event || '');
+    const paymentEntity = req.body?.payload?.payment?.entity || null;
+    const orderEntity = req.body?.payload?.order?.entity || null;
+
+    console.error(`[Razorpay Webhook][${traceId}] ${failureType} failure:`, {
+      message: String(error?.message || error || 'Unknown webhook processing error'),
+      event,
+      paymentId: String(paymentEntity?.id || ''),
+      orderId: String(paymentEntity?.order_id || orderEntity?.id || ''),
+      dueId: String(paymentEntity?.notes?.due_id || orderEntity?.notes?.due_id || ''),
+    });
+
+    return res.status(500).json({
+      error: error?.message || 'Webhook processing failed',
+      failureType,
+      traceId,
+    });
   }
 }
