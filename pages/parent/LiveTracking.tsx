@@ -32,7 +32,7 @@ const ParentLiveTracking: React.FC<{ user: User }> = ({ user }) => {
       try {
         const { data, error } = await supabase
           .from('students')
-          .select('id, full_name, bus_id, route_id, routes(route_name), buses(bus_number, plate)')
+          .select('id, full_name, bus_id, route_id, routes(route_name), buses(bus_number, vehicle_number)')
           .eq('parent_id', user.id)
           .order('full_name', { ascending: true });
 
@@ -126,7 +126,7 @@ const ParentLiveTracking: React.FC<{ user: User }> = ({ user }) => {
               <p className="text-[9px] font-bold text-white/70 mt-1 uppercase tracking-widest">
                 {hasArrived
                   ? 'Bus reached school'
-                  : `${(selectedStudent as any)?.buses?.plate || (selectedStudent as any)?.buses?.bus_number || 'Bus'} live telemetry`}
+                  : `${(selectedStudent as any)?.buses?.vehicle_number || (selectedStudent as any)?.buses?.plate || (selectedStudent as any)?.buses?.bus_number || 'Bus'} live telemetry`}
               </p>
             </div>
 

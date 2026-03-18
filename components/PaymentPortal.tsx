@@ -239,6 +239,7 @@ const PaymentPortal: React.FC<PaymentPortalProps> = ({ state, onClose, onInitiat
                     grade: state?.studentMeta?.grade || 'N/A',
                     section: state?.studentMeta?.section || 'N/A',
                     bus_number: state?.studentMeta?.busNumber || 'N/A',
+                    vehicle_number: state?.studentMeta?.busNumber || 'N/A',
                     plate: state?.studentMeta?.busNumber || 'N/A',
                   },
                 })}

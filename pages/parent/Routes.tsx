@@ -16,6 +16,7 @@ interface ParentRouteStudent {
   } | null;
   buses?: {
     bus_number?: string;
+    vehicle_number?: string;
     plate?: string;
   } | null;
 }
@@ -30,7 +31,7 @@ const ParentRoutes: React.FC<{ user: User }> = ({ user }) => {
       try {
         const { data, error } = await supabase
           .from('students')
-          .select('id, full_name, admission_number, boarding_point, route_id, routes(route_name, code, start_point, end_point), buses(bus_number, plate)')
+          .select('id, full_name, admission_number, boarding_point, route_id, routes(route_name, code, start_point, end_point), buses(bus_number, vehicle_number)')
           .eq('parent_id', user.id)
           .order('full_name', { ascending: true });
 
@@ -111,7 +112,7 @@ const ParentRoutes: React.FC<{ user: User }> = ({ user }) => {
                   </div>
                   <div className="p-4 bg-slate-50 rounded-2xl border border-slate-100">
                     <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1">Plate</p>
-                    <p className="text-xs font-bold text-slate-700 uppercase">{bus?.plate || 'N/A'}</p>
+                    <p className="text-xs font-bold text-slate-700 uppercase">{bus?.vehicle_number || bus?.plate || 'N/A'}</p>
                   </div>
                 </div>
 

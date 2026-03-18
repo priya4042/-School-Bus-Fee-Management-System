@@ -27,7 +27,9 @@ const normalizeStudentInfo = (due: any) => {
   const grade = pickFirst(student?.grade, student?.class, student?.class_name, due?.grade, due?.class, due?.class_name, 'N/A');
   const section = pickFirst(student?.section, due?.section, due?.division, 'N/A');
   const busNumber = pickFirst(
+    nestedBus?.vehicle_number,
     nestedBus?.plate,
+    student?.vehicle_number,
     student?.plate,
     due?.bus_number,
     student?.bus_number,
@@ -328,7 +330,7 @@ export const useReceipts = () => {
       if (txnId) {
         const multiResult = await supabase
           .from('monthly_dues')
-          .select('*, students(full_name, admission_number, grade, section, buses(bus_number, plate))')
+          .select('*, students(full_name, admission_number, grade, section, buses(bus_number, vehicle_number))')
           .eq('transaction_id', String(txnId))
           .order('year', { ascending: true })
           .order('month', { ascending: true });
@@ -340,7 +342,7 @@ export const useReceipts = () => {
 
       return supabase
         .from('monthly_dues')
-        .select('*, students(full_name, admission_number, grade, section, buses(bus_number, plate))')
+        .select('*, students(full_name, admission_number, grade, section, buses(bus_number, vehicle_number))')
         .eq('id', String(paymentId))
         .single();
     })();

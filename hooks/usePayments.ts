@@ -80,7 +80,7 @@
     const fetchDueContext = async (dueId: string) => {
       const { data, error } = await supabase
         .from('monthly_dues')
-        .select('id, student_id, month, year, amount, total_due, students(id, full_name, admission_number, grade, section, parent_id, buses(bus_number, plate))')
+        .select('id, student_id, month, year, amount, total_due, students(id, full_name, admission_number, grade, section, parent_id, buses(bus_number, vehicle_number))')
         .eq('id', String(dueId))
         .maybeSingle();
 
@@ -339,7 +339,7 @@
           : (dueContext as any)?.students;
         const dueBus = Array.isArray(dueStudent?.buses) ? dueStudent.buses[0] : dueStudent?.buses;
         const resolvedBusNumber = String(
-          dueBus?.plate || dueStudent?.plate || dueStudent?.bus_number || dueBus?.bus_number || ''
+          dueBus?.vehicle_number || dueBus?.plate || dueStudent?.vehicle_number || dueStudent?.plate || dueStudent?.bus_number || dueBus?.bus_number || ''
         ).trim();
 
         setPaymentState(prev => ({

@@ -33,7 +33,7 @@ const StudentProfile: React.FC<{ user: User }> = ({ user }) => {
   const loadMyStudents = async (keepSelected = true) => {
     const { data, error } = await supabase
       .from('students')
-      .select('*, routes(route_name), buses(bus_number, vehicle_number, plate)')
+      .select('*, routes(route_name), buses(bus_number, vehicle_number)')
       .eq('parent_id', user.id)
       .in('status', ['active', 'ACTIVE'])
       .order('full_name', { ascending: true });
