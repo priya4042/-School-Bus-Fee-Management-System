@@ -32,7 +32,7 @@ const ParentLiveTracking: React.FC<{ user: User }> = ({ user }) => {
       try {
         const { data, error } = await supabase
           .from('students')
-          .select('id, full_name, bus_id, route_id, routes(route_name), buses(*)')
+          .select('id, full_name, bus_id, route_id, routes(route_name), buses(bus_number, plate)')
           .eq('parent_id', user.id)
           .order('full_name', { ascending: true });
 
