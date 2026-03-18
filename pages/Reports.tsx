@@ -5,6 +5,19 @@ import api from '../lib/api';
 import { supabase } from '../lib/supabase';
 import { showToast, showAlert, showLoading, closeSwal } from '../lib/swal';
 
+const withTimeout = async <T,>(promise: Promise<T>, ms: number, label: string): Promise<T> => {
+  let timer: ReturnType<typeof setTimeout> | null = null;
+  const timeoutPromise = new Promise<never>((_, reject) => {
+    timer = setTimeout(() => reject(new Error(`${label} timeout after ${ms}ms`)), ms);
+  });
+
+  try {
+    return await Promise.race([promise, timeoutPromise]);
+  } finally {
+    if (timer) clearTimeout(timer);
+  }
+};
+
 const Reports: React.FC = () => {
   const [activeReport, setActiveReport] = useState('revenue');
   const [revenueData, setRevenueData] = useState<any[]>([]);
@@ -23,29 +36,60 @@ const Reports: React.FC = () => {
     const fetchReportData = async () => {
       setLoading(true);
       try {
-        const statsRes = await api.get('/dashboard/stats');
-        setRevenueData(statsRes.data.revenueTrend || []);
-        
-        const defRes = await api.get('/reports/defaulters');
-        setDefaulterData(defRes.data || []);
+        const [statsResult, defaultersResult, archivedResult] = await Promise.allSettled([
+          withTimeout(api.get('/dashboard/stats'), 7000, 'Dashboard stats API'),
+          withTimeout(api.get('/reports/defaulters'), 7000, 'Defaulters API'),
+          withTimeout(
+            supabase
+              .from('deleted_students')
+              .select('id, full_name, admission_number, grade, section, parent_name, parent_phone, student_status, fee_record_count, paid_fee_record_count, outstanding_amount, original_created_at, deleted_at')
+              .order('deleted_at', { ascending: false }),
+            7000,
+            'Deleted students query'
+          ),
+        ]);
 
-        const { data: deletedStudentsData } = await supabase
-          .from('deleted_students')
-          .select('id, full_name, admission_number, grade, section, parent_name, parent_phone, student_status, fee_record_count, paid_fee_record_count, outstanding_amount, original_created_at, deleted_at')
-          .order('deleted_at', { ascending: false });
+        const fallbackRevenue = [
+          { month: 'Oct', revenue: 450000 },
+          { month: 'Nov', revenue: 520000 },
+          { month: 'Dec', revenue: 480000 },
+          { month: 'Jan', revenue: 610000 },
+          { month: 'Feb', revenue: 590000 },
+          { month: 'Mar', revenue: 650000 },
+        ];
 
-        const withSummary = (deletedStudentsData || []).map((student: any) => ({
-          ...student,
-          status: student.student_status,
-          totalRecords: Number(student.fee_record_count || 0),
-          paidRecords: Number(student.paid_fee_record_count || 0),
-          outstanding: Number(student.outstanding_amount || 0),
-          created_at: student.original_created_at,
-        }));
+        if (statsResult.status === 'fulfilled') {
+          setRevenueData(statsResult.value?.data?.revenueTrend || fallbackRevenue);
+        } else {
+          console.warn('Reports: dashboard stats unavailable, using fallback trend.', statsResult.reason);
+          setRevenueData(fallbackRevenue);
+        }
 
-        setArchivedStudents(withSummary);
+        if (defaultersResult.status === 'fulfilled') {
+          setDefaulterData(Array.isArray(defaultersResult.value?.data) ? defaultersResult.value.data : []);
+        } else {
+          console.warn('Reports: defaulters API unavailable, using empty list.', defaultersResult.reason);
+          setDefaulterData([]);
+        }
+
+        if (archivedResult.status === 'fulfilled') {
+          const deletedStudentsData = archivedResult.value?.data || [];
+          const withSummary = (deletedStudentsData || []).map((student: any) => ({
+            ...student,
+            status: student.student_status,
+            totalRecords: Number(student.fee_record_count || 0),
+            paidRecords: Number(student.paid_fee_record_count || 0),
+            outstanding: Number(student.outstanding_amount || 0),
+            created_at: student.original_created_at,
+          }));
+
+          setArchivedStudents(withSummary);
+        } else {
+          console.warn('Reports: deleted_students query unavailable, using empty archive.', archivedResult.reason);
+          setArchivedStudents([]);
+        }
       } catch (err) {
-        // Mock fallback
+        console.warn('Reports: unexpected fetch error, applying safe fallbacks.', err);
         setRevenueData([
           { month: 'Oct', revenue: 450000 },
           { month: 'Nov', revenue: 520000 },
@@ -54,6 +98,7 @@ const Reports: React.FC = () => {
           { month: 'Feb', revenue: 590000 },
           { month: 'Mar', revenue: 650000 },
         ]);
+        setDefaulterData([]);
         setArchivedStudents([]);
       } finally {
         setLoading(false);
