@@ -80,7 +80,7 @@
     const fetchDueContext = async (dueId: string) => {
       const { data, error } = await supabase
         .from('monthly_dues')
-        .select('id, student_id, month, year, amount, total_due, students(id, full_name, admission_number, grade, section, parent_id, buses(bus_number, vehicle_number))')
+        .select('id, student_id, month, year, amount, total_due, students(id, full_name, admission_number, grade, section, parent_id, buses(*))')
         .eq('id', String(dueId))
         .maybeSingle();
 

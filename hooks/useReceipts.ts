@@ -330,7 +330,7 @@ export const useReceipts = () => {
       if (txnId) {
         const multiResult = await supabase
           .from('monthly_dues')
-          .select('*, students(full_name, admission_number, grade, section, buses(bus_number, vehicle_number))')
+          .select('*, students(full_name, admission_number, grade, section, buses(*))')
           .eq('transaction_id', String(txnId))
           .order('year', { ascending: true })
           .order('month', { ascending: true });
@@ -342,7 +342,7 @@ export const useReceipts = () => {
 
       return supabase
         .from('monthly_dues')
-        .select('*, students(full_name, admission_number, grade, section, buses(bus_number, vehicle_number))')
+        .select('*, students(full_name, admission_number, grade, section, buses(*))')
         .eq('id', String(paymentId))
         .single();
     })();

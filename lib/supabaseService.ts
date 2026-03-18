@@ -24,7 +24,7 @@ export const saveDBUser = async (user: any) => {
 export const getStudents = async () => {
   const { data, error } = await supabase
     .from('students')
-    .select('*, routes(route_name), buses(vehicle_number), profiles(full_name, phone_number)')
+    .select('*, routes(route_name), buses(*), profiles(full_name, phone_number)')
     .order('created_at', { ascending: false });
   if (error) throw error;
   return data || [];

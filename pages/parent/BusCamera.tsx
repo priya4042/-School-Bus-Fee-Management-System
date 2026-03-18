@@ -21,7 +21,7 @@ const BusCamera: React.FC<{ user: User }> = ({ user }) => {
     try {
       const { data: studentsData } = await supabase
         .from('students')
-        .select('*, buses(id, bus_number, vehicle_number)')
+        .select('*, buses(*)')
         .eq('parent_id', user.id)
         .limit(1);
 
