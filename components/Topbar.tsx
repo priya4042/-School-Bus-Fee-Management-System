@@ -18,8 +18,34 @@ const Topbar: React.FC<TopbarProps> = ({ user, onMenuClick, onOpenNotifications,
   const [showNotifications, setShowNotifications] = useState(false);
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [installPrompt, setInstallPrompt] = useState<any>(null);
+  const [isInstalled, setIsInstalled] = useState(false);
   const modalRef = useRef<HTMLDivElement>(null);
   const userMenuRef = useRef<HTMLDivElement>(null);
+
+  // Capture the PWA install prompt
+  useEffect(() => {
+    const handler = (e: any) => {
+      e.preventDefault();
+      setInstallPrompt(e);
+    };
+    window.addEventListener('beforeinstallprompt', handler);
+    // If already installed (standalone mode) hide the button
+    if (window.matchMedia('(display-mode: standalone)').matches) {
+      setIsInstalled(true);
+    }
+    return () => window.removeEventListener('beforeinstallprompt', handler);
+  }, []);
+
+  const handleInstallClick = async () => {
+    if (!installPrompt) return;
+    installPrompt.prompt();
+    const { outcome } = await installPrompt.userChoice;
+    if (outcome === 'accepted') {
+      setInstallPrompt(null);
+      setIsInstalled(true);
+    }
+  };
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -181,6 +207,17 @@ const Topbar: React.FC<TopbarProps> = ({ user, onMenuClick, onOpenNotifications,
       </div>
 
       <div className="flex items-center gap-4 md:gap-8">
+        {/* PWA Install Button — visible when browser supports install and app isn't installed yet */}
+        {installPrompt && !isInstalled && (
+          <button
+            onClick={handleInstallClick}
+            className="hidden sm:flex items-center gap-2 px-4 py-2 bg-primary text-white text-[10px] font-black uppercase tracking-widest rounded-xl hover:bg-blue-700 transition-colors shadow-md"
+          >
+            <i className="fas fa-download text-xs"></i>
+            Install App
+          </button>
+        )}
+
         <div className="relative">
           <button 
             onClick={() => setShowNotifications(!showNotifications)}
@@ -271,6 +308,15 @@ const Topbar: React.FC<TopbarProps> = ({ user, onMenuClick, onOpenNotifications,
               >
                 Notifications
               </button>
+              {installPrompt && !isInstalled && (
+                <button
+                  onClick={() => { setShowUserMenu(false); handleInstallClick(); }}
+                  className="w-full text-left px-4 py-3 rounded-xl hover:bg-blue-50 text-[11px] font-black uppercase tracking-widest text-primary flex items-center gap-2"
+                >
+                  <i className="fas fa-download text-xs"></i>
+                  Install App
+                </button>
+              )}
             </div>
           )}
         </div>
