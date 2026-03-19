@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" role="img" aria-labelledby="title desc">
+  <title id="title">BusWay Pro App Mark</title>
+  <desc id="desc">Transparent-background bus mark for adaptive icon foreground.</desc>
+  <rect x="182" y="262" width="660" height="394" rx="120" fill="#FFFFFF"/>
+  <rect x="232" y="322" width="560" height="148" rx="42" fill="#D8ECFF"/>
+  <rect x="210" y="500" width="604" height="76" rx="28" fill="#F59E0B"/>
+  <rect x="280" y="420" width="98" height="66" rx="20" fill="#F8FBFF"/>
+  <rect x="422" y="420" width="98" height="66" rx="20" fill="#F8FBFF"/>
+  <rect x="564" y="420" width="98" height="66" rx="20" fill="#F8FBFF"/>
+  <circle cx="330" cy="720" r="82" fill="#0F172A"/>
+  <circle cx="694" cy="720" r="82" fill="#0F172A"/>
+  <circle cx="330" cy="720" r="34" fill="#9FB3C8"/>
+  <circle cx="694" cy="720" r="34" fill="#9FB3C8"/>
+</svg>

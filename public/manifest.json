@@ -1,29 +1,38 @@
 
 {
+  "id": "/",
   "short_name": "BusWay Pro",
-  "name": "BusWay Pro: School Bus Fee Manager",
-  "description": "Manage school bus fees, attendance and payments on the go.",
+  "name": "BusWay Pro - School Bus Fee Management",
   "icons": [
     {
-      "src": "icon.svg",
-      "sizes": "any",
-      "type": "image/svg+xml",
-      "purpose": "any"
+      "src": "favicon-16x16.png",
+      "sizes": "16x16",
+      "type": "image/png"
     },
     {
-      "src": "icon.svg",
-      "sizes": "any",
-      "type": "image/svg+xml",
-      "purpose": "maskable"
+      "src": "favicon-32x32.png",
+      "sizes": "32x32",
+      "type": "image/png"
+    },
+    {
+      "src": "logo192.png",
+      "type": "image/png",
+      "sizes": "192x192",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "logo512.png",
+      "type": "image/png",
+      "sizes": "512x512",
+      "purpose": "any maskable"
     }
   ],
-  "start_url": "/?source=pwa",
+  "start_url": "/",
   "display": "standalone",
-  "orientation": "any",
+  "orientation": "portrait",
   "scope": "/",
-  "theme_color": "#1D4ED8",
-  "background_color": "#1D4ED8",
-  "categories": ["education", "finance", "productivity"],
-  "screenshots": [],
-  "lang": "en"
+  "theme_color": "#1066B3",
+  "background_color": "#0A3B66",
+  "description": "Manage school bus fees, attendance and payments on the go.",
+  "categories": ["education", "finance", "productivity"]
 }
