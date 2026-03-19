@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>BusWay Pro – Offline</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      background: #f0f4ff;
+      color: #1e3a8a;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      padding: 24px;
+    }
+    .card {
+      background: #fff;
+      border-radius: 20px;
+      padding: 48px 40px;
+      max-width: 400px;
+      width: 100%;
+      text-align: center;
+      box-shadow: 0 4px 24px rgba(30,58,138,0.10);
+    }
+    .icon {
+      width: 80px;
+      height: 80px;
+      margin: 0 auto 24px;
+    }
+    h1 { font-size: 1.6rem; font-weight: 700; margin-bottom: 12px; }
+    p  { color: #475569; line-height: 1.6; margin-bottom: 24px; }
+    button {
+      background: #1D4ED8;
+      color: #fff;
+      border: none;
+      border-radius: 12px;
+      padding: 14px 32px;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    button:hover { background: #1e40af; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <svg class="icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+      <rect width="512" height="512" rx="96" fill="#1D4ED8"/>
+      <rect x="80" y="150" width="352" height="200" rx="48" fill="#FFFFFF"/>
+      <rect x="104" y="174" width="304" height="72" rx="20" fill="#DBEAFE"/>
+      <rect x="80" y="264" width="352" height="44" fill="#F59E0B"/>
+      <circle cx="160" cy="370" r="44" fill="#0F172A"/>
+      <circle cx="160" cy="370" r="22" fill="#64748B"/>
+      <circle cx="352" cy="370" r="44" fill="#0F172A"/>
+      <circle cx="352" cy="370" r="22" fill="#64748B"/>
+    </svg>
+    <h1>You're Offline</h1>
+    <p>BusWay Pro needs an internet connection to load your data. Please check your connection and try again.</p>
+    <button onclick="location.reload()">Try Again</button>
+  </div>
+</body>
+</html>

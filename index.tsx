@@ -18,3 +18,12 @@ root.render(
     </ErrorBoundary>
   </React.StrictMode>
 );
+
+// Register service worker so the app is installable (PWA) on phone, tablet, laptop, PC
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/service-worker.js')
+      .then((reg) => console.log('[SW] Registered, scope:', reg.scope))
+      .catch((err) => console.warn('[SW] Registration failed:', err));
+  });
+}
