@@ -1,66 +1,77 @@
-const CACHE_NAME = 'busway-pro-v2';
-const ASSETS_TO_CACHE = [
-  '/',
-  '/index.html',
-  '/offline.html'
-];
+const CACHE_NAME = 'busway-pro-v3';
 
-// Only cache same-origin assets. Skip cross-origin (fonts, CDNs).
-function isSameOrigin(request) {
-  try {
-    const url = new URL(request.url);
-    return url.origin === self.location.origin;
-  } catch (e) {
-    return false;
-  }
-}
+// Static assets safe to cache (they have content-hash in filename, so never go stale)
+const PRECACHE_ASSETS = [
+  '/offline.html',
+  '/icon.svg',
+  '/manifest.json'
+];
 
 self.addEventListener('install', (event) => {
   self.skipWaiting();
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
-      return cache.addAll(ASSETS_TO_CACHE).catch((err) => {
-        console.warn('[SW] Some assets failed to cache during install', err);
+      return cache.addAll(PRECACHE_ASSETS).catch((err) => {
+        console.warn('[SW] Pre-cache failed:', err);
       });
     })
   );
 });
 
 self.addEventListener('activate', (event) => {
-  // Remove old caches
   event.waitUntil(
-    caches.keys().then((keys) =>
-      Promise.all(keys.filter((k) => k !== CACHE_NAME).map((k) => caches.delete(k)))
-    ).then(() => self.clients.claim())
+    caches.keys()
+      .then((keys) => Promise.all(keys.filter((k) => k !== CACHE_NAME).map((k) => caches.delete(k))))
+      .then(() => self.clients.claim())
   );
 });
 
 self.addEventListener('fetch', (event) => {
-  // Prefer cache for same-origin navigations and resources, but handle failures.
-  if (!isSameOrigin(event.request)) {
-    // For cross-origin requests (fonts, cdn), just attempt network fetch and fail safely.
+  const { request } = event;
+  const url = new URL(request.url);
+
+  // ── 1. Non-GET: skip SW entirely ─────────────────────────────────────────
+  if (request.method !== 'GET') return;
+
+  // ── 2. Cross-origin (fonts, CDN, Supabase API): network only ─────────────
+  if (url.origin !== self.location.origin) {
+    event.respondWith(fetch(request).catch(() => new Response('', { status: 503 })));
+    return;
+  }
+
+  // ── 3. HTML navigation (the app shell): NETWORK FIRST, never serve stale HTML ──
+  // This prevents the white screen caused by cached HTML referencing old JS bundles.
+  if (request.mode === 'navigate' || request.headers.get('accept')?.includes('text/html')) {
     event.respondWith(
-      fetch(event.request).catch(() => caches.match('/offline.html') || new Response('', { status: 503 }))
+      fetch(request)
+        .then((res) => res)
+        .catch(() => caches.match('/offline.html').then((r) => r || new Response('Offline', { status: 503 })))
     );
     return;
   }
 
+  // ── 4. Hashed static assets (JS/CSS bundles, images): cache first ────────
+  // Vite adds content hashes to filenames, so cached versions are always valid.
+  if (url.pathname.startsWith('/assets/') || /\.(js|css|woff2?|ttf|png|svg|ico)$/.test(url.pathname)) {
+    event.respondWith(
+      caches.match(request).then((cached) => {
+        if (cached) return cached;
+        return fetch(request).then((res) => {
+          if (res.ok) {
+            caches.open(CACHE_NAME).then((cache) => {
+              try { cache.put(request, res.clone()); } catch (_) { /* quota guard */ }
+            });
+          }
+          return res;
+        }).catch(() => caches.match('/offline.html').then((r) => r || new Response('', { status: 503 })));
+      })
+    );
+    return;
+  }
+
+  // ── 5. Everything else: network only ─────────────────────────────────────
   event.respondWith(
-    caches.match(event.request).then((response) => {
-      if (response) return response;
-      return fetch(event.request).then((networkResp) => {
-        // Put a copy in cache for future navigations if it's a GET
-        if (event.request.method === 'GET') {
-          caches.open(CACHE_NAME).then((cache) => {
-            try { cache.put(event.request, networkResp.clone()); } catch (e) { /* ignore */ }
-          });
-        }
-        return networkResp;
-      }).catch((err) => {
-        console.error('[SW] Fetch failed for', event.request.url, err);
-        return caches.match('/offline.html') || new Response('', { status: 503 });
-      });
-    })
+    fetch(request).catch(() => caches.match('/offline.html').then((r) => r || new Response('', { status: 503 })))
   );
 });
 
@@ -80,3 +91,4 @@ self.addEventListener('notificationclick', (event) => {
   event.notification.close();
   event.waitUntil(clients.openWindow(event.notification.data.url));
 });
+
