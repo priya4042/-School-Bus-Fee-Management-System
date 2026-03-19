@@ -25,16 +25,24 @@ const Topbar: React.FC<TopbarProps> = ({ user, onMenuClick, onOpenNotifications,
 
   // Capture the PWA install prompt
   useEffect(() => {
-    const handler = (e: any) => {
-      e.preventDefault();
-      setInstallPrompt(e);
-    };
-    window.addEventListener('beforeinstallprompt', handler);
     // If already installed (standalone mode) hide the button
     if (window.matchMedia('(display-mode: standalone)').matches) {
       setIsInstalled(true);
+      return;
     }
-    return () => window.removeEventListener('beforeinstallprompt', handler);
+    // The event may have already fired before this component mounted
+    // index.tsx captures it early and stores it on window.__pwaInstallPrompt
+    if ((window as any).__pwaInstallPrompt) {
+      setInstallPrompt((window as any).__pwaInstallPrompt);
+    }
+    // Also listen in case the browser fires it after mount
+    const onReady = () => {
+      if ((window as any).__pwaInstallPrompt) {
+        setInstallPrompt((window as any).__pwaInstallPrompt);
+      }
+    };
+    window.addEventListener('pwainstallready', onReady);
+    return () => window.removeEventListener('pwainstallready', onReady);
   }, []);
 
   const handleInstallClick = async () => {
