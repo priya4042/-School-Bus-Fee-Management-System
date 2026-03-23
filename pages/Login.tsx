@@ -147,9 +147,9 @@ const Login: React.FC<LoginProps> = ({ onLogin, onGoToRegister }) => {
                 </button>
               </div>
               <div className="pt-6 flex justify-center gap-4 text-[9px] font-bold text-slate-300 uppercase tracking-widest">
-                <a href="/privacy" className="hover:text-primary transition-colors">Privacy Policy</a>
+                <a href="/privacy-policy" className="hover:text-primary transition-colors">Privacy Policy</a>
                 <span className="opacity-20">|</span>
-                <a href="/terms" className="hover:text-primary transition-colors">Terms of Service</a>
+                <a href="/terms-of-service" className="hover:text-primary transition-colors">Terms of Service</a>
               </div>
             </div>
           </div>
