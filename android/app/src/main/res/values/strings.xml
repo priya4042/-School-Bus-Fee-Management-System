@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">BusWay Pro</string>
+    <string name="title_activity_main">BusWay Pro</string>
+    <string name="package_name">com.buswaypro.app</string>
+    <string name="custom_url_scheme">com.buswaypro.app</string>
+</resources>
