@@ -12,7 +12,7 @@ export const useStudents = () => {
     try {
       const { data, error } = await supabase
         .from('students')
-        .select('*, routes(route_name), buses(bus_number, vehicle_number, plate), profiles(full_name, phone_number)')
+        .select('*, routes(route_name), buses(bus_number, plate), profiles(full_name, phone_number)')
         .in('status', ['active', 'ACTIVE'])
         .order('full_name');
       if (error) throw error;
