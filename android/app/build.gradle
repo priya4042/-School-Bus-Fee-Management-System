@@ -2,8 +2,8 @@ apply plugin: 'com.android.application'
 
 def keystorePropertiesFile = rootProject.file('keystore.properties')
 def keystoreProperties = new Properties()
-def appVersionCode = Integer.parseInt(project.findProperty('BUSWAY_VERSION_CODE') ?: '2')
-def appVersionName = String.valueOf(project.findProperty('BUSWAY_VERSION_NAME') ?: '1.0.0')
+def appVersionCode = Integer.parseInt(project.findProperty('BUSWAY_VERSION_CODE') ?: '5')
+def appVersionName = String.valueOf(project.findProperty('BUSWAY_VERSION_NAME') ?: '1.0.1')
 
 if (keystorePropertiesFile.exists()) {
     keystoreProperties.load(new FileInputStream(keystorePropertiesFile))
