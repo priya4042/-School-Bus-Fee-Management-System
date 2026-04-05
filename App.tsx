@@ -181,7 +181,7 @@ const App: React.FC = () => {
       {(() => {
         // Handle URL routes for Privacy/Terms/ForgotPassword inside BrowserRouter context
         const path = window.location.pathname;
-        if (path === '/privacy') return <Privacy />;
+        if (path === '/privacy') return <PrivacyPolicy />;
         if (path === '/terms') return <Terms />;
         if (path === '/privacy-policy') return <PrivacyPolicy />;
         if (path === '/terms-of-service') return <TermsOfService />;
