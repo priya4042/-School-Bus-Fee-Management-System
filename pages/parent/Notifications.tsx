@@ -127,7 +127,7 @@ const Notifications: React.FC<{ user: User; focusNotificationId?: string; onFocu
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
         <div>
-          <h1 className="text-4xl font-black text-slate-900 tracking-tight uppercase">Alert Center</h1>
+          <h1 className="text-2xl md:text-4xl font-black text-slate-900 tracking-tight">Alert Center</h1>
           <p className="text-slate-500 font-bold uppercase text-[10px] tracking-widest mt-1">
             System Notifications & Updates
           </p>
@@ -251,7 +251,7 @@ const Notifications: React.FC<{ user: User; focusNotificationId?: string; onFocu
               <div className="w-24 h-24 bg-slate-50 rounded-[2rem] flex items-center justify-center text-slate-300 mx-auto mb-6">
                 <Bell size={48} />
               </div>
-              <h3 className="text-xl font-black text-slate-900 tracking-tight uppercase">All Caught Up</h3>
+              <h3 className="text-xl font-black text-slate-900 tracking-tight">All Caught Up</h3>
               <p className="text-slate-500 font-bold uppercase text-[10px] tracking-widest mt-2">
                 {filter === 'unread' ? 'No unread notifications' : 'No notifications yet'}
               </p>

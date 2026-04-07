@@ -77,7 +77,7 @@ const Documentation: React.FC = () => {
       <div className="bg-white border border-slate-200 rounded-3xl p-8 shadow-sm">
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
           <div>
-            <h2 className="text-2xl md:text-3xl font-black text-slate-800 tracking-tight uppercase">Platform Documentation Center</h2>
+            <h2 className="text-2xl md:text-3xl font-black text-slate-800 tracking-tight">Platform Documentation</h2>
             <p className="text-slate-500 text-sm mt-3 max-w-4xl leading-relaxed">
               This page gives a complete product-level reference for Admin and Parent modules, architecture,
               integrations, and what is free vs paid in your current application setup.

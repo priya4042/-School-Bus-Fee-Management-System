@@ -56,7 +56,7 @@ const LiveTracking: React.FC = () => {
 
       {/* Bus List */}
       <div className="bg-white rounded-[2.5rem] border border-slate-200 shadow-premium p-8">
-        <h3 className="text-lg font-black text-slate-800 uppercase tracking-widest mb-6">Active Buses</h3>
+        <h3 className="text-lg font-black text-slate-800 tracking-widest mb-6">Active Buses</h3>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {buses && buses.map((bus) => (
             <button
@@ -91,7 +91,7 @@ const LiveTracking: React.FC = () => {
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         {activeTab === 'tracking' ? (
           <div>
-            <h2 className="text-3xl font-black text-slate-800 tracking-tighter uppercase">Live Tracking Hub</h2>
+            <h2 className="text-3xl font-black text-slate-800 tracking-tighter">Live Tracking Hub</h2>
             <p className="text-slate-500 font-bold uppercase text-[10px] tracking-widest mt-1">Tracking, Camera Monitoring & Parent Access Controls</p>
           </div>
         ) : <div />}

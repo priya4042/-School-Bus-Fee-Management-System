@@ -107,7 +107,7 @@ const Buses: React.FC = () => {
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         {view === 'buses' ? (
           <div>
-            <h2 className="text-2xl font-black text-slate-800 tracking-tight uppercase">Fleet Asset Control</h2>
+            <h2 className="text-2xl font-black text-slate-800 tracking-tight">Fleet Asset Control</h2>
             <p className="text-slate-500 font-bold uppercase text-[10px] tracking-widest">Active vehicle inventory and monitoring</p>
           </div>
         ) : <div />}

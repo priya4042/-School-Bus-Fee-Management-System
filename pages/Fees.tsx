@@ -219,15 +219,15 @@ const Fees: React.FC = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.student_id) {
-      showAlert('Error', 'Please select a student', 'error');
+      showAlert('Student Required', 'Please select a student to continue', 'error');
       return;
     }
     if (formData.amount <= 0) {
-      showAlert('Error', 'Fee amount must be greater than 0', 'error');
+      showAlert('Invalid Amount', 'Fee amount must be greater than zero', 'error');
       return;
     }
     if (!formData.due_date) {
-      showAlert('Error', 'Please set a due date', 'error');
+      showAlert('Due Date Required', 'Please set a due date for this fee', 'error');
       return;
     }
 
@@ -267,7 +267,7 @@ const Fees: React.FC = () => {
       if (success) {
         showToast('Status updated successfully', 'success');
       } else {
-        showAlert('Error', 'Failed to update status', 'error');
+        showAlert('Update Failed', 'Could not update the payment status. Please try again.', 'error');
       }
     }
   };
@@ -279,7 +279,7 @@ const Fees: React.FC = () => {
     if (success) {
       showToast('Notification sent successfully', 'success');
     } else {
-      showAlert('Error', 'Failed to send notification', 'error');
+      showAlert('Notification Failed', 'Could not send the notification. Please try again.', 'error');
     }
   };
 
@@ -297,22 +297,22 @@ const Fees: React.FC = () => {
     if (success) {
       showToast('Late fee waived successfully', 'success');
     } else {
-      showAlert('Error', 'Failed to waive late fee', 'error');
+      showAlert('Waiver Failed', 'Could not waive the late fee. Please try again.', 'error');
     }
   };
 
   const handleBulkYearSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!bulkYearFormData.student_id) {
-      showAlert('Error', 'Please select a student', 'error');
+      showAlert('Student Required', 'Please select a student to continue', 'error');
       return;
     }
     if (bulkYearFormData.amount <= 0) {
-      showAlert('Error', 'Fee amount must be greater than 0', 'error');
+      showAlert('Invalid Amount', 'Fee amount must be greater than zero', 'error');
       return;
     }
     if (monthSequenceCount(bulkYearFormData.startPeriod, bulkYearFormData.endPeriod) <= 0) {
-      showAlert('Error', 'End period must be on or after start period', 'error');
+      showAlert('Invalid Period', 'End period must be on or after the start period', 'error');
       return;
     }
 
@@ -373,7 +373,7 @@ const Fees: React.FC = () => {
     <div className="space-y-6">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h2 className="text-2xl font-black text-slate-800 tracking-tight uppercase">Fee Management</h2>
+          <h2 className="text-2xl font-black text-slate-800 tracking-tight">Fee Management</h2>
           <p className="text-slate-500 font-bold uppercase text-[10px] tracking-widest">Monitor collections and generate monthly dues</p>
         </div>
         <div className="flex flex-col md:flex-row gap-3">

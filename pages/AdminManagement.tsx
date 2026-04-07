@@ -27,7 +27,7 @@ const AdminManagement: React.FC = () => {
       showToast('Bus admin account created', 'success');
     } else {
       setIsModalOpen(true);
-      showAlert('Error', 'Failed to create admin account', 'error');
+      showAlert('Creation Failed', 'Could not create admin account. Please try again.', 'error');
     }
   };
 
@@ -46,7 +46,7 @@ const AdminManagement: React.FC = () => {
       if (success) {
         showToast(`Account ${action}d`, 'success');
       } else {
-        showAlert('Error', 'Failed to update status', 'error');
+        showAlert('Update Failed', 'Could not update admin status. Please try again.', 'error');
       }
     }
   };

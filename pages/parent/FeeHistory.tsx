@@ -260,7 +260,7 @@ const FeeHistory: React.FC<{ user: User }> = ({ user }) => {
 
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
         <div>
-          <h1 className="text-4xl font-black text-slate-900 tracking-tight uppercase">Fee Ledger</h1>
+          <h1 className="text-2xl md:text-4xl font-black text-slate-900 tracking-tight">Fee Ledger</h1>
           <p className="text-slate-500 font-bold uppercase text-[10px] tracking-widest mt-1">
             Comprehensive Payment History & Dues
           </p>
@@ -450,7 +450,7 @@ const FeeHistory: React.FC<{ user: User }> = ({ user }) => {
             <div className="w-20 h-20 bg-slate-50 rounded-[2rem] flex items-center justify-center text-slate-300 mx-auto mb-6">
               <FileText size={40} />
             </div>
-            <h3 className="text-xl font-black text-slate-900 tracking-tight uppercase">No Records Found</h3>
+            <h3 className="text-xl font-black text-slate-900 tracking-tight">No Records Found</h3>
             <p className="text-slate-500 font-bold uppercase text-[10px] tracking-widest mt-2">
               {students.length === 0
                 ? 'No students linked to your account. Contact Bus Administrator.'

@@ -90,7 +90,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onOpenDocumentation }) 
     <div className="space-y-6">
       <div className="flex items-center justify-between mb-8">
         <div>
-          <h2 className="text-3xl font-black text-slate-800 tracking-tighter uppercase">Operations Hub</h2>
+          <h2 className="text-3xl font-black text-slate-800 tracking-tighter">Operations Hub</h2>
           <p className="text-slate-500 font-bold uppercase text-[10px] tracking-widest mt-1">Global Fleet Intelligence</p>
         </div>
         <div className="flex items-center gap-3 bg-white p-1 rounded-2xl border border-slate-200">

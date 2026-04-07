@@ -196,20 +196,11 @@ const Settings: React.FC<{ user: User }> = ({ user }) => {
 
   return (
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
-        <div>
-          <h1 className="text-4xl font-black text-slate-900 tracking-tight">Settings</h1>
-          <p className="text-slate-500 font-bold text-[10px] tracking-widest mt-1">
-            Manage your account preferences
-          </p>
-        </div>
-        <button
-          onClick={logout}
-          className="bg-red-50 text-red-600 px-8 py-4 rounded-2xl font-bold text-sm border border-red-100 hover:bg-red-100 transition-all flex items-center gap-2"
-        >
-          <LogOut size={18} />
-          Sign Out
-        </button>
+      <div>
+        <h1 className="text-2xl md:text-4xl font-black text-slate-900 tracking-tight">Settings</h1>
+        <p className="text-slate-500 font-bold text-[10px] tracking-widest mt-1">
+          Manage your account preferences
+        </p>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
@@ -284,7 +275,7 @@ const Settings: React.FC<{ user: User }> = ({ user }) => {
                   )}
                 </div>
                 <div>
-                  <h3 className="text-2xl font-black text-slate-900 tracking-tight uppercase">{user.full_name}</h3>
+                  <h3 className="text-2xl font-black text-slate-900 tracking-tight">{user.full_name}</h3>
                   <p className="text-slate-500 font-bold uppercase text-[10px] tracking-widest mt-1">
                     {user.role} Account •{' '}
                     {user.created_at
@@ -448,6 +439,17 @@ const Settings: React.FC<{ user: User }> = ({ user }) => {
             </div>
           )}
         </div>
+      </div>
+
+      {/* Logout at bottom */}
+      <div className="pt-4 border-t border-slate-100">
+        <button
+          onClick={logout}
+          className="w-full md:w-auto bg-red-50 text-red-600 px-8 py-4 rounded-2xl font-bold text-sm border border-red-100 hover:bg-red-100 transition-all flex items-center justify-center gap-2"
+        >
+          <LogOut size={18} />
+          Sign Out
+        </button>
       </div>
     </div>
   );

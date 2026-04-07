@@ -78,7 +78,7 @@ export const useAuthStore = create<AuthState>((set) => ({
 loginWithCredentials: async (identifier: string, password?: string, type?: 'EMAIL' | 'ADMISSION' | 'PHONE' | 'ADMIN') => {
   set({ loading: true });
   try {
-    if (!identifier || !password) throw new Error('Identifier and password are required');
+    if (!identifier || !password) throw new Error('Please enter your credentials to continue.');
 
     let email = identifier;
 
@@ -90,7 +90,7 @@ loginWithCredentials: async (identifier: string, password?: string, type?: 'EMAI
         .eq('admission_number', identifier.trim())
         .maybeSingle();
 
-      if (studentError) throw new Error('Error looking up student. Please try again.');
+      if (studentError) throw new Error('Unable to find student record. Please try again.');
       if (!student) throw new Error('Admission number not found. Please verify with Bus Administration.');
       if (!student.parent_id) throw new Error('No parent account linked to this admission number. Please register first.');
 
@@ -135,7 +135,7 @@ loginWithCredentials: async (identifier: string, password?: string, type?: 'EMAI
       }
       throw signInError;
     }
-    if (!authData.user) throw new Error('Login failed');
+    if (!authData.user) throw new Error('Login failed. Please try again.');
 
     const { data: profile } = await supabase
       .from('profiles')
@@ -192,7 +192,7 @@ loginWithCredentials: async (identifier: string, password?: string, type?: 'EMAI
           throw signUpError;
         }
       } else {
-        if (!authData.user) throw new Error('Admin registration failed — no user returned');
+        if (!authData.user) throw new Error('Registration could not be completed. Please try again.');
         userId = authData.user.id;
       }
 
@@ -240,17 +240,17 @@ loginWithCredentials: async (identifier: string, password?: string, type?: 'EMAI
           });
           if (signInError) {
             if (msg.includes('database error saving new user')) {
-              throw new Error('Registration is blocked by a database/auth trigger issue. Please contact admin to check Supabase Auth trigger/policies.');
+              throw new Error('Registration is temporarily unavailable. Please contact the administrator.');
             }
             throw new Error('Account already exists. Please log in with your existing password.');
           }
-          if (!signInData.user) throw new Error('Registration recovery failed.');
+          if (!signInData.user) throw new Error('Could not recover your account. Please contact support.');
           userId = signInData.user.id;
         } else {
           throw signUpError;
         }
       } else {
-        if (!authData.user) throw new Error('Registration failed — no user returned');
+        if (!authData.user) throw new Error('Registration could not be completed. Please try again.');
         userId = authData.user.id;
       }
 

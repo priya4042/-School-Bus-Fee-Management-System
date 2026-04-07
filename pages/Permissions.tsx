@@ -66,7 +66,7 @@ const Permissions: React.FC = () => {
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
         <div>
-          <h1 className="text-4xl font-black text-slate-900 tracking-tight uppercase">Access Control</h1>
+          <h1 className="text-4xl font-black text-slate-900 tracking-tight">Access Control</h1>
           <p className="text-slate-500 font-bold uppercase text-[10px] tracking-widest mt-1">
             Camera & Live Tracking Permissions Per Parent
           </p>
@@ -125,7 +125,7 @@ const Permissions: React.FC = () => {
       ) : parents.length === 0 ? (
         <div className="py-32 text-center bg-white rounded-[3rem] border border-slate-100 shadow-sm">
           <Shield size={48} className="mx-auto mb-4 text-slate-300" />
-          <h3 className="text-xl font-black text-slate-900 uppercase">No Parents Registered</h3>
+          <h3 className="text-xl font-black text-slate-900">No Parents Registered</h3>
           <p className="text-slate-400 text-[10px] font-bold uppercase tracking-widest mt-2">
             Parents must register through the portal first
           </p>

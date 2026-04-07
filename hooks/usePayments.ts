@@ -454,7 +454,7 @@
         const upiId = String(settings.adminUpiId || import.meta.env.VITE_ADMIN_UPI_ID || '').trim();
 
         if (!upiId) {
-          showAlert('UPI Not Configured', 'Admin UPI ID is not set. Please contact bus administrator.', 'error');
+          showAlert('UPI Not Available', 'UPI payment is not configured yet. Please use Card/Netbanking option or contact bus administrator to enable UPI.', 'info');
           setPaymentState(prev => ({ ...prev, loading: false }));
           return;
         }

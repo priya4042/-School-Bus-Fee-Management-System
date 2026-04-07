@@ -116,7 +116,7 @@ const Support: React.FC<{ user: User; onOpenDocumentation?: () => void }> = ({ u
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 text-center md:text-left">
         <div>
-          <h1 className="text-4xl font-black text-slate-900 tracking-tight uppercase">Support Center</h1>
+          <h1 className="text-2xl md:text-4xl font-black text-slate-900 tracking-tight">Support Center</h1>
           <p className="text-slate-500 font-bold uppercase text-[10px] tracking-widest mt-1">
             We're here to help you 24/7
           </p>
@@ -132,7 +132,7 @@ const Support: React.FC<{ user: User; onOpenDocumentation?: () => void }> = ({ u
         <div className="absolute top-0 right-0 w-64 h-64 bg-primary/20 rounded-bl-full -mr-20 -mt-20 blur-3xl"></div>
         <div className="absolute bottom-0 left-0 w-64 h-64 bg-emerald-500/10 rounded-tr-full -ml-20 -mb-20 blur-3xl"></div>
         <div className="relative z-10 max-w-2xl mx-auto space-y-8">
-          <h2 className="text-3xl font-black uppercase tracking-tight">How can we assist you today?</h2>
+          <h2 className="text-3xl font-black tracking-tight">How can we assist you today?</h2>
           <div className="relative group">
             <Search className="absolute left-6 top-1/2 -translate-y-1/2 text-white/20 group-focus-within:text-primary transition-colors" size={24} />
             <input
@@ -166,7 +166,7 @@ const Support: React.FC<{ user: User; onOpenDocumentation?: () => void }> = ({ u
           <div className="w-20 h-20 bg-primary/10 text-primary rounded-[2rem] flex items-center justify-center mx-auto mb-8 transition-transform group-hover:scale-110">
             <MessageSquare size={32} />
           </div>
-          <h3 className="text-xl font-black text-slate-900 tracking-tight uppercase mb-4">Submit Ticket</h3>
+          <h3 className="text-xl font-black text-slate-900 tracking-tight mb-4">Submit Ticket</h3>
           <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest leading-loose mb-8">
             Send us a detailed support request and we'll respond promptly.
           </p>
@@ -182,7 +182,7 @@ const Support: React.FC<{ user: User; onOpenDocumentation?: () => void }> = ({ u
           <div className="w-20 h-20 bg-emerald-50 text-emerald-600 rounded-[2rem] flex items-center justify-center mx-auto mb-8 transition-transform group-hover:scale-110">
             <Phone size={32} />
           </div>
-          <h3 className="text-xl font-black text-slate-900 tracking-tight uppercase mb-4">Call Support</h3>
+          <h3 className="text-xl font-black text-slate-900 tracking-tight mb-4">Call Support</h3>
           <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest leading-loose mb-8">
             Speak directly with our Bus Administrators.
           </p>
@@ -198,7 +198,7 @@ const Support: React.FC<{ user: User; onOpenDocumentation?: () => void }> = ({ u
           <div className="w-20 h-20 bg-slate-50 text-slate-900 rounded-[2rem] flex items-center justify-center mx-auto mb-8 transition-transform group-hover:scale-110">
             <Mail size={32} />
           </div>
-          <h3 className="text-xl font-black text-slate-900 tracking-tight uppercase mb-4">Email Us</h3>
+          <h3 className="text-xl font-black text-slate-900 tracking-tight mb-4">Email Us</h3>
           <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest leading-loose mb-8">
             Send a detailed message and we'll reply within 24 hours.
           </p>
@@ -313,7 +313,7 @@ const Support: React.FC<{ user: User; onOpenDocumentation?: () => void }> = ({ u
       {/* FAQ */}
       <div className="bg-white rounded-[3rem] p-12 shadow-sm border border-slate-100">
         <div className="flex items-center justify-between mb-12">
-          <h3 className="text-2xl font-black text-slate-900 tracking-tight uppercase">Frequently Asked Questions</h3>
+          <h3 className="text-2xl font-black text-slate-900 tracking-tight">Frequently Asked Questions</h3>
           {searchQuery && (
             <button
               onClick={() => setSearchQuery('')}

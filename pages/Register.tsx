@@ -194,7 +194,7 @@ const Register: React.FC<RegisterProps> = ({ onRegister, onBackToLogin, initialR
           <div className="w-20 h-20 bg-emerald-500 text-white rounded-3xl flex items-center justify-center text-4xl mx-auto mb-8 shadow-xl">
             <i className="fas fa-check"></i>
           </div>
-          <h2 className="text-2xl font-black text-slate-800 uppercase tracking-tighter mb-4">Registration Complete</h2>
+          <h2 className="text-2xl font-black text-slate-800 tracking-tighter mb-4">Registration Complete</h2>
           <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-10 leading-loose">
             Your account has been successfully created. You can now log in.
           </p>
@@ -288,7 +288,7 @@ const Register: React.FC<RegisterProps> = ({ onRegister, onBackToLogin, initialR
            </div>
 
            {error && (
-             <div className="bg-red-50 text-red-600 p-4 rounded-xl text-[9px] font-black uppercase mb-8 border border-red-100">
+             <div className="bg-red-50 text-red-600 p-4 rounded-xl text-[12px] font-semibold mb-6 border border-red-100">
                <p>{error}</p>
              </div>
            )}

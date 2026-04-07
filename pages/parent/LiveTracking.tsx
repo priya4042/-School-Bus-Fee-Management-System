@@ -73,7 +73,7 @@ const ParentLiveTracking: React.FC<{ user: User }> = ({ user }) => {
         <div className="w-20 h-20 bg-slate-50 rounded-[2rem] flex items-center justify-center mx-auto mb-6">
           <i className="fas fa-location-dot text-3xl text-slate-300"></i>
         </div>
-        <h3 className="text-xl font-black text-slate-900 uppercase tracking-tight">No Children Linked</h3>
+        <h3 className="text-xl font-black text-slate-900 tracking-tight">No Children Linked</h3>
         <p className="text-slate-500 text-[10px] font-bold uppercase tracking-widest mt-2">Contact bus admin to link child profiles.</p>
       </div>
     );
@@ -83,7 +83,7 @@ const ParentLiveTracking: React.FC<{ user: User }> = ({ user }) => {
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-700">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-4xl font-black text-slate-900 tracking-tight uppercase">Live Tracking</h1>
+          <h1 className="text-2xl md:text-4xl font-black text-slate-900 tracking-tight">Live Tracking</h1>
           <p className="text-slate-500 font-bold uppercase text-[10px] tracking-widest mt-1">Track only your children buses in real time</p>
         </div>
 
@@ -111,7 +111,7 @@ const ParentLiveTracking: React.FC<{ user: User }> = ({ user }) => {
           <div className="w-20 h-20 bg-slate-50 rounded-[2rem] flex items-center justify-center mx-auto mb-6">
             <i className="fas fa-lock text-3xl text-slate-300"></i>
           </div>
-          <h3 className="text-xl font-black text-slate-900 uppercase tracking-tight">Tracking Access Not Enabled</h3>
+          <h3 className="text-xl font-black text-slate-900 tracking-tight">Tracking Access Not Enabled</h3>
           <p className="text-slate-500 text-[10px] font-bold uppercase tracking-widest mt-2">Please contact bus admin to enable live tracking.</p>
         </div>
       ) : (

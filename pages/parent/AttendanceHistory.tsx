@@ -97,7 +97,7 @@ const AttendanceHistory: React.FC<{ user: User }> = ({ user }) => {
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
         <div>
-          <h1 className="text-4xl font-black text-slate-900 tracking-tight uppercase">Attendance History</h1>
+          <h1 className="text-2xl md:text-4xl font-black text-slate-900 tracking-tight">Attendance History</h1>
           <p className="text-slate-500 font-bold uppercase text-[10px] tracking-widest mt-1">
             Daily Pickup & Drop Records
           </p>
@@ -285,7 +285,7 @@ const AttendanceHistory: React.FC<{ user: User }> = ({ user }) => {
                 <div className="w-20 h-20 bg-slate-50 rounded-[2rem] flex items-center justify-center text-slate-300 mx-auto mb-6">
                   <Calendar size={40} />
                 </div>
-                <h3 className="text-xl font-black text-slate-900 tracking-tight uppercase">No Records Found</h3>
+                <h3 className="text-xl font-black text-slate-900 tracking-tight">No Records Found</h3>
                 <p className="text-slate-500 font-bold uppercase text-[10px] tracking-widest mt-2">
                   No attendance data available for this student
                 </p>

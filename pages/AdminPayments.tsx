@@ -114,7 +114,7 @@ const AdminPayments: React.FC = () => {
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         {view === 'payments' ? (
           <div>
-            <h2 className="text-3xl font-black text-slate-800 tracking-tighter uppercase">Payment Hub</h2>
+            <h2 className="text-3xl font-black text-slate-800 tracking-tighter">Payment Hub</h2>
             <p className="text-slate-500 font-bold uppercase text-[10px] tracking-widest mt-1">System-Wide Payment Tracking</p>
           </div>
         ) : <div />}

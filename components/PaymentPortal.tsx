@@ -141,7 +141,7 @@ const PaymentPortal: React.FC<PaymentPortalProps> = ({ state, onClose, onInitiat
             <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] text-center">Choose Payment Method</p>
 
             {/* UPI Intent - Pay via Google Pay, PhonePe etc */}
-            {adminUpiId && onInitiateUpi && (
+            {onInitiateUpi && (
               <button
                 onClick={onInitiateUpi}
                 disabled={state.loading}
@@ -182,8 +182,8 @@ const PaymentPortal: React.FC<PaymentPortalProps> = ({ state, onClose, onInitiat
               </div>
             </button>
 
-            {/* UPI QR Code */}
-            {adminQrUrl && (
+            {/* UPI QR Code / Manual Payment */}
+            {(adminQrUrl || adminUpiId) && (
               <div className="rounded-2xl border border-slate-200 overflow-hidden bg-white">
                 <button
                   onClick={() => setShowQr(!showQr)}

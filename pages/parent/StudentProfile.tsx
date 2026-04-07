@@ -184,7 +184,7 @@ const StudentProfile: React.FC<{ user: User }> = ({ user }) => {
       <div className="w-24 h-24 bg-slate-50 rounded-[2rem] flex items-center justify-center text-slate-300 mx-auto mb-6">
         <GraduationCap size={48} />
       </div>
-      <h2 className="text-2xl font-black text-slate-900 tracking-tight uppercase">No Student Records</h2>
+      <h2 className="text-2xl font-black text-slate-900 tracking-tight">No Student Records</h2>
       <p className="text-slate-500 font-bold uppercase text-[10px] tracking-widest mt-2">
         Please contact administration to link your child's account
       </p>
@@ -224,7 +224,7 @@ const StudentProfile: React.FC<{ user: User }> = ({ user }) => {
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
         <div>
-          <h1 className="text-4xl font-black text-slate-900 tracking-tight uppercase">Student Dossier</h1>
+          <h1 className="text-2xl md:text-4xl font-black text-slate-900 tracking-tight">Student Profile</h1>
           <p className="text-slate-500 font-bold uppercase text-[10px] tracking-widest mt-1">
             Official Academic & Transit Profile
           </p>
@@ -339,7 +339,7 @@ const StudentProfile: React.FC<{ user: User }> = ({ user }) => {
                   <UserIcon size={64} />
                 </div>
               </div>
-              <h2 className="text-2xl font-black text-slate-900 tracking-tight uppercase">
+              <h2 className="text-2xl font-black text-slate-900 tracking-tight">
                 {selectedStudent.full_name}
               </h2>
               <p className="text-primary font-black uppercase text-[10px] tracking-widest mt-1">
@@ -432,7 +432,7 @@ const StudentProfile: React.FC<{ user: User }> = ({ user }) => {
           {/* Fee Status */}
           <div className="bg-white rounded-[3rem] p-10 shadow-sm border border-slate-100">
             <div className="flex items-center justify-between mb-8">
-              <h3 className="text-xl font-black text-slate-900 tracking-tight uppercase">Fee Status</h3>
+              <h3 className="text-xl font-black text-slate-900 tracking-tight">Fee Status</h3>
               <div className={`flex items-center gap-2 px-4 py-2 rounded-xl text-[9px] font-black uppercase tracking-widest ${
                 feeStatusOk ? 'bg-emerald-50 text-emerald-600' : 'bg-red-50 text-red-600'
               }`}>
@@ -517,7 +517,7 @@ const StudentProfile: React.FC<{ user: User }> = ({ user }) => {
 
           {/* Recent Attendance - Last 10 records */}
           <div className="bg-white rounded-[3rem] p-10 shadow-sm border border-slate-100">
-            <h3 className="text-xl font-black text-slate-900 tracking-tight uppercase mb-8">
+            <h3 className="text-xl font-black text-slate-900 tracking-tight mb-8">
               Last 10 Attendance
             </h3>
             {recentAttendance.length === 0 ? (

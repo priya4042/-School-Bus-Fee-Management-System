@@ -65,7 +65,7 @@ const Login: React.FC<LoginProps> = ({ onLogin, onGoToRegister }) => {
            <div className="w-20 h-20 bg-primary rounded-3xl flex items-center justify-center mx-auto shadow-2xl border-2 border-white/10 mb-6">
               <i className="fas fa-bus-alt text-4xl text-white"></i>
            </div>
-           <h1 className="text-4xl font-black text-white tracking-tighter uppercase">{APP_NAME}</h1>
+           <h1 className="text-4xl font-black text-white tracking-tighter">{APP_NAME}</h1>
         </div>
 
         <div className="bg-white rounded-[2.5rem] shadow-2xl overflow-hidden">
@@ -80,7 +80,7 @@ const Login: React.FC<LoginProps> = ({ onLogin, onGoToRegister }) => {
 
           <div className="p-8">
             {error && (
-              <div className="mb-6 p-4 rounded-xl text-[10px] font-bold uppercase flex items-start gap-3 bg-red-50 text-red-600 border border-red-100">
+              <div className="mb-6 p-4 rounded-xl text-[12px] font-semibold flex items-start gap-3 bg-red-50 text-red-600 border border-red-100">
                 <i className="fas fa-exclamation-triangle flex-shrink-0 mt-1"></i>
                 <div className="space-y-2">
                   <p>{error}</p>

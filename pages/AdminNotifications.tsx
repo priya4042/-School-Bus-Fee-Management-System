@@ -411,7 +411,7 @@ const AdminNotifications: React.FC<{ focusNotificationId?: string; onFocusHandle
     <div className="max-w-5xl space-y-8 pb-10">
       {view === 'notifications' ? (
         <div>
-          <h2 className="text-3xl font-black text-slate-800 tracking-tight uppercase">Notification Center</h2>
+          <h2 className="text-3xl font-black text-slate-800 tracking-tight">Notification Center</h2>
           <p className="text-slate-500 font-bold uppercase text-[10px] tracking-[0.3em] mt-2">Broadcast to Parents</p>
         </div>
       ) : <div />}

@@ -55,7 +55,7 @@ const Attendance: React.FC = () => {
           ...prev,
           [studentId]: currentStatus
         }));
-        showAlert('Sync Failed', 'Could not synchronize attendance with the central cloud. Please check your internet connection.', 'error');
+        showAlert('Sync Failed', 'Could not save attendance. Please check your internet connection and try again.', 'error');
       }
     }
   };

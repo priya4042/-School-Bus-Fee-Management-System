@@ -207,7 +207,7 @@ const ForgotPassword: React.FC = () => {
             <CheckCircle2 size={32} />
           </div>
           <div className="space-y-2">
-            <p className="text-lg font-black text-slate-900 uppercase tracking-tight">
+            <p className="text-lg font-black text-slate-900 tracking-tight">
               {completionMode === 'EMAIL_LINK_SENT' ? 'Email Sent!' : 'Password Reset!'}
             </p>
             <p className="text-sm font-medium text-slate-500 leading-relaxed">
@@ -451,12 +451,12 @@ const ForgotPassword: React.FC = () => {
             <div className="w-20 h-20 bg-primary/10 text-primary rounded-[2rem] flex items-center justify-center mx-auto mb-6">
               <ShieldCheck size={40} />
             </div>
-            <h1 className="text-3xl font-black text-slate-900 tracking-tight uppercase">Reset Access</h1>
+            <h1 className="text-3xl font-black text-slate-900 tracking-tight">Reset Access</h1>
             <p className="text-slate-500 font-bold uppercase text-[10px] tracking-widest mt-2">Recover your account credentials</p>
           </div>
 
           {error && (
-            <div className="mb-6 p-4 rounded-xl text-[10px] font-bold uppercase flex items-center gap-3 bg-red-50 text-red-600 border border-red-100 animate-in fade-in slide-in-from-top-2">
+            <div className="mb-6 p-4 rounded-xl text-[12px] font-semibold flex items-center gap-3 bg-red-50 text-red-600 border border-red-100 animate-in fade-in slide-in-from-top-2">
               <p>{error}</p>
             </div>
           )}

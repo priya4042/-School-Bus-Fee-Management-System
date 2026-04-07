@@ -130,7 +130,7 @@ const ParentDashboard: React.FC<{ user: User }> = ({ user }) => {
             <i className="fas fa-home-user"></i>
           </div>
           <div>
-            <h2 className="text-2xl md:text-4xl font-black text-slate-800 tracking-tighter uppercase leading-none">Family Hub</h2>
+            <h2 className="text-2xl md:text-4xl font-black text-slate-800 tracking-tighter leading-none">Family Hub</h2>
             <div className="flex items-center gap-3 mt-2">
               <p className="text-slate-500 font-bold uppercase text-[9px] md:text-[10px] tracking-widest">
                  {familyStudents.length} Students Registered

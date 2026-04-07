@@ -244,18 +244,28 @@ const Topbar: React.FC<TopbarProps> = ({ user, onMenuClick, onOpenNotifications,
         
         <div className="h-10 w-px bg-slate-100 hidden md:block"></div>
         
-        <div ref={userMenuRef} className="flex items-center gap-3 relative">
-          <div className="text-right hidden md:block">
-            <p className="text-xs font-black text-slate-800 leading-none">{getDisplayName()}</p>
-            <p className="text-[9px] text-primary font-black uppercase tracking-widest mt-1.5">
-              {user?.role === UserRole.ADMIN || user?.role === UserRole.SUPER_ADMIN ? 'Bus admin' : user?.role?.replace('_', ' ')}
+        <div ref={userMenuRef} className="flex items-center gap-2 md:gap-3 relative">
+          <div className="text-right">
+            <p className="text-[10px] md:text-xs font-black text-slate-800 leading-none truncate max-w-[80px] md:max-w-none">{getDisplayName().split(' ')[0]}</p>
+            <p className="text-[7px] md:text-[9px] text-primary font-black uppercase tracking-widest mt-0.5 md:mt-1.5">
+              {user?.role === UserRole.ADMIN || user?.role === UserRole.SUPER_ADMIN ? 'Admin' : 'Parent'}
             </p>
           </div>
           <button
             onClick={() => setShowUserMenu((prev) => !prev)}
-            className="w-10 h-10 md:w-12 md:h-12 bg-slate-900 text-white rounded-2xl flex items-center justify-center font-black text-sm shadow-xl hover:rotate-6 transition-transform cursor-pointer"
+            className="w-10 h-10 md:w-12 md:h-12 rounded-full flex items-center justify-center font-black text-sm shadow-xl hover:scale-105 transition-transform cursor-pointer overflow-hidden border-2 border-slate-200"
           >
-            {getDisplayName().charAt(0)}
+            {(user?.avatar_url || (user?.preferences as any)?.avatar_url) ? (
+              <img
+                src={user.avatar_url || (user.preferences as any)?.avatar_url}
+                alt={getDisplayName()}
+                className="w-full h-full object-cover"
+              />
+            ) : (
+              <div className="w-full h-full bg-slate-900 text-white flex items-center justify-center">
+                {getDisplayName().charAt(0)}
+              </div>
+            )}
           </button>
           {showUserMenu && (
             <div className="absolute right-0 top-14 md:top-16 w-64 bg-white rounded-2xl border border-slate-100 shadow-2xl p-2 z-50">
