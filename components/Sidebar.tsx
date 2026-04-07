@@ -81,20 +81,20 @@ const Sidebar: React.FC<SidebarProps> = ({ user, onLogout, activeTab, setActiveT
           </div>
         </div>
 
-        <nav className="flex-1 mt-1 lg:mt-6 px-2 lg:px-6 space-y-0.5 lg:space-y-2 overflow-y-auto scrollbar-hide pb-2 lg:pb-10">
-          <p className="text-[7px] lg:text-[9px] font-black text-slate-500 tracking-widest mb-1 lg:mb-4 ml-3 lg:ml-4">{t('main_portal')}</p>
+        <nav className="flex-1 mt-2 lg:mt-6 px-3 lg:px-6 space-y-1 lg:space-y-2 overflow-y-auto scrollbar-hide pb-4 lg:pb-10">
+          <p className="text-[8px] lg:text-[9px] font-black text-slate-500 tracking-widest mb-2 lg:mb-4 ml-3 lg:ml-4">{t('main_portal')}</p>
           {links.map((link) => (
             <button
               key={link.name}
               onClick={() => handleTabClick(link.name)}
-              className={`w-full flex items-center gap-3 lg:gap-4 px-3 lg:px-5 py-2 lg:py-3.5 rounded-xl lg:rounded-2xl transition-all text-left group ${
+              className={`w-full flex items-center gap-3 lg:gap-4 px-4 lg:px-5 py-2.5 lg:py-3.5 rounded-xl lg:rounded-2xl transition-all text-left group ${
                 activeTab === link.name
                   ? 'bg-primary text-white shadow-lg shadow-primary/40'
                   : 'text-slate-500 hover:bg-white/5 hover:text-white'
               }`}
             >
-              <i className={`fas ${link.icon} w-5 lg:w-6 text-sm lg:text-lg transition-transform group-hover:scale-110`}></i>
-              <span className="font-bold text-[10px] lg:text-xs tracking-wider lg:tracking-widest truncate">{link.label}</span>
+              <i className={`fas ${link.icon} w-5 lg:w-6 text-base lg:text-lg transition-transform group-hover:scale-110`}></i>
+              <span className="font-bold text-xs lg:text-xs tracking-wider lg:tracking-widest truncate">{link.label}</span>
             </button>
           ))}
         </nav>

@@ -149,23 +149,26 @@ const SupportChat: React.FC<{ user: User }> = ({ user }) => {
 
   return (
     <>
-      {/* Floating chat button */}
-      <button
-        onClick={() => setIsOpen(!isOpen)}
-        className="fixed bottom-6 right-6 z-[1500] w-14 h-14 bg-primary text-white rounded-full shadow-2xl shadow-primary/40 flex items-center justify-center hover:scale-110 transition-transform"
-      >
-        {isOpen ? <X size={22} /> : <MessageCircle size={22} />}
-        {unread > 0 && !isOpen && (
-          <span className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white text-[9px] font-black rounded-full flex items-center justify-center border-2 border-white">
-            {unread}
-          </span>
-        )}
-      </button>
+      {/* Floating chat button - hidden when chat is open */}
+      {!isOpen && (
+        <button
+          onClick={() => setIsOpen(true)}
+          className="fixed right-4 z-[1500] w-14 h-14 bg-primary text-white rounded-full shadow-2xl shadow-primary/40 flex items-center justify-center hover:scale-110 transition-transform"
+          style={{ bottom: 'calc(env(safe-area-inset-bottom, 0px) + 1.5rem)' }}
+        >
+          <MessageCircle size={22} />
+          {unread > 0 && (
+            <span className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white text-[9px] font-black rounded-full flex items-center justify-center border-2 border-white">
+              {unread}
+            </span>
+          )}
+        </button>
+      )}
 
       {/* Chat panel */}
       {isOpen && (
-        <div className="fixed bottom-24 right-4 sm:right-6 z-[1500] w-[calc(100vw-2rem)] sm:w-96 max-w-[24rem] bg-white rounded-3xl shadow-2xl border border-slate-100 flex flex-col overflow-hidden animate-in fade-in slide-in-from-bottom-4 duration-300"
-          style={{ maxHeight: 'calc(100vh - 8rem)' }}
+        <div className="fixed right-3 sm:right-6 z-[1500] w-[calc(100vw-1.5rem)] sm:w-96 max-w-[24rem] bg-white rounded-3xl shadow-2xl border border-slate-100 flex flex-col overflow-hidden animate-in fade-in slide-in-from-bottom-4 duration-300"
+          style={{ bottom: 'calc(env(safe-area-inset-bottom, 0px) + 5.5rem)', maxHeight: 'calc(100vh - 8rem)' }}
         >
           {/* Header */}
           <div className="bg-slate-950 px-6 py-4 flex items-center justify-between">

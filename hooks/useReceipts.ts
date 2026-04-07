@@ -132,7 +132,7 @@ const buildReceiptAggregate = (rows: any[], paymentId: string | number, txnId?: 
   };
 };
 
-const generateReceiptPDF = (due: any) => {
+const generateReceiptPDF = async (due: any) => {
   const doc = new jsPDF({ orientation: 'p', unit: 'mm', format: 'a4' });
   const normalized = normalizeStudentInfo(due);
   const student = normalized.student || {};
@@ -282,10 +282,10 @@ const generateReceiptPDF = (due: any) => {
   doc.text('This is a computer-generated invoice and does not require a physical signature.', margin, 285);
   doc.text(`Generated on ${new Date().toLocaleString('en-IN')} | Reference: ${due.id || 'N/A'}`, margin, 289);
 
-  savePDF(doc, `Invoice_${txnId}.pdf`);
+  await savePDF(doc, `Invoice_${txnId}.pdf`);
 };
 
-const generateCompactReceipt = (due: any) => {
+const generateCompactReceipt = async (due: any) => {
   const doc = new jsPDF({ orientation: 'p', unit: 'mm', format: [80, 200] });
   const normalized = normalizeStudentInfo(due);
   const student = normalized.student || {};
@@ -368,10 +368,10 @@ const generateCompactReceipt = (due: any) => {
   doc.text('Computer generated receipt.', w / 2, y, { align: 'center' });
   doc.text('No signature required.', w / 2, y + 3.5, { align: 'center' });
 
-  savePDF(doc, `Receipt_${txnId}.pdf`);
+  await savePDF(doc, `Receipt_${txnId}.pdf`);
 };
 
-const generateDetailedInvoice = (due: any) => {
+const generateDetailedInvoice = async (due: any) => {
   const doc = new jsPDF({ orientation: 'p', unit: 'mm', format: 'a4' });
   const normalized = normalizeStudentInfo(due);
   const student = normalized.student || {};
@@ -503,43 +503,63 @@ const generateDetailedInvoice = (due: any) => {
   doc.text('This is a computer-generated tax invoice and does not require a physical signature.', margin, 280);
   doc.text(`Generated on ${new Date().toLocaleString('en-IN')} | Txn: ${txnId}`, margin, 285);
 
-  savePDF(doc, `Invoice_${txnId}.pdf`);
+  await savePDF(doc, `Invoice_${txnId}.pdf`);
 };
 
-const savePDF = (doc: any, fileName: string) => {
-  // Detect if running inside Capacitor WebView (Android/iOS)
+const savePDF = async (doc: any, fileName: string) => {
   const isCapacitor = !!(window as any).Capacitor?.isNativePlatform?.();
 
-  if (isCapacitor) {
-    // In Capacitor WebView, doc.save() often fails silently.
-    // Use data URI approach which works reliably on Android WebView.
-    try {
-      const pdfDataUri = doc.output('datauristring');
-
-      // Method 1: Open data URI directly (opens PDF viewer on most devices)
-      const opened = window.open(pdfDataUri, '_blank');
-
-      if (!opened) {
-        // Method 2: Create blob and use download link
-        const pdfBlob = doc.output('blob');
-        const blobUrl = URL.createObjectURL(pdfBlob);
-        const link = document.createElement('a');
-        link.href = blobUrl;
-        link.download = fileName;
-        link.style.display = 'none';
-        document.body.appendChild(link);
-        link.click();
-        setTimeout(() => {
-          document.body.removeChild(link);
-          URL.revokeObjectURL(blobUrl);
-        }, 5000);
-      }
-    } catch {
-      // Method 3: Last resort fallback
-      doc.save(fileName);
-    }
-  } else {
+  if (!isCapacitor) {
     doc.save(fileName);
+    return;
+  }
+
+  // Capacitor mobile: use Filesystem plugin to save, then Share plugin to open
+  try {
+    const { Filesystem, Directory } = await import('@capacitor/filesystem');
+    const base64Data = doc.output('datauristring').split(',')[1];
+
+    const result = await Filesystem.writeFile({
+      path: `Download/${fileName}`,
+      data: base64Data,
+      directory: Directory.ExternalStorage,
+      recursive: true,
+    });
+
+    // Try to share/open the file
+    try {
+      const { Share } = await import('@capacitor/share');
+      await Share.share({
+        title: fileName,
+        url: result.uri,
+        dialogTitle: 'Open Receipt',
+      });
+    } catch {
+      showAlert('Receipt Saved', `${fileName} saved to Downloads folder. Open it from your file manager.`, 'success');
+    }
+  } catch {
+    // Filesystem plugin not available or permission denied — fallback methods
+    try {
+      const pdfBlob = doc.output('blob');
+      const blobUrl = URL.createObjectURL(pdfBlob);
+
+      // Try download link
+      const link = document.createElement('a');
+      link.href = blobUrl;
+      link.download = fileName;
+      link.style.display = 'none';
+      document.body.appendChild(link);
+      link.click();
+
+      setTimeout(() => {
+        try { document.body.removeChild(link); } catch {}
+        URL.revokeObjectURL(blobUrl);
+      }, 5000);
+
+      showAlert('Receipt Generated', `${fileName} has been downloaded. Check your Downloads folder.`, 'success');
+    } catch {
+      try { doc.save(fileName); } catch {}
+    }
   }
 };
 
@@ -622,7 +642,7 @@ export const useReceipts = () => {
     try {
       const immediateDue = normalizeDueShape(dueSnapshot, paymentId, txnId);
       if (immediateDue && hasCoreStudentFields(immediateDue)) {
-        generate(immediateDue);
+        await generate(immediateDue);
         return;
       }
 
@@ -631,18 +651,18 @@ export const useReceipts = () => {
       const error = (result as any)?.error;
       if (error || !due) {
         const minimalDue = normalizeDueShape({ id: paymentId, transaction_id: txnId }, paymentId, txnId);
-        generate(minimalDue);
+        await generate(minimalDue);
         return;
       }
 
       const normalizedDue = Array.isArray(due)
         ? buildReceiptAggregate(due, paymentId, txnId)
         : normalizeDueShape(due, paymentId, txnId);
-      generate(normalizedDue || immediateDue);
+      await generate(normalizedDue || immediateDue);
     } catch (err: any) {
       try {
         const minimalDue = normalizeDueShape({ id: paymentId, transaction_id: txnId }, paymentId, txnId);
-        generate(minimalDue);
+        await generate(minimalDue);
       } catch (fallbackErr) {
         console.error('Receipt download failed:', err, fallbackErr);
         showAlert('Receipt Error', err?.message || 'Could not generate receipt. Please try again.', 'error');

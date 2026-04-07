@@ -108,13 +108,7 @@ const App: React.FC = () => {
 
   useEffect(() => {
     if (!user?.id || !user?.role) return;
-    const key = getTabStorageKey(user);
-    const savedTab = key ? window.localStorage.getItem(key) : null;
-    const allowedTabs = getAllowedTabs(user);
-
-    if (savedTab && allowedTabs.includes(savedTab)) {
-      setActiveTab(savedTab);
-    }
+    setActiveTab('Dashboard');
   }, [user?.id, user?.role]);
 
   useEffect(() => {
@@ -222,7 +216,7 @@ const App: React.FC = () => {
                   setActiveTab('Notifications');
                 }}
               />
-              <main className="p-4 md:p-8 flex-1 overflow-auto bg-slate-50">
+              <main className="p-4 md:p-8 flex-1 overflow-auto bg-slate-50 pb-24 md:pb-8">
                 <div className="max-w-7xl mx-auto">
                   {renderContent()}
                 </div>

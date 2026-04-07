@@ -261,23 +261,27 @@ const Register: React.FC<RegisterProps> = ({ onRegister, onBackToLogin, initialR
   }
 
   return (
-    <div className="min-h-screen bg-slate-900 flex items-center justify-center p-6 bg-[radial-gradient(circle_at_bottom_right,_var(--tw-gradient-stops))] from-slate-800 via-slate-900 to-black overflow-y-auto">
-      <div className="max-w-4xl w-full bg-white rounded-[3rem] shadow-2xl overflow-hidden flex flex-col md:flex-row animate-in fade-in zoom-in duration-500">
-        <div className={`md:w-80 p-12 text-white flex flex-col justify-between transition-colors ${role === UserRole.ADMIN ? 'bg-slate-950' : 'bg-primary'}`}>
-           <div>
-              <div className="w-14 h-14 bg-white/20 rounded-2xl flex items-center justify-center mb-8 border border-white/20">
-                 <i className={`fas ${role === UserRole.ADMIN ? 'fa-shield-halved' : 'fa-user-plus'} text-xl`}></i>
+    <div className="min-h-screen min-h-[100dvh] bg-slate-900 flex items-start md:items-center justify-center p-3 md:p-6 bg-[radial-gradient(circle_at_bottom_right,_var(--tw-gradient-stops))] from-slate-800 via-slate-900 to-black overflow-y-auto"
+      style={{ paddingTop: 'calc(env(safe-area-inset-top, 0px) + 0.75rem)' }}
+    >
+      <div className="max-w-4xl w-full bg-white rounded-2xl md:rounded-[3rem] shadow-2xl overflow-hidden flex flex-col md:flex-row animate-in fade-in zoom-in duration-500">
+        <div className={`md:w-80 px-6 py-5 md:p-12 text-white flex items-center md:items-start md:flex-col justify-between md:justify-start gap-4 transition-colors ${role === UserRole.ADMIN ? 'bg-slate-950' : 'bg-primary'}`}>
+           <div className="flex items-center md:flex-col md:items-start gap-3 md:gap-0">
+              <div className="w-10 h-10 md:w-14 md:h-14 bg-white/20 rounded-xl md:rounded-2xl flex items-center justify-center border border-white/20 flex-shrink-0 md:mb-8">
+                 <i className={`fas ${role === UserRole.ADMIN ? 'fa-shield-halved' : 'fa-user-plus'} text-base md:text-xl`}></i>
               </div>
-              <h1 className="text-3xl font-black tracking-tighter leading-none mb-4 uppercase">Enrollment Hub</h1>
-              <p className="text-white/60 text-[10px] font-bold uppercase tracking-widest leading-relaxed">
-                {role === UserRole.ADMIN ? 'Setup Bus admin authentication.' : 'Connect your family to the transport core.'}
-              </p>
+              <div>
+                <h1 className="text-lg md:text-3xl font-black tracking-tighter leading-none uppercase">Enrollment Hub</h1>
+                <p className="text-white/60 text-[8px] md:text-[10px] font-bold uppercase tracking-widest leading-relaxed mt-1 md:mt-4">
+                  {role === UserRole.ADMIN ? 'Setup Bus admin authentication.' : 'Connect your family to the transport core.'}
+                </p>
+              </div>
            </div>
         </div>
 
-        <div className="flex-1 p-8 md:p-12">
-           <div className="flex items-center justify-between mb-10">
-              <h2 className="text-2xl font-black text-slate-800 tracking-tight uppercase">Registration</h2>
+        <div className="flex-1 p-5 md:p-12">
+           <div className="flex items-center justify-between mb-6 md:mb-10">
+              <h2 className="text-xl md:text-2xl font-black text-slate-800 tracking-tight">Registration</h2>
               <button onClick={onBackToLogin} className="text-[9px] font-black text-primary uppercase tracking-widest hover:underline">
                  <i className="fas fa-arrow-left mr-2"></i> Exit
               </button>
@@ -347,9 +351,9 @@ const Register: React.FC<RegisterProps> = ({ onRegister, onBackToLogin, initialR
                 </button>
              </form>
            ) : (
-             <form onSubmit={handleSendOtp} className="space-y-6">
+             <form onSubmit={handleSendOtp} className="space-y-4 md:space-y-6">
                 {role === UserRole.ADMIN && (
-                  <div className="p-6 bg-slate-50 rounded-2xl border border-slate-100 mb-6">
+                  <div className="p-4 md:p-6 bg-slate-50 rounded-2xl border border-slate-100 mb-4 md:mb-6">
                      <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Master Admin Secret</label>
                      <div className="relative">
                        <input 
@@ -371,7 +375,7 @@ const Register: React.FC<RegisterProps> = ({ onRegister, onBackToLogin, initialR
                   </div>
                 )}
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-6">
                    {role === UserRole.PARENT && (
                      <div className="space-y-1">
                         <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">Admission Number</label>
@@ -384,7 +388,7 @@ const Register: React.FC<RegisterProps> = ({ onRegister, onBackToLogin, initialR
                    </div>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-6">
                    <div className="space-y-1">
                       <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">Email</label>
                       <input required type="email" value={formData.email} onChange={(e) => setFormData({...formData, email: e.target.value})} className={role === UserRole.PARENT ? inputClass : adminInputClass} placeholder="parent@example.com" />
@@ -422,7 +426,7 @@ const Register: React.FC<RegisterProps> = ({ onRegister, onBackToLogin, initialR
              </form>
            )}
 
-           <div className="mt-8 text-center pt-6 border-t border-slate-50">
+           <div className="mt-6 md:mt-8 text-center pt-4 md:pt-6 border-t border-slate-50">
               <button onClick={toggleRole} className="text-slate-400 font-black text-[10px] uppercase tracking-widest hover:text-primary transition-colors">
                 Switch to {role === UserRole.PARENT ? 'Bus admin' : 'Parent'} Registration
               </button>

@@ -5,6 +5,15 @@ export default function PrivacyPolicy() {
   return (
     <div className="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-4xl mx-auto bg-white rounded-lg shadow-lg p-8">
+        {/* Back Button */}
+        <button
+          onClick={() => { window.location.href = '/'; }}
+          className="fixed top-4 right-4 z-50 w-10 h-10 bg-white border border-slate-200 rounded-full shadow-lg flex items-center justify-center text-slate-600 hover:bg-primary hover:text-white transition-all"
+          style={{ top: 'calc(env(safe-area-inset-top, 0px) + 1rem)' }}
+        >
+          <i className="fas fa-arrow-left"></i>
+        </button>
+
         {/* Header */}
         <div className="mb-8 border-b-4 border-blue-600 pb-6">
           <div className="flex items-center gap-3 mb-4">

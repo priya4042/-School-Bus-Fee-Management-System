@@ -465,8 +465,8 @@ const ForgotPassword: React.FC = () => {
 
           <div className="mt-12 pt-10 border-t border-slate-50 text-center">
             <a
-              href="/login"
-              onClick={(e) => { e.preventDefault(); navigate('/login'); }}
+              href="/"
+              onClick={(e) => { e.preventDefault(); window.location.href = '/'; }}
               className="inline-flex items-center gap-2 text-[10px] font-black text-slate-400 uppercase tracking-widest hover:text-primary transition-colors"
             >
               <ArrowLeft size={14} />
