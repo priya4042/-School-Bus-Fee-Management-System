@@ -197,7 +197,7 @@ const Topbar: React.FC<TopbarProps> = ({ user, onMenuClick, onOpenNotifications,
           </button>
           
           {showNotifications && (
-            <div ref={modalRef} className="absolute right-0 mt-4 w-[calc(100vw-2rem)] sm:w-96 max-w-[24rem] bg-white border border-slate-100 rounded-3xl shadow-2xl z-50 animate-in fade-in slide-in-from-top-4 overflow-hidden">
+            <div ref={modalRef} className="absolute -right-2 sm:right-0 mt-4 w-[calc(100vw-1rem)] sm:w-96 max-w-[24rem] bg-white border border-slate-100 rounded-2xl sm:rounded-3xl shadow-2xl z-50 animate-in fade-in slide-in-from-top-4 overflow-hidden">
               <div className="p-6 border-b border-slate-50 flex justify-between items-center bg-slate-50/50">
                 <span className="text-[10px] font-black text-slate-800 uppercase tracking-widest">{t('alert_center')}</span>
                 <button onClick={async () => {
@@ -268,28 +268,21 @@ const Topbar: React.FC<TopbarProps> = ({ user, onMenuClick, onOpenNotifications,
             )}
           </button>
           {showUserMenu && (
-            <div className="absolute right-0 top-14 md:top-16 w-64 bg-white rounded-2xl border border-slate-100 shadow-2xl p-2 z-50">
+            <div className="absolute right-0 top-14 md:top-16 w-56 bg-white rounded-2xl border border-slate-100 shadow-2xl p-2 z-50">
               {user?.role === UserRole.PARENT && (
                 <button
                   onClick={() => handleNavigate('Profile')}
-                  className="w-full text-left px-4 py-3 rounded-xl hover:bg-slate-50 text-[11px] font-black uppercase tracking-widest text-slate-700 flex items-center gap-3"
+                  className="w-full text-left px-4 py-2.5 rounded-xl hover:bg-slate-50 text-[11px] font-bold text-slate-700 flex items-center gap-3"
                 >
-                  <i className="fas fa-user w-4 text-primary"></i>
+                  <i className="fas fa-user w-4 text-primary text-xs"></i>
                   {t('profile')}
                 </button>
               )}
               <button
-                onClick={() => handleNavigate('Notifications')}
-                className="w-full text-left px-4 py-3 rounded-xl hover:bg-slate-50 text-[11px] font-black uppercase tracking-widest text-slate-700 flex items-center gap-3"
-              >
-                <i className="fas fa-bell w-4 text-primary"></i>
-                {t('notifications')}
-              </button>
-              <button
                 onClick={() => handleNavigate('Settings')}
-                className="w-full text-left px-4 py-3 rounded-xl hover:bg-slate-50 text-[11px] font-black uppercase tracking-widest text-slate-700 flex items-center gap-3"
+                className="w-full text-left px-4 py-2.5 rounded-xl hover:bg-slate-50 text-[11px] font-bold text-slate-700 flex items-center gap-3"
               >
-                <i className="fas fa-cog w-4 text-primary"></i>
+                <i className="fas fa-cog w-4 text-primary text-xs"></i>
                 {t('settings')}
               </button>
               <div className="my-1 border-t border-slate-100"></div>

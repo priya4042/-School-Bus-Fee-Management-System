@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { User, Student } from '../../types';
 import { CheckCircle2, XCircle, Filter, Calendar, Bus, ArrowUpCircle, ArrowDownCircle } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
+import MiniLoader from '../../components/MiniLoader';
 
 interface AttendanceRecord {
   id: string;
@@ -21,6 +22,7 @@ const AttendanceHistory: React.FC<{ user: User }> = ({ user }) => {
   const [loading, setLoading] = useState(true);
   const [typeFilter, setTypeFilter] = useState<'ALL' | 'PICKUP' | 'DROP'>('ALL');
   const [monthFilter, setMonthFilter] = useState<string>('ALL');
+  const [yearFilter, setYearFilter] = useState<string>('ALL');
   const [showMonthFilter, setShowMonthFilter] = useState(false);
 
   // Fetch parent's students
@@ -59,18 +61,21 @@ const AttendanceHistory: React.FC<{ user: User }> = ({ user }) => {
     fetchAttendance();
   }, [selectedStudentId]);
 
-  const availableMonths = Array.from(new Set(records.map((r) => {
-    const d = new Date(r.date);
-    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
-  }))).sort().reverse();
+  const availableYears = Array.from(new Set(records.map((r) => new Date(r.date).getFullYear()))).sort().reverse();
+
+  const availableMonthsForYear = yearFilter === 'ALL'
+    ? Array.from(new Set(records.map((r) => new Date(r.date).getMonth()))).sort()
+    : Array.from(new Set(
+        records
+          .filter((r) => new Date(r.date).getFullYear() === Number(yearFilter))
+          .map((r) => new Date(r.date).getMonth())
+      )).sort();
 
   const filteredRecords = records.filter((r) => {
     if (typeFilter !== 'ALL' && r.type !== typeFilter) return false;
-    if (monthFilter !== 'ALL') {
-      const d = new Date(r.date);
-      const recordMonth = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
-      if (recordMonth !== monthFilter) return false;
-    }
+    const d = new Date(r.date);
+    if (yearFilter !== 'ALL' && d.getFullYear() !== Number(yearFilter)) return false;
+    if (monthFilter !== 'ALL' && d.getMonth() !== Number(monthFilter)) return false;
     return true;
   });
 
@@ -205,13 +210,15 @@ const AttendanceHistory: React.FC<{ user: User }> = ({ user }) => {
                   <button
                     onClick={() => setShowMonthFilter(!showMonthFilter)}
                     className={`w-10 h-10 rounded-2xl flex items-center justify-center transition-all ${
-                      monthFilter !== 'ALL' ? 'bg-primary text-white' : 'bg-slate-50 text-slate-400 hover:bg-slate-100'
+                      (yearFilter !== 'ALL' || monthFilter !== 'ALL') ? 'bg-primary text-white' : 'bg-slate-50 text-slate-400 hover:bg-slate-100'
                     }`}
                   >
                     <Filter size={18} />
                   </button>
-                  {monthFilter !== 'ALL' && (
-                    <span className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 rounded-full text-[7px] text-white font-black flex items-center justify-center">1</span>
+                  {(yearFilter !== 'ALL' || monthFilter !== 'ALL') && (
+                    <span className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 rounded-full text-[7px] text-white font-black flex items-center justify-center">
+                      {(yearFilter !== 'ALL' ? 1 : 0) + (monthFilter !== 'ALL' ? 1 : 0)}
+                    </span>
                   )}
                 </div>
                 <div className="flex gap-2">
@@ -234,43 +241,46 @@ const AttendanceHistory: React.FC<{ user: User }> = ({ user }) => {
               {showMonthFilter && (
                 <div className="bg-slate-50 rounded-2xl p-4 animate-in fade-in slide-in-from-top-2 duration-200">
                   <div className="flex items-center justify-between mb-3">
-                    <p className="text-[9px] font-black text-slate-500 tracking-widest">Filter by Month</p>
-                    {monthFilter !== 'ALL' && (
+                    <p className="text-[9px] font-black text-slate-500 tracking-widest">Filter by Year & Month</p>
+                    {(yearFilter !== 'ALL' || monthFilter !== 'ALL') && (
                       <button
-                        onClick={() => setMonthFilter('ALL')}
+                        onClick={() => { setYearFilter('ALL'); setMonthFilter('ALL'); }}
                         className="text-[9px] font-black text-primary tracking-widest hover:underline"
                       >
-                        Clear
+                        Clear All
                       </button>
                     )}
                   </div>
-                  <div className="flex flex-wrap gap-2">
-                    <button
-                      onClick={() => setMonthFilter('ALL')}
-                      className={`px-4 py-2 rounded-xl text-[9px] font-black tracking-widest transition-all ${
-                        monthFilter === 'ALL' ? 'bg-primary text-white' : 'bg-white text-slate-500 border border-slate-200 hover:border-primary/30'
-                      }`}
-                    >
-                      All Months
-                    </button>
-                    {availableMonths.map((m) => {
-                      const [y, mo] = m.split('-');
-                      const label = `${MONTHS[parseInt(mo) - 1]?.slice(0, 3)} ${y}`;
-                      return (
-                        <button
-                          key={m}
-                          onClick={() => setMonthFilter(m)}
-                          className={`px-4 py-2 rounded-xl text-[9px] font-black tracking-widest transition-all ${
-                            monthFilter === m ? 'bg-primary text-white' : 'bg-white text-slate-500 border border-slate-200 hover:border-primary/30'
-                          }`}
-                        >
-                          {label}
-                        </button>
-                      );
-                    })}
-                    {availableMonths.length === 0 && (
-                      <p className="text-[9px] text-slate-400 font-bold py-2">No data available</p>
-                    )}
+                  <div className="flex flex-wrap gap-3">
+                    {/* Year selector */}
+                    <div className="space-y-1">
+                      <p className="text-[8px] font-black text-slate-400 tracking-widest ml-1">Year</p>
+                      <select
+                        value={yearFilter}
+                        onChange={(e) => { setYearFilter(e.target.value); setMonthFilter('ALL'); }}
+                        className="px-4 py-2.5 rounded-xl text-[11px] font-bold bg-white border border-slate-200 text-slate-700 outline-none focus:ring-2 ring-primary/20 focus:border-primary cursor-pointer"
+                      >
+                        <option value="ALL">All Years</option>
+                        {availableYears.map((y) => (
+                          <option key={y} value={y}>{y}</option>
+                        ))}
+                      </select>
+                    </div>
+
+                    {/* Month selector */}
+                    <div className="space-y-1">
+                      <p className="text-[8px] font-black text-slate-400 tracking-widest ml-1">Month</p>
+                      <select
+                        value={monthFilter}
+                        onChange={(e) => setMonthFilter(e.target.value)}
+                        className="px-4 py-2.5 rounded-xl text-[11px] font-bold bg-white border border-slate-200 text-slate-700 outline-none focus:ring-2 ring-primary/20 focus:border-primary cursor-pointer"
+                      >
+                        <option value="ALL">All Months</option>
+                        {availableMonthsForYear.map((m) => (
+                          <option key={m} value={m}>{MONTHS[m]}</option>
+                        ))}
+                      </select>
+                    </div>
                   </div>
                 </div>
               )}
@@ -278,7 +288,7 @@ const AttendanceHistory: React.FC<{ user: User }> = ({ user }) => {
 
             {loading ? (
               <div className="py-20 text-center">
-                <i className="fas fa-circle-notch fa-spin text-primary text-2xl"></i>
+                <MiniLoader />
               </div>
             ) : Object.keys(byDate).length === 0 ? (
               <div className="py-32 text-center">

@@ -7,6 +7,7 @@ import { calculateCurrentLedger, isMonthPayable } from '../utils/feeCalculator';
 import { useReceipts } from '../hooks/useReceipts';
 import api from '../lib/api';
 import { showToast } from '../lib/swal';
+import MiniLoader from '../components/MiniLoader';
 
 const Payments: React.FC<{ user: User }> = ({ user }) => {
   const { paymentState, openPortal, closePortal, initiateRazorpay } = usePayments();
@@ -61,7 +62,7 @@ const Payments: React.FC<{ user: User }> = ({ user }) => {
 
   if (!student) return (
     <div className="p-20 text-center">
-       <i className="fas fa-circle-notch fa-spin text-primary text-2xl"></i>
+       <MiniLoader />
        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-4">Identifying Student Profile...</p>
     </div>
   );

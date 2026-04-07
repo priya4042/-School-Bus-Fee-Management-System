@@ -69,7 +69,11 @@ const SupportChat: React.FC<{ user: User }> = ({ user }) => {
             user_id: payload.new.user_id,
             is_from_admin: payload.new.title?.includes('[CHAT] Admin'),
           };
-          setMessages(prev => [...prev, msg]);
+          // Only add if not already in list (avoid duplicates from optimistic update)
+          setMessages(prev => {
+            if (prev.some(m => m.id === msg.id)) return prev;
+            return [...prev, msg];
+          });
           if (!isOpen && msg.is_from_admin) setUnread(prev => prev + 1);
         }
       })
@@ -102,26 +106,42 @@ const SupportChat: React.FC<{ user: User }> = ({ user }) => {
     setSending(true);
     setInput('');
 
+    const displayName = user.fullName || user.full_name || user.email || 'Parent';
+    const tempId = `temp-${Date.now()}`;
+
+    // Optimistic UI: show message immediately
+    const optimisticMsg: ChatMessage = {
+      id: tempId,
+      message: text,
+      title: `[CHAT] ${displayName}`,
+      created_at: new Date().toISOString(),
+      user_id: user.id,
+      is_from_admin: false,
+    };
+    setMessages(prev => [...prev, optimisticMsg]);
+
     try {
-      // Send to admin
+      // Save in parent's notifications (so parent sees their own message)
+      const { data: inserted } = await supabase.from('notifications').insert({
+        user_id: user.id,
+        title: `[CHAT] ${displayName}`,
+        message: text,
+        type: 'INFO',
+        is_read: true,
+      }).select('id').single();
+
+      // Update temp ID with real ID
+      if (inserted?.id) {
+        setMessages(prev => prev.map(m => m.id === tempId ? { ...m, id: inserted.id } : m));
+      }
+
+      // Also notify admin
       const { data: admins } = await supabase
         .from('profiles')
         .select('id')
         .in('role', ['ADMIN', 'SUPER_ADMIN'])
         .limit(1);
 
-      const displayName = user.fullName || user.full_name || user.email || 'Parent';
-
-      // Save in parent's notifications (so parent sees their own message)
-      await supabase.from('notifications').insert({
-        user_id: user.id,
-        title: `[CHAT] ${displayName}`,
-        message: text,
-        type: 'INFO',
-        is_read: true,
-      });
-
-      // Also notify admin
       if (admins?.[0]?.id) {
         await supabase.from('notifications').insert({
           user_id: admins[0].id,
@@ -132,6 +152,8 @@ const SupportChat: React.FC<{ user: User }> = ({ user }) => {
         });
       }
     } catch {
+      // Remove optimistic message on failure, restore input
+      setMessages(prev => prev.filter(m => m.id !== tempId));
       setInput(text);
     } finally {
       setSending(false);
@@ -149,21 +171,21 @@ const SupportChat: React.FC<{ user: User }> = ({ user }) => {
 
   return (
     <>
-      {/* Floating chat button - hidden when chat is open */}
-      {!isOpen && (
-        <button
-          onClick={() => setIsOpen(true)}
-          className="fixed right-4 z-[1500] w-14 h-14 bg-primary text-white rounded-full shadow-2xl shadow-primary/40 flex items-center justify-center hover:scale-110 transition-transform"
-          style={{ bottom: 'calc(env(safe-area-inset-bottom, 0px) + 1.5rem)' }}
-        >
-          <MessageCircle size={22} />
-          {unread > 0 && (
-            <span className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white text-[9px] font-black rounded-full flex items-center justify-center border-2 border-white">
-              {unread}
-            </span>
-          )}
-        </button>
-      )}
+      {/* Floating chat button */}
+      <button
+        onClick={() => setIsOpen(!isOpen)}
+        className={`fixed right-4 z-[1500] w-14 h-14 rounded-full shadow-2xl flex items-center justify-center hover:scale-110 transition-all ${
+          isOpen ? 'bg-slate-800 text-white shadow-slate-800/40' : 'bg-primary text-white shadow-primary/40'
+        }`}
+        style={{ bottom: 'calc(env(safe-area-inset-bottom, 0px) + 1.5rem)' }}
+      >
+        {isOpen ? <X size={22} /> : <MessageCircle size={22} />}
+        {unread > 0 && !isOpen && (
+          <span className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white text-[9px] font-black rounded-full flex items-center justify-center border-2 border-white">
+            {unread}
+          </span>
+        )}
+      </button>
 
       {/* Chat panel */}
       {isOpen && (
@@ -184,9 +206,6 @@ const SupportChat: React.FC<{ user: User }> = ({ user }) => {
                 </div>
               </div>
             </div>
-            <button onClick={() => setIsOpen(false)} className="text-slate-400 hover:text-white transition-colors">
-              <X size={18} />
-            </button>
           </div>
 
           {/* Messages */}

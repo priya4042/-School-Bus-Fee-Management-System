@@ -11,6 +11,7 @@ import { useReceipts } from '../hooks/useReceipts';
 import { showToast } from '../lib/swal';
 import GoogleMap from '../components/GoogleMap';
 import { supabase } from '../lib/supabase';
+import MiniLoader from '../components/MiniLoader';
 
 const ParentDashboard: React.FC<{ user: User }> = ({ user }) => {
   const { paymentState, openPortal, closePortal, initiateRazorpay } = usePayments();
@@ -63,7 +64,7 @@ const ParentDashboard: React.FC<{ user: User }> = ({ user }) => {
 
   if (loading) return (
      <div className="p-20 text-center">
-        <i className="fas fa-circle-notch fa-spin text-primary text-2xl"></i>
+        <MiniLoader />
      </div>
   );
 

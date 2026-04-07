@@ -3,6 +3,7 @@ import { Camera, AlertCircle, ShieldCheck } from 'lucide-react';
 import CameraFeed from '../components/Camera/CameraFeed';
 import { useBuses } from '../hooks/useBuses';
 import { supabase } from '../lib/supabase';
+import MiniLoader from '../components/MiniLoader';
 
 const BusCameraAdmin: React.FC = () => {
   const { buses } = useBuses();
@@ -59,7 +60,7 @@ const BusCameraAdmin: React.FC = () => {
 
       {loading ? (
         <div className="py-20 text-center">
-          <i className="fas fa-circle-notch fa-spin text-primary text-2xl"></i>
+          <MiniLoader />
           <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-4">Loading camera feeds...</p>
         </div>
       ) : (

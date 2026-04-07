@@ -3,6 +3,7 @@ import { User } from '../types';
 import { MONTHS } from '../constants';
 import { useReceipts } from '../hooks/useReceipts';
 import { supabase } from '../lib/supabase';
+import MiniLoader from '../components/MiniLoader';
 
 const Receipts: React.FC<{ user: User }> = ({ user }) => {
   const { downloadReceipt, downloading } = useReceipts();
@@ -118,7 +119,7 @@ const Receipts: React.FC<{ user: User }> = ({ user }) => {
         <div className="min-h-[300px]">
           {loading ? (
              <div className="p-20 text-center">
-                <i className="fas fa-circle-notch fa-spin text-primary text-2xl"></i>
+                <MiniLoader />
              </div>
           ) : payments.length > 0 ? (
             <>

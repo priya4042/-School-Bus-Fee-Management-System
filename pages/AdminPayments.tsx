@@ -3,6 +3,7 @@ import { supabase } from '../lib/supabase';
 import { calculateCurrentLedger } from '../utils/feeCalculator';
 import { MONTHS } from '../constants';
 import Reports from './Reports';
+import MiniLoader from '../components/MiniLoader';
 
 const AdminPayments: React.FC = () => {
   const [view, setView] = useState<'payments' | 'reports'>('payments');
@@ -193,7 +194,7 @@ const AdminPayments: React.FC = () => {
         <div className="overflow-x-auto">
           {loading ? (
             <div className="py-20 text-center">
-              <i className="fas fa-circle-notch fa-spin text-primary text-2xl"></i>
+              <MiniLoader />
               <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-4">Loading payments...</p>
             </div>
           ) : filteredPayments.length === 0 ? (

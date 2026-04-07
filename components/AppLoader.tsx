@@ -74,18 +74,12 @@ const AppLoader: React.FC = () => {
         </div>
 
         {/* Progress bar */}
-        <div className="w-52 space-y-3">
+        <div className="w-52">
           <div className="h-[3px] bg-white/5 rounded-full overflow-hidden">
             <div
               className="h-full rounded-full transition-all duration-500 ease-out bg-gradient-to-r from-primary via-blue-400 to-cyan-400"
               style={{ width: `${Math.min(progress, 95)}%` }}
             ></div>
-          </div>
-          <div className="flex items-center justify-center gap-1.5">
-            <div className="w-1.5 h-1.5 bg-primary rounded-full animate-pulse"></div>
-            <p className="text-[9px] font-bold text-slate-500 uppercase tracking-widest">
-              Initializing
-            </p>
           </div>
         </div>
       </div>

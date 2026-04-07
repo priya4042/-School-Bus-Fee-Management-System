@@ -7,6 +7,7 @@ import { useTracking } from '../hooks/useTracking';
 import { useBuses } from '../hooks/useBuses';
 import BusCameraModal from '../components/BusCameraModal';
 import GoogleMap from '../components/GoogleMap';
+import MiniLoader from '../components/MiniLoader';
 
 interface AdminDashboardProps {
   onOpenDocumentation?: () => void;
@@ -81,7 +82,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onOpenDocumentation }) 
   if (loading || !stats) {
     return (
       <div className="h-96 flex items-center justify-center">
-        <i className="fas fa-circle-notch fa-spin text-primary text-2xl"></i>
+        <MiniLoader />
       </div>
     );
   }

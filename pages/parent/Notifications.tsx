@@ -4,6 +4,7 @@ import { Bell, Info, AlertTriangle, CheckCircle2, Clock, Trash2, Mail, MessageSq
 import { supabase } from '../../lib/supabase';
 import { showToast } from '../../lib/swal';
 import { formatNotificationMessage } from '../../utils/notificationMessage';
+import MiniLoader from '../../components/MiniLoader';
 
 interface Notification {
   id: string;
@@ -182,7 +183,7 @@ const Notifications: React.FC<{ user: User; focusNotificationId?: string; onFocu
         <div className="lg:col-span-3 space-y-4">
           {loading && (
             <div className="py-20 text-center">
-              <i className="fas fa-circle-notch fa-spin text-primary text-2xl"></i>
+              <MiniLoader />
             </div>
           )}
 

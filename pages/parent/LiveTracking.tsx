@@ -3,6 +3,7 @@ import { User } from '../../types';
 import { supabase } from '../../lib/supabase';
 import { useTracking } from '../../hooks/useTracking';
 import GoogleMap from '../../components/GoogleMap';
+import MiniLoader from '../../components/MiniLoader';
 
 interface TrackingStudent {
   id: string;
@@ -62,7 +63,7 @@ const ParentLiveTracking: React.FC<{ user: User }> = ({ user }) => {
   if (loading) {
     return (
       <div className="py-20 text-center">
-        <i className="fas fa-circle-notch fa-spin text-primary text-2xl"></i>
+        <MiniLoader />
       </div>
     );
   }

@@ -77,12 +77,7 @@ const Sidebar: React.FC<SidebarProps> = ({ user, onLogout, activeTab, setActiveT
   const links = isAdmin ? adminLinks : isParent ? parentLinks : [];
 
   const handleTabClick = (name: string) => {
-    // Map special sub-items to their actual tab names
-    const tabMap: Record<string, string> = {
-      'Settings_lang': 'Settings',
-      'Support_faq': 'Support',
-    };
-    setActiveTab(tabMap[name] || name);
+    setActiveTab(name);
     if (onClose) onClose();
   };
 
@@ -92,8 +87,18 @@ const Sidebar: React.FC<SidebarProps> = ({ user, onLogout, activeTab, setActiveT
 
   const isChildActive = (item: NavItem) => {
     if (!item.children) return false;
-    return item.children.some((c) => c.name === activeTab || c.name.split('_')[0] === activeTab);
+    return item.children.some((c) => c.name === activeTab);
   };
+
+  // Auto-expand group when its child is active
+  React.useEffect(() => {
+    for (const item of links) {
+      if (item.children?.some((c) => c.name === activeTab)) {
+        setExpandedGroup(item.name);
+        return;
+      }
+    }
+  }, [activeTab]);
 
   const sidebarClasses = `
     fixed inset-y-0 left-0 z-[2000] w-[70vw] max-w-60 bg-slate-950 text-white flex flex-col transition-transform duration-300 lg:relative lg:w-60 lg:max-w-none lg:translate-x-0
@@ -118,7 +123,6 @@ const Sidebar: React.FC<SidebarProps> = ({ user, onLogout, activeTab, setActiveT
 
         {/* Navigation */}
         <nav className="flex-1 mt-1 px-2 lg:px-3 space-y-0.5 overflow-y-auto scrollbar-hide pb-3">
-          <p className="text-[7px] font-black text-slate-600 tracking-widest mb-2 ml-3">{t('main_portal')}</p>
           {links.map((item) => {
             const hasChildren = item.children && item.children.length > 0;
             const isExpanded = expandedGroup === item.name;
@@ -153,13 +157,12 @@ const Sidebar: React.FC<SidebarProps> = ({ user, onLogout, activeTab, setActiveT
                 {hasChildren && isExpanded && (
                   <div className="ml-5 mt-0.5 mb-1 space-y-0.5 border-l border-white/10 pl-3 animate-in fade-in slide-in-from-top-1 duration-200">
                     {item.children!.map((child) => {
-                      const childActive = activeTab === child.name || child.name.split('_')[0] === activeTab;
                       return (
                         <button
                           key={child.name}
                           onClick={() => handleTabClick(child.name)}
                           className={`w-full flex items-center gap-2 px-3 py-1.5 rounded-lg transition-all text-left ${
-                            childActive
+                            activeTab === child.name
                               ? 'bg-primary/20 text-primary'
                               : 'text-slate-500 hover:bg-white/5 hover:text-slate-300'
                           }`}

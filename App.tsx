@@ -43,6 +43,7 @@ import ParentNotifications from './pages/parent/Notifications';
 import ParentSettings from './pages/parent/Settings';
 import StudentProfile from './pages/parent/StudentProfile';
 import Support from './pages/parent/Support';
+import Receipts from './pages/Receipts';
 import AttendanceHistory from './pages/parent/AttendanceHistory';
 import ParentRoutes from './pages/parent/Routes';
 import ParentLiveTracking from './pages/parent/LiveTracking';
@@ -80,8 +81,10 @@ const getAllowedTabs = (user?: User | null) => {
       'Receipts',
       'Profile',
       'Settings',
+      'Settings_lang',
       'Student Profile',
       'Support',
+      'Support_faq',
     ];
   }
 
@@ -158,11 +161,13 @@ const App: React.FC = () => {
         case 'Payments': return <FeeHistory user={user!} />;
         case 'Fees': return <FeeHistory user={user!} />;
         case 'Notifications': return <ParentNotifications user={user!} focusNotificationId={selectedNotificationId} onFocusHandled={() => setSelectedNotificationId(undefined)} />;
-        case 'Receipts': return <FeeHistory user={user!} />;
+        case 'Receipts': return <Receipts user={user!} />;
         case 'Profile': return <Profile user={user!} />;
         case 'Settings': return <ParentSettings user={user!} />;
+        case 'Settings_lang': return <ParentSettings user={user!} />;
         case 'Student Profile': return <StudentProfile user={user!} />;
         case 'Support': return <Support user={user!} />;
+        case 'Support_faq': return <Support user={user!} />;
         default: return <ParentDashboard user={user!} />;
       }
     }

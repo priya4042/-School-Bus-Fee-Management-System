@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Camera, MapPin, Check, X, Shield, RefreshCw } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { showToast } from '../lib/swal';
+import MiniLoader from '../components/MiniLoader';
 
 const Permissions: React.FC = () => {
   const [parents, setParents] = useState<any[]>([]);
@@ -120,7 +121,7 @@ const Permissions: React.FC = () => {
       {/* Table */}
       {loading ? (
         <div className="py-20 text-center">
-          <i className="fas fa-circle-notch fa-spin text-primary text-2xl"></i>
+          <MiniLoader />
         </div>
       ) : parents.length === 0 ? (
         <div className="py-32 text-center bg-white rounded-[3rem] border border-slate-100 shadow-sm">

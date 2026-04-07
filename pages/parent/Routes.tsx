@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { User } from '../../types';
 import { supabase } from '../../lib/supabase';
+import MiniLoader from '../../components/MiniLoader';
 
 interface ParentRouteStudent {
   id: string;
@@ -50,7 +51,7 @@ const ParentRoutes: React.FC<{ user: User }> = ({ user }) => {
   if (loading) {
     return (
       <div className="py-20 text-center">
-        <i className="fas fa-circle-notch fa-spin text-primary text-2xl"></i>
+        <MiniLoader />
       </div>
     );
   }

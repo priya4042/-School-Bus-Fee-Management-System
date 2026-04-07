@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { User } from '../types';
 import api from '../lib/api';
 import { formatNotificationMessage } from '../utils/notificationMessage';
+import MiniLoader from '../components/MiniLoader';
 
 const Notifications: React.FC<{ user: User }> = ({ user }) => {
   const [notifications, setNotifications] = useState<any[]>([]);
@@ -47,7 +48,7 @@ const Notifications: React.FC<{ user: User }> = ({ user }) => {
       <div className="bg-white rounded-[2.5rem] border border-slate-200 shadow-sm overflow-hidden divide-y divide-slate-50">
         {loading ? (
           <div className="p-20 text-center">
-            <i className="fas fa-circle-notch fa-spin text-primary text-2xl"></i>
+            <MiniLoader />
           </div>
         ) : notifications.length > 0 ? (
           notifications.map((n) => (

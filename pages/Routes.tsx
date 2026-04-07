@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import Modal from '../components/Modal';
 import { useRoutes } from '../hooks/useRoutes';
 import { showToast, showLoading, closeSwal, showAlert, showConfirm } from '../lib/swal';
+import MiniLoader from '../components/MiniLoader';
 
 const Routes: React.FC = () => {
   const { routes, loading, addRoute, updateRoute, deleteRoute } = useRoutes();
@@ -96,7 +97,7 @@ const Routes: React.FC = () => {
         <div className="overflow-x-auto min-h-[300px]">
           {loading ? (
             <div className="p-20 text-center">
-               <i className="fas fa-circle-notch fa-spin text-primary text-2xl"></i>
+               <MiniLoader />
             </div>
           ) : routes.length > 0 ? (
             <table className="w-full text-left">
