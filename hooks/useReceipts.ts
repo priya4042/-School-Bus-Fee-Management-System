@@ -282,7 +282,265 @@ const generateReceiptPDF = (due: any) => {
   doc.text('This is a computer-generated invoice and does not require a physical signature.', margin, 285);
   doc.text(`Generated on ${new Date().toLocaleString('en-IN')} | Reference: ${due.id || 'N/A'}`, margin, 289);
 
-  doc.save(`Receipt_${txnId}.pdf`);
+  savePDF(doc, `Invoice_${txnId}.pdf`);
+};
+
+const generateCompactReceipt = (due: any) => {
+  const doc = new jsPDF({ orientation: 'p', unit: 'mm', format: [80, 200] });
+  const normalized = normalizeStudentInfo(due);
+  const student = normalized.student || {};
+  const txnId = due.transaction_id || due.id;
+  const paidDateTime = formatDateTime(due.paid_at || new Date().toISOString());
+  const receiptNo = `RCP-${String(txnId).slice(-8).toUpperCase()}`;
+  const totalPaid = Number(due.total_due || due.amount || 0);
+  const monthsCovered = extractReceiptMonths(due);
+  const w = 80;
+  const m = 6;
+
+  // Header
+  doc.setFillColor(30, 64, 175);
+  doc.rect(0, 0, w, 18, 'F');
+  doc.setTextColor(255, 255, 255);
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(10);
+  doc.text('School Bus WayPro', w / 2, 8, { align: 'center' });
+  doc.setFontSize(7);
+  doc.text('PAYMENT RECEIPT', w / 2, 14, { align: 'center' });
+
+  let y = 24;
+  doc.setTextColor(100, 116, 139);
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(7);
+  doc.text(`Receipt: ${receiptNo}`, m, y);
+  doc.text(`Date: ${paidDateTime}`, m, y + 4);
+
+  y += 12;
+  doc.setDrawColor(226, 232, 240);
+  doc.line(m, y, w - m, y);
+  y += 5;
+
+  doc.setTextColor(15, 23, 42);
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(7.5);
+  doc.text(String(student.full_name || 'Student'), m, y);
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(6.5);
+  doc.text(`Adm: ${student.admission_number || 'N/A'} | Class: ${student.grade || 'N/A'}-${student.section || 'N/A'}`, m, y + 4);
+
+  y += 12;
+  doc.line(m, y, w - m, y);
+  y += 5;
+
+  // Line items
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(6.5);
+  doc.text('ITEM', m, y);
+  doc.text('AMT', w - m, y, { align: 'right' });
+  y += 4;
+
+  doc.setFont('helvetica', 'normal');
+  monthsCovered.forEach((item: any) => {
+    doc.text(`Bus Fee - ${item.label}`, m, y);
+    doc.text(`Rs.${Number(item.amount || 0).toLocaleString('en-IN')}`, w - m, y, { align: 'right' });
+    y += 4;
+  });
+
+  y += 2;
+  doc.line(m, y, w - m, y);
+  y += 5;
+
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(9);
+  doc.text('TOTAL PAID', m, y);
+  doc.text(`Rs.${totalPaid.toLocaleString('en-IN')}`, w - m, y, { align: 'right' });
+
+  y += 8;
+  doc.setFillColor(34, 197, 94);
+  doc.roundedRect(m, y, w - m * 2, 8, 2, 2, 'F');
+  doc.setTextColor(255, 255, 255);
+  doc.setFontSize(7);
+  doc.text('PAID - VERIFIED', w / 2, y + 5.5, { align: 'center' });
+
+  y += 14;
+  doc.setTextColor(148, 163, 184);
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(5.5);
+  doc.text('Computer generated receipt.', w / 2, y, { align: 'center' });
+  doc.text('No signature required.', w / 2, y + 3.5, { align: 'center' });
+
+  savePDF(doc, `Receipt_${txnId}.pdf`);
+};
+
+const generateDetailedInvoice = (due: any) => {
+  const doc = new jsPDF({ orientation: 'p', unit: 'mm', format: 'a4' });
+  const normalized = normalizeStudentInfo(due);
+  const student = normalized.student || {};
+  const txnId = due.transaction_id || due.id;
+  const paidDateTime = formatDateTime(due.paid_at || new Date().toISOString());
+  const receiptNo = `INV-${String(txnId).slice(-8).toUpperCase()}`;
+  const paymentMethod = String(due.payment_method || due.method || 'ONLINE').toUpperCase();
+  const baseFee = Number(due.amount || 0);
+  const lateFee = Number(due.late_fee || 0);
+  const discount = Number(due.discount || 0);
+  const totalPaid = Number(due.total_due || due.amount || 0);
+  const monthsCovered = extractReceiptMonths(due);
+  const billingPeriod = due.billing_period_label || `${MONTHS[(due.month || 1) - 1]} ${due.year}`;
+  const margin = 14;
+  const pageWidth = 210;
+  const contentWidth = pageWidth - margin * 2;
+
+  // Elegant header with double line
+  doc.setFillColor(15, 23, 42);
+  doc.rect(0, 0, pageWidth, 36, 'F');
+  doc.setTextColor(255, 255, 255);
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(20);
+  doc.text('TAX INVOICE', margin, 16);
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(9);
+  doc.text('School Bus WayPro — Transport Fee Invoice', margin, 24);
+  doc.setFontSize(8);
+  doc.text(`Invoice No: ${receiptNo}`, pageWidth - margin, 16, { align: 'right' });
+  doc.text(`Date: ${paidDateTime}`, pageWidth - margin, 22, { align: 'right' });
+  doc.text(`Method: ${paymentMethod}`, pageWidth - margin, 28, { align: 'right' });
+
+  // Bill To & Ship To
+  let y = 46;
+  doc.setFillColor(248, 250, 252);
+  doc.roundedRect(margin, y, contentWidth / 2 - 4, 36, 2, 2, 'F');
+  doc.roundedRect(margin + contentWidth / 2 + 4, y, contentWidth / 2 - 4, 36, 2, 2, 'F');
+
+  doc.setTextColor(100, 116, 139);
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(7);
+  doc.text('BILL TO', margin + 4, y + 6);
+  doc.text('TRANSPORT DETAILS', margin + contentWidth / 2 + 8, y + 6);
+
+  doc.setTextColor(15, 23, 42);
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(8);
+  doc.text(String(student.full_name || 'Student'), margin + 4, y + 13);
+  doc.text(`Admission: ${student.admission_number || 'N/A'}`, margin + 4, y + 19);
+  doc.text(`Class: ${student.grade || 'N/A'} | Section: ${student.section || 'N/A'}`, margin + 4, y + 25);
+
+  doc.text(`Bus: ${normalized.busNumber || 'N/A'}`, margin + contentWidth / 2 + 8, y + 13);
+  doc.text(`Billing Period: ${billingPeriod}`, margin + contentWidth / 2 + 8, y + 19);
+  doc.text(`Months: ${monthsCovered.length}`, margin + contentWidth / 2 + 8, y + 25);
+
+  // Table
+  y = 90;
+  doc.setFillColor(15, 23, 42);
+  doc.rect(margin, y, contentWidth, 9, 'F');
+  doc.setTextColor(255, 255, 255);
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(7.5);
+  doc.text('SL', margin + 4, y + 6);
+  doc.text('DESCRIPTION', margin + 16, y + 6);
+  doc.text('PERIOD', margin + 100, y + 6);
+  doc.text('AMOUNT (Rs.)', pageWidth - margin - 4, y + 6, { align: 'right' });
+
+  y += 9;
+  doc.setTextColor(15, 23, 42);
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(8);
+
+  monthsCovered.forEach((item: any, idx: number) => {
+    if (idx % 2 === 0) {
+      doc.setFillColor(248, 250, 252);
+      doc.rect(margin, y, contentWidth, 7, 'F');
+    }
+    doc.text(String(idx + 1), margin + 4, y + 5);
+    doc.text('School Bus Transport Fee', margin + 16, y + 5);
+    doc.text(String(item.label), margin + 100, y + 5);
+    doc.setFont('helvetica', 'bold');
+    doc.text(Number(item.amount || 0).toLocaleString('en-IN'), pageWidth - margin - 4, y + 5, { align: 'right' });
+    doc.setFont('helvetica', 'normal');
+    y += 7;
+  });
+
+  doc.setDrawColor(226, 232, 240);
+  doc.rect(margin, 90, contentWidth, y - 90);
+
+  // Summary
+  y += 6;
+  const sumX = pageWidth - margin - 80;
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(8);
+  const summaryLines: [string, string][] = [
+    ['Subtotal (Base Fee)', `Rs. ${baseFee.toLocaleString('en-IN')}`],
+    ['Late Fee', `Rs. ${lateFee.toLocaleString('en-IN')}`],
+    ['Discount', `- Rs. ${discount.toLocaleString('en-IN')}`],
+  ];
+  summaryLines.forEach(([label, val]) => {
+    doc.setTextColor(100, 116, 139);
+    doc.text(label, sumX, y);
+    doc.setTextColor(15, 23, 42);
+    doc.text(val, pageWidth - margin - 4, y, { align: 'right' });
+    y += 6;
+  });
+
+  y += 2;
+  doc.setFillColor(15, 23, 42);
+  doc.roundedRect(sumX - 4, y, pageWidth - margin - sumX + 8, 12, 2, 2, 'F');
+  doc.setTextColor(255, 255, 255);
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(10);
+  doc.text('TOTAL PAID', sumX, y + 8);
+  doc.text(`Rs. ${totalPaid.toLocaleString('en-IN')}`, pageWidth - margin - 4, y + 8, { align: 'right' });
+
+  // Footer
+  y += 24;
+  doc.setFillColor(34, 197, 94);
+  doc.roundedRect(margin, y, 50, 8, 2, 2, 'F');
+  doc.setTextColor(255, 255, 255);
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(7);
+  doc.text('PAYMENT VERIFIED', margin + 25, y + 5.5, { align: 'center' });
+
+  doc.setTextColor(148, 163, 184);
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(7);
+  doc.text('This is a computer-generated tax invoice and does not require a physical signature.', margin, 280);
+  doc.text(`Generated on ${new Date().toLocaleString('en-IN')} | Txn: ${txnId}`, margin, 285);
+
+  savePDF(doc, `Invoice_${txnId}.pdf`);
+};
+
+const savePDF = (doc: any, fileName: string) => {
+  // Detect if running inside Capacitor WebView (Android/iOS)
+  const isCapacitor = !!(window as any).Capacitor?.isNativePlatform?.();
+
+  if (isCapacitor) {
+    // In Capacitor WebView, doc.save() often fails silently.
+    // Use data URI approach which works reliably on Android WebView.
+    try {
+      const pdfDataUri = doc.output('datauristring');
+
+      // Method 1: Open data URI directly (opens PDF viewer on most devices)
+      const opened = window.open(pdfDataUri, '_blank');
+
+      if (!opened) {
+        // Method 2: Create blob and use download link
+        const pdfBlob = doc.output('blob');
+        const blobUrl = URL.createObjectURL(pdfBlob);
+        const link = document.createElement('a');
+        link.href = blobUrl;
+        link.download = fileName;
+        link.style.display = 'none';
+        document.body.appendChild(link);
+        link.click();
+        setTimeout(() => {
+          document.body.removeChild(link);
+          URL.revokeObjectURL(blobUrl);
+        }, 5000);
+      }
+    } catch {
+      // Method 3: Last resort fallback
+      doc.save(fileName);
+    }
+  } else {
+    doc.save(fileName);
+  }
 };
 
 export const useReceipts = () => {
@@ -352,35 +610,39 @@ export const useReceipts = () => {
     return Promise.race([fetchPromise, timeoutPromise]) as Promise<any>;
   };
 
-  const downloadReceipt = async (paymentId: string | number, txnId?: string, dueSnapshot?: any) => {
+  const getGenerator = (format: 'pdf' | 'invoice' | 'receipt') => {
+    if (format === 'receipt') return generateCompactReceipt;
+    if (format === 'invoice') return generateDetailedInvoice;
+    return generateReceiptPDF;
+  };
+
+  const downloadReceipt = async (paymentId: string | number, txnId?: string, dueSnapshot?: any, format: 'pdf' | 'invoice' | 'receipt' = 'pdf') => {
     setDownloading(String(paymentId));
+    const generate = getGenerator(format);
     try {
-      // Generate immediately only when snapshot already has core student details.
       const immediateDue = normalizeDueShape(dueSnapshot, paymentId, txnId);
       if (immediateDue && hasCoreStudentFields(immediateDue)) {
-        generateReceiptPDF(immediateDue);
+        generate(immediateDue);
         return;
       }
 
-      // Fallback: short timed fetch for missing details.
       const result = await fetchDueWithTimeout(paymentId, txnId);
       const due = (result as any)?.data;
       const error = (result as any)?.error;
       if (error || !due) {
         const minimalDue = normalizeDueShape({ id: paymentId, transaction_id: txnId }, paymentId, txnId);
-        generateReceiptPDF(minimalDue);
+        generate(minimalDue);
         return;
       }
 
       const normalizedDue = Array.isArray(due)
         ? buildReceiptAggregate(due, paymentId, txnId)
         : normalizeDueShape(due, paymentId, txnId);
-      generateReceiptPDF(normalizedDue || immediateDue);
+      generate(normalizedDue || immediateDue);
     } catch (err: any) {
-      // Last-resort fallback still generates a receipt skeleton instantly.
       try {
         const minimalDue = normalizeDueShape({ id: paymentId, transaction_id: txnId }, paymentId, txnId);
-        generateReceiptPDF(minimalDue);
+        generate(minimalDue);
       } catch (fallbackErr) {
         console.error('Receipt download failed:', err, fallbackErr);
         showAlert('Receipt Error', err?.message || 'Could not generate receipt. Please try again.', 'error');

@@ -5,6 +5,7 @@ import { showToast } from '../lib/swal';
 import { useAuthStore } from '../store/authStore';
 import { otpService } from '../services/otpService';
 import { userService } from '../services/userService';
+import { useLanguage } from '../lib/i18n';
 
 interface RegisterProps {
   onRegister: (user: any) => void;
@@ -13,10 +14,12 @@ interface RegisterProps {
 }
 
 const Register: React.FC<RegisterProps> = ({ onRegister, onBackToLogin, initialRole }) => {
+  const { lang, setLang, t } = useLanguage();
   const [role, setRole] = useState<UserRole>(initialRole || UserRole.PARENT);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  
+  const [showLangPicker, setShowLangPicker] = useState(() => !localStorage.getItem('app_language'));
+
   const [regStep, setRegStep] = useState<'form' | 'success'>('form');
   const [isOtpSent, setIsOtpSent] = useState(false);
   const [otp, setOtp] = useState('');
@@ -203,6 +206,59 @@ const Register: React.FC<RegisterProps> = ({ onRegister, onBackToLogin, initialR
 
   const inputClass = "w-full px-5 py-4 rounded-xl bg-primary/5 border border-primary/20 outline-none font-bold text-sm transition-all focus:ring-4 focus:ring-primary/10 focus:border-primary text-slate-800 placeholder-slate-400";
   const adminInputClass = "w-full px-5 py-4 rounded-xl bg-slate-50 border border-slate-200 outline-none font-bold text-sm transition-all focus:ring-4 focus:ring-primary/10 focus:border-primary text-slate-800 placeholder-slate-400";
+
+  if (showLangPicker) {
+    return (
+      <div className="min-h-screen bg-slate-900 flex items-center justify-center p-6 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-primary/20 via-slate-900 to-black">
+        <div className="max-w-md w-full animate-in fade-in zoom-in duration-500">
+          <div className="text-center mb-10">
+            <div className="w-20 h-20 bg-primary rounded-3xl flex items-center justify-center mx-auto shadow-2xl border-2 border-white/10 mb-6">
+              <i className="fas fa-globe text-4xl text-white"></i>
+            </div>
+            <h1 className="text-3xl font-black text-white tracking-tighter uppercase">Choose Language</h1>
+            <p className="text-white/40 text-[10px] font-bold uppercase tracking-widest mt-3">भाषा चुनें • Select your preferred language</p>
+          </div>
+
+          <div className="bg-white rounded-[3rem] p-10 shadow-2xl space-y-4">
+            <button
+              onClick={() => { setLang('en'); setShowLangPicker(false); }}
+              className={`w-full p-6 rounded-2xl border-2 transition-all flex items-center gap-5 ${
+                lang === 'en' ? 'border-primary bg-primary/5 shadow-lg' : 'border-slate-100 hover:border-primary/30'
+              }`}
+            >
+              <span className="text-4xl">🇬🇧</span>
+              <div className="text-left flex-1">
+                <p className="font-black text-lg text-slate-800">English</p>
+                <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mt-1">Default language</p>
+              </div>
+              {lang === 'en' && <div className="w-6 h-6 bg-primary rounded-full flex items-center justify-center"><i className="fas fa-check text-white text-xs"></i></div>}
+            </button>
+
+            <button
+              onClick={() => { setLang('hi'); setShowLangPicker(false); }}
+              className={`w-full p-6 rounded-2xl border-2 transition-all flex items-center gap-5 ${
+                lang === 'hi' ? 'border-primary bg-primary/5 shadow-lg' : 'border-slate-100 hover:border-primary/30'
+              }`}
+            >
+              <span className="text-4xl">🇮🇳</span>
+              <div className="text-left flex-1">
+                <p className="font-black text-lg text-slate-800">हिन्दी</p>
+                <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mt-1">Hindi language</p>
+              </div>
+              {lang === 'hi' && <div className="w-6 h-6 bg-primary rounded-full flex items-center justify-center"><i className="fas fa-check text-white text-xs"></i></div>}
+            </button>
+
+            <button
+              onClick={() => setShowLangPicker(false)}
+              className="w-full mt-4 py-4 bg-slate-100 text-slate-500 rounded-2xl font-black uppercase text-[10px] tracking-widest hover:bg-slate-200 transition-all"
+            >
+              {t('cancel')}
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-slate-900 flex items-center justify-center p-6 bg-[radial-gradient(circle_at_bottom_right,_var(--tw-gradient-stops))] from-slate-800 via-slate-900 to-black overflow-y-auto">

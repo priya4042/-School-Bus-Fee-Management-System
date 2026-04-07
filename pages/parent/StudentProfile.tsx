@@ -515,10 +515,10 @@ const StudentProfile: React.FC<{ user: User }> = ({ user }) => {
             )}
           </div>
 
-          {/* Recent Attendance */}
+          {/* Recent Attendance - Last 10 records */}
           <div className="bg-white rounded-[3rem] p-10 shadow-sm border border-slate-100">
             <h3 className="text-xl font-black text-slate-900 tracking-tight uppercase mb-8">
-              Recent Attendance
+              Last 10 Attendance
             </h3>
             {recentAttendance.length === 0 ? (
               <p className="text-slate-400 font-bold text-[10px] uppercase tracking-widest text-center py-10">
@@ -526,7 +526,7 @@ const StudentProfile: React.FC<{ user: User }> = ({ user }) => {
               </p>
             ) : (
               <div className="space-y-4">
-                {recentAttendance.slice(0, 6).map((record) => (
+                {recentAttendance.slice(0, 10).map((record) => (
                   <div key={record.id} className="flex items-center justify-between p-4 bg-slate-50 rounded-2xl">
                     <div className="flex items-center gap-4">
                       <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${

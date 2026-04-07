@@ -57,10 +57,17 @@ const UserDirectory: React.FC = () => {
   });
 
   const getParentStudents = (parent: User) => {
-    return students.filter(s => 
-      (s.parent_phone === parent.phoneNumber) || 
-      (s.admission_number === parent.admissionNumber)
-    );
+    // Primary match by parent_id (most reliable)
+    const byParentId = students.filter(s => s.parent_id === parent.id);
+    if (byParentId.length > 0) return byParentId;
+
+    // Fallback: match by admission number only if no parent_id match
+    if (parent.admissionNumber) {
+      const byAdmission = students.filter(s => s.admission_number === parent.admissionNumber);
+      if (byAdmission.length > 0) return byAdmission;
+    }
+
+    return [];
   };
 
   const getBillingStatus = (studentId: string) => {
@@ -153,9 +160,13 @@ const UserDirectory: React.FC = () => {
                    <h3 className="text-2xl font-black text-slate-800 tracking-tighter uppercase">{selectedUser.fullName || selectedUser.full_name}</h3>
                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mt-1">{selectedUser.email}</p>
                 </div>
-                <div className="w-16 h-16 bg-white rounded-3xl flex items-center justify-center shadow-xl border border-primary/10">
-                   <i className="fas fa-home-user text-primary text-xl"></i>
-                </div>
+                <button
+                  onClick={() => setIsModalOpen(false)}
+                  className="w-16 h-16 bg-white rounded-3xl flex items-center justify-center shadow-xl border border-primary/10 hover:bg-primary hover:text-white transition-all group"
+                  title="Close"
+                >
+                   <i className="fas fa-home-user text-primary text-xl group-hover:text-white"></i>
+                </button>
              </div>
 
              {selectedUser.role === UserRole.PARENT ? (

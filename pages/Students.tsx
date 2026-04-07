@@ -14,6 +14,21 @@ const toMonthInputValue = (date: Date) => {
   return `${year}-${month}`;
 };
 
+const generateMonthOptions = () => {
+  const options: { value: string; label: string }[] = [];
+  const now = new Date();
+  const startYear = now.getFullYear() - 1;
+  for (let y = startYear; y <= startYear + 3; y++) {
+    for (let m = 1; m <= 12; m++) {
+      const value = `${y}-${String(m).padStart(2, '0')}`;
+      options.push({ value, label: `${MONTHS[m - 1]} ${y}` });
+    }
+  }
+  return options;
+};
+
+const monthOptions = generateMonthOptions();
+
 const getCurrentFinancialYearRange = () => {
   const now = new Date();
   const currentYear = now.getFullYear();
@@ -518,13 +533,16 @@ const Students: React.FC = () => {
                   {feeSetupData.billingMode === 'monthly' ? (
                     <div>
                       <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5 ml-1">Billing Month</label>
-                      <input
-                        type="month"
+                      <select
                         className={inputClass}
                         value={feeSetupData.monthlyPeriod}
                         onChange={(e) => setFeeSetupData({ ...feeSetupData, monthlyPeriod: e.target.value })}
                         required={feeSetupData.enabled}
-                      />
+                      >
+                        {monthOptions.map((opt) => (
+                          <option key={opt.value} value={opt.value}>{opt.label}</option>
+                        ))}
+                      </select>
                     </div>
                   ) : (
                   <div className="space-y-3">
@@ -545,23 +563,29 @@ const Students: React.FC = () => {
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div>
                         <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5 ml-1">Start Month</label>
-                        <input
-                          type="month"
+                        <select
                           className={inputClass}
                           value={feeSetupData.startPeriod}
                           onChange={(e) => setFeeSetupData({ ...feeSetupData, startPeriod: e.target.value })}
                           required={feeSetupData.enabled}
-                        />
+                        >
+                          {monthOptions.map((opt) => (
+                            <option key={opt.value} value={opt.value}>{opt.label}</option>
+                          ))}
+                        </select>
                       </div>
                       <div>
                         <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5 ml-1">End Month</label>
-                        <input
-                          type="month"
+                        <select
                           className={inputClass}
                           value={feeSetupData.endPeriod}
                           onChange={(e) => setFeeSetupData({ ...feeSetupData, endPeriod: e.target.value })}
                           required={feeSetupData.enabled}
-                        />
+                        >
+                          {monthOptions.map((opt) => (
+                            <option key={opt.value} value={opt.value}>{opt.label}</option>
+                          ))}
+                        </select>
                       </div>
                     </div>
                   </div>

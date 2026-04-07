@@ -7,9 +7,11 @@ import {
 import { useAuthStore } from '../../store/authStore';
 import { supabase } from '../../lib/supabase';
 import { showToast } from '../../lib/swal';
+import { useLanguage } from '../../lib/i18n';
 
 const Settings: React.FC<{ user: User }> = ({ user }) => {
   const { logout, setUser } = useAuthStore();
+  const { lang, setLang, t } = useLanguage();
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const [activeTab, setActiveTab] = useState('profile');
   const [saving, setSaving] = useState(false);
@@ -35,9 +37,9 @@ const Settings: React.FC<{ user: User }> = ({ user }) => {
   });
 
   const tabs = [
-    { id: 'profile', name: 'Profile', icon: <UserIcon size={20} /> },
-    { id: 'notifications', name: 'Alerts', icon: <Bell size={20} /> },
-    { id: 'security', name: 'Security', icon: <Shield size={20} /> },
+    { id: 'profile', name: t('profile'), icon: <UserIcon size={20} /> },
+    { id: 'security', name: 'Password Reset', icon: <Shield size={20} /> },
+    { id: 'language', name: t('language'), icon: <Globe size={20} /> },
   ];
 
   const handleSaveProfile = async () => {
@@ -196,9 +198,9 @@ const Settings: React.FC<{ user: User }> = ({ user }) => {
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
         <div>
-          <h1 className="text-4xl font-black text-slate-900 tracking-tight uppercase">Preferences</h1>
-          <p className="text-slate-500 font-bold uppercase text-[10px] tracking-widest mt-1">
-            Manage Account & System Settings
+          <h1 className="text-4xl font-black text-slate-900 tracking-tight">Settings</h1>
+          <p className="text-slate-500 font-bold text-[10px] tracking-widest mt-1">
+            Manage your account preferences
           </p>
         </div>
         <button
@@ -214,7 +216,7 @@ const Settings: React.FC<{ user: User }> = ({ user }) => {
         {/* Sidebar nav */}
         <div className="lg:col-span-1 space-y-6">
           <div className="bg-white rounded-[2.5rem] p-8 shadow-sm border border-slate-100">
-            <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-6">Navigation</h3>
+            <h3 className="text-[10px] font-black text-slate-400 tracking-widest mb-6">Navigation</h3>
             <div className="space-y-2">
               {tabs.map((tab) => (
                 <button
@@ -233,29 +235,6 @@ const Settings: React.FC<{ user: User }> = ({ user }) => {
             </div>
           </div>
 
-          <div className="bg-slate-950 rounded-[2.5rem] p-8 text-white shadow-2xl">
-            <h3 className="text-[10px] font-black text-white/40 uppercase tracking-widest mb-6">Support Hub</h3>
-            <div className="space-y-4">
-              <button className="w-full flex items-center justify-between p-4 bg-white/5 rounded-2xl border border-white/5 hover:bg-white/10 transition-all group">
-                <div className="flex items-center gap-4">
-                  <div className="w-10 h-10 bg-primary/20 text-primary rounded-xl flex items-center justify-center">
-                    <HelpCircle size={18} />
-                  </div>
-                  <span className="text-[9px] font-black uppercase tracking-widest">Help Center</span>
-                </div>
-                <ChevronRight size={14} className="text-white/20 group-hover:text-white transition-colors" />
-              </button>
-              <div className="flex items-center justify-between p-4 bg-white/5 rounded-2xl border border-white/5">
-                <div className="flex items-center gap-4">
-                  <div className="w-10 h-10 bg-emerald-500/20 text-emerald-500 rounded-xl flex items-center justify-center">
-                    <Globe size={18} />
-                  </div>
-                  <span className="text-[9px] font-black uppercase tracking-widest">Language</span>
-                </div>
-                <span className="text-[9px] font-black uppercase tracking-widest text-white/40">English</span>
-              </div>
-            </div>
-          </div>
         </div>
 
         {/* Content area */}
@@ -368,48 +347,10 @@ const Settings: React.FC<{ user: User }> = ({ user }) => {
             </div>
           )}
 
-          {/* Notifications Tab */}
-          {activeTab === 'notifications' && (
-            <div className="bg-white rounded-[3rem] p-10 shadow-sm border border-slate-100">
-              <h3 className="text-xl font-black text-slate-900 tracking-tight uppercase mb-10">Alert Preferences</h3>
-              <div className="space-y-6">
-                {[
-                  { key: 'push' as keyof UserPreferences, title: 'Push Notifications', desc: 'Receive real-time alerts on your mobile device', icon: <Smartphone /> },
-                  { key: 'email' as keyof UserPreferences, title: 'Email Summaries', desc: 'Weekly reports of student activity and fees', icon: <Mail /> },
-                  { key: 'sms' as keyof UserPreferences, title: 'SMS Alerts', desc: 'Critical alerts for bus delays and emergencies', icon: <MessageSquare /> },
-                ].map((item) => (
-                  <div key={item.key} className="flex items-center justify-between p-6 bg-slate-50 rounded-[2rem] border border-slate-100">
-                    <div className="flex items-center gap-6">
-                      <div className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center text-primary shadow-sm">
-                        {item.icon}
-                      </div>
-                      <div>
-                        <h4 className="text-sm font-black text-slate-800 uppercase tracking-tight">{item.title}</h4>
-                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">{item.desc}</p>
-                      </div>
-                    </div>
-                    <button
-                      onClick={() => handleSavePrefs(item.key, !prefs[item.key])}
-                      className={`w-12 h-6 rounded-full relative transition-colors duration-300 ${
-                        prefs[item.key] ? 'bg-primary' : 'bg-slate-200'
-                      }`}
-                    >
-                      <div
-                        className={`absolute top-1 w-4 h-4 bg-white rounded-full shadow-sm transition-all duration-300 ${
-                          prefs[item.key] ? 'right-1' : 'left-1'
-                        }`}
-                      ></div>
-                    </button>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* Security Tab */}
+          {/* Password Reset Tab */}
           {activeTab === 'security' && (
             <div className="bg-white rounded-[3rem] p-10 shadow-sm border border-slate-100">
-              <h3 className="text-xl font-black text-slate-900 tracking-tight uppercase mb-10">Change Password</h3>
+              <h3 className="text-xl font-black text-slate-900 tracking-tight mb-10">Password Reset</h3>
               <div className="space-y-6 max-w-md">
                 <div className="space-y-2">
                   <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-4">New Password</label>
@@ -461,6 +402,47 @@ const Settings: React.FC<{ user: User }> = ({ user }) => {
                 >
                   {changingPwd ? <i className="fas fa-circle-notch fa-spin"></i> : <Shield size={16} />}
                   {changingPwd ? 'Changing...' : 'Update Password'}
+                </button>
+              </div>
+            </div>
+          )}
+
+          {activeTab === 'language' && (
+            <div className="bg-white rounded-[3rem] p-10 shadow-sm border border-slate-100">
+              <h3 className="text-xl font-black text-slate-900 tracking-tight mb-4">{t('select_language')}</h3>
+              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-10">
+                {lang === 'hi' ? 'अपनी पसंदीदा भाषा चुनें' : 'Choose your preferred language'}
+              </p>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-lg">
+                <button
+                  onClick={() => setLang('en')}
+                  className={`p-6 rounded-2xl border-2 transition-all flex items-center gap-4 ${
+                    lang === 'en'
+                      ? 'border-primary bg-primary/5 shadow-lg shadow-primary/10'
+                      : 'border-slate-100 hover:border-slate-200'
+                  }`}
+                >
+                  <span className="text-2xl">🇬🇧</span>
+                  <div className="text-left">
+                    <p className="font-black text-sm text-slate-800">English</p>
+                    <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mt-1">Default</p>
+                  </div>
+                  {lang === 'en' && <Check size={18} className="ml-auto text-primary" />}
+                </button>
+                <button
+                  onClick={() => setLang('hi')}
+                  className={`p-6 rounded-2xl border-2 transition-all flex items-center gap-4 ${
+                    lang === 'hi'
+                      ? 'border-primary bg-primary/5 shadow-lg shadow-primary/10'
+                      : 'border-slate-100 hover:border-slate-200'
+                  }`}
+                >
+                  <span className="text-2xl">🇮🇳</span>
+                  <div className="text-left">
+                    <p className="font-black text-sm text-slate-800">हिन्दी</p>
+                    <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mt-1">Hindi</p>
+                  </div>
+                  {lang === 'hi' && <Check size={18} className="ml-auto text-primary" />}
                 </button>
               </div>
             </div>

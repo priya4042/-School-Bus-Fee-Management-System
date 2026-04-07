@@ -12,12 +12,16 @@ interface AttendanceRecord {
   created_at: string;
 }
 
+const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+
 const AttendanceHistory: React.FC<{ user: User }> = ({ user }) => {
   const [students, setStudents] = useState<Student[]>([]);
   const [selectedStudentId, setSelectedStudentId] = useState<string>('');
   const [records, setRecords] = useState<AttendanceRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [typeFilter, setTypeFilter] = useState<'ALL' | 'PICKUP' | 'DROP'>('ALL');
+  const [monthFilter, setMonthFilter] = useState<string>('ALL');
+  const [showMonthFilter, setShowMonthFilter] = useState(false);
 
   // Fetch parent's students
   useEffect(() => {
@@ -55,8 +59,20 @@ const AttendanceHistory: React.FC<{ user: User }> = ({ user }) => {
     fetchAttendance();
   }, [selectedStudentId]);
 
-  const filteredRecords =
-    typeFilter === 'ALL' ? records : records.filter((r) => r.type === typeFilter);
+  const availableMonths = Array.from(new Set(records.map((r) => {
+    const d = new Date(r.date);
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+  }))).sort().reverse();
+
+  const filteredRecords = records.filter((r) => {
+    if (typeFilter !== 'ALL' && r.type !== typeFilter) return false;
+    if (monthFilter !== 'ALL') {
+      const d = new Date(r.date);
+      const recordMonth = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+      if (recordMonth !== monthFilter) return false;
+    }
+    return true;
+  });
 
   const stats = {
     totalPresent: records.filter((r) => r.status).length,
@@ -183,25 +199,81 @@ const AttendanceHistory: React.FC<{ user: User }> = ({ user }) => {
 
           {/* Filter + Records */}
           <div className="bg-white rounded-[3rem] shadow-sm border border-slate-100 overflow-hidden">
-            <div className="p-8 border-b border-slate-50 flex items-center gap-4">
-              <div className="w-10 h-10 bg-slate-50 rounded-2xl flex items-center justify-center text-slate-400">
-                <Filter size={18} />
-              </div>
-              <div className="flex gap-2">
-                {(['ALL', 'PICKUP', 'DROP'] as const).map((f) => (
+            <div className="p-6 md:p-8 border-b border-slate-50 space-y-4">
+              <div className="flex items-center gap-4">
+                <div className="relative">
                   <button
-                    key={f}
-                    onClick={() => setTypeFilter(f)}
-                    className={`px-5 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${
-                      typeFilter === f
-                        ? 'bg-primary text-white shadow-lg shadow-primary/20'
-                        : 'text-slate-400 hover:bg-slate-100'
+                    onClick={() => setShowMonthFilter(!showMonthFilter)}
+                    className={`w-10 h-10 rounded-2xl flex items-center justify-center transition-all ${
+                      monthFilter !== 'ALL' ? 'bg-primary text-white' : 'bg-slate-50 text-slate-400 hover:bg-slate-100'
                     }`}
                   >
-                    {f}
+                    <Filter size={18} />
                   </button>
-                ))}
+                  {monthFilter !== 'ALL' && (
+                    <span className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 rounded-full text-[7px] text-white font-black flex items-center justify-center">1</span>
+                  )}
+                </div>
+                <div className="flex gap-2">
+                  {(['ALL', 'PICKUP', 'DROP'] as const).map((f) => (
+                    <button
+                      key={f}
+                      onClick={() => setTypeFilter(f)}
+                      className={`px-5 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${
+                        typeFilter === f
+                          ? 'bg-primary text-white shadow-lg shadow-primary/20'
+                          : 'text-slate-400 hover:bg-slate-100'
+                      }`}
+                    >
+                      {f}
+                    </button>
+                  ))}
+                </div>
               </div>
+
+              {showMonthFilter && (
+                <div className="bg-slate-50 rounded-2xl p-4 animate-in fade-in slide-in-from-top-2 duration-200">
+                  <div className="flex items-center justify-between mb-3">
+                    <p className="text-[9px] font-black text-slate-500 tracking-widest">Filter by Month</p>
+                    {monthFilter !== 'ALL' && (
+                      <button
+                        onClick={() => setMonthFilter('ALL')}
+                        className="text-[9px] font-black text-primary tracking-widest hover:underline"
+                      >
+                        Clear
+                      </button>
+                    )}
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    <button
+                      onClick={() => setMonthFilter('ALL')}
+                      className={`px-4 py-2 rounded-xl text-[9px] font-black tracking-widest transition-all ${
+                        monthFilter === 'ALL' ? 'bg-primary text-white' : 'bg-white text-slate-500 border border-slate-200 hover:border-primary/30'
+                      }`}
+                    >
+                      All Months
+                    </button>
+                    {availableMonths.map((m) => {
+                      const [y, mo] = m.split('-');
+                      const label = `${MONTHS[parseInt(mo) - 1]?.slice(0, 3)} ${y}`;
+                      return (
+                        <button
+                          key={m}
+                          onClick={() => setMonthFilter(m)}
+                          className={`px-4 py-2 rounded-xl text-[9px] font-black tracking-widest transition-all ${
+                            monthFilter === m ? 'bg-primary text-white' : 'bg-white text-slate-500 border border-slate-200 hover:border-primary/30'
+                          }`}
+                        >
+                          {label}
+                        </button>
+                      );
+                    })}
+                    {availableMonths.length === 0 && (
+                      <p className="text-[9px] text-slate-400 font-bold py-2">No data available</p>
+                    )}
+                  </div>
+                </div>
+              )}
             </div>
 
             {loading ? (

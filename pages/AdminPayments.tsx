@@ -130,30 +130,30 @@ const AdminPayments: React.FC = () => {
         <>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-4">
-        <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm">
-          <p className="text-slate-500 font-black uppercase text-[9px] tracking-widest mb-2">Total Dues</p>
-          <p className="text-3xl font-black text-slate-800">{stats.totalDues}</p>
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 md:gap-4">
+        <div className="bg-white rounded-2xl border border-slate-200 p-4 md:p-6 shadow-sm">
+          <p className="text-slate-500 font-black uppercase text-[8px] md:text-[9px] tracking-widest mb-1 md:mb-2">Total Dues</p>
+          <p className="text-2xl md:text-3xl font-black text-slate-800">{stats.totalDues}</p>
         </div>
-        <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm">
-          <p className="text-slate-500 font-black uppercase text-[9px] tracking-widest mb-2">Paid</p>
-          <p className="text-3xl font-black text-success">{stats.totalPaid}</p>
+        <div className="bg-white rounded-2xl border border-slate-200 p-4 md:p-6 shadow-sm">
+          <p className="text-slate-500 font-black uppercase text-[8px] md:text-[9px] tracking-widest mb-1 md:mb-2">Paid</p>
+          <p className="text-2xl md:text-3xl font-black text-success">{stats.totalPaid}</p>
         </div>
-        <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm">
-          <p className="text-slate-500 font-black uppercase text-[9px] tracking-widest mb-2">Pending</p>
-          <p className="text-3xl font-black text-amber-600">{stats.totalPending}</p>
+        <div className="bg-white rounded-2xl border border-slate-200 p-4 md:p-6 shadow-sm">
+          <p className="text-slate-500 font-black uppercase text-[8px] md:text-[9px] tracking-widest mb-1 md:mb-2">Pending</p>
+          <p className="text-2xl md:text-3xl font-black text-amber-600">{stats.totalPending}</p>
         </div>
-        <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm">
-          <p className="text-slate-500 font-black uppercase text-[9px] tracking-widest mb-2">Overdue</p>
-          <p className="text-3xl font-black text-danger">{stats.totalOverdue}</p>
+        <div className="bg-white rounded-2xl border border-slate-200 p-4 md:p-6 shadow-sm">
+          <p className="text-slate-500 font-black uppercase text-[8px] md:text-[9px] tracking-widest mb-1 md:mb-2">Overdue</p>
+          <p className="text-2xl md:text-3xl font-black text-danger">{stats.totalOverdue}</p>
         </div>
-        <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm">
-          <p className="text-slate-500 font-black uppercase text-[9px] tracking-widest mb-2">Future</p>
-          <p className="text-3xl font-black text-slate-500">{stats.totalFuture}</p>
+        <div className="bg-white rounded-2xl border border-slate-200 p-4 md:p-6 shadow-sm">
+          <p className="text-slate-500 font-black uppercase text-[8px] md:text-[9px] tracking-widest mb-1 md:mb-2">Future</p>
+          <p className="text-2xl md:text-3xl font-black text-slate-500">{stats.totalFuture}</p>
         </div>
-        <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm">
-          <p className="text-slate-500 font-black uppercase text-[9px] tracking-widest mb-2">Total Revenue</p>
-          <p className="text-2xl font-black text-primary">₹{(stats.totalRevenue / 100000).toFixed(1)}L</p>
+        <div className="bg-white rounded-2xl border border-slate-200 p-4 md:p-6 shadow-sm col-span-2 md:col-span-1">
+          <p className="text-slate-500 font-black uppercase text-[8px] md:text-[9px] tracking-widest mb-1 md:mb-2">Total Revenue</p>
+          <p className="text-2xl md:text-3xl font-black text-primary">₹{(stats.totalRevenue / 100000).toFixed(1)}L</p>
         </div>
       </div>
 
@@ -246,7 +246,22 @@ const AdminPayments: React.FC = () => {
                       </span>
                     </td>
                     <td className="px-8 py-6">
-                      <p className="text-[10px] text-slate-500 uppercase tracking-widest">{payment.paid_at || payment.due_date}</p>
+                      {(payment.paid_at || payment.due_date) ? (
+                        <div>
+                          <p className="text-[11px] font-bold text-slate-700">
+                            {new Date(payment.paid_at || payment.due_date).toLocaleDateString('en-IN', {
+                              day: '2-digit', month: 'short', year: 'numeric'
+                            })}
+                          </p>
+                          <p className="text-[9px] text-slate-400 mt-0.5">
+                            {new Date(payment.paid_at || payment.due_date).toLocaleTimeString('en-IN', {
+                              hour: '2-digit', minute: '2-digit', hour12: true
+                            })}
+                          </p>
+                        </div>
+                      ) : (
+                        <p className="text-[10px] text-slate-400">—</p>
+                      )}
                     </td>
                   </tr>
                 ))}

@@ -5,6 +5,7 @@ import { ARRIVAL_EVENT, PAYMENT_EVENT } from '../lib/telemetry';
 import { showToast } from '../lib/swal';
 import { supabase } from '../lib/supabase';
 import { formatNotificationMessage } from '../utils/notificationMessage';
+import { useLanguage } from '../lib/i18n';
 
 interface TopbarProps {
   user: User;
@@ -15,6 +16,7 @@ interface TopbarProps {
 
 const Topbar: React.FC<TopbarProps> = ({ user, onMenuClick, onOpenNotifications, onNavigateTab }) => {
   const { setUser } = useAuthStore();
+  const { lang, setLang, t } = useLanguage();
   const [showNotifications, setShowNotifications] = useState(false);
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [notifications, setNotifications] = useState<Notification[]>([]);
@@ -169,14 +171,14 @@ const Topbar: React.FC<TopbarProps> = ({ user, onMenuClick, onOpenNotifications,
   };
 
   return (
-    <header className="h-20 bg-white/80 backdrop-blur-md border-b border-slate-100 px-6 md:px-10 flex items-center justify-between sticky top-0 z-[1001]">
+    <header className="bg-white/80 backdrop-blur-md border-b border-slate-100 px-4 md:px-10 flex items-center justify-between sticky top-0 z-[1001]" style={{ paddingTop: 'calc(env(safe-area-inset-top, 0px) + 0.5rem)', paddingBottom: '0.5rem', minHeight: 'calc(env(safe-area-inset-top, 0px) + 3.5rem)' }}>
       <div className="flex items-center gap-6">
         <button onClick={onMenuClick} className="p-2 text-slate-600 hover:bg-slate-100 rounded-xl lg:hidden transition-colors">
           <i className="fas fa-bars"></i>
         </button>
         <div className="hidden md:flex items-center gap-3">
           <div className="w-2 h-2 bg-success rounded-full animate-pulse"></div>
-          <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Global Fleet Link • Online</span>
+          <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{t('global_fleet')} • {t('online')}</span>
         </div>
       </div>
 
@@ -195,9 +197,9 @@ const Topbar: React.FC<TopbarProps> = ({ user, onMenuClick, onOpenNotifications,
           </button>
           
           {showNotifications && (
-            <div ref={modalRef} className="absolute right-0 mt-4 w-96 bg-white border border-slate-100 rounded-3xl shadow-2xl z-50 animate-in fade-in slide-in-from-top-4 overflow-hidden">
+            <div ref={modalRef} className="absolute right-0 mt-4 w-[calc(100vw-2rem)] sm:w-96 max-w-[24rem] bg-white border border-slate-100 rounded-3xl shadow-2xl z-50 animate-in fade-in slide-in-from-top-4 overflow-hidden">
               <div className="p-6 border-b border-slate-50 flex justify-between items-center bg-slate-50/50">
-                <span className="text-[10px] font-black text-slate-800 uppercase tracking-widest">Alert Center</span>
+                <span className="text-[10px] font-black text-slate-800 uppercase tracking-widest">{t('alert_center')}</span>
                 <button onClick={async () => {
                   const unreadIds = notifications.filter(n => !n.read).map(n => n.id);
                   if (unreadIds.length === 0) return;
@@ -209,7 +211,7 @@ const Topbar: React.FC<TopbarProps> = ({ user, onMenuClick, onOpenNotifications,
                   if (!error) {
                     setNotifications(prev => prev.map(n => ({ ...n, read: true, is_read: true })));
                   }
-                }} className="text-[8px] font-black text-primary uppercase tracking-widest">Mark All Read</button>
+                }} className="text-[8px] font-black text-primary uppercase tracking-widest">{t('mark_all_read')}</button>
               </div>
               <div className="max-h-[400px] overflow-y-auto scrollbar-hide divide-y divide-slate-50">
                 {notifications.length > 0 ? notifications.map((n) => (
@@ -233,7 +235,7 @@ const Topbar: React.FC<TopbarProps> = ({ user, onMenuClick, onOpenNotifications,
                     </div>
                   </div>
                 )) : (
-                  <div className="p-10 text-center text-slate-400 font-bold text-xs uppercase tracking-widest">No Alerts</div>
+                  <div className="p-10 text-center text-slate-400 font-bold text-xs uppercase tracking-widest">{t('no_alerts')}</div>
                 )}
               </div>
             </div>
@@ -256,21 +258,56 @@ const Topbar: React.FC<TopbarProps> = ({ user, onMenuClick, onOpenNotifications,
             {getDisplayName().charAt(0)}
           </button>
           {showUserMenu && (
-            <div className="absolute right-0 top-14 md:top-16 w-56 bg-white rounded-2xl border border-slate-100 shadow-2xl p-2 z-50">
+            <div className="absolute right-0 top-14 md:top-16 w-64 bg-white rounded-2xl border border-slate-100 shadow-2xl p-2 z-50">
               {user?.role === UserRole.PARENT && (
                 <button
                   onClick={() => handleNavigate('Profile')}
-                  className="w-full text-left px-4 py-3 rounded-xl hover:bg-slate-50 text-[11px] font-black uppercase tracking-widest text-slate-700"
+                  className="w-full text-left px-4 py-3 rounded-xl hover:bg-slate-50 text-[11px] font-black uppercase tracking-widest text-slate-700 flex items-center gap-3"
                 >
-                  My Profile
+                  <i className="fas fa-user w-4 text-primary"></i>
+                  {t('profile')}
                 </button>
               )}
               <button
                 onClick={() => handleNavigate('Notifications')}
-                className="w-full text-left px-4 py-3 rounded-xl hover:bg-slate-50 text-[11px] font-black uppercase tracking-widest text-slate-700"
+                className="w-full text-left px-4 py-3 rounded-xl hover:bg-slate-50 text-[11px] font-black uppercase tracking-widest text-slate-700 flex items-center gap-3"
               >
-                Notifications
+                <i className="fas fa-bell w-4 text-primary"></i>
+                {t('notifications')}
               </button>
+              <button
+                onClick={() => handleNavigate('Settings')}
+                className="w-full text-left px-4 py-3 rounded-xl hover:bg-slate-50 text-[11px] font-black uppercase tracking-widest text-slate-700 flex items-center gap-3"
+              >
+                <i className="fas fa-cog w-4 text-primary"></i>
+                {t('settings')}
+              </button>
+              <div className="my-1 border-t border-slate-100"></div>
+              <div className="px-4 py-2">
+                <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-2">{t('language')}</p>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => { setLang('en'); setShowUserMenu(false); }}
+                    className={`flex-1 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${
+                      lang === 'en'
+                        ? 'bg-primary text-white shadow-md'
+                        : 'bg-slate-50 text-slate-500 hover:bg-slate-100'
+                    }`}
+                  >
+                    🇬🇧 EN
+                  </button>
+                  <button
+                    onClick={() => { setLang('hi'); setShowUserMenu(false); }}
+                    className={`flex-1 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${
+                      lang === 'hi'
+                        ? 'bg-primary text-white shadow-md'
+                        : 'bg-slate-50 text-slate-500 hover:bg-slate-100'
+                    }`}
+                  >
+                    🇮🇳 हिं
+                  </button>
+                </div>
+              </div>
             </div>
           )}
         </div>

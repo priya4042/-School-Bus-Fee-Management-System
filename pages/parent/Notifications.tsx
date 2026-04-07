@@ -175,12 +175,6 @@ const Notifications: React.FC<{ user: User; focusNotificationId?: string; onFocu
                 </div>
                 <span className="text-[9px] font-black uppercase tracking-widest">Email Admin</span>
               </a>
-              <button className="w-full flex items-center gap-4 p-4 bg-white/5 rounded-2xl border border-white/5 hover:bg-white/10 transition-all">
-                <div className="w-10 h-10 bg-emerald-500/20 text-emerald-500 rounded-xl flex items-center justify-center">
-                  <MessageSquare size={18} />
-                </div>
-                <span className="text-[9px] font-black uppercase tracking-widest">Support Chat</span>
-              </button>
             </div>
           </div>
         </div>

@@ -22,6 +22,8 @@ import LiveTracking from './pages/LiveTracking';
 import Documentation from './pages/Documentation';
 import Sidebar from './components/Sidebar';
 import Topbar from './components/Topbar';
+import SupportChat from './components/SupportChat';
+import AppLoader from './components/AppLoader';
 import { useAuthStore } from './store/authStore';
 import { isSupabaseConfigured } from './lib/supabase';
 
@@ -79,7 +81,6 @@ const getAllowedTabs = (user?: User | null) => {
       'Profile',
       'Settings',
       'Student Profile',
-      'Documentation',
       'Support',
     ];
   }
@@ -167,8 +168,7 @@ const App: React.FC = () => {
         case 'Profile': return <Profile user={user!} />;
         case 'Settings': return <ParentSettings user={user!} />;
         case 'Student Profile': return <StudentProfile user={user!} />;
-        case 'Documentation': return <Documentation />;
-        case 'Support': return <Support user={user!} onOpenDocumentation={() => setActiveTab('Documentation')} />;
+        case 'Support': return <Support user={user!} />;
         default: return <ParentDashboard user={user!} />;
       }
     }
@@ -192,14 +192,7 @@ const App: React.FC = () => {
         if (path === '/forgot-password') return <ForgotPassword />;
 
         if (!initialized) {
-          return (
-            <div className="min-h-screen flex items-center justify-center bg-slate-950">
-              <div className="flex flex-col items-center gap-6">
-                <div className="w-16 h-16 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
-                <p className="text-slate-500 font-black text-[10px] uppercase tracking-[0.4em]">Initializing School Bus WayPro Hub</p>
-              </div>
-            </div>
-          );
+          return <AppLoader />;
         }
 
         if (!user) {
@@ -210,7 +203,7 @@ const App: React.FC = () => {
         }
 
         return (
-          <div className="flex min-h-screen bg-slate-50 font-sans">
+          <div className="flex min-h-screen min-h-[100dvh] bg-slate-50 font-sans">
             <Sidebar 
               user={user} 
               onLogout={logout} 
@@ -235,6 +228,7 @@ const App: React.FC = () => {
                 </div>
               </main>
             </div>
+            <SupportChat user={user} />
           </div>
         );
       })()}

@@ -70,53 +70,58 @@ const ParentRoutes: React.FC<{ user: User }> = ({ user }) => {
   return (
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-700">
       <div>
-        <h1 className="text-4xl font-black text-slate-900 tracking-tight uppercase">Child Route Details</h1>
-        <p className="text-slate-500 font-bold uppercase text-[10px] tracking-widest mt-1">Only routes assigned to your children are shown</p>
+        <h1 className="text-2xl md:text-4xl font-black text-slate-900 tracking-tight">Child Route Details</h1>
+        <p className="text-slate-500 font-bold text-[10px] tracking-widest mt-1">Only routes assigned to your children are shown</p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
         {students.map((student: any) => {
           const route = student.routes;
           const bus = student.buses;
 
           return (
-            <div key={student.id} className="bg-white rounded-[2.5rem] border border-slate-100 shadow-sm p-8 space-y-5">
-              <div>
-                <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Student</p>
-                <h3 className="text-lg font-black text-slate-900 uppercase tracking-tight">{student.full_name}</h3>
-                <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mt-1">Admission #{student.admission_number}</p>
+            <div key={student.id} className="bg-white rounded-2xl md:rounded-[2.5rem] border border-slate-100 shadow-sm p-5 md:p-8 space-y-4 md:space-y-5">
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 bg-primary/10 rounded-2xl flex items-center justify-center text-primary font-black text-lg flex-shrink-0">
+                  {student.full_name?.charAt(0)}
+                </div>
+                <div className="min-w-0">
+                  <p className="text-[8px] font-black text-slate-400 tracking-widest">Student</p>
+                  <h3 className="text-base md:text-lg font-black text-slate-900 tracking-tight truncate">{student.full_name}</h3>
+                  <p className="text-[9px] font-bold text-slate-400 tracking-widest">Admission #{student.admission_number}</p>
+                </div>
               </div>
 
-              <div className="grid grid-cols-1 gap-4">
-                <div className="p-4 bg-slate-50 rounded-2xl border border-slate-100">
-                  <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1">Route Name</p>
-                  <p className="text-sm font-black text-slate-800 uppercase">{route?.route_name || 'Not Assigned'}</p>
+              <div className="grid grid-cols-1 gap-3">
+                <div className="p-3 md:p-4 bg-slate-50 rounded-xl md:rounded-2xl border border-slate-100">
+                  <p className="text-[8px] font-black text-slate-400 tracking-widest mb-1">Route Name</p>
+                  <p className="text-sm font-black text-slate-800">{route?.route_name || 'Not Assigned'}</p>
                 </div>
 
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="p-4 bg-slate-50 rounded-2xl border border-slate-100">
-                    <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1">Start</p>
+                <div className="grid grid-cols-2 gap-2 md:gap-3">
+                  <div className="p-3 md:p-4 bg-slate-50 rounded-xl md:rounded-2xl border border-slate-100">
+                    <p className="text-[8px] font-black text-slate-400 tracking-widest mb-1">Start</p>
                     <p className="text-xs font-bold text-slate-700">{route?.start_point || 'N/A'}</p>
                   </div>
-                  <div className="p-4 bg-slate-50 rounded-2xl border border-slate-100">
-                    <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1">End</p>
+                  <div className="p-3 md:p-4 bg-slate-50 rounded-xl md:rounded-2xl border border-slate-100">
+                    <p className="text-[8px] font-black text-slate-400 tracking-widest mb-1">End</p>
                     <p className="text-xs font-bold text-slate-700">{route?.end_point || 'N/A'}</p>
                   </div>
                 </div>
 
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="p-4 bg-slate-50 rounded-2xl border border-slate-100">
-                    <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1">Bus</p>
-                    <p className="text-xs font-bold text-slate-700 uppercase">{bus?.bus_number || 'N/A'}</p>
+                <div className="grid grid-cols-2 gap-2 md:gap-3">
+                  <div className="p-3 md:p-4 bg-slate-50 rounded-xl md:rounded-2xl border border-slate-100">
+                    <p className="text-[8px] font-black text-slate-400 tracking-widest mb-1">Bus</p>
+                    <p className="text-xs font-bold text-slate-700">{bus?.bus_number || 'N/A'}</p>
                   </div>
-                  <div className="p-4 bg-slate-50 rounded-2xl border border-slate-100">
-                    <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1">Plate</p>
-                    <p className="text-xs font-bold text-slate-700 uppercase">{bus?.plate || 'N/A'}</p>
+                  <div className="p-3 md:p-4 bg-slate-50 rounded-xl md:rounded-2xl border border-slate-100">
+                    <p className="text-[8px] font-black text-slate-400 tracking-widest mb-1">Plate</p>
+                    <p className="text-xs font-bold text-slate-700">{bus?.plate || 'N/A'}</p>
                   </div>
                 </div>
 
-                <div className="p-4 bg-blue-50 rounded-2xl border border-blue-100">
-                  <p className="text-[8px] font-black text-blue-400 uppercase tracking-widest mb-1">Boarding Point</p>
+                <div className="p-3 md:p-4 bg-blue-50 rounded-xl md:rounded-2xl border border-blue-100">
+                  <p className="text-[8px] font-black text-blue-400 tracking-widest mb-1">Boarding Point</p>
                   <p className="text-xs font-bold text-blue-800">{student.boarding_point || 'Not Set'}</p>
                 </div>
               </div>

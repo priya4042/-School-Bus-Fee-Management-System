@@ -351,20 +351,6 @@ const Support: React.FC<{ user: User; onOpenDocumentation?: () => void }> = ({ u
 
       {/* Quick links */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-        {onOpenDocumentation && (
-          <button
-            onClick={onOpenDocumentation}
-            className="bg-white p-6 rounded-[2rem] border border-primary/20 shadow-sm flex items-center justify-between group hover:bg-primary/5 transition-all"
-          >
-            <div className="flex items-center gap-4">
-              <div className="w-10 h-10 bg-primary/10 text-primary rounded-xl flex items-center justify-center transition-transform group-hover:scale-110">
-                <FileText />
-              </div>
-              <span className="text-[10px] font-black uppercase tracking-widest text-slate-700">Documentation</span>
-            </div>
-            <ChevronRight size={14} className="text-primary/40 group-hover:text-primary transition-colors" />
-          </button>
-        )}
         {[
           { id: 'manual', title: 'User Manual', icon: <FileText />, color: 'text-blue-500' },
           { id: 'safety', title: 'Safety Policy', icon: <Shield />, color: 'text-emerald-500' },

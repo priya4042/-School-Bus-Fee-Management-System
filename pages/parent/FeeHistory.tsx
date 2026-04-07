@@ -1,12 +1,79 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { User, MonthlyDue, PaymentStatus, Student } from '../../types';
 import { MONTHS } from '../../constants';
-import { Download, CheckCircle2, AlertCircle, Filter, Search, FileText } from 'lucide-react';
+import { Download, CheckCircle2, AlertCircle, Filter, Search, FileText, ChevronDown, FileSpreadsheet, Receipt } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { calculateCurrentLedger, buildPaymentBundle } from '../../utils/feeCalculator';
 import { usePayments } from '../../hooks/usePayments';
 import { useReceipts } from '../../hooks/useReceipts';
 import PaymentPortal from '../../components/PaymentPortal';
+
+const ReceiptDropdown: React.FC<{
+  dueId: string;
+  txnId: string;
+  due: any;
+  downloading: string | null;
+  onDownload: (id: string, txn: string, due: any, format: 'pdf' | 'invoice' | 'receipt') => void;
+}> = ({ dueId, txnId, due, downloading, onDownload }) => {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, []);
+
+  const isLoading = downloading === dueId;
+
+  const items: { format: 'pdf' | 'invoice' | 'receipt'; label: string; icon: React.ReactNode; desc: string }[] = [
+    { format: 'pdf', label: 'PDF', icon: <FileText size={14} />, desc: 'Standard format' },
+    { format: 'invoice', label: 'Invoice', icon: <FileSpreadsheet size={14} />, desc: 'Detailed tax invoice' },
+    { format: 'receipt', label: 'Receipt', icon: <Receipt size={14} />, desc: 'Compact receipt' },
+  ];
+
+  return (
+    <div ref={ref} className="relative inline-flex">
+      <button
+        onClick={() => setOpen(!open)}
+        disabled={isLoading}
+        className="w-9 h-9 flex items-center justify-center rounded-full hover:bg-slate-100 transition-all disabled:opacity-50"
+        title="Download Receipt"
+      >
+        {isLoading ? (
+          <i className="fas fa-circle-notch fa-spin text-sm text-primary"></i>
+        ) : (
+          <i className="fas fa-ellipsis-vertical text-slate-500"></i>
+        )}
+      </button>
+      {open && (
+        <div className="absolute right-0 bottom-full mb-2 w-52 bg-white rounded-2xl border border-slate-100 shadow-2xl z-50 p-2 animate-in fade-in slide-in-from-bottom-2 duration-200">
+          <p className="text-[8px] font-black text-slate-400 tracking-widest px-3 py-2">Download As</p>
+          {items.map((item) => (
+            <button
+              key={item.format}
+              onClick={() => {
+                setOpen(false);
+                onDownload(dueId, txnId, due, item.format);
+              }}
+              className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-primary/5 transition-all text-left group"
+            >
+              <div className="w-8 h-8 bg-slate-50 rounded-lg flex items-center justify-center text-primary group-hover:bg-primary group-hover:text-white transition-all">
+                {item.icon}
+              </div>
+              <div>
+                <p className="text-[11px] font-black text-slate-800 tracking-widest">{item.label}</p>
+                <p className="text-[8px] font-bold text-slate-400">{item.desc}</p>
+              </div>
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+};
 
 const FeeHistory: React.FC<{ user: User }> = ({ user }) => {
   const [dues, setDues] = useState<MonthlyDue[]>([]);
@@ -198,13 +265,6 @@ const FeeHistory: React.FC<{ user: User }> = ({ user }) => {
             Comprehensive Payment History & Dues
           </p>
         </div>
-        <button
-          onClick={handleExport}
-          className="bg-white text-slate-900 px-6 py-4 rounded-2xl font-bold text-sm border border-slate-100 shadow-sm hover:bg-slate-50 transition-all flex items-center gap-2"
-        >
-          <Download size={18} />
-          Export CSV
-        </button>
       </div>
 
       {/* Stats */}
@@ -348,18 +408,13 @@ const FeeHistory: React.FC<{ user: User }> = ({ user }) => {
                     </td>
                     <td className="px-8 py-6">
                       {isPaid ? (
-                        <button
-                          onClick={() => downloadReceipt(due.id, due.transaction_id || due.id, due)}
-                          disabled={downloading === due.id}
-                          className="p-3 bg-white text-primary rounded-xl border border-slate-100 shadow-sm hover:bg-primary hover:text-white transition-all disabled:opacity-50 flex items-center gap-2"
-                          title="Download Receipt"
-                        >
-                          {downloading === due.id ? (
-                            <i className="fas fa-circle-notch fa-spin text-sm"></i>
-                          ) : (
-                            <Download size={16} />
-                          )}
-                        </button>
+                        <ReceiptDropdown
+                          dueId={due.id}
+                          txnId={due.transaction_id || due.id}
+                          due={due}
+                          downloading={downloading}
+                          onDownload={downloadReceipt}
+                        />
                       ) : isLocked ? (
                         <div className="inline-flex items-center gap-2 text-slate-400">
                           <i className="fas fa-lock text-xs"></i>
