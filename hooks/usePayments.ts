@@ -4,8 +4,9 @@
   import { loadRazorpay } from '../lib/razorpay';
   import { supabase } from '../lib/supabase';
   import { PAYMENT_EVENT } from '../lib/telemetry';
+  import { loadFeeSettings } from '../lib/feeSettings';
 
-  export type PaymentMethod = 'RAZORPAY';
+  export type PaymentMethod = 'RAZORPAY' | 'UPI_INTENT' | 'UPI_QR';
 
   interface PaymentState {
     isOpen: boolean;
@@ -430,10 +431,154 @@
       }
     };
 
-    return { 
-      paymentState, 
-      openPortal, 
-      closePortal, 
-      initiateRazorpay
+    const initiateUpiIntent = async () => {
+      setPaymentState(prev => ({ ...prev, loading: true }));
+      try {
+        if (!paymentState.dueId) throw new Error('No due selected.');
+
+        const dueContext = await fetchDueContext(String(paymentState.dueId));
+        const dueStudent = Array.isArray(dueContext?.students) ? dueContext.students[0] : dueContext?.students;
+        const dueBus = Array.isArray(dueStudent?.buses) ? dueStudent.buses[0] : dueStudent?.buses;
+
+        setPaymentState(prev => ({
+          ...prev,
+          studentMeta: {
+            admissionNumber: dueStudent?.admission_number || '',
+            grade: dueStudent?.grade || '',
+            section: dueStudent?.section || '',
+            busNumber: String(dueBus?.plate || dueBus?.bus_number || 'N/A'),
+          }
+        }));
+
+        const settings = loadFeeSettings();
+        const upiId = String(settings.adminUpiId || import.meta.env.VITE_ADMIN_UPI_ID || '').trim();
+
+        if (!upiId) {
+          showAlert('UPI Not Configured', 'Admin UPI ID is not set. Please contact bus administrator.', 'error');
+          setPaymentState(prev => ({ ...prev, loading: false }));
+          return;
+        }
+
+        const amount = paymentState.amount;
+        const studentName = dueStudent?.full_name || paymentState.studentName || 'Student';
+        const txnRef = `BUSWAY${Date.now()}`;
+        const note = `Bus Fee - ${studentName}`;
+
+        const upiUrl = `upi://pay?pa=${encodeURIComponent(upiId)}&pn=${encodeURIComponent('School Bus WayPro')}&am=${amount}&cu=INR&tn=${encodeURIComponent(note)}&tr=${txnRef}`;
+
+        // Try to open UPI app
+        window.location.href = upiUrl;
+
+        // After redirect back, show confirmation dialog
+        setPaymentState(prev => ({ ...prev, loading: false }));
+
+        // Wait a moment then show confirmation
+        setTimeout(() => {
+          setPaymentState(prev => ({
+            ...prev,
+            step: 'UPI_CONFIRM' as any,
+            transactionId: txnRef,
+          }));
+        }, 1500);
+
+      } catch (err: any) {
+        console.error('UPI Intent failed:', err);
+        showAlert('UPI Error', err.message || 'Failed to open UPI app.', 'error');
+        setPaymentState(prev => ({ ...prev, loading: false }));
+      }
+    };
+
+    const confirmUpiPayment = async (upiRefId: string) => {
+      if (!upiRefId.trim()) {
+        showToast('Please enter UPI reference number', 'error');
+        return;
+      }
+
+      setPaymentState(prev => ({ ...prev, step: 'PROCESSING' }));
+
+      try {
+        const now = new Date().toISOString();
+        const dueIds = paymentState.dueIds || [String(paymentState.dueId)];
+
+        // Mark all dues as PAID
+        for (const dueId of dueIds) {
+          await supabase
+            .from('monthly_dues')
+            .update({
+              status: 'PAID',
+              paid_at: now,
+              transaction_id: upiRefId,
+              payment_method: 'UPI',
+            } as any)
+            .eq('id', String(dueId));
+
+          const { data: existingReceipt } = await supabase
+            .from('receipts')
+            .select('id')
+            .eq('due_id', String(dueId))
+            .maybeSingle();
+
+          if (!existingReceipt) {
+            await supabase
+              .from('receipts')
+              .insert({
+                due_id: String(dueId),
+                receipt_no: `UPI-${Date.now().toString().slice(-6)}-${Math.floor(Math.random() * 1000)}`,
+                amount_paid: paymentState.amount,
+                payment_method: 'UPI',
+                transaction_id: upiRefId,
+                created_at: now,
+              } as any);
+          }
+        }
+
+        // Notify admin
+        const { data: admins } = await supabase
+          .from('profiles')
+          .select('id')
+          .in('role', ['ADMIN', 'SUPER_ADMIN'])
+          .limit(1);
+
+        if (admins?.[0]?.id) {
+          await supabase.from('notifications').insert({
+            user_id: admins[0].id,
+            title: `UPI Payment Received`,
+            message: `${paymentState.studentName} paid ₹${paymentState.amount} via UPI. Ref: ${upiRefId}. Please verify in your bank app.`,
+            type: 'SUCCESS',
+            is_read: false,
+          });
+        }
+
+        window.dispatchEvent(new CustomEvent(PAYMENT_EVENT, {
+          detail: {
+            studentName: paymentState.studentName,
+            amount: paymentState.amount,
+            txnId: upiRefId,
+            dueId: paymentState.dueId,
+            timestamp: Date.now(),
+          }
+        }));
+
+        setPaymentState(prev => ({
+          ...prev,
+          step: 'SUCCESS',
+          transactionId: upiRefId,
+          loading: false,
+        }));
+        showToast('Payment recorded successfully!', 'success');
+
+      } catch (err: any) {
+        showAlert('Error', err.message || 'Failed to record payment.', 'error');
+        setPaymentState(prev => ({ ...prev, step: 'SELECT', loading: false }));
+      }
+    };
+
+    return {
+      paymentState,
+      openPortal,
+      closePortal,
+      initiateRazorpay,
+      initiateUpiIntent,
+      confirmUpiPayment,
     };
   };

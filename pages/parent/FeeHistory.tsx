@@ -83,7 +83,7 @@ const FeeHistory: React.FC<{ user: User }> = ({ user }) => {
   const [showFutureScheduled, setShowFutureScheduled] = useState(false);
   const [loading, setLoading] = useState(true);
 
-  const { paymentState, openPortal, closePortal, initiateRazorpay } = usePayments();
+  const { paymentState, openPortal, closePortal, initiateRazorpay, initiateUpiIntent, confirmUpiPayment } = usePayments();
   const { downloadReceipt, downloading } = useReceipts();
 
   const getFinancialYearLabel = (month: number, year: number) => {
@@ -256,7 +256,7 @@ const FeeHistory: React.FC<{ user: User }> = ({ user }) => {
 
   return (
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
-      <PaymentPortal state={paymentState} onClose={closePortal} onInitiateRazorpay={initiateRazorpay} />
+      <PaymentPortal state={paymentState} onClose={closePortal} onInitiateRazorpay={initiateRazorpay} onInitiateUpi={initiateUpiIntent} onConfirmUpi={confirmUpiPayment} />
 
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
         <div>
