@@ -427,7 +427,7 @@ const AdminNotifications: React.FC<{ focusNotificationId?: string; onFocusHandle
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         <div className="lg:col-span-2">
-          <form onSubmit={handleBroadcast} className="bg-white rounded-[2.5rem] border border-slate-200 shadow-premium overflow-hidden">
+          <form onSubmit={handleBroadcast} className="bg-white rounded-2xl md:rounded-[2.5rem] border border-slate-200 shadow-premium overflow-hidden">
             <div className="p-8 border-b border-slate-100 bg-slate-50/50 flex items-center justify-between">
               <div className="flex items-center gap-4">
                 <div className="w-10 h-10 bg-primary rounded-xl flex items-center justify-center text-white shadow-lg">
@@ -494,7 +494,7 @@ const AdminNotifications: React.FC<{ focusNotificationId?: string; onFocusHandle
         </div>
 
         <div className="space-y-8">
-          <div className="bg-white p-8 rounded-[2.5rem] border border-slate-200 shadow-sm">
+          <div className="bg-white p-8 rounded-2xl md:rounded-[2.5rem] border border-slate-200 shadow-sm">
             <h4 className="font-black text-slate-800 uppercase tracking-widest text-[10px] mb-8 flex items-center gap-3">
               <i className="fas fa-user-check text-primary"></i>
               Parent Name Requests
@@ -532,7 +532,7 @@ const AdminNotifications: React.FC<{ focusNotificationId?: string; onFocusHandle
             )}
           </div>
 
-          <div className="bg-white p-8 rounded-[2.5rem] border border-slate-200 shadow-sm">
+          <div className="bg-white p-8 rounded-2xl md:rounded-[2.5rem] border border-slate-200 shadow-sm">
             <h4 className="font-black text-slate-800 uppercase tracking-widest text-[10px] mb-8 flex items-center gap-3">
               <i className="fas fa-clipboard-check text-primary"></i>
               Name Request History
@@ -559,7 +559,7 @@ const AdminNotifications: React.FC<{ focusNotificationId?: string; onFocusHandle
             )}
           </div>
 
-          <div className="bg-white p-8 rounded-[2.5rem] border border-slate-200 shadow-sm">
+          <div className="bg-white p-8 rounded-2xl md:rounded-[2.5rem] border border-slate-200 shadow-sm">
             <h4 className="font-black text-slate-800 uppercase tracking-widest text-[10px] mb-8 flex items-center gap-3">
               <i className="fas fa-receipt text-primary"></i>
               Payment Confirmations
@@ -616,7 +616,7 @@ const AdminNotifications: React.FC<{ focusNotificationId?: string; onFocusHandle
             )}
           </div>
 
-          <div className="bg-white p-8 rounded-[2.5rem] border border-slate-200 shadow-sm">
+          <div className="bg-white p-8 rounded-2xl md:rounded-[2.5rem] border border-slate-200 shadow-sm">
             <h4 className="font-black text-slate-800 uppercase tracking-widest text-[10px] mb-8 flex items-center gap-3">
               <i className="fas fa-history text-primary"></i>
               Recent Broadcasts
@@ -733,7 +733,7 @@ const ChatSection: React.FC = () => {
   if (chatMessages.length === 0) return null;
 
   return (
-    <div className="bg-white rounded-[2.5rem] border border-slate-200 p-8 shadow-sm">
+    <div className="bg-white rounded-2xl md:rounded-[2.5rem] border border-slate-200 p-8 shadow-sm">
       <h3 className="font-black text-slate-800 tracking-tight text-lg mb-6 flex items-center gap-3">
         <i className="fas fa-comments text-primary"></i>
         Parent Chat Messages

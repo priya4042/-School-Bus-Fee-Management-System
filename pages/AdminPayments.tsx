@@ -190,7 +190,7 @@ const AdminPayments: React.FC = () => {
       </div>
 
       {/* Payments Table */}
-      <div className="bg-white rounded-[2.5rem] border border-slate-200 shadow-premium overflow-hidden">
+      <div className="bg-white rounded-2xl md:rounded-[2.5rem] border border-slate-200 shadow-premium overflow-hidden">
         <div className="overflow-x-auto">
           {loading ? (
             <div className="py-20 text-center">

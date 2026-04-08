@@ -126,7 +126,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onOpenDocumentation }) 
               <DashboardCard title="Active Fleet" value={stats.activeBuses} icon="fa-bus" color="orange" />
             </div>
 
-            <div className="bg-white p-8 rounded-[2.5rem] border border-slate-200 shadow-premium overflow-hidden">
+            <div className="bg-white p-4 md:p-8 rounded-2xl md:rounded-[2.5rem] border border-slate-200 shadow-premium overflow-hidden">
               <h3 className="font-black text-slate-800 uppercase tracking-widest text-[10px] mb-10">Monthly Revenue Growth</h3>
               <div style={{ width: '100%', height: 320 }}>
                 <ResponsiveContainer width="100%" height="100%">
@@ -147,7 +147,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onOpenDocumentation }) 
           </div>
         </div>
       ) : (
-        <div className="h-[600px] bg-white rounded-[3rem] border border-slate-200 shadow-premium overflow-hidden relative z-0">
+        <div className="h-[600px] bg-white rounded-2xl md:rounded-[3rem] border border-slate-200 shadow-premium overflow-hidden relative z-0">
           <GoogleMap location={location} busId={activeBusId || undefined} />
           {location && (
             <div className="absolute bottom-10 left-10 z-[1000] bg-slate-900/90 backdrop-blur-xl p-6 rounded-3xl border border-white/10 text-white min-w-[200px] animate-in slide-in-from-left-4">

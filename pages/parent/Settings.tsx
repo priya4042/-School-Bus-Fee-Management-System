@@ -208,10 +208,10 @@ const Settings: React.FC<{ user: User; section?: 'profile' | 'security' | 'langu
       <div className="space-y-8">
           {/* Profile Tab */}
           {activeTab === 'profile' && (
-            <div className="bg-white rounded-[3rem] p-10 shadow-sm border border-slate-100">
+            <div className="bg-white rounded-2xl md:rounded-[3rem] p-5 md:p-10 shadow-sm border border-slate-100">
               <div className="flex items-center gap-8 mb-12 pb-12 border-b border-slate-50">
                 <div className="relative group">
-                  <div className="w-32 h-32 bg-slate-50 rounded-[2.5rem] flex items-center justify-center text-slate-300 overflow-hidden border-4 border-white shadow-xl">
+                  <div className="w-32 h-32 bg-slate-50 rounded-2xl md:rounded-[2.5rem] flex items-center justify-center text-slate-300 overflow-hidden border-4 border-white shadow-xl">
                     {(user.avatar_url || (user.preferences as any)?.avatar_url) ? (
                       <img
                         src={user.avatar_url || (user.preferences as any)?.avatar_url}
@@ -316,7 +316,7 @@ const Settings: React.FC<{ user: User; section?: 'profile' | 'security' | 'langu
 
           {/* Password Reset Tab */}
           {activeTab === 'security' && (
-            <div className="bg-white rounded-[3rem] p-10 shadow-sm border border-slate-100">
+            <div className="bg-white rounded-2xl md:rounded-[3rem] p-5 md:p-10 shadow-sm border border-slate-100">
               <h3 className="text-xl font-black text-slate-900 tracking-tight mb-10">Password Reset</h3>
               <div className="space-y-6 max-w-md">
                 <div className="space-y-2">
@@ -375,7 +375,7 @@ const Settings: React.FC<{ user: User; section?: 'profile' | 'security' | 'langu
           )}
 
           {activeTab === 'language' && (
-            <div className="bg-white rounded-[3rem] p-10 shadow-sm border border-slate-100">
+            <div className="bg-white rounded-2xl md:rounded-[3rem] p-5 md:p-10 shadow-sm border border-slate-100">
               <h3 className="text-xl font-black text-slate-900 tracking-tight mb-4">{t('select_language')}</h3>
               <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-10">
                 {lang === 'hi' ? 'अपनी पसंदीदा भाषा चुनें' : 'Choose your preferred language'}

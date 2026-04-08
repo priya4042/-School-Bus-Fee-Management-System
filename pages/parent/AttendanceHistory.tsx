@@ -133,28 +133,28 @@ const AttendanceHistory: React.FC<{ user: User }> = ({ user }) => {
         <>
           {/* Stats row */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-            <div className="bg-white p-6 rounded-[2.5rem] border border-slate-100 shadow-sm text-center">
+            <div className="bg-white p-4 md:p-6 rounded-xl md:rounded-[2.5rem] border border-slate-100 shadow-sm text-center">
               <div className="w-12 h-12 bg-emerald-50 text-emerald-600 rounded-2xl flex items-center justify-center mx-auto mb-3">
                 <CheckCircle2 size={24} />
               </div>
               <p className="text-2xl font-black text-slate-900">{stats.totalPresent}</p>
               <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mt-1">Present</p>
             </div>
-            <div className="bg-white p-6 rounded-[2.5rem] border border-slate-100 shadow-sm text-center">
+            <div className="bg-white p-4 md:p-6 rounded-xl md:rounded-[2.5rem] border border-slate-100 shadow-sm text-center">
               <div className="w-12 h-12 bg-red-50 text-red-500 rounded-2xl flex items-center justify-center mx-auto mb-3">
                 <XCircle size={24} />
               </div>
               <p className="text-2xl font-black text-slate-900">{stats.totalAbsent}</p>
               <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mt-1">Absent</p>
             </div>
-            <div className="bg-white p-6 rounded-[2.5rem] border border-slate-100 shadow-sm text-center">
+            <div className="bg-white p-4 md:p-6 rounded-xl md:rounded-[2.5rem] border border-slate-100 shadow-sm text-center">
               <div className="w-12 h-12 bg-blue-50 text-primary rounded-2xl flex items-center justify-center mx-auto mb-3">
                 <ArrowUpCircle size={24} />
               </div>
               <p className="text-2xl font-black text-slate-900">{stats.pickupPresent}</p>
               <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mt-1">Pickups</p>
             </div>
-            <div className="bg-white p-6 rounded-[2.5rem] border border-slate-100 shadow-sm text-center">
+            <div className="bg-white p-4 md:p-6 rounded-xl md:rounded-[2.5rem] border border-slate-100 shadow-sm text-center">
               <div className="w-12 h-12 bg-amber-50 text-amber-600 rounded-2xl flex items-center justify-center mx-auto mb-3">
                 <ArrowDownCircle size={24} />
               </div>
@@ -165,7 +165,7 @@ const AttendanceHistory: React.FC<{ user: User }> = ({ user }) => {
 
           {/* Attendance rate bar */}
           {records.length > 0 && (
-            <div className="bg-white p-8 rounded-[2.5rem] border border-slate-100 shadow-sm">
+            <div className="bg-white p-4 md:p-8 rounded-2xl md:rounded-[2.5rem] border border-slate-100 shadow-sm">
               <div className="flex items-center justify-between mb-4">
                 <p className="font-black text-slate-800 uppercase text-sm tracking-tight">
                   Overall Attendance Rate
@@ -196,7 +196,7 @@ const AttendanceHistory: React.FC<{ user: User }> = ({ user }) => {
           )}
 
           {/* Filter + Records */}
-          <div className="bg-white rounded-[3rem] shadow-sm border border-slate-100 overflow-hidden">
+          <div className="bg-white rounded-2xl md:rounded-[3rem] shadow-sm border border-slate-100 overflow-hidden">
             <div className="p-6 md:p-8 border-b border-slate-50 space-y-4">
               <div className="flex items-center gap-4">
                 <div className="relative">

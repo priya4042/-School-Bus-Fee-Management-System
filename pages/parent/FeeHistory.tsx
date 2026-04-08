@@ -271,27 +271,27 @@ const FeeHistory: React.FC<{ user: User }> = ({ user }) => {
 
       {/* Stats */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="bg-white p-8 rounded-[2.5rem] border border-slate-100 shadow-sm">
+        <div className="bg-white p-4 md:p-8 rounded-2xl md:rounded-[2.5rem] border border-slate-100 shadow-sm">
           <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Total Cleared</p>
           <p className="text-3xl font-black text-emerald-600 tracking-tight">
             ₹{stats.totalPaid.toLocaleString('en-IN')}
           </p>
         </div>
-        <div className="bg-white p-8 rounded-[2.5rem] border border-slate-100 shadow-sm">
+        <div className="bg-white p-4 md:p-8 rounded-2xl md:rounded-[2.5rem] border border-slate-100 shadow-sm">
           <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Outstanding</p>
           <p className="text-3xl font-black text-primary tracking-tight">
             ₹{stats.pending.toLocaleString('en-IN')}
           </p>
         </div>
-        <div className="bg-white p-8 rounded-[2.5rem] border border-slate-100 shadow-sm">
+        <div className="bg-white p-4 md:p-8 rounded-2xl md:rounded-[2.5rem] border border-slate-100 shadow-sm">
           <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Overdue Months</p>
           <p className="text-3xl font-black text-red-500 tracking-tight">{stats.overdue}</p>
         </div>
       </div>
 
       {/* Table */}
-      <div className="bg-white rounded-[3rem] shadow-sm border border-slate-100 overflow-hidden">
-        <div className="p-8 border-b border-slate-50 flex flex-col md:flex-row md:items-center justify-between gap-6">
+      <div className="bg-white rounded-2xl md:rounded-[3rem] shadow-sm border border-slate-100 overflow-hidden">
+        <div className="p-4 md:p-8 border-b border-slate-50 flex flex-col md:flex-row md:items-center justify-between gap-6">
           <div className="flex items-center gap-4">
             <div className="w-12 h-12 bg-slate-50 rounded-2xl flex items-center justify-center text-slate-400">
               <Filter size={20} />
@@ -334,7 +334,64 @@ const FeeHistory: React.FC<{ user: User }> = ({ user }) => {
           </div>
         )}
 
-        <div className="overflow-x-auto">
+        {/* Mobile Card View */}
+        <div className="lg:hidden divide-y divide-slate-50">
+          {filteredDues.map((due) => {
+            const isPaid = due.status === PaymentStatus.PAID;
+            const isPayable = isDuePayable(due);
+            const isOverdue = !isPaid && due.due_date && new Date() > new Date(due.due_date);
+            const student = students.find((s) => s.id === due.student_id);
+            const isLocked = !isPaid && !isPayable;
+
+            return (
+              <div key={`card-${due.id}`} className={`p-4 ${isLocked ? 'opacity-60' : ''}`}>
+                <div className="flex items-start justify-between gap-3">
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-black text-slate-800 tracking-tight">
+                      {MONTHS[(due.month || 1) - 1]} {due.year}
+                    </p>
+                    <p className="text-[10px] font-bold text-slate-400 mt-0.5">
+                      {student?.full_name || due.student_name || 'Student'}
+                    </p>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-base font-black text-slate-900">₹{Number(due.total_due || 0).toLocaleString('en-IN')}</p>
+                    <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[8px] font-black uppercase mt-1 ${
+                      isPaid ? 'bg-emerald-50 text-emerald-600' : isOverdue ? 'bg-red-50 text-red-600' : 'bg-amber-50 text-amber-600'
+                    }`}>
+                      {isPaid ? <CheckCircle2 size={8} /> : <AlertCircle size={8} />}
+                      {due.status}
+                    </span>
+                  </div>
+                </div>
+                <div className="flex items-center justify-between mt-3">
+                  {isPaid && due.paid_at && (
+                    <p className="text-[9px] text-slate-400">{new Date(due.paid_at).toLocaleDateString('en-IN')}</p>
+                  )}
+                  {!isPaid && !isLocked && <div />}
+                  {isPaid ? (
+                    <ReceiptDropdown dueId={due.id} txnId={due.transaction_id || due.id} due={due} downloading={downloading} onDownload={downloadReceipt} />
+                  ) : isLocked ? (
+                    <p className="text-[8px] font-bold text-slate-400"><i className="fas fa-lock mr-1"></i>Pay previous first</p>
+                  ) : (
+                    <button
+                      onClick={() => {
+                        const payBundle = buildPaymentBundle(due, dues);
+                        openPortal(due.id, payBundle.amount || Number(due.total_due || due.amount || 0), student?.full_name || due.student_name || 'Student', payBundle.dueIds, payBundle);
+                      }}
+                      className="bg-primary text-white px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest shadow-md"
+                    >
+                      Pay Now
+                    </button>
+                  )}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+
+        {/* Desktop Table View */}
+        <div className="overflow-x-auto hidden lg:block">
           <table className="w-full text-left border-collapse">
             <thead>
               <tr className="bg-slate-50/50">

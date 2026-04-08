@@ -163,7 +163,7 @@ const Support: React.FC<{ user: User; onOpenDocumentation?: () => void; section?
       {/* Contact channels */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
         <div
-          className="bg-white p-10 rounded-[3rem] border border-slate-100 shadow-sm text-center group hover:border-primary/20 transition-all cursor-pointer"
+          className="bg-white p-6 md:p-10 rounded-2xl md:rounded-[3rem] border border-slate-100 shadow-sm text-center group hover:border-primary/20 transition-all cursor-pointer"
           onClick={() => setShowTicketForm(true)}
         >
           <div className="w-20 h-20 bg-primary/10 text-primary rounded-[2rem] flex items-center justify-center mx-auto mb-8 transition-transform group-hover:scale-110">
@@ -180,7 +180,7 @@ const Support: React.FC<{ user: User; onOpenDocumentation?: () => void; section?
 
         <a
           href="tel:+911234567890"
-          className="bg-white p-10 rounded-[3rem] border border-slate-100 shadow-sm text-center group hover:border-emerald-500/20 transition-all"
+          className="bg-white p-6 md:p-10 rounded-2xl md:rounded-[3rem] border border-slate-100 shadow-sm text-center group hover:border-emerald-500/20 transition-all"
         >
           <div className="w-20 h-20 bg-emerald-50 text-emerald-600 rounded-[2rem] flex items-center justify-center mx-auto mb-8 transition-transform group-hover:scale-110">
             <Phone size={32} />
@@ -196,7 +196,7 @@ const Support: React.FC<{ user: User; onOpenDocumentation?: () => void; section?
 
         <a
           href="mailto:support@school.com"
-          className="bg-white p-10 rounded-[3rem] border border-slate-100 shadow-sm text-center group hover:border-slate-900/20 transition-all"
+          className="bg-white p-6 md:p-10 rounded-2xl md:rounded-[3rem] border border-slate-100 shadow-sm text-center group hover:border-slate-900/20 transition-all"
         >
           <div className="w-20 h-20 bg-slate-50 text-slate-900 rounded-[2rem] flex items-center justify-center mx-auto mb-8 transition-transform group-hover:scale-110">
             <Mail size={32} />
@@ -215,7 +215,7 @@ const Support: React.FC<{ user: User; onOpenDocumentation?: () => void; section?
       {showTicketForm && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[2000] overflow-y-auto">
           <div className="flex min-h-full items-start justify-center p-4 pt-20 pb-6 md:pt-24">
-          <div className="bg-white rounded-[3rem] p-10 max-w-lg w-full shadow-2xl animate-in fade-in zoom-in duration-300 max-h-[calc(100vh-6rem)] overflow-y-auto">
+          <div className="bg-white rounded-2xl md:rounded-[3rem] p-5 md:p-10 max-w-lg w-full shadow-2xl animate-in fade-in zoom-in duration-300 max-h-[calc(100vh-6rem)] overflow-y-auto">
             <div className="flex items-center justify-between mb-8">
               <h2 className="text-2xl font-black text-slate-900 uppercase tracking-tight">Submit Support Ticket</h2>
               <button
@@ -317,7 +317,7 @@ const Support: React.FC<{ user: User; onOpenDocumentation?: () => void; section?
 
       {section === 'faq' && (<>
       {/* FAQ */}
-      <div className="bg-white rounded-[3rem] p-12 shadow-sm border border-slate-100">
+      <div className="bg-white rounded-2xl md:rounded-[3rem] p-5 md:p-12 shadow-sm border border-slate-100">
         <div className="flex items-center justify-between mb-12">
           <h3 className="text-2xl font-black text-slate-900 tracking-tight">Frequently Asked Questions</h3>
           {searchQuery && (
@@ -338,7 +338,7 @@ const Support: React.FC<{ user: User; onOpenDocumentation?: () => void; section?
             {filteredFaqs.map((faq, idx) => (
               <div
                 key={idx}
-                className="p-8 bg-slate-50 rounded-[2.5rem] border border-slate-100 group hover:bg-white hover:border-primary/20 transition-all"
+                className="p-4 md:p-8 bg-slate-50 rounded-xl md:rounded-[2.5rem] border border-slate-100 group hover:bg-white hover:border-primary/20 transition-all"
               >
                 <div className="flex items-start gap-6">
                   <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center text-primary shadow-sm group-hover:bg-primary group-hover:text-white transition-all flex-shrink-0">

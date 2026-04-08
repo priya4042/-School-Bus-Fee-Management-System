@@ -99,7 +99,7 @@ const UserDirectory: React.FC = () => {
         </div>
       </div>
 
-      <div className="bg-white rounded-[2.5rem] border border-slate-200 shadow-premium overflow-hidden">
+      <div className="bg-white rounded-2xl md:rounded-[2.5rem] border border-slate-200 shadow-premium overflow-hidden">
         <div className="p-8 border-b border-slate-100 bg-slate-50/30">
            <input 
               type="text" 
@@ -155,7 +155,7 @@ const UserDirectory: React.FC = () => {
       <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title="Family Intelligence Detail" maxWidthClass="max-w-5xl" bodyClassName="p-6 md:p-8">
         {selectedUser && (
           <div className="space-y-8">
-             <div className="p-8 bg-primary/5 rounded-[2.5rem] border border-primary/10 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+             <div className="p-8 bg-primary/5 rounded-2xl md:rounded-[2.5rem] border border-primary/10 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
                 <div>
                    <h3 className="text-2xl font-black text-slate-800 tracking-tighter uppercase">{selectedUser.fullName || selectedUser.full_name}</h3>
                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mt-1">{selectedUser.email}</p>
@@ -201,7 +201,7 @@ const UserDirectory: React.FC = () => {
                   </div>
                </div>
              ) : (
-               <div className="p-10 bg-slate-900 rounded-[2.5rem] text-white">
+               <div className="p-10 bg-slate-900 rounded-2xl md:rounded-[2.5rem] text-white">
                   <p className="text-[10px] font-black uppercase tracking-widest text-white/40 mb-2">Staff Identity</p>
                   <p className="text-sm font-bold opacity-60 italic">This profile is registered as an Administrative Access Node and does not have a family manifest.</p>
                </div>

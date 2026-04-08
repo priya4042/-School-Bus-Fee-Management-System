@@ -107,7 +107,7 @@ const Settings: React.FC = () => {
         <div className="lg:col-span-2 space-y-8">
            {activeTab === 'fees' ? (
              <>
-              <section className="bg-white rounded-[2.5rem] border border-slate-200 p-10 shadow-sm relative overflow-hidden">
+              <section className="bg-white rounded-2xl md:rounded-[2.5rem] border border-slate-200 p-5 md:p-10 shadow-sm relative overflow-hidden">
                 <div className="flex items-center gap-4 mb-10">
                    <div className="w-12 h-12 bg-primary/10 text-primary rounded-2xl flex items-center justify-center">
                       <i className="fas fa-money-bill-wave"></i>
@@ -148,7 +148,7 @@ const Settings: React.FC = () => {
                 </div>
               </section>
 
-              <section className="bg-white rounded-[2.5rem] border border-slate-200 p-10 shadow-sm">
+              <section className="bg-white rounded-2xl md:rounded-[2.5rem] border border-slate-200 p-5 md:p-10 shadow-sm">
                 <div className="flex items-center gap-4 mb-10">
                    <div className="w-12 h-12 bg-danger/10 text-danger rounded-2xl flex items-center justify-center">
                       <i className="fas fa-clock"></i>
@@ -198,7 +198,7 @@ const Settings: React.FC = () => {
                 </div>
               </section>
 
-              <section className="bg-white rounded-[2.5rem] border border-slate-200 p-10 shadow-sm">
+              <section className="bg-white rounded-2xl md:rounded-[2.5rem] border border-slate-200 p-5 md:p-10 shadow-sm">
                 <div className="flex items-center gap-4 mb-10">
                    <div className="w-12 h-12 bg-emerald-50 text-emerald-600 rounded-2xl flex items-center justify-center">
                       <i className="fas fa-qrcode"></i>
@@ -247,7 +247,7 @@ const Settings: React.FC = () => {
               </section>
              </>
            ) : (
-             <section className="bg-slate-900 rounded-[2.5rem] p-12 text-white shadow-2xl animate-in zoom-in duration-500">
+             <section className="bg-slate-900 rounded-2xl md:rounded-[2.5rem] p-5 md:p-12 text-white shadow-2xl animate-in zoom-in duration-500">
                 <div className="flex items-center gap-6 mb-12">
                    <div className="w-16 h-16 bg-white/10 rounded-3xl flex items-center justify-center border border-white/10">
                       <i className="fas fa-shield-alt text-2xl"></i>
@@ -276,7 +276,7 @@ const Settings: React.FC = () => {
         </div>
 
         <div className="space-y-8">
-           <div className="bg-primary p-10 rounded-[2.5rem] text-white shadow-2xl relative overflow-hidden group">
+           <div className="bg-primary p-5 md:p-10 rounded-2xl md:rounded-[2.5rem] text-white shadow-2xl relative overflow-hidden group">
               <div className="absolute top-0 right-0 p-8 opacity-10 group-hover:rotate-12 transition-transform">
                  <i className="fas fa-save text-8xl"></i>
               </div>
@@ -300,7 +300,7 @@ const Settings: React.FC = () => {
               </div>
            </div>
 
-           <div className="bg-white p-10 rounded-[2.5rem] border border-slate-200 shadow-sm">
+           <div className="bg-white p-5 md:p-10 rounded-2xl md:rounded-[2.5rem] border border-slate-200 shadow-sm">
               <h4 className="font-black text-[10px] uppercase tracking-widest text-slate-400 mb-8 flex items-center gap-3">
                  <i className="fas fa-info-circle text-primary"></i>
                  Active Parameters

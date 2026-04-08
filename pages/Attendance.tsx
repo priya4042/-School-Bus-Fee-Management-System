@@ -107,7 +107,7 @@ const Attendance: React.FC = () => {
         ))}
       </div>
 
-      <div className="bg-white rounded-[2.5rem] border border-slate-200 shadow-premium overflow-hidden">
+      <div className="bg-white rounded-2xl md:rounded-[2.5rem] border border-slate-200 shadow-premium overflow-hidden">
         <div className="p-8 bg-slate-50/50 border-b border-slate-100 flex items-center justify-between">
            <div className="flex items-center gap-4">
               <div className={`w-12 h-12 rounded-2xl flex items-center justify-center text-white shadow-lg ${selectedShift === 'MORNING' ? 'bg-orange-500 shadow-orange-500/20' : 'bg-primary shadow-primary/20'}`}>

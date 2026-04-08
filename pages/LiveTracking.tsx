@@ -31,7 +31,7 @@ const LiveTracking: React.FC = () => {
         </div>
       </div>
 
-      <div className="h-[600px] bg-white rounded-[3rem] border border-slate-200 shadow-premium overflow-hidden relative z-0">
+      <div className="h-[600px] bg-white rounded-2xl md:rounded-[3rem] border border-slate-200 shadow-premium overflow-hidden relative z-0">
         <GoogleMap location={location} busId={activeBusId || undefined} />
         {location && (
           <div className="absolute bottom-10 left-10 z-[1000] bg-slate-900/90 backdrop-blur-xl p-6 rounded-3xl border border-white/10 text-white min-w-[200px] animate-in slide-in-from-left-4">
@@ -55,7 +55,7 @@ const LiveTracking: React.FC = () => {
       </div>
 
       {/* Bus List */}
-      <div className="bg-white rounded-[2.5rem] border border-slate-200 shadow-premium p-8">
+      <div className="bg-white rounded-2xl md:rounded-[2.5rem] border border-slate-200 shadow-premium p-8">
         <h3 className="text-lg font-black text-slate-800 tracking-widest mb-6">Active Buses</h3>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {buses && buses.map((bus) => (

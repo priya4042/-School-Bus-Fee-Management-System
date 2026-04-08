@@ -331,7 +331,7 @@ const StudentProfile: React.FC<{ user: User }> = ({ user }) => {
         {/* Left column */}
         <div className="lg:col-span-1 space-y-8">
           {/* ID Card */}
-          <div className="bg-white rounded-[3rem] p-10 shadow-sm border border-slate-100 text-center relative overflow-hidden group">
+          <div className="bg-white rounded-2xl md:rounded-[3rem] p-5 md:p-10 shadow-sm border border-slate-100 text-center relative overflow-hidden group">
             <div className="absolute top-0 left-0 w-full h-32 bg-slate-950 -mt-10 -skew-y-6 group-hover:skew-y-0 transition-transform duration-700"></div>
             <div className="relative z-10">
               <div className="w-32 h-32 bg-white rounded-[2.5rem] p-1 shadow-2xl mx-auto mb-6">
@@ -386,7 +386,7 @@ const StudentProfile: React.FC<{ user: User }> = ({ user }) => {
           </div>
 
           {/* Transit Details */}
-          <div className="bg-slate-950 rounded-[3rem] p-10 text-white shadow-2xl relative overflow-hidden">
+          <div className="bg-slate-950 rounded-2xl md:rounded-[3rem] p-5 md:p-10 text-white shadow-2xl relative overflow-hidden">
             <div className="absolute top-0 right-0 w-32 h-32 bg-primary/20 rounded-bl-full -mr-10 -mt-10 blur-2xl"></div>
             <h3 className="text-lg font-black uppercase tracking-tight mb-8 relative z-10">Transit Details</h3>
             <div className="space-y-6 relative z-10">
@@ -430,7 +430,7 @@ const StudentProfile: React.FC<{ user: User }> = ({ user }) => {
         {/* Right column */}
         <div className="lg:col-span-2 space-y-8">
           {/* Fee Status */}
-          <div className="bg-white rounded-[3rem] p-10 shadow-sm border border-slate-100">
+          <div className="bg-white rounded-2xl md:rounded-[3rem] p-5 md:p-10 shadow-sm border border-slate-100">
             <div className="flex items-center justify-between mb-8">
               <h3 className="text-xl font-black text-slate-900 tracking-tight">Fee Status</h3>
               <div className={`flex items-center gap-2 px-4 py-2 rounded-xl text-[9px] font-black uppercase tracking-widest ${
@@ -442,7 +442,7 @@ const StudentProfile: React.FC<{ user: User }> = ({ user }) => {
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="p-8 bg-slate-50 rounded-[2rem] border border-slate-100">
+              <div className="p-4 md:p-8 bg-slate-50 rounded-xl md:rounded-[2rem] border border-slate-100">
                 <div className="flex items-center gap-4 mb-4">
                   <div className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center text-primary shadow-sm">
                     <CreditCard size={22} />
@@ -459,7 +459,7 @@ const StudentProfile: React.FC<{ user: User }> = ({ user }) => {
                 </p>
               </div>
 
-              <div className="p-8 bg-slate-50 rounded-[2rem] border border-slate-100">
+              <div className="p-4 md:p-8 bg-slate-50 rounded-xl md:rounded-[2rem] border border-slate-100">
                 <div className="flex items-center gap-4 mb-4">
                   <div className={`w-12 h-12 bg-white rounded-2xl flex items-center justify-center shadow-sm ${totalDue > 0 ? 'text-red-500' : 'text-emerald-500'}`}>
                     <AlertCircle size={22} />
@@ -516,7 +516,7 @@ const StudentProfile: React.FC<{ user: User }> = ({ user }) => {
           </div>
 
           {/* Recent Attendance - Last 10 records */}
-          <div className="bg-white rounded-[3rem] p-10 shadow-sm border border-slate-100">
+          <div className="bg-white rounded-2xl md:rounded-[3rem] p-5 md:p-10 shadow-sm border border-slate-100">
             <h3 className="text-xl font-black text-slate-900 tracking-tight mb-8">
               Last 10 Attendance
             </h3>

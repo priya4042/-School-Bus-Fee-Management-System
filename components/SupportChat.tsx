@@ -2,6 +2,8 @@ import React, { useState, useEffect, useRef } from 'react';
 import { MessageCircle, Send, X, User as UserIcon } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { User } from '../types';
+import { getBotReply } from '../lib/chatBot';
+import { useLanguage } from '../lib/i18n';
 
 interface ChatMessage {
   id: string;
@@ -13,6 +15,7 @@ interface ChatMessage {
 }
 
 const SupportChat: React.FC<{ user: User }> = ({ user }) => {
+  const { lang } = useLanguage();
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState('');
@@ -151,6 +154,31 @@ const SupportChat: React.FC<{ user: User }> = ({ user }) => {
           is_read: false,
         });
       }
+
+      // Bot auto-reply
+      const botReply = getBotReply(text, lang);
+      if (botReply) {
+        setTimeout(() => {
+          const botMsg: ChatMessage = {
+            id: `bot-${Date.now()}`,
+            message: botReply,
+            title: '[CHAT] Admin',
+            created_at: new Date().toISOString(),
+            user_id: user.id,
+            is_from_admin: true,
+          };
+          setMessages(prev => [...prev, botMsg]);
+
+          // Also save bot reply to DB so it persists
+          supabase.from('notifications').insert({
+            user_id: user.id,
+            title: '[CHAT] Admin',
+            message: botReply,
+            type: 'INFO',
+            is_read: false,
+          }).then();
+        }, 1000 + Math.random() * 1000); // 1-2s delay for natural feel
+      }
     } catch {
       // Remove optimistic message on failure, restore input
       setMessages(prev => prev.filter(m => m.id !== tempId));
@@ -174,10 +202,10 @@ const SupportChat: React.FC<{ user: User }> = ({ user }) => {
       {/* Floating chat button */}
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className={`fixed right-4 z-[1500] w-14 h-14 rounded-full shadow-2xl flex items-center justify-center hover:scale-110 transition-all ${
+        className={`fixed right-4 z-[1500] w-12 h-12 lg:w-14 lg:h-14 rounded-full shadow-2xl flex items-center justify-center hover:scale-110 transition-all ${
           isOpen ? 'bg-slate-800 text-white shadow-slate-800/40' : 'bg-primary text-white shadow-primary/40'
         }`}
-        style={{ bottom: 'calc(env(safe-area-inset-bottom, 0px) + 1.5rem)' }}
+        style={{ bottom: 'calc(env(safe-area-inset-bottom, 0px) + 4.5rem)' }}
       >
         {isOpen ? <X size={22} /> : <MessageCircle size={22} />}
         {unread > 0 && !isOpen && (
@@ -190,7 +218,7 @@ const SupportChat: React.FC<{ user: User }> = ({ user }) => {
       {/* Chat panel */}
       {isOpen && (
         <div className="fixed right-3 sm:right-6 z-[1500] w-[calc(100vw-1.5rem)] sm:w-96 max-w-[24rem] bg-white rounded-3xl shadow-2xl border border-slate-100 flex flex-col overflow-hidden animate-in fade-in slide-in-from-bottom-4 duration-300"
-          style={{ bottom: 'calc(env(safe-area-inset-bottom, 0px) + 5.5rem)', maxHeight: 'calc(100vh - 8rem)' }}
+          style={{ bottom: 'calc(env(safe-area-inset-bottom, 0px) + 8rem)', maxHeight: 'calc(100vh - 12rem)' }}
         >
           {/* Header */}
           <div className="bg-slate-950 px-6 py-4 flex items-center justify-between">
@@ -199,7 +227,7 @@ const SupportChat: React.FC<{ user: User }> = ({ user }) => {
                 <MessageCircle size={16} className="text-white" />
               </div>
               <div>
-                <p className="text-xs font-black text-white uppercase tracking-widest">Support Chat</p>
+                <p className="text-xs font-black text-white uppercase tracking-widest">AI Assistant</p>
                 <div className="flex items-center gap-1.5 mt-0.5">
                   <div className="w-1.5 h-1.5 bg-emerald-400 rounded-full animate-pulse"></div>
                   <span className="text-[8px] font-bold text-slate-400 uppercase tracking-widest">Online</span>
@@ -215,8 +243,8 @@ const SupportChat: React.FC<{ user: User }> = ({ user }) => {
                 <div className="w-12 h-12 bg-slate-100 rounded-2xl flex items-center justify-center mx-auto mb-3">
                   <MessageCircle size={20} className="text-slate-300" />
                 </div>
-                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Start a conversation</p>
-                <p className="text-[9px] text-slate-400 mt-1">Send a message and our team will respond</p>
+                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Ask me anything</p>
+                <p className="text-[9px] text-slate-400 mt-1">I can help with fees, tracking, attendance & more</p>
               </div>
             )}
 
@@ -230,7 +258,7 @@ const SupportChat: React.FC<{ user: User }> = ({ user }) => {
                   }`}>
                     {msg.is_from_admin && (
                       <p className="text-[8px] font-black text-primary uppercase tracking-widest mb-1 flex items-center gap-1">
-                        <UserIcon size={8} /> Admin
+                        {msg.id?.startsWith('bot-') ? <><i className="fas fa-robot text-[7px]"></i> AI Bot</> : <><UserIcon size={8} /> Admin</>}
                       </p>
                     )}
                     <p className={`text-[12px] font-semibold leading-relaxed ${msg.is_from_admin ? 'text-slate-700' : 'text-white'}`}>

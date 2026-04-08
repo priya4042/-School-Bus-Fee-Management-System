@@ -24,6 +24,7 @@ import Sidebar from './components/Sidebar';
 import Topbar from './components/Topbar';
 import SupportChat from './components/SupportChat';
 import AppLoader from './components/AppLoader';
+import BottomTabs from './components/BottomTabs';
 import { useAuthStore } from './store/authStore';
 import { isSupabaseConfigured } from './lib/supabase';
 
@@ -203,14 +204,30 @@ const App: React.FC = () => {
 
         return (
           <div className="flex min-h-screen min-h-[100dvh] bg-slate-50 font-sans">
-            <Sidebar 
-              user={user} 
-              onLogout={logout} 
-              activeTab={activeTab} 
-              setActiveTab={setActiveTab} 
-              isOpen={isSidebarOpen}
-              onClose={() => setIsSidebarOpen(false)}
-            />
+            {/* Sidebar: hidden on mobile, visible on lg+ */}
+            <div className="hidden lg:block">
+              <Sidebar
+                user={user}
+                onLogout={logout}
+                activeTab={activeTab}
+                setActiveTab={setActiveTab}
+                isOpen={isSidebarOpen}
+                onClose={() => setIsSidebarOpen(false)}
+              />
+            </div>
+            {/* Mobile sidebar overlay (only when hamburger clicked) */}
+            {isSidebarOpen && (
+              <div className="lg:hidden">
+                <Sidebar
+                  user={user}
+                  onLogout={logout}
+                  activeTab={activeTab}
+                  setActiveTab={setActiveTab}
+                  isOpen={isSidebarOpen}
+                  onClose={() => setIsSidebarOpen(false)}
+                />
+              </div>
+            )}
             <div className="flex-1 flex flex-col min-w-0">
               <Topbar
                 user={user}
@@ -221,12 +238,14 @@ const App: React.FC = () => {
                   setActiveTab('Notifications');
                 }}
               />
-              <main className="p-4 md:p-8 flex-1 overflow-auto bg-slate-50 pb-24 md:pb-8">
+              <main className="p-3 md:p-8 flex-1 overflow-auto bg-slate-50 pb-20 lg:pb-8">
                 <div className="max-w-7xl mx-auto">
                   {renderContent()}
                 </div>
               </main>
             </div>
+            {/* Bottom tabs: visible on mobile only */}
+            <BottomTabs user={user} activeTab={activeTab} setActiveTab={setActiveTab} />
             <SupportChat user={user} />
           </div>
         );

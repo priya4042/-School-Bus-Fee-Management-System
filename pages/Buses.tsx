@@ -133,7 +133,7 @@ const Buses: React.FC = () => {
       ) : (
         <>
 
-      <div className="bg-white rounded-[2.5rem] border border-slate-200 overflow-hidden shadow-premium">
+      <div className="bg-white rounded-2xl md:rounded-[2.5rem] border border-slate-200 overflow-hidden shadow-premium">
         <div className="overflow-x-auto min-h-[400px]">
           {loading ? (
              <div className="flex flex-col items-center justify-center h-80 gap-4">

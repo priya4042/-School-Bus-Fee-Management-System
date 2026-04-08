@@ -398,7 +398,7 @@ const Fees: React.FC = () => {
         </div>
       </div>
 
-      <div className="bg-white rounded-[2.5rem] border border-slate-200 overflow-hidden shadow-premium">
+      <div className="bg-white rounded-2xl md:rounded-[2.5rem] border border-slate-200 overflow-hidden shadow-premium">
         <div className="p-6 bg-slate-50/50 border-b border-slate-100 flex flex-col md:flex-row gap-4 items-center justify-between">
           <div className="relative w-full max-w-md">
             <i className="fas fa-search absolute left-5 top-1/2 -translate-y-1/2 text-slate-400"></i>

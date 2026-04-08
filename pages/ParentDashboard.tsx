@@ -166,7 +166,7 @@ const ParentDashboard: React.FC<{ user: User }> = ({ user }) => {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2">
-           <div className="bg-slate-950 rounded-3xl md:rounded-[3.5rem] shadow-2xl overflow-hidden border-8 md:border-[12px] border-white/5 relative h-[400px] md:h-[600px] group z-0">
+           <div className="bg-slate-950 rounded-3xl md:rounded-[3.5rem] shadow-2xl overflow-hidden border-4 md:border-[12px] border-white/5 relative h-[400px] md:h-[600px] group z-0">
               <div className={`absolute inset-0 transition-opacity duration-1000 ${trackingActive ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
                 {trackingActive && <GoogleMap location={location} busId={selectedStudent?.bus_id} />}
               </div>
