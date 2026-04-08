@@ -197,7 +197,7 @@ const Topbar: React.FC<TopbarProps> = ({ user, onMenuClick, onOpenNotifications,
           </button>
           
           {showNotifications && (
-            <div ref={modalRef} className="absolute -right-2 sm:right-0 mt-4 w-[calc(100vw-1rem)] sm:w-96 max-w-[24rem] bg-white border border-slate-100 rounded-2xl sm:rounded-3xl shadow-2xl z-50 animate-in fade-in slide-in-from-top-4 overflow-hidden">
+            <div ref={modalRef} style={{ top: 'calc(env(safe-area-inset-top, 0px) + 3.5rem)' }} className="fixed left-2 right-2 sm:absolute sm:left-auto sm:right-0 sm:top-auto mt-2 sm:mt-4 sm:w-96 mx-auto sm:mx-0 bg-white border border-slate-100 rounded-2xl sm:rounded-3xl shadow-2xl z-[1100] animate-in fade-in slide-in-from-top-4 overflow-hidden">
               <div className="p-6 border-b border-slate-50 flex justify-between items-center bg-slate-50/50">
                 <span className="text-[10px] font-black text-slate-800 uppercase tracking-widest">{t('alert_center')}</span>
                 <button onClick={async () => {

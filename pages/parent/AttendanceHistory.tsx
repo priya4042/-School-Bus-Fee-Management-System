@@ -61,15 +61,8 @@ const AttendanceHistory: React.FC<{ user: User }> = ({ user }) => {
     fetchAttendance();
   }, [selectedStudentId]);
 
-  const availableYears = Array.from(new Set(records.map((r) => new Date(r.date).getFullYear()))).sort().reverse();
-
-  const availableMonthsForYear = yearFilter === 'ALL'
-    ? Array.from(new Set(records.map((r) => new Date(r.date).getMonth()))).sort()
-    : Array.from(new Set(
-        records
-          .filter((r) => new Date(r.date).getFullYear() === Number(yearFilter))
-          .map((r) => new Date(r.date).getMonth())
-      )).sort();
+  const currentYear = new Date().getFullYear();
+  const yearsList = Array.from({ length: 10 }, (_, i) => currentYear - i);
 
   const filteredRecords = records.filter((r) => {
     if (typeFilter !== 'ALL' && r.type !== typeFilter) return false;
@@ -261,7 +254,7 @@ const AttendanceHistory: React.FC<{ user: User }> = ({ user }) => {
                         className="px-4 py-2.5 rounded-xl text-[11px] font-bold bg-white border border-slate-200 text-slate-700 outline-none focus:ring-2 ring-primary/20 focus:border-primary cursor-pointer"
                       >
                         <option value="ALL">All Years</option>
-                        {availableYears.map((y) => (
+                        {yearsList.map((y) => (
                           <option key={y} value={y}>{y}</option>
                         ))}
                       </select>
@@ -276,8 +269,8 @@ const AttendanceHistory: React.FC<{ user: User }> = ({ user }) => {
                         className="px-4 py-2.5 rounded-xl text-[11px] font-bold bg-white border border-slate-200 text-slate-700 outline-none focus:ring-2 ring-primary/20 focus:border-primary cursor-pointer"
                       >
                         <option value="ALL">All Months</option>
-                        {availableMonthsForYear.map((m) => (
-                          <option key={m} value={m}>{MONTHS[m]}</option>
+                        {MONTHS.map((name, idx) => (
+                          <option key={idx} value={idx}>{name}</option>
                         ))}
                       </select>
                     </div>

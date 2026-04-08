@@ -5,6 +5,7 @@ import { supabase } from '../../lib/supabase';
 import { showToast } from '../../lib/swal';
 import { formatNotificationMessage } from '../../utils/notificationMessage';
 import MiniLoader from '../../components/MiniLoader';
+import { useLanguage } from '../../lib/i18n';
 
 interface Notification {
   id: string;

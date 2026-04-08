@@ -9,11 +9,11 @@ import { supabase } from '../../lib/supabase';
 import { showToast } from '../../lib/swal';
 import { useLanguage } from '../../lib/i18n';
 
-const Settings: React.FC<{ user: User }> = ({ user }) => {
+const Settings: React.FC<{ user: User; section?: 'profile' | 'security' | 'language' }> = ({ user, section = 'profile' }) => {
   const { logout, setUser } = useAuthStore();
   const { lang, setLang, t } = useLanguage();
   const fileInputRef = useRef<HTMLInputElement | null>(null);
-  const [activeTab, setActiveTab] = useState('profile');
+  const activeTab = section;
   const [saving, setSaving] = useState(false);
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
 
@@ -197,39 +197,15 @@ const Settings: React.FC<{ user: User }> = ({ user }) => {
   return (
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
       <div>
-        <h1 className="text-2xl md:text-4xl font-black text-slate-900 tracking-tight">Settings</h1>
+        <h1 className="text-2xl md:text-4xl font-black text-slate-900 tracking-tight">
+          {activeTab === 'profile' ? t('edit_profile') : activeTab === 'security' ? t('password_reset') : t('select_language')}
+        </h1>
         <p className="text-slate-500 font-bold text-[10px] tracking-widest mt-1">
-          Manage your account preferences
+          {activeTab === 'profile' ? t('update_info') : activeTab === 'security' ? t('change_password') : t('choose_language')}
         </p>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
-        {/* Sidebar nav */}
-        <div className="lg:col-span-1 space-y-6">
-          <div className="bg-white rounded-[2.5rem] p-8 shadow-sm border border-slate-100">
-            <h3 className="text-[10px] font-black text-slate-400 tracking-widest mb-6">Navigation</h3>
-            <div className="space-y-2">
-              {tabs.map((tab) => (
-                <button
-                  key={tab.id}
-                  onClick={() => setActiveTab(tab.id)}
-                  className={`w-full flex items-center gap-4 px-6 py-4 rounded-2xl text-[10px] font-black uppercase tracking-widest text-left transition-all ${
-                    activeTab === tab.id
-                      ? 'bg-primary text-white shadow-lg shadow-primary/20'
-                      : 'text-slate-500 hover:bg-slate-50'
-                  }`}
-                >
-                  {tab.icon}
-                  {tab.name}
-                </button>
-              ))}
-            </div>
-          </div>
-
-        </div>
-
-        {/* Content area */}
-        <div className="lg:col-span-3 space-y-8">
+      <div className="space-y-8">
           {/* Profile Tab */}
           {activeTab === 'profile' && (
             <div className="bg-white rounded-[3rem] p-10 shadow-sm border border-slate-100">
@@ -438,7 +414,6 @@ const Settings: React.FC<{ user: User }> = ({ user }) => {
               </div>
             </div>
           )}
-        </div>
       </div>
 
       {/* Logout at bottom */}

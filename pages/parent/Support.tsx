@@ -7,7 +7,7 @@ import {
 import { supabase } from '../../lib/supabase';
 import { showToast } from '../../lib/swal';
 
-const Support: React.FC<{ user: User; onOpenDocumentation?: () => void }> = ({ user, onOpenDocumentation }) => {
+const Support: React.FC<{ user: User; onOpenDocumentation?: () => void; section?: 'ticket' | 'faq' }> = ({ user, section = 'ticket' }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [showTicketForm, setShowTicketForm] = useState(false);
   const [ticketSubject, setTicketSubject] = useState('');
@@ -116,9 +116,11 @@ const Support: React.FC<{ user: User; onOpenDocumentation?: () => void }> = ({ u
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 text-center md:text-left">
         <div>
-          <h1 className="text-2xl md:text-4xl font-black text-slate-900 tracking-tight">Support Center</h1>
-          <p className="text-slate-500 font-bold uppercase text-[10px] tracking-widest mt-1">
-            We're here to help you 24/7
+          <h1 className="text-2xl md:text-4xl font-black text-slate-900 tracking-tight">
+            {section === 'faq' ? 'Frequently Asked Questions' : 'Submit a Ticket'}
+          </h1>
+          <p className="text-slate-500 font-bold text-[10px] tracking-widest mt-1">
+            {section === 'faq' ? 'Find answers to common questions' : "We're here to help you 24/7"}
           </p>
         </div>
         <div className="flex items-center gap-3 bg-primary/10 px-6 py-3 rounded-2xl border border-primary/10 mx-auto md:mx-0">
@@ -127,6 +129,7 @@ const Support: React.FC<{ user: User; onOpenDocumentation?: () => void }> = ({ u
         </div>
       </div>
 
+      {section === 'ticket' && (<>
       {/* Search hero */}
       <div className="bg-slate-950 rounded-[3rem] p-12 text-white shadow-2xl relative overflow-hidden text-center">
         <div className="absolute top-0 right-0 w-64 h-64 bg-primary/20 rounded-bl-full -mr-20 -mt-20 blur-3xl"></div>
@@ -310,6 +313,9 @@ const Support: React.FC<{ user: User; onOpenDocumentation?: () => void }> = ({ u
         </div>
       )}
 
+      </>)}
+
+      {section === 'faq' && (<>
       {/* FAQ */}
       <div className="bg-white rounded-[3rem] p-12 shadow-sm border border-slate-100">
         <div className="flex items-center justify-between mb-12">
@@ -373,6 +379,8 @@ const Support: React.FC<{ user: User; onOpenDocumentation?: () => void }> = ({ u
         ))}
       </div>
 
+      </>)}
+
       {activeDocument && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[2100] overflow-y-auto">
           <div className="flex min-h-full items-start justify-center p-4 pt-20 pb-6 md:pt-24">
@@ -387,11 +395,11 @@ const Support: React.FC<{ user: User; onOpenDocumentation?: () => void }> = ({ u
               </button>
             </div>
             <div className="space-y-6">
-              {docDetails[activeDocument].sections.map((section) => (
-                <section key={section.heading} className="p-5 rounded-2xl border border-slate-100 bg-slate-50/60">
-                  <h4 className="text-sm font-black text-slate-800 uppercase tracking-widest mb-2">{section.heading}</h4>
-                  <p className="text-[12px] text-slate-600 font-semibold leading-relaxed">{section.body}</p>
-                </section>
+              {docDetails[activeDocument].sections.map((sec) => (
+                <div key={sec.heading} className="p-5 rounded-2xl border border-slate-100 bg-slate-50/60">
+                  <h4 className="text-sm font-black text-slate-800 tracking-widest mb-2">{sec.heading}</h4>
+                  <p className="text-[12px] text-slate-600 font-semibold leading-relaxed">{sec.body}</p>
+                </div>
               ))}
             </div>
           </div>

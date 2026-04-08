@@ -8,6 +8,7 @@ import { usePayments } from '../../hooks/usePayments';
 import { useReceipts } from '../../hooks/useReceipts';
 import PaymentPortal from '../../components/PaymentPortal';
 import MiniLoader from '../../components/MiniLoader';
+import { useLanguage } from '../../lib/i18n';
 
 const ReceiptDropdown: React.FC<{
   dueId: string;

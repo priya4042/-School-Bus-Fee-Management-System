@@ -647,6 +647,129 @@ const AdminNotifications: React.FC<{ focusNotificationId?: string; onFocusHandle
         </div>
       </div>
       )}
+
+      {/* Chat Messages from Parents */}
+      <ChatSection />
+    </div>
+  );
+};
+
+const ChatSection: React.FC = () => {
+  const [chatMessages, setChatMessages] = useState<any[]>([]);
+  const [replyInputs, setReplyInputs] = useState<Record<string, string>>({});
+  const [sending, setSending] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchChats = async () => {
+      const { data: session } = await supabase.auth.getSession();
+      const adminId = session?.session?.user?.id;
+      if (!adminId) return;
+
+      const { data } = await supabase
+        .from('notifications')
+        .select('*')
+        .eq('user_id', adminId)
+        .like('title', '%[CHAT]%')
+        .order('created_at', { ascending: false })
+        .limit(20);
+
+      setChatMessages(data || []);
+    };
+    fetchChats();
+
+    const channel = supabase
+      .channel('admin-chat-listen')
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'notifications' }, (payload: any) => {
+        if (payload.new?.title?.includes('[CHAT]') && !payload.new?.title?.includes('[CHAT] Admin')) {
+          setChatMessages((prev) => [payload.new, ...prev].slice(0, 20));
+        }
+      })
+      .subscribe();
+
+    return () => { supabase.removeChannel(channel); };
+  }, []);
+
+  const sendReply = async (parentName: string, originalMsg: any) => {
+    const text = replyInputs[originalMsg.id]?.trim();
+    if (!text) return;
+
+    setSending(originalMsg.id);
+    try {
+      // Find parent's user_id from the message
+      // Chat messages from parent are stored in admin's notifications with parent name in title
+      // We need to find the parent's profile to send reply to their user_id
+      const nameFromTitle = originalMsg.title?.replace('[CHAT] ', '') || '';
+      const { data: parentProfiles } = await supabase
+        .from('profiles')
+        .select('id')
+        .eq('role', 'PARENT')
+        .or(`full_name.ilike.%${nameFromTitle}%`)
+        .limit(1);
+
+      const parentId = parentProfiles?.[0]?.id;
+      if (!parentId) {
+        showToast('Could not find parent to reply to', 'error');
+        return;
+      }
+
+      // Send reply to parent's notifications
+      await supabase.from('notifications').insert({
+        user_id: parentId,
+        title: '[CHAT] Admin',
+        message: text,
+        type: 'INFO',
+        is_read: false,
+      });
+
+      setReplyInputs((prev) => ({ ...prev, [originalMsg.id]: '' }));
+      showToast('Reply sent!', 'success');
+    } catch (err: any) {
+      showToast(err.message || 'Failed to send reply', 'error');
+    } finally {
+      setSending(null);
+    }
+  };
+
+  if (chatMessages.length === 0) return null;
+
+  return (
+    <div className="bg-white rounded-[2.5rem] border border-slate-200 p-8 shadow-sm">
+      <h3 className="font-black text-slate-800 tracking-tight text-lg mb-6 flex items-center gap-3">
+        <i className="fas fa-comments text-primary"></i>
+        Parent Chat Messages
+      </h3>
+      <div className="space-y-4 max-h-[500px] overflow-y-auto">
+        {chatMessages.filter(m => !m.title?.includes('[CHAT] Admin')).map((msg) => (
+          <div key={msg.id} className="p-4 bg-slate-50 rounded-2xl border border-slate-100">
+            <div className="flex items-start justify-between gap-3">
+              <div className="flex-1">
+                <p className="text-[10px] font-black text-primary tracking-widest">{msg.title?.replace('[CHAT] ', '')}</p>
+                <p className="text-sm text-slate-700 font-semibold mt-1">{msg.message}</p>
+                <p className="text-[8px] text-slate-400 font-bold mt-2">
+                  {new Date(msg.created_at).toLocaleString('en-IN', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })}
+                </p>
+              </div>
+            </div>
+            <div className="flex gap-2 mt-3">
+              <input
+                type="text"
+                value={replyInputs[msg.id] || ''}
+                onChange={(e) => setReplyInputs((prev) => ({ ...prev, [msg.id]: e.target.value }))}
+                onKeyDown={(e) => { if (e.key === 'Enter') sendReply(msg.title, msg); }}
+                placeholder="Type reply..."
+                className="flex-1 px-4 py-2 bg-white border border-slate-200 rounded-xl text-sm font-bold outline-none focus:ring-2 ring-primary/20 focus:border-primary"
+              />
+              <button
+                onClick={() => sendReply(msg.title, msg)}
+                disabled={!replyInputs[msg.id]?.trim() || sending === msg.id}
+                className="px-4 py-2 bg-primary text-white rounded-xl text-[10px] font-black uppercase tracking-widest disabled:opacity-40 hover:bg-blue-800 transition-all"
+              >
+                {sending === msg.id ? <i className="fas fa-circle-notch fa-spin"></i> : 'Reply'}
+              </button>
+            </div>
+          </div>
+        ))}
+      </div>
     </div>
   );
 };

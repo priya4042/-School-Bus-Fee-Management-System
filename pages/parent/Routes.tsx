@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { User } from '../../types';
 import { supabase } from '../../lib/supabase';
 import MiniLoader from '../../components/MiniLoader';
+import { useLanguage } from '../../lib/i18n';
 
 interface ParentRouteStudent {
   id: string;

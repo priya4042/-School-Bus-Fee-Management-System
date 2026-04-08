@@ -162,12 +162,12 @@ const App: React.FC = () => {
         case 'Fees': return <FeeHistory user={user!} />;
         case 'Notifications': return <ParentNotifications user={user!} focusNotificationId={selectedNotificationId} onFocusHandled={() => setSelectedNotificationId(undefined)} />;
         case 'Receipts': return <Receipts user={user!} />;
-        case 'Profile': return <Profile user={user!} />;
-        case 'Settings': return <ParentSettings user={user!} />;
-        case 'Settings_lang': return <ParentSettings user={user!} />;
+        case 'Profile': return <ParentSettings user={user!} section="profile" />;
+        case 'Settings': return <ParentSettings user={user!} section="security" />;
+        case 'Settings_lang': return <ParentSettings user={user!} section="language" />;
         case 'Student Profile': return <StudentProfile user={user!} />;
-        case 'Support': return <Support user={user!} />;
-        case 'Support_faq': return <Support user={user!} />;
+        case 'Support': return <Support user={user!} section="ticket" />;
+        case 'Support_faq': return <Support user={user!} section="faq" />;
         default: return <ParentDashboard user={user!} />;
       }
     }

@@ -12,6 +12,7 @@ import { showToast } from '../lib/swal';
 import GoogleMap from '../components/GoogleMap';
 import { supabase } from '../lib/supabase';
 import MiniLoader from '../components/MiniLoader';
+import { useLanguage } from '../lib/i18n';
 
 const ParentDashboard: React.FC<{ user: User }> = ({ user }) => {
   const { paymentState, openPortal, closePortal, initiateRazorpay } = usePayments();

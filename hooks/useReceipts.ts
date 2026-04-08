@@ -132,6 +132,27 @@ const buildReceiptAggregate = (rows: any[], paymentId: string | number, txnId?: 
   };
 };
 
+const drawLogo = (doc: any, x: number, y: number, size: number) => {
+  // Draw bus icon circle
+  doc.setFillColor(30, 64, 175);
+  doc.circle(x + size / 2, y + size / 2, size / 2, 'F');
+  // Bus body
+  doc.setFillColor(255, 255, 255);
+  const bx = x + size * 0.2;
+  const by = y + size * 0.25;
+  const bw = size * 0.6;
+  const bh = size * 0.45;
+  doc.roundedRect(bx, by, bw, bh, 1, 1, 'F');
+  // Bus windows
+  doc.setFillColor(30, 64, 175);
+  doc.rect(bx + bw * 0.1, by + bh * 0.15, bw * 0.35, bh * 0.35, 'F');
+  doc.rect(bx + bw * 0.55, by + bh * 0.15, bw * 0.35, bh * 0.35, 'F');
+  // Wheels
+  doc.setFillColor(51, 65, 85);
+  doc.circle(bx + bw * 0.25, by + bh + 0.5, size * 0.07, 'F');
+  doc.circle(bx + bw * 0.75, by + bh + 0.5, size * 0.07, 'F');
+};
+
 const generateReceiptPDF = async (due: any) => {
   const doc = new jsPDF({ orientation: 'p', unit: 'mm', format: 'a4' });
   const normalized = normalizeStudentInfo(due);
@@ -156,13 +177,14 @@ const generateReceiptPDF = async (due: any) => {
   // Header band (invoice style)
   doc.setFillColor(30, 64, 175);
   doc.rect(0, 0, pageWidth, 30, 'F');
+  drawLogo(doc, margin, 4, 12);
   doc.setTextColor(255, 255, 255);
   doc.setFont('helvetica', 'bold');
-  doc.setFontSize(18);
-  doc.text('School Bus WayPro', margin, 13);
+  doc.setFontSize(16);
+  doc.text('School Bus WayPro', margin + 15, 12);
   doc.setFont('helvetica', 'normal');
-  doc.setFontSize(9);
-  doc.text('Bus Fee Payment Invoice', margin, 20);
+  doc.setFontSize(8);
+  doc.text('Bus Fee Payment Invoice', margin + 15, 19);
 
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(14);
@@ -299,13 +321,14 @@ const generateCompactReceipt = async (due: any) => {
 
   // Header
   doc.setFillColor(30, 64, 175);
-  doc.rect(0, 0, w, 18, 'F');
+  doc.rect(0, 0, w, 20, 'F');
+  drawLogo(doc, w / 2 - 4, 2, 8);
   doc.setTextColor(255, 255, 255);
   doc.setFont('helvetica', 'bold');
-  doc.setFontSize(10);
-  doc.text('School Bus WayPro', w / 2, 8, { align: 'center' });
-  doc.setFontSize(7);
-  doc.text('PAYMENT RECEIPT', w / 2, 14, { align: 'center' });
+  doc.setFontSize(8);
+  doc.text('School Bus WayPro', w / 2, 14, { align: 'center' });
+  doc.setFontSize(5);
+  doc.text('PAYMENT RECEIPT', w / 2, 18, { align: 'center' });
 
   let y = 24;
   doc.setTextColor(100, 116, 139);
@@ -392,13 +415,14 @@ const generateDetailedInvoice = async (due: any) => {
   // Elegant header with double line
   doc.setFillColor(15, 23, 42);
   doc.rect(0, 0, pageWidth, 36, 'F');
+  drawLogo(doc, margin, 6, 14);
   doc.setTextColor(255, 255, 255);
   doc.setFont('helvetica', 'bold');
-  doc.setFontSize(20);
-  doc.text('TAX INVOICE', margin, 16);
+  doc.setFontSize(18);
+  doc.text('Tax Invoice', margin + 18, 15);
   doc.setFont('helvetica', 'normal');
-  doc.setFontSize(9);
-  doc.text('School Bus WayPro — Transport Fee Invoice', margin, 24);
+  doc.setFontSize(8);
+  doc.text('School Bus WayPro — Transport Fee Invoice', margin + 18, 23);
   doc.setFontSize(8);
   doc.text(`Invoice No: ${receiptNo}`, pageWidth - margin, 16, { align: 'right' });
   doc.text(`Date: ${paidDateTime}`, pageWidth - margin, 22, { align: 'right' });
