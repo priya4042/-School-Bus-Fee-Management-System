@@ -15,7 +15,7 @@ import MiniLoader from '../components/MiniLoader';
 import { useLanguage } from '../lib/i18n';
 
 const ParentDashboard: React.FC<{ user: User }> = ({ user }) => {
-  const { paymentState, openPortal, closePortal, initiateRazorpay } = usePayments();
+  const { paymentState, openPortal, closePortal, initiatePayU, initiateRazorpay, initiateUpiIntent, confirmUpiPayment } = usePayments();
   const { downloadReceipt } = useReceipts();
   const [familyStudents, setFamilyStudents] = useState<Student[]>([]);
   const [dues, setDues] = useState<MonthlyDue[]>([]);
@@ -117,10 +117,13 @@ const ParentDashboard: React.FC<{ user: User }> = ({ user }) => {
 
   return (
     <div className="space-y-6">
-      <PaymentPortal 
-        state={paymentState} 
-        onClose={closePortal} 
+      <PaymentPortal
+        state={paymentState}
+        onClose={closePortal}
         onInitiateRazorpay={initiateRazorpay}
+        onInitiatePayU={initiatePayU}
+        onInitiateUpi={initiateUpiIntent}
+        onConfirmUpi={confirmUpiPayment}
       />
 
       <div className="bg-white p-6 md:p-10 rounded-3xl md:rounded-[3rem] border border-slate-200 shadow-premium flex flex-col md:flex-row items-center justify-between gap-6 relative overflow-hidden group">

@@ -1,5 +1,5 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { verifyWebhookSignature } from '../../../lib/server/payments/paymentCore.js';
+import { verifyPayUResponseHash } from '../../../lib/server/payments/paymentCore.js';
 import { recordSuccessfulPayment } from '../../../lib/server/payments/recordSuccessfulPayment.js';
 
 const classifyWebhookFailure = (error: any): 'CONFIG' | 'DATA' | 'RUNTIME' => {
@@ -8,7 +8,7 @@ const classifyWebhookFailure = (error: any): 'CONFIG' | 'DATA' | 'RUNTIME' => {
   if (
     raw.includes('supabase_url') ||
     raw.includes('supabase_service_role_key') ||
-    raw.includes('razorpay_webhook_secret') ||
+    raw.includes('payu_merchant_salt') ||
     raw.includes('not configured') ||
     raw.includes('missing')
   ) {
@@ -34,7 +34,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   res.setHeader('Access-Control-Allow-Methods', 'GET,OPTIONS,PATCH,DELETE,POST,PUT');
   res.setHeader(
     'Access-Control-Allow-Headers',
-    'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version, Authorization, x-razorpay-signature'
+    'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version, Authorization'
   );
 
   if (req.method === 'OPTIONS') {
@@ -45,47 +45,49 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  const signature = String(req.headers['x-razorpay-signature'] || '');
-  const payloadString = JSON.stringify(req.body || {});
   const traceId = `webhook-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
 
-  console.log(`[Razorpay Webhook][${traceId}] Received webhook event`);
-
-  if (!signature) {
-    console.warn(`[Razorpay Webhook][${traceId}] Missing secret or signature`);
-    return res.status(400).json({ error: 'Missing secret or signature', traceId });
-  }
+  console.log(`[PayU Webhook][${traceId}] Received webhook event`);
 
   try {
-    const valid = verifyWebhookSignature(payloadString, signature);
+    const body = req.body || {};
+    const payuStatus = String(body.status || '').toLowerCase();
+    const txnid = String(body.txnid || '');
+    const mihpayid = String(body.mihpayid || '');
+    const hash = String(body.hash || '');
+    const dueId = String(body.udf1 || '').trim();
+
+    if (payuStatus !== 'success') {
+      console.log(`[PayU Webhook][${traceId}] Non-success status: ${payuStatus}`);
+      return res.status(200).json({ status: 'ignored', payuStatus, traceId });
+    }
+
+    // Verify response hash
+    const valid = verifyPayUResponseHash({
+      salt: '',
+      status: payuStatus,
+      email: String(body.email || ''),
+      firstname: String(body.firstname || ''),
+      productinfo: String(body.productinfo || ''),
+      amount: String(body.amount || ''),
+      txnid,
+      key: '',
+      responseHash: hash,
+      udf1: String(body.udf1 || ''),
+      udf2: String(body.udf2 || ''),
+      udf3: String(body.udf3 || ''),
+      udf4: String(body.udf4 || ''),
+      udf5: String(body.udf5 || ''),
+      additionalCharges: String(body.additionalCharges || ''),
+    });
+
     if (!valid) {
-      console.warn(`[Razorpay Webhook][${traceId}] Invalid signature`);
-      return res.status(400).json({ error: 'Invalid signature', traceId });
+      console.warn(`[PayU Webhook][${traceId}] Invalid hash`);
+      return res.status(400).json({ error: 'Invalid hash', traceId });
     }
 
-    const event = String(req.body?.event || '');
-    console.log(`[Razorpay Webhook][${traceId}] Signature valid. Event: ${event}`);
-
-    const paymentEntity = req.body?.payload?.payment?.entity || null;
-    const orderEntity = req.body?.payload?.order?.entity || null;
-    const dueId = String(
-      paymentEntity?.notes?.due_id ||
-      paymentEntity?.notes?.dueId ||
-      orderEntity?.notes?.due_id ||
-      orderEntity?.notes?.dueId ||
-      ''
-    ).trim();
-
-    const razorpayOrderId = String(paymentEntity?.order_id || orderEntity?.id || '').trim();
-    const razorpayPaymentId = String(paymentEntity?.id || '').trim();
-
-    const isPaymentSuccessEvent = event === 'payment.captured' || event === 'order.paid';
-    if (!isPaymentSuccessEvent) {
-      return res.status(200).json({ status: 'ignored', event, traceId });
-    }
-
-    if (!dueId || !razorpayOrderId || !razorpayPaymentId) {
-      console.warn(`[Razorpay Webhook][${traceId}] Missing due/order/payment identifiers in payload`);
+    if (!dueId || !txnid || !mihpayid) {
+      console.warn(`[PayU Webhook][${traceId}] Missing due/txn identifiers`);
       return res.status(202).json({
         status: 'accepted_without_sync',
         reason: 'missing_due_or_payment_identifiers',
@@ -96,14 +98,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const result = await recordSuccessfulPayment({
       dueId,
       dueIds: [dueId],
-      razorpayOrderId,
-      razorpayPaymentId,
+      payuTxnId: txnid,
+      payuMihpayId: mihpayid,
       source: 'webhook',
     });
 
     return res.status(200).json({
       status: 'ok',
-      event,
       traceId,
       dueId: result.dueId,
       transactionId: result.transactionId,
@@ -111,16 +112,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     });
   } catch (error: any) {
     const failureType = classifyWebhookFailure(error);
-    const event = String(req.body?.event || '');
-    const paymentEntity = req.body?.payload?.payment?.entity || null;
-    const orderEntity = req.body?.payload?.order?.entity || null;
-
-    console.error(`[Razorpay Webhook][${traceId}] ${failureType} failure:`, {
+    console.error(`[PayU Webhook][${traceId}] ${failureType} failure:`, {
       message: String(error?.message || error || 'Unknown webhook processing error'),
-      event,
-      paymentId: String(paymentEntity?.id || ''),
-      orderId: String(paymentEntity?.order_id || orderEntity?.id || ''),
-      dueId: String(paymentEntity?.notes?.due_id || orderEntity?.notes?.due_id || ''),
     });
 
     return res.status(500).json({

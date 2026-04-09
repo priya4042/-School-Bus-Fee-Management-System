@@ -129,7 +129,7 @@ export default function TermsOfService() {
           <h2 className="text-2xl font-bold text-gray-900 mb-4">10. Payment Terms</h2>
           <div className="space-y-3 text-gray-700">
             <p>
-              <strong>Fee Payment:</strong> All fees are to be paid according to the billing cycle specified by the school. Payment can be made through the integrated payment gateways (Razorpay or Stripe).
+              <strong>Fee Payment:</strong> All fees are to be paid according to the billing cycle specified by the school. Payment can be made through the integrated payment gateways (PayU or Stripe).
             </p>
             <p>
               <strong>Late Payments:</strong> Late payments may incur penalties as specified by the school administration.
@@ -216,6 +216,13 @@ export default function TermsOfService() {
           <p className="text-center text-sm text-gray-600">
             By using BusWay Pro, you agree to these Terms of Service.
           </p>
+          <div className="flex flex-wrap justify-center gap-4 mt-3 text-xs text-gray-500">
+            <a href="/privacy" className="hover:underline">Privacy Policy</a>
+            <a href="/cookie-policy" className="hover:underline">Cookie Policy</a>
+            <a href="/data-protection" className="hover:underline">Data Protection</a>
+            <a href="/refund-policy" className="hover:underline">Refund Policy</a>
+            <a href="/shipping-policy" className="hover:underline">Shipping Policy</a>
+          </div>
           <p className="text-center text-xs text-gray-500 mt-2">
             © 2026 BusWay Pro. All rights reserved.
           </p>

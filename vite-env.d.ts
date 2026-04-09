@@ -11,15 +11,15 @@ interface ImportMetaEnv {
   readonly VITE_STREAMING_URL: string
   readonly VITE_STREAMING_SERVER_SECRET: string
   readonly VITE_GOOGLE_MAPS_API_KEY: string
-  readonly VITE_RAZORPAY_KEY_ID: string
-  readonly VITE_RAZORPAY_KEY?: string
+  readonly VITE_PAYU_MERCHANT_KEY: string
+  readonly VITE_PAYU_MERCHANT_SALT?: string
   readonly VITE_SUPABASE_URL: 'https://pjovjynubnrvhwpnfnlw.supabase.co'
   readonly VITE_SUPABASE_ANON_KEY: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBqb3ZqeW51Ym5ydmh3cG5mbmx3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIwNzEwNjcsImV4cCI6MjA4NzY0NzA2N30.SkEOaLUY6o1MrmGXgilW_hNA0fi6fvKWURES82UVp8M'
   readonly VITE_OTP_PROVIDER: string
   readonly VITE_MSG91_AUTH_KEY: string
   readonly VITE_MSG91_TEMPLATE_ID: string
   readonly VITE_MSG91_SENDER_ID: string
-  readonly VITE_RAZORPAY_KEY_SECRET: string
+  readonly VITE_PAYU_ENV?: string
   readonly VITE_ADMIN_PAYMENT_QR_URL?: string
   readonly VITE_ADMIN_UPI_ID?: string
   readonly VITE_CAMERA_STREAM_BASE_URL: string
@@ -36,5 +36,5 @@ interface ImportMeta {
 
 interface Window {
   google: any;
-  Razorpay: any;
+  bolt: any;
 }

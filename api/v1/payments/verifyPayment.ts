@@ -6,7 +6,7 @@ const classifyVerifyFailure = (error: any): 'CONFIG' | 'DATA' | 'RUNTIME' => {
   if (
     raw.includes('supabase_url') ||
     raw.includes('supabase_service_role_key') ||
-    raw.includes('razorpay_key_secret') ||
+    raw.includes('payu_merchant_salt') ||
     raw.includes('not configured') ||
     raw.includes('missing')
   ) {
@@ -45,46 +45,73 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   const body = (req.body || {}) as any;
   const {
-    razorpay_order_id,
-    razorpay_payment_id,
-    razorpay_signature,
+    txnid,
+    mihpayid,
+    status: payuStatus,
+    hash: responseHash,
+    amount,
+    productinfo,
+    firstname,
+    email,
     dueId,
     due_id,
     due_ids,
+    udf1,
+    udf2,
+    udf3,
+    udf4,
+    udf5,
+    additionalCharges,
   } = body;
   const traceId = `verify-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
 
-  const finalDueId = String(dueId || due_id || '').trim();
+  const finalDueId = String(dueId || due_id || udf1 || '').trim();
 
-  console.log(`[Razorpay Verify][${traceId}] Verifying payment for dueId: ${finalDueId}, payment: ${razorpay_payment_id}`);
+  console.log(`[PayU Verify][${traceId}] Verifying payment for dueId: ${finalDueId}, txnid: ${txnid}, mihpayid: ${mihpayid}, status: ${payuStatus}`);
 
-  if (!finalDueId || !razorpay_payment_id || !razorpay_order_id || !razorpay_signature) {
+  if (!finalDueId || !txnid || !mihpayid) {
     return res.status(400).json({ success: false, error: 'Missing required fields' });
   }
 
+  if (payuStatus !== 'success') {
+    return res.status(400).json({ success: false, error: `Payment was not successful. Status: ${payuStatus}` });
+  }
+
   try {
-    const [{ verifyCheckoutSignature }, { recordSuccessfulPayment }] = await Promise.all([
+    const [{ verifyPayUResponseHash }, { recordSuccessfulPayment }] = await Promise.all([
       import('../../../lib/server/payments/paymentCore.js'),
       import('../../../lib/server/payments/recordSuccessfulPayment.js'),
     ]);
 
-    const valid = verifyCheckoutSignature({
-      razorpayOrderId: String(razorpay_order_id),
-      razorpayPaymentId: String(razorpay_payment_id),
-      razorpaySignature: String(razorpay_signature),
+    const valid = verifyPayUResponseHash({
+      salt: '',  // function reads from env
+      status: String(payuStatus),
+      email: String(email || ''),
+      firstname: String(firstname || ''),
+      productinfo: String(productinfo || ''),
+      amount: String(amount || ''),
+      txnid: String(txnid),
+      key: '', // function reads from env
+      responseHash: String(responseHash || ''),
+      udf1: String(udf1 || ''),
+      udf2: String(udf2 || ''),
+      udf3: String(udf3 || ''),
+      udf4: String(udf4 || ''),
+      udf5: String(udf5 || ''),
+      additionalCharges: String(additionalCharges || ''),
     });
 
     if (!valid) {
-      console.warn(`[Razorpay Verify][${traceId}] Invalid signature for payment: ${razorpay_payment_id}`);
-      return res.status(400).json({ success: false, error: 'Invalid signature' });
+      console.warn(`[PayU Verify][${traceId}] Invalid hash for payment: ${mihpayid}`);
+      return res.status(400).json({ success: false, error: 'Invalid payment hash' });
     }
 
-    console.log(`[Razorpay Verify][${traceId}] Signature valid for payment: ${razorpay_payment_id}`);
+    console.log(`[PayU Verify][${traceId}] Hash valid for payment: ${mihpayid}`);
     const result = await recordSuccessfulPayment({
       dueId: finalDueId,
       dueIds: Array.isArray(due_ids) ? due_ids.map((id: any) => String(id)) : [],
-      razorpayOrderId: String(razorpay_order_id),
-      razorpayPaymentId: String(razorpay_payment_id),
+      payuTxnId: String(txnid),
+      payuMihpayId: String(mihpayid),
       source: 'verify',
     });
 
@@ -98,11 +125,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     });
   } catch (error: any) {
     const failureType = classifyVerifyFailure(error);
-    console.error(`[Razorpay Verify][${traceId}] ${failureType} failure:`, {
+    console.error(`[PayU Verify][${traceId}] ${failureType} failure:`, {
       message: String(error?.message || error || 'Unknown payment verification failure'),
       dueId: finalDueId,
-      paymentId: String(razorpay_payment_id || ''),
-      orderId: String(razorpay_order_id || ''),
+      mihpayid: String(mihpayid || ''),
+      txnid: String(txnid || ''),
       hasBundledDues: Array.isArray(due_ids) && due_ids.length > 0,
     });
 

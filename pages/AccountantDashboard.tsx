@@ -58,7 +58,7 @@ const AccountantDashboard: React.FC = () => {
                  </div>
                  <div>
                     <p className="text-sm font-bold text-slate-700">Bank Reconciliation</p>
-                    <p className="text-[10px] text-slate-400">Match Razorpay payouts</p>
+                    <p className="text-[10px] text-slate-400">Match PayU payouts</p>
                  </div>
               </button>
               <button className="w-full p-4 bg-slate-50 hover:bg-slate-100 rounded-xl flex items-center gap-3 transition-colors text-left group">

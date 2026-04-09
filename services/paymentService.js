@@ -1,40 +1,30 @@
 import axios from 'axios';
 import { ENV } from '../config/env';
-
-// Helper to load Razorpay script dynamically
-const loadRazorpayScript = () => {
-  return new Promise((resolve) => {
-    const script = document.createElement('script');
-    script.src = 'https://checkout.razorpay.com/v1/checkout.js';
-    script.onload = () => resolve(true);
-    script.onerror = () => resolve(false);
-    document.body.appendChild(script);
-  });
-};
+import { loadPayU } from '../lib/razorpay';
 
 export const paymentService = {
   /**
-   * Create a payment order for monthly bus fee
+   * Create a payment hash for monthly bus fee via PayU
    */
   createPaymentOrder: async (amount, studentId, month) => {
-    if (!ENV.RAZORPAY_KEY_ID) {
-      console.warn('RAZORPAY_KEY_ID is missing in env.js. Simulating payment order.');
+    if (!ENV.PAYU_MERCHANT_KEY) {
+      console.warn('PAYU_MERCHANT_KEY is missing in env.js. Simulating payment order.');
       return { success: true, orderId: `sim_order_${Date.now()}`, amount };
     }
 
     try {
-      // In a real app, this calls your backend to create a Razorpay order securely
-      const response = await axios.post(`${ENV.VITE_API_BASE_URL}/api/payments/createOrder`, {
+      const response = await axios.post(`${ENV.API_BASE_URL}/api/payments/createOrder`, {
         amount,
         studentId,
         month
       });
 
-      return { 
-        success: true, 
-        orderId: response.data.id, 
+      return {
+        success: true,
+        txnid: response.data.txnid,
+        hash: response.data.hash,
+        merchantKey: response.data.merchantKey,
         amount: response.data.amount,
-        currency: response.data.currency || 'INR'
       };
     } catch (error) {
       console.error('Failed to create payment order:', error);
@@ -43,18 +33,17 @@ export const paymentService = {
   },
 
   /**
-   * Verify the payment after Razorpay checkout
+   * Verify the payment after PayU checkout
    */
   verifyPayment: async (paymentData) => {
-    if (!ENV.RAZORPAY_KEY_ID) {
-      console.warn('RAZORPAY_KEY_ID is missing. Simulating payment verification.');
+    if (!ENV.PAYU_MERCHANT_KEY) {
+      console.warn('PAYU_MERCHANT_KEY is missing. Simulating payment verification.');
       return { success: true, message: 'Payment verified (simulated)' };
     }
 
     try {
-      // In a real app, this calls your backend to verify the Razorpay signature
-      const response = await axios.post(`${ENV.VITE_API_BASE_URL}/api/payments/verifyPayment`, paymentData);
-      
+      const response = await axios.post(`${ENV.API_BASE_URL}/api/payments/verifyPayment`, paymentData);
+
       return { success: true, message: 'Payment verified successfully', data: response.data };
     } catch (error) {
       console.error('Failed to verify payment:', error);
@@ -68,7 +57,7 @@ export const paymentService = {
   generateReceipt: async (transactionId, details) => {
     try {
       console.log(`Generating receipt for transaction ${transactionId}`, details);
-      
+
       const receiptHtml = `
         <html>
           <head>
@@ -120,13 +109,13 @@ export const paymentService = {
 
       const blob = new Blob([receiptHtml], { type: 'text/html' });
       const url = window.URL.createObjectURL(blob);
-      
+
       // Open in new window to trigger print dialog (Save as PDF)
       const printWindow = window.open(url, '_blank');
       if (!printWindow) {
         throw new Error('Please allow popups to generate receipt');
       }
-      
+
       return { success: true, message: 'Receipt generated successfully' };
     } catch (error) {
       console.error('Failed to generate receipt:', error);
@@ -151,7 +140,7 @@ export const paymentService = {
       });
 
       if (error) throw error;
-      
+
       return { success: true, message: 'Cash payment recorded successfully' };
     } catch (error) {
       console.error('Failed to record cash payment:', error);
@@ -160,65 +149,65 @@ export const paymentService = {
   },
 
   /**
-   * Initialize Razorpay checkout
+   * Initialize PayU Bolt checkout
    */
   initiateCheckout: async (amount, studentId, month, userDetails, onSuccess, onError) => {
-    const res = await loadRazorpayScript();
-    
-    if (!res) {
-      if (onError) onError('Razorpay SDK failed to load. Are you online?');
+    const res = await loadPayU();
+
+    if (!res || !window.bolt) {
+      if (onError) onError('PayU SDK failed to load. Are you online?');
       return;
     }
 
     const orderRes = await paymentService.createPaymentOrder(amount, studentId, month);
-    
+
     if (!orderRes.success) {
       if (onError) onError(orderRes.error);
       return;
     }
 
-    if (!ENV.RAZORPAY_KEY_ID) {
+    if (!ENV.PAYU_MERCHANT_KEY) {
       // Simulated success if no key
       setTimeout(() => {
         const mockPaymentData = {
-          razorpay_payment_id: `sim_pay_${Date.now()}`,
-          razorpay_order_id: orderRes.orderId,
-          razorpay_signature: 'sim_signature'
+          txnid: `sim_txn_${Date.now()}`,
+          mihpayid: `sim_mihpay_${Date.now()}`,
+          status: 'success',
+          hash: 'sim_hash'
         };
         if (onSuccess) onSuccess(mockPaymentData);
       }, 1000);
       return;
     }
 
-    const options = {
-      key: ENV.RAZORPAY_KEY_ID,
+    const surl = `${window.location.origin}/api/v1/payments/verifyPayment`;
+    const furl = `${window.location.origin}/api/v1/payments/verifyPayment`;
+
+    const payuData = {
+      key: orderRes.merchantKey,
+      txnid: orderRes.txnid,
       amount: orderRes.amount,
-      currency: orderRes.currency || 'INR',
-      name: 'School Bus WayPro',
-      description: `Bus Fee for ${month}`,
-      order_id: orderRes.orderId,
-      handler: async function (response) {
-        const verifyRes = await paymentService.verifyPayment(response);
-        if (verifyRes.success) {
-          if (onSuccess) onSuccess(response);
-        } else {
-          if (onError) onError(verifyRes.error);
-        }
-      },
-      prefill: {
-        name: userDetails?.name || '',
-        email: userDetails?.email || '',
-        contact: userDetails?.phone || ''
-      },
-      theme: {
-        color: '#3b82f6'
-      }
+      productinfo: `Bus Fee for ${month}`,
+      firstname: userDetails?.name || '',
+      email: userDetails?.email || 'parent@buswaypro.app',
+      phone: userDetails?.phone || '',
+      surl,
+      furl,
+      hash: orderRes.hash,
     };
 
-    const paymentObject = new window.Razorpay(options);
-    paymentObject.on('payment.failed', function (response) {
-      if (onError) onError(response.error.description);
+    window.bolt.launch(payuData, {
+      responseHandler: function (response) {
+        const txnResponse = response.response || {};
+        if (txnResponse.txnStatus === 'SUCCESS') {
+          if (onSuccess) onSuccess(txnResponse);
+        } else {
+          if (onError) onError(txnResponse.txnMessage || 'Payment failed');
+        }
+      },
+      catchException: function (error) {
+        if (onError) onError(error?.message || 'Payment checkout error');
+      }
     });
-    paymentObject.open();
   }
 };

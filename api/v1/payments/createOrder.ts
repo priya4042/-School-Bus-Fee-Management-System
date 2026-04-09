@@ -1,75 +1,32 @@
 import { VercelRequest, VercelResponse } from '@vercel/node';
-import Razorpay from 'razorpay';
+import crypto from 'crypto';
 
 const cleanEnv = (value: string) => String(value || '').trim().replace(/^['\"]|['\"]$/g, '');
 
-const inferKeyMode = (keyId: string) => {
-  if (keyId.startsWith('rzp_test_')) return 'test';
-  if (keyId.startsWith('rzp_live_')) return 'live';
-  return 'unknown';
+const resolveKeys = () => {
+  const merchantKey = cleanEnv(process.env.PAYU_MERCHANT_KEY || process.env.VITE_PAYU_MERCHANT_KEY || '');
+  const merchantSalt = cleanEnv(process.env.PAYU_MERCHANT_SALT || process.env.VITE_PAYU_MERCHANT_SALT || '');
+  return { merchantKey, merchantSalt };
 };
 
-const buildReceipt = (studentId: string, month: string | number) => {
-  const studentPart = String(studentId || 'stu')
-    .replace(/[^a-zA-Z0-9]/g, '')
-    .slice(-10);
-  const monthPart = String(month || '0')
-    .replace(/[^a-zA-Z0-9]/g, '')
-    .slice(0, 2);
-  const tsPart = Date.now().toString().slice(-10);
-  // Keep receipt short; Razorpay max is 40 chars.
-  return `r_${studentPart}_${monthPart}_${tsPart}`.slice(0, 40);
-};
-
-type KeyPair = {
-  keyId: string;
-  keySecret: string;
-  keyIdSource: string;
-  keySecretSource: string;
-};
-
-const resolveKeyPairs = (): KeyPair[] => {
-  const raw = {
-    keyIdPrimary: cleanEnv(process.env.RAZORPAY_KEY_ID || ''),
-    keyIdFallback: cleanEnv(process.env.VITE_RAZORPAY_KEY_ID || ''),
-    keySecretPrimary: cleanEnv(process.env.RAZORPAY_KEY_SECRET || ''),
-    keySecretFallback: cleanEnv(process.env.VITE_RAZORPAY_KEY_SECRET || ''),
-  };
-
-  const candidates: KeyPair[] = [
-    {
-      keyId: raw.keyIdPrimary,
-      keySecret: raw.keySecretPrimary,
-      keyIdSource: 'RAZORPAY_KEY_ID',
-      keySecretSource: 'RAZORPAY_KEY_SECRET',
-    },
-    {
-      keyId: raw.keyIdFallback,
-      keySecret: raw.keySecretFallback,
-      keyIdSource: 'VITE_RAZORPAY_KEY_ID',
-      keySecretSource: 'VITE_RAZORPAY_KEY_SECRET',
-    },
-    {
-      keyId: raw.keyIdPrimary,
-      keySecret: raw.keySecretFallback,
-      keyIdSource: 'RAZORPAY_KEY_ID',
-      keySecretSource: 'VITE_RAZORPAY_KEY_SECRET',
-    },
-    {
-      keyId: raw.keyIdFallback,
-      keySecret: raw.keySecretPrimary,
-      keyIdSource: 'VITE_RAZORPAY_KEY_ID',
-      keySecretSource: 'RAZORPAY_KEY_SECRET',
-    },
-  ];
-
-  const uniq = new Map<string, KeyPair>();
-  for (const pair of candidates) {
-    if (!pair.keyId || !pair.keySecret) continue;
-    const key = `${pair.keyId}::${pair.keySecret}`;
-    if (!uniq.has(key)) uniq.set(key, pair);
-  }
-  return [...uniq.values()];
+const generatePayUHash = (params: {
+  key: string;
+  txnid: string;
+  amount: string;
+  productinfo: string;
+  firstname: string;
+  email: string;
+  salt: string;
+  udf1?: string;
+  udf2?: string;
+  udf3?: string;
+  udf4?: string;
+  udf5?: string;
+}) => {
+  // PayU hash formula:
+  // sha512(key|txnid|amount|productinfo|firstname|email|udf1|udf2|udf3|udf4|udf5||||||salt)
+  const hashString = `${params.key}|${params.txnid}|${params.amount}|${params.productinfo}|${params.firstname}|${params.email}|${params.udf1 || ''}|${params.udf2 || ''}|${params.udf3 || ''}|${params.udf4 || ''}|${params.udf5 || ''}||||||${params.salt}`;
+  return crypto.createHash('sha512').update(hashString).digest('hex');
 };
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
@@ -89,81 +46,62 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  const { amount, studentId, month, dueId, due_id } = req.body;
+  const { amount, studentId, month, dueId, due_id, studentName, email, phone } = req.body;
   const finalDueId = String(dueId || due_id || '').trim();
-  const keyPairs = resolveKeyPairs();
+  const { merchantKey, merchantSalt } = resolveKeys();
 
-  console.log(`[Razorpay Order] Creating order for student: ${studentId}, amount: ${amount}, due: ${finalDueId}`);
+  console.log(`[PayU Order] Creating hash for student: ${studentId}, amount: ${amount}, due: ${finalDueId}`);
 
   if (!amount) {
     return res.status(400).json({ error: 'Amount is required' });
   }
 
-  if (keyPairs.length === 0) {
+  if (!merchantKey || !merchantSalt) {
     return res.status(500).json({
-      error: 'Server payment configuration missing (RAZORPAY_KEY_ID / RAZORPAY_KEY_SECRET).',
+      error: 'Server payment configuration missing (PAYU_MERCHANT_KEY / PAYU_MERCHANT_SALT).',
     });
   }
 
-  let lastError: any = null;
-  let lastPair: KeyPair | null = null;
+  try {
+    const txnid = `BW${Date.now().toString(36).toUpperCase()}${Math.random().toString(36).slice(2, 6).toUpperCase()}`;
+    const amountStr = Number(amount).toFixed(2);
+    const productinfo = `Bus Fee - ${finalDueId}`;
+    const firstname = String(studentName || 'Parent').slice(0, 60);
+    const emailAddr = String(email || 'parent@buswaypro.app').trim();
 
-  for (const pair of keyPairs) {
-    try {
-      const razorpay = new Razorpay({
-        key_id: pair.keyId,
-        key_secret: pair.keySecret,
-      });
+    const hash = generatePayUHash({
+      key: merchantKey,
+      txnid,
+      amount: amountStr,
+      productinfo,
+      firstname,
+      email: emailAddr,
+      salt: merchantSalt,
+      udf1: finalDueId,
+      udf2: String(studentId || ''),
+      udf3: String(month || ''),
+    });
 
-      const options = {
-        amount: Math.round(amount * 100),
-        currency: 'INR',
-        receipt: buildReceipt(String(studentId || ''), month),
-        notes: {
-          due_id: finalDueId,
-          student_id: String(studentId || ''),
-        },
-      };
+    console.log(`[PayU Order] Generated hash for txnid: ${txnid}`);
 
-      const order = await razorpay.orders.create(options);
-      console.log(`[Razorpay Order] Created order: ${order.id}`);
-
-      return res.status(200).json({
-        id: order.id,
-        amount: order.amount,
-        currency: order.currency,
-      });
-    } catch (error: any) {
-      lastError = error;
-      lastPair = pair;
-      const providerMessage = String(
-        error?.error?.description ||
-        error?.description ||
-        error?.message ||
-        ''
-      ).toLowerCase();
-      const providerCode = String(error?.error?.code || error?.code || '').toUpperCase();
-      const isAuthFailure = providerMessage.includes('authentication failed') || providerCode === 'BAD_REQUEST_ERROR';
-      if (!isAuthFailure) break;
-    }
+    return res.status(200).json({
+      merchantKey,
+      txnid,
+      amount: amountStr,
+      productinfo,
+      firstname,
+      email: emailAddr,
+      phone: String(phone || ''),
+      hash,
+      udf1: finalDueId,
+      udf2: String(studentId || ''),
+      udf3: String(month || ''),
+    });
+  } catch (error: any) {
+    console.error('[PayU Order] Error:', error);
+    return res.status(500).json({
+      error: error?.message || 'Failed to generate payment hash',
+      code: 'PAYU_HASH_FAILED',
+    });
   }
-
-  console.error('[Razorpay Order] Error:', lastError);
-  const providerMessage =
-    lastError?.error?.description ||
-    lastError?.description ||
-    lastError?.message ||
-    'Failed to create order';
-
-  return res.status(500).json({
-    error: providerMessage,
-    code: lastError?.error?.code || lastError?.code || 'RAZORPAY_ORDER_CREATE_FAILED',
-    diagnostics: {
-      keyIdSource: lastPair?.keyIdSource || 'NONE',
-      keySecretSource: lastPair?.keySecretSource || 'NONE',
-      keyMode: inferKeyMode(lastPair?.keyId || ''),
-      keyIdTail: lastPair?.keyId ? lastPair.keyId.slice(-6) : '',
-      triedPairs: keyPairs.map((pair) => `${pair.keyIdSource}+${pair.keySecretSource}`),
-    },
-  });
 }

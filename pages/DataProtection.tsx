@@ -215,7 +215,7 @@ export default function DataProtection() {
               <strong>Tokenization:</strong> Credit card numbers are never stored; instead, secure tokens are used
             </p>
             <p>
-              <strong>Third-Party Security:</strong> Payment gateways (Razorpay, Stripe) undergo regular security audits
+              <strong>Third-Party Security:</strong> Payment gateways (PayU, Stripe) undergo regular security audits
             </p>
             <p>
               <strong>SSL Certificates:</strong> All payment pages use 256-bit SSL encryption
@@ -325,6 +325,13 @@ export default function DataProtection() {
           <p className="text-center text-sm text-gray-600">
             Your data security is our responsibility. Thank you for trusting BusWay Pro.
           </p>
+          <div className="flex flex-wrap justify-center gap-4 mt-3 text-xs text-gray-500">
+            <a href="/privacy" className="hover:underline">Privacy Policy</a>
+            <a href="/terms" className="hover:underline">Terms of Service</a>
+            <a href="/cookie-policy" className="hover:underline">Cookie Policy</a>
+            <a href="/refund-policy" className="hover:underline">Refund Policy</a>
+            <a href="/shipping-policy" className="hover:underline">Shipping Policy</a>
+          </div>
           <p className="text-center text-xs text-gray-500 mt-2">
             © 2026 BusWay Pro. All rights reserved.
           </p>

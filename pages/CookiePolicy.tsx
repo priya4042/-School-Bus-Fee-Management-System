@@ -76,7 +76,7 @@ export default function CookiePolicy() {
                 <strong>Purpose:</strong> Set by external services integrated with our app
               </p>
               <p className="text-gray-700 text-sm mt-1">
-                <strong>Examples:</strong> Google Maps (location services), Razorpay (payments), analytics providers
+                <strong>Examples:</strong> Google Maps (location services), PayU (payments), analytics providers
               </p>
               <p className="text-gray-700 text-sm mt-1 text-orange-800">
                 <strong>Can be disabled?</strong> Partially - depends on service requirements
@@ -223,10 +223,10 @@ export default function CookiePolicy() {
               </a>
             </div>
             <div className="p-4 border-l-4 border-blue-500 bg-blue-50">
-              <h3 className="font-semibold text-gray-900">Razorpay</h3>
+              <h3 className="font-semibold text-gray-900">PayU</h3>
               <p className="text-gray-700 text-sm">For secure payment processing</p>
-              <a href="https://razorpay.com/privacy" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline text-sm">
-                Razorpay Privacy Policy →
+              <a href="https://payu.in/privacy-policy" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline text-sm">
+                PayU Privacy Policy →
               </a>
             </div>
             <div className="p-4 border-l-4 border-purple-500 bg-purple-50">
@@ -303,6 +303,13 @@ export default function CookiePolicy() {
           <p className="text-center text-sm text-gray-600">
             Thank you for helping us improve BusWay Pro while protecting your privacy.
           </p>
+          <div className="flex flex-wrap justify-center gap-4 mt-3 text-xs text-gray-500">
+            <a href="/privacy" className="hover:underline">Privacy Policy</a>
+            <a href="/terms" className="hover:underline">Terms of Service</a>
+            <a href="/data-protection" className="hover:underline">Data Protection</a>
+            <a href="/refund-policy" className="hover:underline">Refund Policy</a>
+            <a href="/shipping-policy" className="hover:underline">Shipping Policy</a>
+          </div>
           <p className="text-center text-xs text-gray-500 mt-2">
             © 2026 BusWay Pro. All rights reserved.
           </p>

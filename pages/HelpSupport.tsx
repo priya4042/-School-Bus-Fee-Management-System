@@ -15,7 +15,7 @@ export default function HelpSupport() {
     },
     {
       question: "What payment methods are accepted?",
-      answer: "We accept credit cards, debit cards, and digital payment methods through Razorpay and Stripe."
+      answer: "We accept credit cards, debit cards, and digital payment methods through PayU and Stripe."
     },
     {
       question: "How do I view my payment history?",
@@ -35,7 +35,7 @@ export default function HelpSupport() {
     },
     {
       question: "Is my payment information stored?",
-      answer: "No, payment information is never stored. We use secure payment gateways (Razorpay/Stripe) with PCI DSS compliance."
+      answer: "No, payment information is never stored. We use secure payment gateways (PayU/Stripe) with PCI DSS compliance."
     }
   ];
 
@@ -224,6 +224,12 @@ export default function HelpSupport() {
           <p className="text-gray-600 mb-2">
             Average response time: 24-48 hours
           </p>
+          <div className="flex flex-wrap justify-center gap-4 mt-3 text-xs text-gray-500">
+            <a href="/privacy" className="hover:underline">Privacy Policy</a>
+            <a href="/terms" className="hover:underline">Terms of Service</a>
+            <a href="/refund-policy" className="hover:underline">Refund Policy</a>
+            <a href="/shipping-policy" className="hover:underline">Shipping Policy</a>
+          </div>
           <p className="text-xs text-gray-500">
             © 2026 BusWay Pro. All rights reserved.
           </p>

@@ -56,7 +56,7 @@ export default function AboutUs() {
             <div className="p-6 bg-green-50 rounded-lg border-l-4 border-green-600">
               <h3 className="font-semibold text-gray-900 mb-2">Secure Payments</h3>
               <p className="text-gray-700 text-sm">
-                PCI DSS compliant payment processing with Razorpay and Stripe integration
+                PCI DSS compliant payment processing with PayU and Stripe integration
               </p>
             </div>
             <div className="p-6 bg-purple-50 rounded-lg border-l-4 border-purple-600">
@@ -142,7 +142,7 @@ export default function AboutUs() {
                 <li>• Supabase for database and auth</li>
                 <li>• Node.js serverless functions</li>
                 <li>• Google Maps API for tracking</li>
-                <li>• Razorpay & Stripe for payments</li>
+                <li>• PayU & Stripe for payments</li>
               </ul>
             </div>
             <div>
@@ -224,6 +224,12 @@ export default function AboutUs() {
           <p className="text-gray-600 mb-2">
             © 2026 BusWay Pro. All rights reserved.
           </p>
+          <div className="flex flex-wrap justify-center gap-4 mt-3 text-xs text-gray-500">
+            <a href="/privacy" className="hover:underline">Privacy Policy</a>
+            <a href="/terms" className="hover:underline">Terms of Service</a>
+            <a href="/refund-policy" className="hover:underline">Refund Policy</a>
+            <a href="/shipping-policy" className="hover:underline">Shipping Policy</a>
+          </div>
           <p className="text-xs text-gray-500">
             Made with ❤️ for better school transportation
           </p>

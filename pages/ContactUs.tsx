@@ -286,6 +286,12 @@ export default function ContactUs() {
           <p className="text-gray-600 mb-2">
             We value your feedback and are committed to serving you better.
           </p>
+          <div className="flex flex-wrap justify-center gap-4 mt-3 text-xs text-gray-500">
+            <a href="/privacy" className="hover:underline">Privacy Policy</a>
+            <a href="/terms" className="hover:underline">Terms of Service</a>
+            <a href="/refund-policy" className="hover:underline">Refund Policy</a>
+            <a href="/shipping-policy" className="hover:underline">Shipping Policy</a>
+          </div>
           <p className="text-xs text-gray-500">
             © 2026 BusWay Pro. All rights reserved.
           </p>

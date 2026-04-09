@@ -1,12 +1,12 @@
   import { useState } from 'react';
   import type { PaymentBundle } from '../utils/feeCalculator';
   import { showToast, showAlert } from '../lib/swal';
-  import { loadRazorpay } from '../lib/razorpay';
+  import { loadPayU } from '../lib/razorpay';
   import { supabase } from '../lib/supabase';
   import { PAYMENT_EVENT } from '../lib/telemetry';
   import { loadFeeSettings } from '../lib/feeSettings';
 
-  export type PaymentMethod = 'RAZORPAY' | 'UPI_INTENT' | 'UPI_QR';
+  export type PaymentMethod = 'PAYU' | 'UPI_INTENT' | 'UPI_QR';
 
   interface PaymentState {
     isOpen: boolean;
@@ -64,18 +64,6 @@
 
     const closePortal = () => {
       setPaymentState(prev => ({ ...prev, isOpen: false }));
-    };
-
-    const resolveRazorpayKeyId = () => {
-      const raw = String(
-        import.meta.env.VITE_RAZORPAY_KEY_ID ||
-        import.meta.env.VITE_RAZORPAY_KEY ||
-        ''
-      ).trim();
-
-      if (!raw) return '';
-      if (raw === 'your_razorpay_key_id') return '';
-      return raw;
     };
 
     const fetchDueContext = async (dueId: string) => {
@@ -186,41 +174,35 @@
       return parts.join(' | ');
     };
 
-    const createOrder = async (dueId: string, amount: number, context: any, dueIds: string[]) => {
+    const createPayUHash = async (dueId: string, amount: number, context: any, dueIds: string[]) => {
       let lastError: any;
       const attemptedUrls: string[] = [];
 
       const paymentBases = getPaymentApiBases();
-      const payloadVariants = [
-        {
-          amount,
-          dueId,
-          due_id: dueId,
-          due_ids: dueIds,
-          studentId: context?.student_id,
-          month: context?.month,
-        },
-        {
-          amount,
-          due_id: dueId,
-          due_ids: dueIds,
-        },
-      ];
+      const dueStudent = Array.isArray(context?.students) ? context.students[0] : context?.students;
 
-      const endpointPaths = [
-        '/api/v1/payments/createOrder',
-      ];
+      const payload = {
+        amount,
+        dueId,
+        due_id: dueId,
+        due_ids: dueIds,
+        studentId: context?.student_id,
+        month: context?.month,
+        studentName: dueStudent?.full_name || paymentState.studentName || 'Parent',
+        email: '',
+        phone: '',
+      };
+
+      const endpointPaths = ['/api/v1/payments/createOrder'];
 
       for (const base of paymentBases) {
         for (const path of endpointPaths) {
-          for (const payload of payloadVariants) {
-            try {
-              attemptedUrls.push(`${normalizeBase(base)}${path}`);
-              const order = await postPaymentApi(base, path, payload);
-              if ((order as any)?.id) return order;
-            } catch (err: any) {
-              lastError = err;
-            }
+          try {
+            attemptedUrls.push(`${normalizeBase(base)}${path}`);
+            const result = await postPaymentApi(base, path, payload);
+            if ((result as any)?.hash && (result as any)?.txnid) return result;
+          } catch (err: any) {
+            lastError = err;
           }
         }
       }
@@ -228,12 +210,25 @@
       if (lastError) {
         (lastError as any).attemptedUrls = attemptedUrls;
       }
-      throw lastError || new Error('Unable to initialize payment order.');
+      throw lastError || new Error('Unable to initialize payment.');
     };
 
-    const verifyPayment = async (paymentResult: any, dueId: string, dueIds: string[]) => {
+    const verifyPayment = async (payuResponse: any, dueId: string, dueIds: string[]) => {
       const payload = {
-        ...paymentResult,
+        txnid: payuResponse.txnid,
+        mihpayid: payuResponse.mihpayid,
+        status: payuResponse.status,
+        hash: payuResponse.hash,
+        amount: payuResponse.amount,
+        productinfo: payuResponse.productinfo,
+        firstname: payuResponse.firstname,
+        email: payuResponse.email,
+        udf1: payuResponse.udf1,
+        udf2: payuResponse.udf2,
+        udf3: payuResponse.udf3,
+        udf4: payuResponse.udf4,
+        udf5: payuResponse.udf5,
+        additionalCharges: payuResponse.additionalCharges,
         dueId,
         due_id: dueId,
         due_ids: dueIds,
@@ -243,9 +238,7 @@
       const attemptedUrls: string[] = [];
 
       const paymentBases = getPaymentApiBases();
-      const endpointPaths = [
-        '/api/v1/payments/verifyPayment',
-      ];
+      const endpointPaths = ['/api/v1/payments/verifyPayment'];
 
       for (const base of paymentBases) {
         for (const path of endpointPaths) {
@@ -311,20 +304,13 @@
       }));
     };
 
-    const initiateRazorpay = async () => {
+    const initiatePayU = async () => {
       const { data: { session } } = await supabase.auth.getSession();
-      console.log('Initiating Razorpay payment. Supabase session found:', !!session?.access_token);
-      const razorpayKeyId = resolveRazorpayKeyId();
-      
+      console.log('Initiating PayU payment. Supabase session found:', !!session?.access_token);
+
       if (!session?.access_token) {
         alert('Please login to continue');
         setPaymentState(prev => ({ ...prev, loading: false }));
-        return;
-      }
-
-      if (!razorpayKeyId) {
-        console.error('Razorpay key missing. Add VITE_RAZORPAY_KEY_ID (or VITE_RAZORPAY_KEY) in environment variables.');
-        showAlert('Payment Error', 'Razorpay key is not configured. Please ask support to set VITE_RAZORPAY_KEY_ID.', 'error');
         return;
       }
 
@@ -353,71 +339,106 @@
           }
         }));
 
-        const order = await createOrder(String(paymentState.dueId), paymentState.amount, dueContext, paymentState.dueIds || [String(paymentState.dueId)]);
+        // Get hash from server
+        const hashData: any = await createPayUHash(
+          String(paymentState.dueId),
+          paymentState.amount,
+          dueContext,
+          paymentState.dueIds || [String(paymentState.dueId)]
+        );
 
-        const isLoaded = await loadRazorpay();
-        if (!isLoaded || !(window as any).Razorpay) {
-          throw new Error('Razorpay SDK failed to load');
+        const isLoaded = await loadPayU();
+        if (!isLoaded || !(window as any).bolt) {
+          throw new Error('PayU SDK failed to load. Please check your internet connection.');
         }
 
-        const options = {
-          key: razorpayKeyId,
-          amount: order.amount,
-          currency: "INR",
-          name: "School Bus WayPro",
-          description: "Bus Fee Payment",
-          order_id: order.id,
-          method: {
-            card: true,
-            upi: true,
-            netbanking: true,
-            wallet: true,
-            emi: true,
-            paylater: true,
-          },
-          prefill: {
-            name: dueContext?.students?.full_name || paymentState.studentName,
-          },
-          theme: {
-            color: '#1E40AF',
-          },
-          handler: async (paymentResult: any) => {
+        const surl = `${window.location.origin}/api/v1/payments/verifyPayment`;
+        const furl = `${window.location.origin}/api/v1/payments/verifyPayment`;
+
+        const payuData = {
+          key: hashData.merchantKey,
+          txnid: hashData.txnid,
+          amount: hashData.amount,
+          productinfo: hashData.productinfo,
+          firstname: hashData.firstname,
+          email: hashData.email,
+          phone: hashData.phone || '',
+          surl,
+          furl,
+          hash: hashData.hash,
+          udf1: hashData.udf1 || '',
+          udf2: hashData.udf2 || '',
+          udf3: hashData.udf3 || '',
+          udf4: '',
+          udf5: '',
+        };
+
+        // Launch PayU Bolt checkout
+        (window as any).bolt.launch(payuData, {
+          responseHandler: async (response: any) => {
             try {
-              setPaymentState(prev => ({ ...prev, step: 'PROCESSING' }));
-              await verifyPayment(paymentResult, String(paymentState.dueId), paymentState.dueIds || [String(paymentState.dueId)]);
+              console.log('[PayU] Bolt response:', response.response?.txnStatus);
+              const txnResponse = response.response || {};
 
-              window.dispatchEvent(new CustomEvent(PAYMENT_EVENT, {
-                detail: {
-                  studentName: dueContext?.students?.full_name || paymentState.studentName,
-                  amount: Number(paymentState.amount || dueContext?.total_due || dueContext?.amount || 0),
-                  txnId: paymentResult.razorpay_payment_id,
-                  dueId: String(paymentState.dueId),
-                  timestamp: Date.now(),
-                }
-              }));
+              if (txnResponse.txnStatus === 'SUCCESS') {
+                setPaymentState(prev => ({ ...prev, step: 'PROCESSING' }));
 
-              setPaymentState(prev => ({
-                ...prev,
-                step: 'SUCCESS',
-                transactionId: paymentResult.razorpay_payment_id,
-                loading: false
-              }));
-              showToast('Payment Successful', 'success');
+                await verifyPayment(
+                  {
+                    txnid: txnResponse.txnid,
+                    mihpayid: txnResponse.mihpayid,
+                    status: 'success',
+                    hash: txnResponse.hash,
+                    amount: txnResponse.amount,
+                    productinfo: txnResponse.productinfo,
+                    firstname: txnResponse.firstname,
+                    email: txnResponse.email,
+                    udf1: txnResponse.udf1,
+                    udf2: txnResponse.udf2,
+                    udf3: txnResponse.udf3,
+                    udf4: txnResponse.udf4,
+                    udf5: txnResponse.udf5,
+                    additionalCharges: txnResponse.additionalCharges,
+                  },
+                  String(paymentState.dueId),
+                  paymentState.dueIds || [String(paymentState.dueId)]
+                );
+
+                window.dispatchEvent(new CustomEvent(PAYMENT_EVENT, {
+                  detail: {
+                    studentName: dueContext?.students?.full_name || paymentState.studentName,
+                    amount: Number(paymentState.amount || dueContext?.total_due || dueContext?.amount || 0),
+                    txnId: txnResponse.mihpayid || txnResponse.txnid,
+                    dueId: String(paymentState.dueId),
+                    timestamp: Date.now(),
+                  }
+                }));
+
+                setPaymentState(prev => ({
+                  ...prev,
+                  step: 'SUCCESS',
+                  transactionId: txnResponse.mihpayid || txnResponse.txnid,
+                  loading: false
+                }));
+                showToast('Payment Successful', 'success');
+              } else {
+                const errorMsg = txnResponse.txnMessage || txnResponse.error_Message || 'Payment was not successful';
+                showAlert('Payment Failed', errorMsg, 'error');
+                setPaymentState(prev => ({ ...prev, step: 'SELECT', loading: false }));
+              }
             } catch (err: any) {
               showAlert('Payment Error', err.message || 'Failed to verify payment', 'error');
               setPaymentState(prev => ({ ...prev, step: 'SELECT', loading: false }));
             }
           },
-          modal: {
-            ondismiss: function() {
-              setPaymentState(prev => ({ ...prev, loading: false }));
-            }
+          catchException: (error: any) => {
+            console.error('[PayU] Bolt exception:', error);
+            const errorMsg = error?.message || 'Payment checkout encountered an error.';
+            showAlert('Payment Error', errorMsg, 'error');
+            setPaymentState(prev => ({ ...prev, step: 'SELECT', loading: false }));
           }
-        };
+        });
 
-        const rzp = new (window as any).Razorpay(options);
-        rzp.open();
-        
         // Stop loading on button after popup opens
         setPaymentState(prev => ({ ...prev, loading: false }));
 
@@ -430,6 +451,9 @@
         setPaymentState(prev => ({ ...prev, loading: false }));
       }
     };
+
+    // Keep old name as alias for backward compat
+    const initiateRazorpay = initiatePayU;
 
     const initiateUpiIntent = async () => {
       setPaymentState(prev => ({ ...prev, loading: true }));
@@ -577,6 +601,7 @@
       paymentState,
       openPortal,
       closePortal,
+      initiatePayU,
       initiateRazorpay,
       initiateUpiIntent,
       confirmUpiPayment,

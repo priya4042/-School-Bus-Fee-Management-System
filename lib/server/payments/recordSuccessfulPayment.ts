@@ -16,8 +16,15 @@ const buildReceiptNo = (dueId: string, index: number) => {
   return `RCPT-${Date.now().toString().slice(-7)}-${index}-${suffix}-${Math.floor(Math.random() * 1000)}`;
 };
 
-export async function recordSuccessfulPayment({ dueId, dueIds = [], razorpayOrderId, razorpayPaymentId, source }) {
+export async function recordSuccessfulPayment({ dueId, dueIds = [], payuTxnId, payuMihpayId, source }: {
+  dueId: string;
+  dueIds?: string[];
+  payuTxnId: string;
+  payuMihpayId: string;
+  source: string;
+}) {
   const supabase = createAdminClient();
+  const paymentId = payuMihpayId || payuTxnId;
   const finalDueIds = [...new Set([String(dueId), ...(Array.isArray(dueIds) ? dueIds.map((id: any) => String(id)) : [])].filter(Boolean))];
 
   const { data: dues, error: dueError } = await supabase
@@ -35,7 +42,7 @@ export async function recordSuccessfulPayment({ dueId, dueIds = [], razorpayOrde
   const paidAt = new Date().toISOString();
   const totalPaidAmount = sortedDues.reduce((sum: number, d: any) => sum + Number(d.total_due || d.amount || 0), 0);
   const dueIdsToUpdate = sortedDues
-    .filter((d: any) => !(String(d.status || '').toUpperCase() === 'PAID' && String(d.transaction_id || '') === String(razorpayPaymentId || '')))
+    .filter((d: any) => !(String(d.status || '').toUpperCase() === 'PAID' && String(d.transaction_id || '') === String(paymentId || '')))
     .map((d: any) => String(d.id));
 
   if (dueIdsToUpdate.length > 0) {
@@ -44,7 +51,7 @@ export async function recordSuccessfulPayment({ dueId, dueIds = [], razorpayOrde
       .update({
         status: 'PAID',
         paid_at: paidAt,
-        transaction_id: razorpayPaymentId,
+        transaction_id: paymentId,
         payment_method: 'ONLINE',
       } as any)
       .in('id', dueIdsToUpdate as any);
@@ -72,11 +79,11 @@ export async function recordSuccessfulPayment({ dueId, dueIds = [], razorpayOrde
     }
 
     if (existingReceipt?.id) {
-      if (String(existingReceipt.transaction_id || '') !== String(razorpayPaymentId || '')) {
+      if (String(existingReceipt.transaction_id || '') !== String(paymentId || '')) {
         const { error: receiptUpdateError } = await supabase
           .from('receipts')
           .update({
-            transaction_id: razorpayPaymentId,
+            transaction_id: paymentId,
             amount_paid: due.total_due || due.amount,
             payment_method: 'ONLINE',
           } as any)
@@ -100,7 +107,7 @@ export async function recordSuccessfulPayment({ dueId, dueIds = [], razorpayOrde
           receipt_no: buildReceiptNo(String(due.id), index + attempt),
           amount_paid: due.total_due || due.amount,
           payment_method: 'ONLINE',
-          transaction_id: razorpayPaymentId,
+          transaction_id: paymentId,
           created_at: paidAt,
         } as any);
 
@@ -129,13 +136,13 @@ export async function recordSuccessfulPayment({ dueId, dueIds = [], razorpayOrde
         .from('notifications')
         .select('id')
         .eq('user_id', parentId)
-        .ilike('message', `%[TXN:${String(razorpayPaymentId)}]%`)
+        .ilike('message', `%[TXN:${String(paymentId)}]%`)
         .limit(1)
         .maybeSingle();
 
       if (!existingNotification?.id) {
         const monthText = `${String(primaryDue?.month || '')}/${String(primaryDue?.year || '')}`;
-        const message = `Fee payment received for ${String(studentRelation?.full_name || 'Student')}: Rs ${totalPaidAmount.toLocaleString('en-IN')} (${monthText}) [TXN:${String(razorpayPaymentId)}] [DUE_ID:${String(primaryDue?.id || dueId)}]`;
+        const message = `Fee payment received for ${String(studentRelation?.full_name || 'Student')}: Rs ${totalPaidAmount.toLocaleString('en-IN')} (${monthText}) [TXN:${String(paymentId)}] [DUE_ID:${String(primaryDue?.id || dueId)}]`;
 
         await supabase.from('notifications').insert({
           user_id: parentId,
@@ -153,7 +160,7 @@ export async function recordSuccessfulPayment({ dueId, dueIds = [], razorpayOrde
 
   return {
     alreadyProcessed: dueIdsToUpdate.length === 0 && createdOrUpdatedReceipts === 0,
-    transactionId: razorpayPaymentId,
+    transactionId: paymentId,
     dueId: String(primaryDue?.id || dueId),
     dueIds: finalDueIds,
   };

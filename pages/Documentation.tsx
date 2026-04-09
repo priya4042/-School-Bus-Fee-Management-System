@@ -36,7 +36,7 @@ const stackRows = [
   { area: 'Backend API', used: 'Serverless endpoints (Vercel) + optional Python backend', pricing: 'Free tier available', buy: 'Upgrade if traffic grows' },
   { area: 'Database + Auth', used: 'Supabase (Postgres, Auth, Realtime)', pricing: 'Free tier + paid plans', buy: 'Buy paid plan for production scale' },
   { area: 'Hosting', used: 'Vercel (frontend deployment)', pricing: 'Free tier + Pro plans', buy: 'Buy Pro for team limits and higher usage' },
-  { area: 'Payments', used: 'Razorpay checkout + webhook verification', pricing: 'Per transaction fees', buy: 'Business account required for live payments' },
+  { area: 'Payments', used: 'PayU checkout + hash verification', pricing: 'Per transaction fees', buy: 'Business account required for live payments' },
   { area: 'Maps', used: 'Google Maps integration', pricing: 'Usage-based billing', buy: 'Billing account required beyond free credit' },
   { area: 'Alerts / UI', used: 'SweetAlert, custom notification UI', pricing: 'Free libraries', buy: 'No purchase needed' },
   { area: 'Build Tooling', used: 'Node.js, npm, ESLint, TypeScript', pricing: 'Free / Open source', buy: 'No purchase needed' },
@@ -51,7 +51,7 @@ const playStoreChecklist = [
   'Android package ID and app name finalized',
   'Capacitor Android project synced from web build',
   'Production API endpoints configured in environment variables',
-  'Razorpay live keys and webhook URL configured',
+  'PayU live keys configured',
   'Supabase production project URL and anon key configured',
   'Privacy policy URL and Terms URL publicly accessible',
   'App icon, feature graphic, screenshots, and app description ready',
@@ -61,7 +61,7 @@ const playStoreChecklist = [
 const envItems = [
   { key: 'VITE_SUPABASE_URL', purpose: 'Supabase project URL for auth and database access' },
   { key: 'VITE_SUPABASE_ANON_KEY', purpose: 'Public anon key used by frontend Supabase client' },
-  { key: 'VITE_RAZORPAY_KEY_ID', purpose: 'Razorpay public key for checkout initialization' },
+  { key: 'VITE_PAYU_MERCHANT_KEY', purpose: 'PayU merchant key for checkout initialization' },
   { key: 'VITE_API_BASE_URL', purpose: 'Optional backend API base URL if using external API server' },
   { key: 'VITE_GOOGLE_MAPS_API_KEY', purpose: 'Google Maps key for live tracking map features' },
 ];
@@ -151,7 +151,7 @@ const Documentation: React.FC = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs text-slate-700">
           <div className="border border-slate-100 rounded-2xl p-4 bg-slate-50/50">
             <p className="font-black text-slate-800 uppercase tracking-wide mb-2">Must Have</p>
-            <p>Supabase project, Razorpay live keys, Vercel project, domain SSL, production environment variables.</p>
+            <p>Supabase project, PayU live keys, Vercel project, domain SSL, production environment variables.</p>
           </div>
           <div className="border border-slate-100 rounded-2xl p-4 bg-slate-50/50">
             <p className="font-black text-slate-800 uppercase tracking-wide mb-2">Recommended</p>

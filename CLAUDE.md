@@ -25,7 +25,7 @@ No test framework is configured. TypeScript strict mode is off (`strict: false`,
 - **Frontend:** React 19 + TypeScript + Vite 6, Tailwind CSS 3, Zustand 5, React Router 7
 - **Backend:** Node.js on Render.com (`VITE_API_BASE_URL`)
 - **Database/Auth:** Supabase (PostgreSQL + Supabase Auth)
-- **Payments:** Razorpay (primary), Stripe
+- **Payments:** PayU (primary), Stripe
 - **SMS/OTP:** Twilio
 - **Maps:** Google Maps + Leaflet
 - **Mobile:** Capacitor 8 (Android)
@@ -75,7 +75,7 @@ Source files live at the repo root (no `src/` directory for components/pages). P
 
 **Billing & Payments (two separate tables)**
 - `monthly_dues` — fee billing; status: `PENDING` | `PAID` | `OVERDUE` | `PARTIAL`; has `fine_per_day`, `fine_after_days`
-- `payments` — Razorpay/gateway transactions; status: `pending` | `captured` | `overdue` | `failed`; linked to `student_id` + `parent_id`
+- `payments` — PayU/gateway transactions; status: `pending` | `captured` | `overdue` | `failed`; linked to `student_id` + `parent_id`
 - `receipts` — payment proof linked to `payments`, unique `transaction_id`
 - `waiver_requests` — linked to `payments` (not `monthly_dues`); status: `pending` | `approved` | `rejected`
 
@@ -92,7 +92,7 @@ Tailwind CSS with custom theme in `tailwind.config.js`: primary (`#1e40af`), sec
 Copy `.env.example`. Key ones:
 - `VITE_SUPABASE_URL` + `VITE_SUPABASE_ANON_KEY`
 - `VITE_API_BASE_URL` — backend (default: `https://busway-backend-9maw.onrender.com`)
-- `VITE_RAZORPAY_KEY_ID` / `VITE_RAZORPAY_KEY_SECRET`
+- `VITE_PAYU_MERCHANT_KEY`
 - `VITE_GOOGLE_MAPS_API_KEY`
 - `TWILIO_ACCOUNT_SID` / `TWILIO_AUTH_TOKEN` / `TWILIO_PHONE_NUMBER` (server-side only)
 

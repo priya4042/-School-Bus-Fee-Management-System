@@ -28,14 +28,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   };
 
   const requiredWithFallbacks = [
-    { label: 'RAZORPAY_KEY_ID', keys: ['RAZORPAY_KEY_ID', 'VITE_RAZORPAY_KEY_ID'] },
-    { label: 'RAZORPAY_KEY_SECRET', keys: ['RAZORPAY_KEY_SECRET', 'VITE_RAZORPAY_KEY_SECRET'] },
+    { label: 'PAYU_MERCHANT_KEY', keys: ['PAYU_MERCHANT_KEY', 'VITE_PAYU_MERCHANT_KEY'] },
+    { label: 'PAYU_MERCHANT_SALT', keys: ['PAYU_MERCHANT_SALT', 'VITE_PAYU_MERCHANT_SALT'] },
     { label: 'SUPABASE_URL', keys: ['SUPABASE_URL', 'VITE_SUPABASE_URL'] },
     { label: 'SUPABASE_SERVICE_ROLE_KEY', keys: ['SUPABASE_SERVICE_ROLE_KEY'] },
   ] as const;
 
   const optional = [
-    'RAZORPAY_WEBHOOK_SECRET',
     'PAYMENT_EMAIL_ENABLED',
     'RESEND_API_KEY',
     'PAYMENT_EMAIL_FROM',
@@ -58,6 +57,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   return res.status(200).json({
     ok: missingRequired.length === 0,
+    gateway: 'PayU',
     missingRequired,
     missingOptional,
     resolvedRequired,

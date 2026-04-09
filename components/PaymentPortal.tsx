@@ -9,11 +9,13 @@ interface PaymentPortalProps {
   state: any;
   onClose: () => void;
   onInitiateRazorpay: () => void;
+  onInitiatePayU?: () => void;
   onInitiateUpi?: () => void;
   onConfirmUpi?: (refId: string) => void;
 }
 
-const PaymentPortal: React.FC<PaymentPortalProps> = ({ state, onClose, onInitiateRazorpay, onInitiateUpi, onConfirmUpi }) => {
+const PaymentPortal: React.FC<PaymentPortalProps> = ({ state, onClose, onInitiateRazorpay, onInitiatePayU, onInitiateUpi, onConfirmUpi }) => {
+  const handlePayU = onInitiatePayU || onInitiateRazorpay;
   const { downloadReceipt, downloading } = useReceipts();
   const [runtimeQrUrl, setRuntimeQrUrl] = useState('');
   const [runtimeUpiId, setRuntimeUpiId] = useState('');
@@ -160,9 +162,9 @@ const PaymentPortal: React.FC<PaymentPortalProps> = ({ state, onClose, onInitiat
               </button>
             )}
 
-            {/* Razorpay */}
+            {/* PayU - Cards, UPI, Netbanking, Wallets */}
             <button
-              onClick={onInitiateRazorpay}
+              onClick={handlePayU}
               disabled={state.loading}
               className="group w-full flex items-center justify-between p-5 bg-slate-900 border border-slate-800 rounded-2xl hover:bg-black transition-all active:scale-[0.98] text-white shadow-xl shadow-slate-900/20 disabled:opacity-50 disabled:cursor-not-allowed"
             >
@@ -171,13 +173,14 @@ const PaymentPortal: React.FC<PaymentPortalProps> = ({ state, onClose, onInitiat
                   {state.loading ? <i className="fas fa-circle-notch fa-spin"></i> : <i className="fas fa-shield-alt text-xl"></i>}
                 </div>
                 <div className="text-left">
-                  <p className="font-black text-white text-sm">Pay via Card / Netbanking</p>
-                  <p className="text-[9px] font-bold text-white/40 uppercase tracking-wider">Debit Card, Credit Card, Netbanking</p>
+                  <p className="font-black text-white text-sm">Pay via Card / UPI / Netbanking</p>
+                  <p className="text-[9px] font-bold text-white/40 uppercase tracking-wider">Cards, Google Pay, BHIM UPI, Netbanking, Wallets</p>
                 </div>
               </div>
               <div className="flex items-center gap-2">
                  <i className="fab fa-cc-visa text-white/20 text-xs"></i>
                  <i className="fab fa-cc-mastercard text-white/20 text-xs"></i>
+                 <i className="fab fa-google-pay text-white/20 text-xs"></i>
                  <i className="fas fa-chevron-right text-white/40 ml-2"></i>
               </div>
             </button>

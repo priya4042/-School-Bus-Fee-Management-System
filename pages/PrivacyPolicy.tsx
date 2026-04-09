@@ -65,7 +65,7 @@ export default function PrivacyPolicy() {
             </div>
             <div>
               <h3 className="font-semibold text-gray-900">Financial Information</h3>
-              <p className="text-gray-700 ml-7">Payment details, transaction history, fee statements, receipts (processed via Razorpay and Stripe)</p>
+              <p className="text-gray-700 ml-7">Payment details, transaction history, fee statements, receipts (processed via PayU and Stripe)</p>
             </div>
             <div>
               <h3 className="font-semibold text-gray-900">Device Information</h3>
@@ -133,7 +133,7 @@ export default function PrivacyPolicy() {
           <div className="space-y-3 ml-4">
             <div className="p-4 bg-blue-50 border-l-4 border-blue-600">
               <h3 className="font-semibold text-gray-900">Payment Processors</h3>
-              <p className="text-gray-700">Razorpay and Stripe receive necessary information to process payments securely</p>
+              <p className="text-gray-700">PayU and Stripe receive necessary information to process payments securely</p>
             </div>
             <div className="p-4 bg-blue-50 border-l-4 border-blue-600">
               <h3 className="font-semibold text-gray-900">Communication Services</h3>
@@ -281,6 +281,13 @@ export default function PrivacyPolicy() {
           <p className="text-center text-sm text-gray-600">
             By using BusWay Pro, you consent to this Privacy Policy and our processing of your information as described.
           </p>
+          <div className="flex flex-wrap justify-center gap-4 mt-3 text-xs text-gray-500">
+            <a href="/terms" className="hover:underline">Terms of Service</a>
+            <a href="/cookie-policy" className="hover:underline">Cookie Policy</a>
+            <a href="/data-protection" className="hover:underline">Data Protection</a>
+            <a href="/refund-policy" className="hover:underline">Refund Policy</a>
+            <a href="/shipping-policy" className="hover:underline">Shipping Policy</a>
+          </div>
           <p className="text-center text-xs text-gray-500 mt-2">
             © 2026 BusWay Pro. All rights reserved.
           </p>

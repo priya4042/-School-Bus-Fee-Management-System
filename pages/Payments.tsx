@@ -10,7 +10,7 @@ import { showToast } from '../lib/swal';
 import MiniLoader from '../components/MiniLoader';
 
 const Payments: React.FC<{ user: User }> = ({ user }) => {
-  const { paymentState, openPortal, closePortal, initiateRazorpay } = usePayments();
+  const { paymentState, openPortal, closePortal, initiatePayU, initiateRazorpay, initiateUpiIntent, confirmUpiPayment } = usePayments();
   const { downloadReceipt, downloading } = useReceipts();
   const [dues, setDues] = useState<MonthlyDue[]>([]);
   const [loading, setLoading] = useState(false);
@@ -69,10 +69,13 @@ const Payments: React.FC<{ user: User }> = ({ user }) => {
 
   return (
     <div className="space-y-6">
-      <PaymentPortal 
-        state={paymentState} 
-        onClose={closePortal} 
+      <PaymentPortal
+        state={paymentState}
+        onClose={closePortal}
         onInitiateRazorpay={initiateRazorpay}
+        onInitiatePayU={initiatePayU}
+        onInitiateUpi={initiateUpiIntent}
+        onConfirmUpi={confirmUpiPayment}
       />
 
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
