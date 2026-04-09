@@ -217,8 +217,8 @@ const SupportChat: React.FC<{ user: User }> = ({ user }) => {
 
       {/* Chat panel */}
       {isOpen && (
-        <div className="fixed right-3 sm:right-6 z-[1500] w-[calc(100vw-1.5rem)] sm:w-96 max-w-[24rem] bg-white rounded-3xl shadow-2xl border border-slate-100 flex flex-col overflow-hidden animate-in fade-in slide-in-from-bottom-4 duration-300"
-          style={{ bottom: 'calc(env(safe-area-inset-bottom, 0px) + 8rem)', maxHeight: 'calc(100vh - 12rem)' }}
+        <div className="fixed right-2 sm:right-6 z-[1500] w-[calc(100vw-1rem)] sm:w-80 max-w-[22rem] bg-white rounded-2xl shadow-2xl border border-slate-100 flex flex-col overflow-hidden animate-in fade-in slide-in-from-bottom-4 duration-200"
+          style={{ bottom: 'calc(env(safe-area-inset-bottom, 0px) + 5.5rem)', maxHeight: 'calc(100dvh - 10rem)' }}
         >
           {/* Header */}
           <div className="bg-slate-950 px-6 py-4 flex items-center justify-between">
@@ -237,7 +237,7 @@ const SupportChat: React.FC<{ user: User }> = ({ user }) => {
           </div>
 
           {/* Messages */}
-          <div className="flex-1 overflow-y-auto p-4 space-y-3 bg-slate-50 min-h-[200px] max-h-[400px]">
+          <div className="flex-1 overflow-y-auto p-3 space-y-2 bg-slate-50 min-h-[150px] max-h-[350px]">
             {messages.length === 0 && (
               <div className="text-center py-10">
                 <div className="w-12 h-12 bg-slate-100 rounded-2xl flex items-center justify-center mx-auto mb-3">

@@ -8,6 +8,8 @@ import {
 import { supabase } from '../../lib/supabase';
 import Modal from '../../components/Modal';
 import { showAlert, showLoading, showToast, closeSwal } from '../../lib/swal';
+import { useLanguage } from '../../lib/i18n';
+import MiniLoader from '../../components/MiniLoader';
 
 const buildProvisionalAdmissionNumber = () => {
   const now = new Date();
@@ -173,11 +175,7 @@ const StudentProfile: React.FC<{ user: User }> = ({ user }) => {
     fetchStudentData();
   }, [selectedStudent?.id]);
 
-  if (loading) return (
-    <div className="p-20 text-center animate-pulse text-slate-300 font-black uppercase tracking-widest">
-      Accessing Student Records...
-    </div>
-  );
+  if (loading) return <MiniLoader text="Loading student profile" />;
 
   if (!selectedStudent) return (
     <div className="p-20 text-center bg-white rounded-[3rem] border border-slate-100 shadow-sm">

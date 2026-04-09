@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { supabase } from '../lib/supabase';
-import { showAlert } from '../lib/swal';
+import { showAlert, showToast } from '../lib/swal';
 import jsPDF from 'jspdf';
 
 const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
@@ -133,24 +133,31 @@ const buildReceiptAggregate = (rows: any[], paymentId: string | number, txnId?: 
 };
 
 const drawLogo = (doc: any, x: number, y: number, size: number) => {
-  // Draw bus icon circle
+  // Rounded square background (like the app icon)
   doc.setFillColor(30, 64, 175);
-  doc.circle(x + size / 2, y + size / 2, size / 2, 'F');
+  doc.roundedRect(x, y, size, size, size * 0.22, size * 0.22, 'F');
   // Bus body
   doc.setFillColor(255, 255, 255);
-  const bx = x + size * 0.2;
-  const by = y + size * 0.25;
-  const bw = size * 0.6;
-  const bh = size * 0.45;
-  doc.roundedRect(bx, by, bw, bh, 1, 1, 'F');
-  // Bus windows
-  doc.setFillColor(30, 64, 175);
-  doc.rect(bx + bw * 0.1, by + bh * 0.15, bw * 0.35, bh * 0.35, 'F');
-  doc.rect(bx + bw * 0.55, by + bh * 0.15, bw * 0.35, bh * 0.35, 'F');
+  const bx = x + size * 0.15;
+  const by = y + size * 0.2;
+  const bw = size * 0.7;
+  const bh = size * 0.42;
+  doc.roundedRect(bx, by, bw, bh, size * 0.06, size * 0.06, 'F');
+  // Windshield
+  doc.setFillColor(200, 220, 255);
+  doc.rect(bx + bw * 0.08, by + bh * 0.1, bw * 0.84, bh * 0.4, 'F');
+  // Bus stripe
+  doc.setFillColor(245, 158, 11);
+  doc.rect(bx, by + bh * 0.55, bw, bh * 0.15, 'F');
   // Wheels
-  doc.setFillColor(51, 65, 85);
-  doc.circle(bx + bw * 0.25, by + bh + 0.5, size * 0.07, 'F');
-  doc.circle(bx + bw * 0.75, by + bh + 0.5, size * 0.07, 'F');
+  doc.setFillColor(30, 41, 59);
+  doc.circle(bx + bw * 0.25, by + bh + size * 0.03, size * 0.06, 'F');
+  doc.circle(bx + bw * 0.75, by + bh + size * 0.03, size * 0.06, 'F');
+  // SBW text at bottom
+  doc.setTextColor(255, 255, 255);
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(size * 0.22);
+  doc.text('SBW', x + size / 2, y + size * 0.88, { align: 'center' });
 };
 
 const generateReceiptPDF = async (due: any) => {
@@ -542,6 +549,7 @@ const savePDF = async (doc: any, fileName: string) => {
   try {
     const { Filesystem, Directory } = await import('@capacitor/filesystem');
     const base64Data = doc.output('datauristring').split(',')[1];
+    showToast('Downloading receipt...', 'info');
 
     const result = await Filesystem.writeFile({
       path: `Download/${fileName}`,

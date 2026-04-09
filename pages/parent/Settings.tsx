@@ -376,56 +376,43 @@ const Settings: React.FC<{ user: User; section?: 'profile' | 'security' | 'langu
 
           {activeTab === 'language' && (
             <div className="bg-white rounded-2xl md:rounded-[3rem] p-5 md:p-10 shadow-sm border border-slate-100">
-              <h3 className="text-xl font-black text-slate-900 tracking-tight mb-4">{t('select_language')}</h3>
-              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-10">
-                {lang === 'hi' ? 'अपनी पसंदीदा भाषा चुनें' : 'Choose your preferred language'}
-              </p>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-lg">
-                <button
-                  onClick={() => setLang('en')}
-                  className={`p-6 rounded-2xl border-2 transition-all flex items-center gap-4 ${
-                    lang === 'en'
-                      ? 'border-primary bg-primary/5 shadow-lg shadow-primary/10'
-                      : 'border-slate-100 hover:border-slate-200'
-                  }`}
-                >
-                  <span className="text-2xl">🇬🇧</span>
-                  <div className="text-left">
-                    <p className="font-black text-sm text-slate-800">English</p>
-                    <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mt-1">Default</p>
-                  </div>
-                  {lang === 'en' && <Check size={18} className="ml-auto text-primary" />}
-                </button>
-                <button
-                  onClick={() => setLang('hi')}
-                  className={`p-6 rounded-2xl border-2 transition-all flex items-center gap-4 ${
-                    lang === 'hi'
-                      ? 'border-primary bg-primary/5 shadow-lg shadow-primary/10'
-                      : 'border-slate-100 hover:border-slate-200'
-                  }`}
-                >
-                  <span className="text-2xl">🇮🇳</span>
-                  <div className="text-left">
-                    <p className="font-black text-sm text-slate-800">हिन्दी</p>
-                    <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mt-1">Hindi</p>
-                  </div>
-                  {lang === 'hi' && <Check size={18} className="ml-auto text-primary" />}
-                </button>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-w-xl">
+                {[
+                  { code: 'en', flag: '🇬🇧', name: 'English', sub: 'Default', available: true },
+                  { code: 'hi', flag: '🇮🇳', name: 'हिन्दी', sub: 'Hindi', available: true },
+                  { code: 'es', flag: '🇪🇸', name: 'Español', sub: 'Spanish', available: false },
+                  { code: 'fr', flag: '🇫🇷', name: 'Français', sub: 'French', available: false },
+                  { code: 'ar', flag: '🇸🇦', name: 'العربية', sub: 'Arabic', available: false },
+                  { code: 'pt', flag: '🇧🇷', name: 'Português', sub: 'Portuguese', available: false },
+                  { code: 'zh', flag: '🇨🇳', name: '中文', sub: 'Chinese', available: false },
+                  { code: 'ja', flag: '🇯🇵', name: '日本語', sub: 'Japanese', available: false },
+                ].map((l) => (
+                  <button
+                    key={l.code}
+                    onClick={() => l.available && setLang(l.code as any)}
+                    className={`p-4 rounded-2xl border-2 transition-all flex items-center gap-3 ${
+                      lang === l.code
+                        ? 'border-primary bg-primary/5 shadow-md'
+                        : l.available
+                        ? 'border-slate-100 hover:border-primary/30'
+                        : 'border-slate-50 opacity-50 cursor-not-allowed'
+                    }`}
+                  >
+                    <span className="text-2xl">{l.flag}</span>
+                    <div className="text-left flex-1">
+                      <p className="font-black text-sm text-slate-800">{l.name}</p>
+                      <p className="text-[8px] font-bold text-slate-400 mt-0.5">
+                        {l.available ? l.sub : `${l.sub} — Coming soon`}
+                      </p>
+                    </div>
+                    {lang === l.code && <Check size={16} className="text-primary" />}
+                  </button>
+                ))}
               </div>
             </div>
           )}
       </div>
 
-      {/* Logout at bottom */}
-      <div className="pt-4 border-t border-slate-100">
-        <button
-          onClick={logout}
-          className="w-full md:w-auto bg-red-50 text-red-600 px-8 py-4 rounded-2xl font-bold text-sm border border-red-100 hover:bg-red-100 transition-all flex items-center justify-center gap-2"
-        >
-          <LogOut size={18} />
-          Sign Out
-        </button>
-      </div>
     </div>
   );
 };

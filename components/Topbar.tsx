@@ -197,8 +197,8 @@ const Topbar: React.FC<TopbarProps> = ({ user, onMenuClick, onOpenNotifications,
           </button>
           
           {showNotifications && (
-            <div ref={modalRef} style={{ top: 'calc(env(safe-area-inset-top, 0px) + 3.5rem)' }} className="fixed left-2 right-2 sm:absolute sm:left-auto sm:right-0 sm:top-auto mt-2 sm:mt-4 sm:w-96 mx-auto sm:mx-0 bg-white border border-slate-100 rounded-2xl sm:rounded-3xl shadow-2xl z-[1100] animate-in fade-in slide-in-from-top-4 overflow-hidden">
-              <div className="p-6 border-b border-slate-50 flex justify-between items-center bg-slate-50/50">
+            <div ref={modalRef} className="absolute right-0 mt-2 w-72 sm:w-80 bg-white border border-slate-100 rounded-2xl shadow-2xl z-[1100] animate-in fade-in slide-in-from-top-2 duration-200 overflow-hidden">
+              <div className="px-4 py-3 border-b border-slate-50 flex justify-between items-center bg-slate-50/50">
                 <span className="text-[10px] font-black text-slate-800 uppercase tracking-widest">{t('alert_center')}</span>
                 <button onClick={async () => {
                   const unreadIds = notifications.filter(n => !n.read).map(n => n.id);
@@ -213,12 +213,12 @@ const Topbar: React.FC<TopbarProps> = ({ user, onMenuClick, onOpenNotifications,
                   }
                 }} className="text-[8px] font-black text-primary uppercase tracking-widest">{t('mark_all_read')}</button>
               </div>
-              <div className="max-h-[400px] overflow-y-auto scrollbar-hide divide-y divide-slate-50">
+              <div className="max-h-[300px] overflow-y-auto scrollbar-hide divide-y divide-slate-50">
                 {notifications.length > 0 ? notifications.map((n) => (
                   <div
                     key={n.id}
                     onClick={() => handleOpenNotification(n)}
-                    className={`p-5 hover:bg-slate-50 transition-all cursor-pointer group ${!n.read ? 'bg-blue-50/20' : ''}`}
+                    className={`px-4 py-3 hover:bg-slate-50 transition-all cursor-pointer group ${!n.read ? 'bg-blue-50/20' : ''}`}
                   >
                     <div className="flex items-start gap-4">
                       <div className={`w-8 h-8 rounded-lg flex items-center justify-center text-xs mt-1 ${

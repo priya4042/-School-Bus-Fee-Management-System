@@ -6,6 +6,7 @@ import {
 } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { showToast } from '../../lib/swal';
+import { useLanguage } from '../../lib/i18n';
 
 const Support: React.FC<{ user: User; onOpenDocumentation?: () => void; section?: 'ticket' | 'faq' }> = ({ user, section = 'ticket' }) => {
   const [searchQuery, setSearchQuery] = useState('');
@@ -114,18 +115,18 @@ const Support: React.FC<{ user: User; onOpenDocumentation?: () => void; section?
 
   return (
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 text-center md:text-left">
-        <div>
-          <h1 className="text-2xl md:text-4xl font-black text-slate-900 tracking-tight">
-            {section === 'faq' ? 'Frequently Asked Questions' : 'Submit a Ticket'}
+      <div className="flex items-center justify-between gap-3">
+        <div className="min-w-0">
+          <h1 className="text-xl md:text-4xl font-black text-slate-900 tracking-tight truncate">
+            {section === 'faq' ? 'FAQ' : 'Submit Ticket'}
           </h1>
-          <p className="text-slate-500 font-bold text-[10px] tracking-widest mt-1">
-            {section === 'faq' ? 'Find answers to common questions' : "We're here to help you 24/7"}
+          <p className="text-slate-500 font-bold text-[9px] tracking-widest mt-0.5">
+            {section === 'faq' ? 'Find answers to common questions' : "We're here to help"}
           </p>
         </div>
-        <div className="flex items-center gap-3 bg-primary/10 px-6 py-3 rounded-2xl border border-primary/10 mx-auto md:mx-0">
-          <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></div>
-          <span className="text-[10px] font-black text-primary uppercase tracking-widest">Support Active</span>
+        <div className="flex items-center gap-2 bg-primary/10 px-3 py-2 rounded-xl border border-primary/10 flex-shrink-0">
+          <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></div>
+          <span className="text-[8px] font-black text-primary uppercase tracking-widest">Active</span>
         </div>
       </div>
 
@@ -356,7 +357,7 @@ const Support: React.FC<{ user: User; onOpenDocumentation?: () => void; section?
       </div>
 
       {/* Quick links */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-6 pb-4">
         {[
           { id: 'manual', title: 'User Manual', icon: <FileText />, color: 'text-blue-500' },
           { id: 'safety', title: 'Safety Policy', icon: <Shield />, color: 'text-emerald-500' },

@@ -3,6 +3,7 @@ import { User, Student } from '../../types';
 import { CheckCircle2, XCircle, Filter, Calendar, Bus, ArrowUpCircle, ArrowDownCircle } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import MiniLoader from '../../components/MiniLoader';
+import { useLanguage } from '../../lib/i18n';
 
 interface AttendanceRecord {
   id: string;

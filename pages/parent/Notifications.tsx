@@ -145,10 +145,9 @@ const Notifications: React.FC<{ user: User; focusNotificationId?: string; onFocu
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 md:gap-8">
-        <div className="lg:col-span-1 space-y-6">
-          <div className="bg-white rounded-2xl md:rounded-[2.5rem] p-4 md:p-8 shadow-sm border border-slate-100">
-            <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-6">Filter Alerts</h3>
-            <div className="space-y-2">
+        <div className="lg:col-span-1 space-y-4 lg:space-y-6">
+          <div className="bg-white rounded-2xl md:rounded-[2.5rem] p-3 md:p-8 shadow-sm border border-slate-100">
+            <div className="flex lg:flex-col gap-2">
               {(['all', 'unread'] as const).map((f) => (
                 <button
                   key={f}
