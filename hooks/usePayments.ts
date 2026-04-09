@@ -340,12 +340,27 @@
         }));
 
         // Get hash from server
-        const hashData: any = await createPayUHash(
-          String(paymentState.dueId),
-          paymentState.amount,
-          dueContext,
-          paymentState.dueIds || [String(paymentState.dueId)]
-        );
+        let hashData: any;
+        try {
+          hashData = await createPayUHash(
+            String(paymentState.dueId),
+            paymentState.amount,
+            dueContext,
+            paymentState.dueIds || [String(paymentState.dueId)]
+          );
+        } catch (hashErr: any) {
+          const msg = String(hashErr?.message || hashErr?.details?.error || '').toLowerCase();
+          if (msg.includes('configuration missing') || msg.includes('payu_merchant') || msg.includes('not configured') || hashErr?.status === 500) {
+            showAlert(
+              'Payment Coming Soon',
+              'Our developers are setting up the payment gateway. Online payments will be available shortly. Please try again later or contact your school bus administrator.',
+              'info'
+            );
+            setPaymentState(prev => ({ ...prev, step: 'SELECT', loading: false }));
+            return;
+          }
+          throw hashErr;
+        }
 
         const isLoaded = await loadPayU();
         if (!isLoaded || !(window as any).bolt) {

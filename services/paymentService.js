@@ -8,8 +8,8 @@ export const paymentService = {
    */
   createPaymentOrder: async (amount, studentId, month) => {
     if (!ENV.PAYU_MERCHANT_KEY) {
-      console.warn('PAYU_MERCHANT_KEY is missing in env.js. Simulating payment order.');
-      return { success: true, orderId: `sim_order_${Date.now()}`, amount };
+      console.warn('PAYU_MERCHANT_KEY is missing. Payment gateway is being configured.');
+      return { success: false, error: 'Payment gateway is being configured by our developers. Please try again later.' };
     }
 
     try {
@@ -37,8 +37,7 @@ export const paymentService = {
    */
   verifyPayment: async (paymentData) => {
     if (!ENV.PAYU_MERCHANT_KEY) {
-      console.warn('PAYU_MERCHANT_KEY is missing. Simulating payment verification.');
-      return { success: true, message: 'Payment verified (simulated)' };
+      return { success: false, error: 'Payment gateway is being configured. Please try again later.' };
     }
 
     try {
@@ -167,16 +166,7 @@ export const paymentService = {
     }
 
     if (!ENV.PAYU_MERCHANT_KEY) {
-      // Simulated success if no key
-      setTimeout(() => {
-        const mockPaymentData = {
-          txnid: `sim_txn_${Date.now()}`,
-          mihpayid: `sim_mihpay_${Date.now()}`,
-          status: 'success',
-          hash: 'sim_hash'
-        };
-        if (onSuccess) onSuccess(mockPaymentData);
-      }, 1000);
+      if (onError) onError('Payment gateway is being configured by our developers. Please try again later.');
       return;
     }
 
