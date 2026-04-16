@@ -1,5 +1,5 @@
 import React from 'react';
-import { Truck, CheckCircle, Clock, Globe, Mail } from 'lucide-react';
+import { Truck, CheckCircle, Globe, Mail } from 'lucide-react';
 
 export default function ShippingPolicy() {
   return (
@@ -18,10 +18,10 @@ export default function ShippingPolicy() {
         <div className="mb-8 border-b-4 border-blue-600 pb-6">
           <div className="flex items-center gap-3 mb-4">
             <Truck className="w-8 h-8 text-blue-600" />
-            <h1 className="text-3xl font-bold text-gray-900">Shipping & Delivery Policy</h1>
+            <h1 className="text-3xl font-bold text-gray-900">Shipping & Service Delivery Policy</h1>
           </div>
           <p className="text-gray-600">
-            Meena Devi – Bus Transport Service &mdash; Fee Payment & Bus Management
+            Meena Devi – Bus Transport Service &mdash; School Bus Pickup & Drop Service
           </p>
           <p className="text-sm text-gray-500 mt-1">Last Updated: April 2026</p>
           <p className="text-sm text-gray-500">Operated by: Meena Devi (Proprietor – Bus Transport Service), V.P.O. Ghurkari, Tehsil & District Kangra, Himachal Pradesh - 176001, India</p>
@@ -33,32 +33,29 @@ export default function ShippingPolicy() {
           <section>
             <div className="flex items-center gap-2 mb-3">
               <Globe className="w-5 h-5 text-blue-600" />
-              <h2 className="text-xl font-bold text-gray-900">1. Nature of Service</h2>
+              <h2 className="text-xl font-bold text-gray-900">1. No Physical Shipping or Delivery</h2>
             </div>
-            <p>
-              Meena Devi – Bus Transport Service is a <strong>digital platform</strong> that provides an online fee payment and school bus management service.
-              This is <strong>not a physical product</strong> &mdash; no physical goods are shipped or delivered.
+            <div className="bg-amber-50 border-l-4 border-amber-500 p-4 mb-3">
+              <p className="font-semibold text-amber-900">
+                We do NOT ship or deliver any physical goods, products, or merchandise.
+              </p>
+              <p className="text-sm text-amber-800 mt-2">
+                This is a <strong>school bus transportation service</strong>. The only "service" we provide is picking up students from their assigned bus stop in the morning and dropping them back in the evening. There is nothing to ship, courier, or deliver.
+              </p>
+            </div>
+            <p className="mt-3">
+              Meena Devi – Bus Transport Service operates 2 buses that pick up and drop students of Mount Carmel School, Gaggal between their home stop and the school. The website and Android app are used only to manage student records, fee payments, attendance and notifications related to this bus service.
             </p>
-            <div className="mt-3 bg-blue-50 rounded-lg p-4">
-              <p className="font-semibold text-blue-800">What Meena Devi – Bus Transport Service provides:</p>
-              <ul className="list-disc pl-6 mt-2 space-y-1 text-blue-700">
-                <li>Online payment of monthly school bus transportation fees</li>
-                <li>Digital payment receipts (downloadable PDF)</li>
-                <li>Real-time bus tracking for parents</li>
-                <li>Fee history and billing records</li>
-                <li>Notifications and alerts</li>
-              </ul>
-            </div>
           </section>
 
           {/* Section 2 */}
           <section>
             <div className="flex items-center gap-2 mb-3">
-              <Clock className="w-5 h-5 text-blue-600" />
-              <h2 className="text-xl font-bold text-gray-900">2. Service Delivery</h2>
+              <Truck className="w-5 h-5 text-blue-600" />
+              <h2 className="text-xl font-bold text-gray-900">2. How the Bus Service Is Delivered</h2>
             </div>
             <p className="mb-3">
-              Since Meena Devi – Bus Transport Service is a digital service, all deliverables are provided electronically and instantly:
+              Our service is delivered through the daily operation of our 2 buses:
             </p>
             <div className="space-y-4">
               <div className="flex items-start gap-4 bg-gray-50 rounded-lg p-4">
@@ -66,8 +63,8 @@ export default function ShippingPolicy() {
                   <CheckCircle className="w-5 h-5 text-green-600" />
                 </div>
                 <div>
-                  <p className="font-bold text-gray-900">Payment Confirmation</p>
-                  <p className="text-sm text-gray-600">Delivered instantly upon successful payment via on-screen confirmation and in-app notification.</p>
+                  <p className="font-bold text-gray-900">Morning Pickup</p>
+                  <p className="text-sm text-gray-600">Our bus arrives at the student's assigned stop on the route and picks up the student to take them to Mount Carmel School, Gaggal.</p>
                 </div>
               </div>
               <div className="flex items-start gap-4 bg-gray-50 rounded-lg p-4">
@@ -75,8 +72,8 @@ export default function ShippingPolicy() {
                   <CheckCircle className="w-5 h-5 text-green-600" />
                 </div>
                 <div>
-                  <p className="font-bold text-gray-900">Digital Receipt</p>
-                  <p className="text-sm text-gray-600">Available for download immediately after payment. Also accessible anytime via the Receipts section of the app.</p>
+                  <p className="font-bold text-gray-900">Evening Drop</p>
+                  <p className="text-sm text-gray-600">After school hours, our bus drops the student back at the same assigned stop on the route.</p>
                 </div>
               </div>
               <div className="flex items-start gap-4 bg-gray-50 rounded-lg p-4">
@@ -84,8 +81,8 @@ export default function ShippingPolicy() {
                   <CheckCircle className="w-5 h-5 text-green-600" />
                 </div>
                 <div>
-                  <p className="font-bold text-gray-900">Fee Status Update</p>
-                  <p className="text-sm text-gray-600">The student's fee record is updated in real-time to reflect "PAID" status in both parent and admin dashboards.</p>
+                  <p className="font-bold text-gray-900">Service Days</p>
+                  <p className="text-sm text-gray-600">Monday to Saturday during the school's working days. No service on Sundays and school holidays.</p>
                 </div>
               </div>
               <div className="flex items-start gap-4 bg-gray-50 rounded-lg p-4">
@@ -93,8 +90,8 @@ export default function ShippingPolicy() {
                   <CheckCircle className="w-5 h-5 text-green-600" />
                 </div>
                 <div>
-                  <p className="font-bold text-gray-900">Email Notification (if enabled)</p>
-                  <p className="text-sm text-gray-600">Payment confirmation email sent to the parent's registered email address within minutes of successful payment.</p>
+                  <p className="font-bold text-gray-900">Digital Receipt After Payment</p>
+                  <p className="text-sm text-gray-600">Once a parent pays the monthly bus fee (online via PayU or in cash to the admin/driver), a PDF receipt is generated automatically and made available in the app and on the website.</p>
                 </div>
               </div>
             </div>
@@ -104,17 +101,15 @@ export default function ShippingPolicy() {
           <section>
             <div className="flex items-center gap-2 mb-3">
               <Truck className="w-5 h-5 text-blue-600" />
-              <h2 className="text-xl font-bold text-gray-900">3. Bus Transportation Service</h2>
+              <h2 className="text-xl font-bold text-gray-900">3. Bus Service Operator</h2>
             </div>
             <p>
-              The actual school bus transportation service is provided by the <strong>school/institution</strong>, not by Meena Devi – Bus Transport Service.
-              Meena Devi – Bus Transport Service acts solely as a technology platform to facilitate fee collection, tracking, and communication
-              between schools and parents.
+              The bus pickup and drop service is owned and operated by <strong>Meena Devi (Proprietor)</strong>. The school (Mount Carmel School, Gaggal) is the destination served — it does not operate these buses. The buses, drivers, routes and stops are managed entirely by the proprietor.
             </p>
             <ul className="list-disc pl-6 mt-3 space-y-2">
-              <li>Bus routes, schedules, and operations are managed by the school administration.</li>
-              <li>Any queries regarding bus service availability, pickup/drop timings, or route changes should be directed to the school's bus administration office.</li>
-              <li>Meena Devi – Bus Transport Service provides real-time GPS tracking of buses as an informational service to parents.</li>
+              <li>2 buses currently in operation, serving 100+ students daily.</li>
+              <li>Routes operated: Kangra → Gaggal and Shahpur → Gaggal.</li>
+              <li>For any queries regarding pickup/drop timings, route changes or driver behaviour, parents may contact the proprietor directly.</li>
             </ul>
           </section>
 
@@ -122,12 +117,12 @@ export default function ShippingPolicy() {
           <section>
             <div className="flex items-center gap-2 mb-3">
               <Globe className="w-5 h-5 text-blue-600" />
-              <h2 className="text-xl font-bold text-gray-900">4. Service Availability</h2>
+              <h2 className="text-xl font-bold text-gray-900">4. Website & App Availability</h2>
             </div>
             <ul className="list-disc pl-6 space-y-2">
-              <li><strong>Platform:</strong> Meena Devi – Bus Transport Service is accessible 24/7 via web browser and Android mobile app.</li>
-              <li><strong>Coverage:</strong> The service is available across India wherever the partnered school operates bus services.</li>
-              <li><strong>Downtime:</strong> Scheduled maintenance windows, if any, will be communicated via in-app notifications. We aim for 99.9% uptime.</li>
+              <li><strong>Platform:</strong> The website and the companion Android app are accessible 24/7 for fee payment, attendance and notifications.</li>
+              <li><strong>Coverage:</strong> The bus pickup and drop service is currently available only on the Kangra → Gaggal and Shahpur → Gaggal routes serving Mount Carmel School, Gaggal.</li>
+              <li><strong>Downtime:</strong> Any planned maintenance of the website or app will be communicated to parents via in-app notification.</li>
             </ul>
           </section>
 
