@@ -21,10 +21,10 @@ export default function RefundPolicy() {
             <h1 className="text-3xl font-bold text-gray-900">Refund & Cancellation Policy</h1>
           </div>
           <p className="text-gray-600">
-            BusWay Pro &mdash; School Bus Fee Management System
+            Mount Carmel School Bus &mdash; Fee Payment & Bus Management
           </p>
           <p className="text-sm text-gray-500 mt-1">Last Updated: April 2026</p>
-          <p className="text-sm text-gray-500">Website: https://school-bus-fee-management-system.vercel.app</p>
+          <p className="text-sm text-gray-500">Operated by: Mount Carmel School Bus (Proprietor: Singal), V.P.O. Ghurkari, Tehsil & District Kangra, Himachal Pradesh - 176001, India</p>
         </div>
 
         <div className="space-y-8 text-gray-700 leading-relaxed">
@@ -36,9 +36,9 @@ export default function RefundPolicy() {
               <h2 className="text-xl font-bold text-gray-900">1. Overview</h2>
             </div>
             <p>
-              BusWay Pro is a digital platform that enables parents to pay school bus transportation fees online.
+              Mount Carmel School Bus operates a digital platform that enables parents to pay school bus transportation fees online.
               All payments made through this platform are for <strong>school bus transportation services</strong> provided
-              by the respective school/institution. This policy outlines the conditions under which refunds and
+              to students of Mount Carmel School, Gaggal. This policy outlines the conditions under which refunds and
               cancellations are processed.
             </p>
           </section>
@@ -82,7 +82,7 @@ export default function RefundPolicy() {
             <div className="bg-blue-50 rounded-lg p-5 space-y-3">
               <div className="flex items-start gap-3">
                 <span className="w-7 h-7 rounded-full bg-blue-600 text-white flex items-center justify-center text-sm font-bold shrink-0">1</span>
-                <p><strong>Request:</strong> Parent submits a refund request via the Contact Us page or by emailing <strong>support@buswaypro.app</strong> with the transaction ID, student name, and reason.</p>
+                <p><strong>Request:</strong> Parent submits a refund request via the Contact Us page or by emailing <strong>choudharyajay533@gmail.com</strong> with the transaction ID, student name, and reason.</p>
               </div>
               <div className="flex items-start gap-3">
                 <span className="w-7 h-7 rounded-full bg-blue-600 text-white flex items-center justify-center text-sm font-bold shrink-0">2</span>
@@ -122,11 +122,11 @@ export default function RefundPolicy() {
             <div className="bg-gray-50 rounded-lg p-5 space-y-3">
               <div className="flex items-center gap-3">
                 <Mail className="w-5 h-5 text-blue-600" />
-                <p><strong>Email:</strong> support@buswaypro.app</p>
+                <p><strong>Email:</strong> <a href="mailto:choudharyajay533@gmail.com" className="text-blue-600 hover:underline">choudharyajay533@gmail.com</a></p>
               </div>
               <div className="flex items-center gap-3">
                 <Phone className="w-5 h-5 text-blue-600" />
-                <p><strong>Phone:</strong> Contact your school's bus administration office</p>
+                <p><strong>Phone:</strong> <a href="tel:+918988159431" className="text-blue-600 hover:underline">+91 89881 59431</a></p>
               </div>
               <div className="flex items-center gap-3">
                 <i className="fas fa-globe text-blue-600 w-5 text-center"></i>
@@ -147,7 +147,7 @@ export default function RefundPolicy() {
             <p>
               All online payments are securely processed through <strong>PayU</strong>, a PCI DSS compliant payment gateway.
               PayU supports Credit Cards, Debit Cards, UPI (Google Pay, PhonePe, BHIM), Net Banking, and Wallets.
-              BusWay Pro does not store any card or bank account details. All payment data is handled directly by PayU
+              Mount Carmel School Bus does not store any card or bank account details. All payment data is handled directly by PayU
               under their security protocols.
             </p>
           </section>
@@ -159,7 +159,7 @@ export default function RefundPolicy() {
               <h2 className="text-xl font-bold text-gray-900">8. Amendments</h2>
             </div>
             <p>
-              BusWay Pro reserves the right to modify this Refund & Cancellation Policy at any time.
+              Mount Carmel School Bus reserves the right to modify this Refund & Cancellation Policy at any time.
               Changes will be posted on this page with an updated revision date. Continued use of the
               platform after changes constitutes acceptance of the revised policy.
             </p>
@@ -170,12 +170,14 @@ export default function RefundPolicy() {
         {/* Footer */}
         <div className="mt-10 pt-6 border-t border-gray-200">
           <div className="flex flex-wrap gap-4 text-sm text-blue-600">
-            <a href="/privacy" className="hover:underline">Privacy Policy</a>
+            <a href="/about" className="hover:underline">About Us</a>
+            <a href="/services" className="hover:underline">Services</a>
+            <a href="/privacy-policy" className="hover:underline">Privacy Policy</a>
             <a href="/terms-of-service" className="hover:underline">Terms of Service</a>
             <a href="/shipping-policy" className="hover:underline">Shipping & Delivery</a>
             <a href="/contact-us" className="hover:underline">Contact Us</a>
           </div>
-          <p className="text-sm text-gray-500 mt-3">&copy; {new Date().getFullYear()} BusWay Pro. All rights reserved.</p>
+          <p className="text-sm text-gray-500 mt-3">&copy; {new Date().getFullYear()} Mount Carmel School Bus. All rights reserved.</p>
         </div>
       </div>
     </div>

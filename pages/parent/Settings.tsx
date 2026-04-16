@@ -261,7 +261,7 @@ const Settings: React.FC<{ user: User; section?: 'profile' | 'security' | 'langu
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-8">
                 <div className="space-y-2">
                   <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-4">Full Name</label>
                   <input

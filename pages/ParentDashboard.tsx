@@ -64,13 +64,13 @@ const ParentDashboard: React.FC<{ user: User }> = ({ user }) => {
 
 
   if (loading) return (
-     <div className="p-20 text-center">
+     <div className="p-8 md:p-20 text-center">
         <MiniLoader />
      </div>
   );
 
   if (!selectedStudent && !loading) return (
-     <div className="p-20 text-center bg-white rounded-3xl shadow-sm">
+     <div className="p-8 md:p-20 text-center bg-white rounded-3xl shadow-sm">
         <i className="fas fa-user-graduate text-slate-300 text-6xl mb-4"></i>
         <h2 className="text-xl font-bold text-slate-700">No Students Found</h2>
         <p className="text-slate-500 mt-2">Please contact the Bus Administrator to link your child's account.</p>
@@ -145,7 +145,7 @@ const ParentDashboard: React.FC<{ user: User }> = ({ user }) => {
         </div>
         <div className="text-center md:text-right relative z-10 w-full sm:w-auto">
           <p className="text-[9px] md:text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Consolidated Dues</p>
-          <p className={`text-3xl md:text-5xl font-black tracking-tighter ${totalFamilyDue > 0 ? 'text-danger' : 'text-success'}`}>
+          <p className={`text-2xl md:text-5xl font-black tracking-tighter ${totalFamilyDue > 0 ? 'text-danger' : 'text-success'}`}>
              ₹{Number(totalFamilyDue || 0).toLocaleString()}
           </p>
         </div>
@@ -169,7 +169,7 @@ const ParentDashboard: React.FC<{ user: User }> = ({ user }) => {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2">
-           <div className="bg-slate-950 rounded-3xl md:rounded-[3.5rem] shadow-2xl overflow-hidden border-4 md:border-[12px] border-white/5 relative h-[400px] md:h-[600px] group z-0">
+           <div className="bg-slate-950 rounded-2xl md:rounded-[3.5rem] shadow-2xl overflow-hidden border-2 md:border-[12px] border-white/5 relative h-[250px] md:h-[600px] group z-0">
               <div className={`absolute inset-0 transition-opacity duration-1000 ${trackingActive ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
                 {trackingActive && <GoogleMap location={location} busId={selectedStudent?.bus_id} />}
               </div>
@@ -301,7 +301,7 @@ const ParentDashboard: React.FC<{ user: User }> = ({ user }) => {
               );
             })}
             {studentDues.length === 0 && (
-              <div className="p-20 text-center">
+              <div className="p-8 md:p-20 text-center">
                  <p className="text-[9px] font-black text-slate-300 uppercase tracking-widest">No fee records found</p>
               </div>
             )}

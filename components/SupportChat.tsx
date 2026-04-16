@@ -202,10 +202,10 @@ const SupportChat: React.FC<{ user: User }> = ({ user }) => {
       {/* Floating chat button */}
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className={`fixed right-4 z-[1500] w-12 h-12 lg:w-14 lg:h-14 rounded-full shadow-2xl flex items-center justify-center hover:scale-110 transition-all ${
+        className={`fixed right-3 z-[1500] w-12 h-12 rounded-full shadow-2xl flex items-center justify-center hover:scale-110 transition-all ${
           isOpen ? 'bg-slate-800 text-white shadow-slate-800/40' : 'bg-primary text-white shadow-primary/40'
         }`}
-        style={{ bottom: 'calc(env(safe-area-inset-bottom, 0px) + 4.5rem)' }}
+        style={{ bottom: 'calc(env(safe-area-inset-bottom, 0px) + 4rem)' }}
       >
         {isOpen ? <X size={22} /> : <MessageCircle size={22} />}
         {unread > 0 && !isOpen && (
@@ -217,8 +217,8 @@ const SupportChat: React.FC<{ user: User }> = ({ user }) => {
 
       {/* Chat panel */}
       {isOpen && (
-        <div className="fixed right-2 sm:right-6 z-[1500] w-[calc(100vw-1rem)] sm:w-80 max-w-[22rem] bg-white rounded-2xl shadow-2xl border border-slate-100 flex flex-col overflow-hidden animate-in fade-in slide-in-from-bottom-4 duration-200"
-          style={{ bottom: 'calc(env(safe-area-inset-bottom, 0px) + 5.5rem)', maxHeight: 'calc(100dvh - 10rem)' }}
+        <div className="fixed left-2 right-2 sm:left-auto sm:right-4 sm:w-80 z-[2000] bg-white rounded-2xl shadow-2xl border border-slate-100 flex flex-col overflow-hidden animate-in fade-in slide-in-from-bottom-4 duration-200"
+          style={{ bottom: 'calc(env(safe-area-inset-bottom, 0px) + 4rem)', top: 'calc(env(safe-area-inset-top, 0px) + 4rem)' }}
         >
           {/* Header */}
           <div className="bg-slate-950 px-6 py-4 flex items-center justify-between">

@@ -178,7 +178,7 @@ const StudentProfile: React.FC<{ user: User }> = ({ user }) => {
   if (loading) return <MiniLoader text="Loading student profile" />;
 
   if (!selectedStudent) return (
-    <div className="p-20 text-center bg-white rounded-[3rem] border border-slate-100 shadow-sm">
+    <div className="p-8 md:p-20 text-center bg-white rounded-[3rem] border border-slate-100 shadow-sm">
       <div className="w-24 h-24 bg-slate-50 rounded-[2rem] flex items-center justify-center text-slate-300 mx-auto mb-6">
         <GraduationCap size={48} />
       </div>

@@ -133,7 +133,7 @@ const AttendanceHistory: React.FC<{ user: User }> = ({ user }) => {
       {students.length > 0 && (
         <>
           {/* Stats row */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-6">
             <div className="bg-white p-4 md:p-6 rounded-xl md:rounded-[2.5rem] border border-slate-100 shadow-sm text-center">
               <div className="w-12 h-12 bg-emerald-50 text-emerald-600 rounded-2xl flex items-center justify-center mx-auto mb-3">
                 <CheckCircle2 size={24} />

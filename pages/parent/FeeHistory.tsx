@@ -249,7 +249,7 @@ const FeeHistory: React.FC<{ user: User }> = ({ user }) => {
 
   if (loading) {
     return (
-      <div className="p-20 text-center">
+      <div className="p-8 md:p-20 text-center">
         <MiniLoader />
         <p className="text-slate-400 font-black text-[10px] uppercase tracking-widest mt-4">Loading Fee Records...</p>
       </div>

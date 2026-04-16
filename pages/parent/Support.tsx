@@ -132,11 +132,11 @@ const Support: React.FC<{ user: User; onOpenDocumentation?: () => void; section?
 
       {section === 'ticket' && (<>
       {/* Search hero */}
-      <div className="bg-slate-950 rounded-[3rem] p-12 text-white shadow-2xl relative overflow-hidden text-center">
+      <div className="bg-slate-950 rounded-2xl md:rounded-[3rem] p-6 md:p-12 text-white shadow-2xl relative overflow-hidden text-center">
         <div className="absolute top-0 right-0 w-64 h-64 bg-primary/20 rounded-bl-full -mr-20 -mt-20 blur-3xl"></div>
         <div className="absolute bottom-0 left-0 w-64 h-64 bg-emerald-500/10 rounded-tr-full -ml-20 -mb-20 blur-3xl"></div>
         <div className="relative z-10 max-w-2xl mx-auto space-y-8">
-          <h2 className="text-3xl font-black tracking-tight">How can we assist you today?</h2>
+          <h2 className="text-xl md:text-3xl font-black tracking-tight">How can we assist you today?</h2>
           <div className="relative group">
             <Search className="absolute left-6 top-1/2 -translate-y-1/2 text-white/20 group-focus-within:text-primary transition-colors" size={24} />
             <input
@@ -144,7 +144,7 @@ const Support: React.FC<{ user: User; onOpenDocumentation?: () => void; section?
               placeholder="Search FAQs (e.g., 'fees', 'tracking', 'receipt')..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full bg-white/5 border border-white/10 rounded-[2rem] py-6 pl-16 pr-8 text-base font-bold focus:ring-4 ring-primary/20 outline-none transition-all placeholder:text-white/20"
+              className="w-full bg-white/5 border border-white/10 rounded-[2rem] py-4 md:py-6 pl-12 md:pl-16 pr-6 md:pr-8 text-base font-bold focus:ring-4 ring-primary/20 outline-none transition-all placeholder:text-white/20"
             />
           </div>
           <div className="flex flex-wrap justify-center gap-4">
@@ -162,7 +162,7 @@ const Support: React.FC<{ user: User; onOpenDocumentation?: () => void; section?
       </div>
 
       {/* Contact channels */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-8">
         <div
           className="bg-white p-6 md:p-10 rounded-2xl md:rounded-[3rem] border border-slate-100 shadow-sm text-center group hover:border-primary/20 transition-all cursor-pointer"
           onClick={() => setShowTicketForm(true)}

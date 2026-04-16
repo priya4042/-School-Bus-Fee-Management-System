@@ -39,6 +39,8 @@ import HelpSupport from './pages/HelpSupport';
 import ContactUs from './pages/ContactUs';
 import RefundPolicy from './pages/RefundPolicy';
 import ShippingPolicy from './pages/ShippingPolicy';
+import Services from './pages/Services';
+import AboutUs from './pages/AboutUs';
 
 import BusCamera from './pages/parent/BusCamera';
 import FeeHistory from './pages/parent/FeeHistory';
@@ -193,6 +195,8 @@ const App: React.FC = () => {
         if (path === '/contact-us') return <ContactUs />;
         if (path === '/refund-policy') return <RefundPolicy />;
         if (path === '/shipping-policy') return <ShippingPolicy />;
+        if (path === '/services') return <Services />;
+        if (path === '/about' || path === '/about-us') return <AboutUs />;
         if (path === '/forgot-password') return <ForgotPassword />;
 
         if (!initialized) {

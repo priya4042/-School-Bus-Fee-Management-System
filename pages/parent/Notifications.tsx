@@ -191,7 +191,7 @@ const Notifications: React.FC<{ user: User; focusNotificationId?: string; onFocu
             <div
               key={notif.id}
               id={`notif-${notif.id}`}
-              className={`bg-white rounded-[2.5rem] p-8 shadow-sm border transition-all group ${
+              className={`bg-white rounded-[2.5rem] p-4 md:p-8 shadow-sm border transition-all group ${
                 highlightedId === notif.id
                   ? 'border-primary ring-2 ring-primary/20'
                   : notif.is_read

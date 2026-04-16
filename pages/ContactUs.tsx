@@ -42,14 +42,57 @@ export default function ContactUs() {
           </p>
         </div>
 
+        {/* Business Info Card - For PayU Verification */}
+        <div className="bg-white rounded-lg shadow-lg p-8 mb-12 border-l-4 border-blue-600">
+          <h2 className="text-2xl font-bold text-gray-900 mb-6">Business Information</h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <p className="text-xs font-bold text-gray-500 uppercase mb-1">Legal Business Name</p>
+              <p className="text-lg font-semibold text-gray-900">Mount Carmel School Bus</p>
+            </div>
+            <div>
+              <p className="text-xs font-bold text-gray-500 uppercase mb-1">Proprietor</p>
+              <p className="text-lg font-semibold text-gray-900">Singal</p>
+            </div>
+            <div>
+              <p className="text-xs font-bold text-gray-500 uppercase mb-1">Business Type</p>
+              <p className="text-lg font-semibold text-gray-900">Proprietorship</p>
+            </div>
+            <div>
+              <p className="text-xs font-bold text-gray-500 uppercase mb-1">School Served</p>
+              <p className="text-lg font-semibold text-gray-900">Mount Carmel School, Gaggal</p>
+            </div>
+            <div>
+              <p className="text-xs font-bold text-gray-500 uppercase mb-1">Email Address</p>
+              <a href="mailto:choudharyajay533@gmail.com" className="text-lg font-semibold text-blue-600 hover:underline break-all">choudharyajay533@gmail.com</a>
+            </div>
+            <div>
+              <p className="text-xs font-bold text-gray-500 uppercase mb-1">Contact Number</p>
+              <a href="tel:+918988159431" className="text-lg font-semibold text-blue-600 hover:underline">+91 89881 59431</a>
+            </div>
+            <div className="md:col-span-2">
+              <p className="text-xs font-bold text-gray-500 uppercase mb-1">Operating Address</p>
+              <p className="text-lg font-semibold text-gray-900">
+                V.P.O. Ghurkari, Tehsil & District Kangra, Himachal Pradesh - 176001, India
+              </p>
+            </div>
+            <div className="md:col-span-2">
+              <p className="text-xs font-bold text-gray-500 uppercase mb-1">Fleet</p>
+              <p className="text-lg font-semibold text-gray-900">
+                2 Buses serving 100+ students on the Kangra → Gaggal and Shahpur → Gaggal routes
+              </p>
+            </div>
+          </div>
+        </div>
+
         {/* Contact Methods */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-12">
           <div className="bg-white rounded-lg shadow-md p-6 text-center hover:shadow-lg transition">
             <Mail className="w-8 h-8 text-blue-600 mx-auto mb-4" />
             <h3 className="font-semibold text-gray-900 mb-2">Email</h3>
             <p className="text-gray-600 text-sm">
-              <a href="mailto:support@buswayapp.com" className="text-blue-600 hover:underline">
-                support@buswayapp.com
+              <a href="mailto:choudharyajay533@gmail.com" className="text-blue-600 hover:underline break-all">
+                choudharyajay533@gmail.com
               </a>
             </p>
             <p className="text-xs text-gray-500 mt-2">24-48 hours response</p>
@@ -59,29 +102,31 @@ export default function ContactUs() {
             <Phone className="w-8 h-8 text-green-600 mx-auto mb-4" />
             <h3 className="font-semibold text-gray-900 mb-2">Phone</h3>
             <p className="text-gray-600 text-sm">
-              School Office<br />
-              <span className="text-xs text-gray-500">Check your school directory</span>
+              <a href="tel:+918988159431" className="text-blue-600 hover:underline">
+                +91 89881 59431
+              </a>
             </p>
-            <p className="text-xs text-gray-500 mt-2">Business hours</p>
+            <p className="text-xs text-gray-500 mt-2">Mon-Sat 9AM-6PM IST</p>
+          </div>
+
+          <div className="bg-white rounded-lg shadow-md p-6 text-center hover:shadow-lg transition">
+            <MapPin className="w-8 h-8 text-red-600 mx-auto mb-4" />
+            <h3 className="font-semibold text-gray-900 mb-2">Location</h3>
+            <p className="text-gray-600 text-sm">
+              Ghurkari, Kangra<br />
+              HP, India - 176001
+            </p>
+            <p className="text-xs text-gray-500 mt-2">Operating Area</p>
           </div>
 
           <div className="bg-white rounded-lg shadow-md p-6 text-center hover:shadow-lg transition">
             <Clock className="w-8 h-8 text-purple-600 mx-auto mb-4" />
-            <h3 className="font-semibold text-gray-900 mb-2">In-App Support</h3>
+            <h3 className="font-semibold text-gray-900 mb-2">Working Hours</h3>
             <p className="text-gray-600 text-sm">
-              Use Help Center in app
+              Mon - Sat<br />
+              9:00 AM - 6:00 PM IST
             </p>
-            <p className="text-xs text-gray-500 mt-2">Instant access to FAQs</p>
-          </div>
-
-          <div className="bg-white rounded-lg shadow-md p-6 text-center hover:shadow-lg transition">
-            <AlertCircle className="w-8 h-8 text-red-600 mx-auto mb-4" />
-            <h3 className="font-semibold text-gray-900 mb-2">Emergency</h3>
-            <p className="text-gray-600 text-sm">
-              Contact school<br />
-              administration
-            </p>
-            <p className="text-xs text-gray-500 mt-2">For urgent matters</p>
+            <p className="text-xs text-gray-500 mt-2">Closed Sundays</p>
           </div>
         </div>
 
@@ -207,7 +252,7 @@ export default function ContactUs() {
                 For technical issues, payment problems, or general support:
               </p>
               <a
-                href="mailto:support@buswayapp.com"
+                href="mailto:choudharyajay533@gmail.com"
                 className="inline-block bg-blue-600 text-white px-6 py-2 rounded-lg font-semibold hover:bg-blue-700 transition"
               >
                 Email Support
@@ -221,7 +266,7 @@ export default function ContactUs() {
                 For payment issues or billing inquiries:
               </p>
               <a
-                href="mailto:billing@buswayapp.com"
+                href="mailto:choudharyajay533@gmail.com"
                 className="inline-block bg-green-600 text-white px-6 py-2 rounded-lg font-semibold hover:bg-green-700 transition"
               >
                 Contact Billing
@@ -235,7 +280,7 @@ export default function ContactUs() {
                 For privacy concerns or security issues:
               </p>
               <a
-                href="mailto:privacy@buswayapp.com"
+                href="mailto:choudharyajay533@gmail.com"
                 className="inline-block bg-purple-600 text-white px-6 py-2 rounded-lg font-semibold hover:bg-purple-700 transition"
               >
                 Privacy Contact
@@ -287,13 +332,15 @@ export default function ContactUs() {
             We value your feedback and are committed to serving you better.
           </p>
           <div className="flex flex-wrap justify-center gap-4 mt-3 text-xs text-gray-500">
-            <a href="/privacy" className="hover:underline">Privacy Policy</a>
-            <a href="/terms" className="hover:underline">Terms of Service</a>
+            <a href="/about" className="hover:underline">About Us</a>
+            <a href="/services" className="hover:underline">Services</a>
+            <a href="/privacy-policy" className="hover:underline">Privacy Policy</a>
+            <a href="/terms-of-service" className="hover:underline">Terms of Service</a>
             <a href="/refund-policy" className="hover:underline">Refund Policy</a>
             <a href="/shipping-policy" className="hover:underline">Shipping Policy</a>
           </div>
           <p className="text-xs text-gray-500">
-            © 2026 BusWay Pro. All rights reserved.
+            © 2026 Mount Carmel School Bus. All rights reserved.
           </p>
         </div>
       </div>

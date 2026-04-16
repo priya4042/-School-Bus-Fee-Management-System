@@ -10,11 +10,63 @@ export default function AboutUs() {
         <div className="bg-gradient-to-r from-blue-600 to-blue-800 rounded-lg shadow-lg p-12 text-white mb-12">
           <div className="flex items-center gap-4 mb-4">
             <Globe className="w-10 h-10" />
-            <h1 className="text-4xl font-bold">About BusWay Pro</h1>
+            <h1 className="text-4xl font-bold">About Mount Carmel School Bus</h1>
           </div>
           <p className="text-blue-100 text-lg">
-            Simplifying school bus management with modern technology and data-driven solutions
+            Safe and reliable school bus transportation service for Mount Carmel School, Gaggal — serving over 100 students daily.
           </p>
+        </div>
+
+        {/* Business Information - For PayU KYC Verification */}
+        <div className="bg-white rounded-lg shadow-lg p-8 mb-12 border-l-4 border-blue-600">
+          <h2 className="text-2xl font-bold text-gray-900 mb-6">Business Information</h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <p className="text-xs font-bold text-gray-500 uppercase mb-1">Legal Business Name</p>
+              <p className="text-lg font-semibold text-gray-900">Mount Carmel School Bus</p>
+            </div>
+            <div>
+              <p className="text-xs font-bold text-gray-500 uppercase mb-1">Proprietor</p>
+              <p className="text-lg font-semibold text-gray-900">Singal</p>
+            </div>
+            <div>
+              <p className="text-xs font-bold text-gray-500 uppercase mb-1">Business Type</p>
+              <p className="text-lg font-semibold text-gray-900">Proprietorship</p>
+            </div>
+            <div>
+              <p className="text-xs font-bold text-gray-500 uppercase mb-1">Service Category</p>
+              <p className="text-lg font-semibold text-gray-900">School Bus Transportation</p>
+            </div>
+            <div>
+              <p className="text-xs font-bold text-gray-500 uppercase mb-1">School Served</p>
+              <p className="text-lg font-semibold text-gray-900">Mount Carmel School, Gaggal</p>
+            </div>
+            <div>
+              <p className="text-xs font-bold text-gray-500 uppercase mb-1">Fleet & Students</p>
+              <p className="text-lg font-semibold text-gray-900">2 Buses · 100+ Students</p>
+            </div>
+            <div>
+              <p className="text-xs font-bold text-gray-500 uppercase mb-1">Email</p>
+              <a href="mailto:choudharyajay533@gmail.com" className="text-lg font-semibold text-blue-600 hover:underline break-all">choudharyajay533@gmail.com</a>
+            </div>
+            <div>
+              <p className="text-xs font-bold text-gray-500 uppercase mb-1">Phone</p>
+              <a href="tel:+918988159431" className="text-lg font-semibold text-blue-600 hover:underline">+91 89881 59431</a>
+            </div>
+            <div className="md:col-span-2">
+              <p className="text-xs font-bold text-gray-500 uppercase mb-1">Operating Address</p>
+              <p className="text-lg font-semibold text-gray-900">
+                V.P.O. Ghurkari, Tehsil & District Kangra, Himachal Pradesh - 176001, India
+              </p>
+            </div>
+            <div className="md:col-span-2">
+              <p className="text-xs font-bold text-gray-500 uppercase mb-1">Bus Routes</p>
+              <ul className="text-base font-semibold text-gray-900 space-y-1">
+                <li>1. Kangra → Mount Carmel School, Gaggal</li>
+                <li>2. Shahpur → Mount Carmel School, Gaggal</li>
+              </ul>
+            </div>
+          </div>
         </div>
 
         {/* Mission */}
@@ -206,15 +258,18 @@ export default function AboutUs() {
           <div className="space-y-3">
             <p>
               <strong>Email:</strong>{' '}
-              <a href="mailto:info@buswayapp.com" className="text-blue-600 hover:underline">
-                info@buswayapp.com
+              <a href="mailto:choudharyajay533@gmail.com" className="text-blue-600 hover:underline">
+                choudharyajay533@gmail.com
               </a>
             </p>
             <p>
-              <strong>Support:</strong>{' '}
-              <a href="mailto:support@buswayapp.com" className="text-blue-600 hover:underline">
-                support@buswayapp.com
+              <strong>Phone:</strong>{' '}
+              <a href="tel:+918988159431" className="text-blue-600 hover:underline">
+                +91 89881 59431
               </a>
+            </p>
+            <p>
+              <strong>Address:</strong> V.P.O. Ghurkari, Tehsil & District Kangra, Himachal Pradesh - 176001, India
             </p>
           </div>
         </div>
@@ -222,11 +277,13 @@ export default function AboutUs() {
         {/* Footer */}
         <div className="text-center mt-12 pt-8 border-t">
           <p className="text-gray-600 mb-2">
-            © 2026 BusWay Pro. All rights reserved.
+            © 2026 Mount Carmel School Bus. All rights reserved.
           </p>
           <div className="flex flex-wrap justify-center gap-4 mt-3 text-xs text-gray-500">
-            <a href="/privacy" className="hover:underline">Privacy Policy</a>
-            <a href="/terms" className="hover:underline">Terms of Service</a>
+            <a href="/services" className="hover:underline">Services</a>
+            <a href="/contact-us" className="hover:underline">Contact Us</a>
+            <a href="/privacy-policy" className="hover:underline">Privacy Policy</a>
+            <a href="/terms-of-service" className="hover:underline">Terms of Service</a>
             <a href="/refund-policy" className="hover:underline">Refund Policy</a>
             <a href="/shipping-policy" className="hover:underline">Shipping Policy</a>
           </div>

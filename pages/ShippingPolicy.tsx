@@ -21,10 +21,10 @@ export default function ShippingPolicy() {
             <h1 className="text-3xl font-bold text-gray-900">Shipping & Delivery Policy</h1>
           </div>
           <p className="text-gray-600">
-            BusWay Pro &mdash; School Bus Fee Management System
+            Mount Carmel School Bus &mdash; Fee Payment & Bus Management
           </p>
           <p className="text-sm text-gray-500 mt-1">Last Updated: April 2026</p>
-          <p className="text-sm text-gray-500">Website: https://school-bus-fee-management-system.vercel.app</p>
+          <p className="text-sm text-gray-500">Operated by: Mount Carmel School Bus (Proprietor: Singal), V.P.O. Ghurkari, Tehsil & District Kangra, Himachal Pradesh - 176001, India</p>
         </div>
 
         <div className="space-y-8 text-gray-700 leading-relaxed">
@@ -36,11 +36,11 @@ export default function ShippingPolicy() {
               <h2 className="text-xl font-bold text-gray-900">1. Nature of Service</h2>
             </div>
             <p>
-              BusWay Pro is a <strong>digital platform</strong> that provides an online fee payment and school bus management service.
+              Mount Carmel School Bus is a <strong>digital platform</strong> that provides an online fee payment and school bus management service.
               This is <strong>not a physical product</strong> &mdash; no physical goods are shipped or delivered.
             </p>
             <div className="mt-3 bg-blue-50 rounded-lg p-4">
-              <p className="font-semibold text-blue-800">What BusWay Pro provides:</p>
+              <p className="font-semibold text-blue-800">What Mount Carmel School Bus provides:</p>
               <ul className="list-disc pl-6 mt-2 space-y-1 text-blue-700">
                 <li>Online payment of monthly school bus transportation fees</li>
                 <li>Digital payment receipts (downloadable PDF)</li>
@@ -58,7 +58,7 @@ export default function ShippingPolicy() {
               <h2 className="text-xl font-bold text-gray-900">2. Service Delivery</h2>
             </div>
             <p className="mb-3">
-              Since BusWay Pro is a digital service, all deliverables are provided electronically and instantly:
+              Since Mount Carmel School Bus is a digital service, all deliverables are provided electronically and instantly:
             </p>
             <div className="space-y-4">
               <div className="flex items-start gap-4 bg-gray-50 rounded-lg p-4">
@@ -107,14 +107,14 @@ export default function ShippingPolicy() {
               <h2 className="text-xl font-bold text-gray-900">3. Bus Transportation Service</h2>
             </div>
             <p>
-              The actual school bus transportation service is provided by the <strong>school/institution</strong>, not by BusWay Pro.
-              BusWay Pro acts solely as a technology platform to facilitate fee collection, tracking, and communication
+              The actual school bus transportation service is provided by the <strong>school/institution</strong>, not by Mount Carmel School Bus.
+              Mount Carmel School Bus acts solely as a technology platform to facilitate fee collection, tracking, and communication
               between schools and parents.
             </p>
             <ul className="list-disc pl-6 mt-3 space-y-2">
               <li>Bus routes, schedules, and operations are managed by the school administration.</li>
               <li>Any queries regarding bus service availability, pickup/drop timings, or route changes should be directed to the school's bus administration office.</li>
-              <li>BusWay Pro provides real-time GPS tracking of buses as an informational service to parents.</li>
+              <li>Mount Carmel School Bus provides real-time GPS tracking of buses as an informational service to parents.</li>
             </ul>
           </section>
 
@@ -125,7 +125,7 @@ export default function ShippingPolicy() {
               <h2 className="text-xl font-bold text-gray-900">4. Service Availability</h2>
             </div>
             <ul className="list-disc pl-6 space-y-2">
-              <li><strong>Platform:</strong> BusWay Pro is accessible 24/7 via web browser and Android mobile app.</li>
+              <li><strong>Platform:</strong> Mount Carmel School Bus is accessible 24/7 via web browser and Android mobile app.</li>
               <li><strong>Coverage:</strong> The service is available across India wherever the partnered school operates bus services.</li>
               <li><strong>Downtime:</strong> Scheduled maintenance windows, if any, will be communicated via in-app notifications. We aim for 99.9% uptime.</li>
             </ul>
@@ -141,7 +141,11 @@ export default function ShippingPolicy() {
             <div className="bg-gray-50 rounded-lg p-5 space-y-3">
               <div className="flex items-center gap-3">
                 <Mail className="w-5 h-5 text-blue-600" />
-                <p><strong>Email:</strong> support@buswaypro.app</p>
+                <p><strong>Email:</strong> <a href="mailto:choudharyajay533@gmail.com" className="text-blue-600 hover:underline">choudharyajay533@gmail.com</a></p>
+              </div>
+              <div className="flex items-center gap-3">
+                <i className="fas fa-phone text-blue-600 w-5 text-center"></i>
+                <p><strong>Phone:</strong> <a href="tel:+918988159431" className="text-blue-600 hover:underline">+91 89881 59431</a></p>
               </div>
               <div className="flex items-center gap-3">
                 <i className="fas fa-globe text-blue-600 w-5 text-center"></i>
@@ -155,12 +159,14 @@ export default function ShippingPolicy() {
         {/* Footer */}
         <div className="mt-10 pt-6 border-t border-gray-200">
           <div className="flex flex-wrap gap-4 text-sm text-blue-600">
-            <a href="/privacy" className="hover:underline">Privacy Policy</a>
+            <a href="/about" className="hover:underline">About Us</a>
+            <a href="/services" className="hover:underline">Services</a>
+            <a href="/privacy-policy" className="hover:underline">Privacy Policy</a>
             <a href="/terms-of-service" className="hover:underline">Terms of Service</a>
             <a href="/refund-policy" className="hover:underline">Refund & Cancellation</a>
             <a href="/contact-us" className="hover:underline">Contact Us</a>
           </div>
-          <p className="text-sm text-gray-500 mt-3">&copy; {new Date().getFullYear()} BusWay Pro. All rights reserved.</p>
+          <p className="text-sm text-gray-500 mt-3">&copy; {new Date().getFullYear()} School Busway Pro. All rights reserved.</p>
         </div>
       </div>
     </div>
