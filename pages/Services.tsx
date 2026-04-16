@@ -37,8 +37,8 @@ export default function Services() {
           <Bus className="w-16 h-16 mx-auto mb-4" />
           <h1 className="text-4xl font-bold mb-4">Our Service & Pricing</h1>
           <p className="text-blue-100 text-lg max-w-2xl mx-auto">
-            Independent bus pickup & drop service for students of Mount Carmel School, Gaggal — operated by Ajay Choudhary.
-            One simple monthly fee, no hidden charges, no platform fees.
+            Independent bus pickup & drop service for students of Mount Carmel School, Gaggal — operated by Meena Devi.
+            Managed through this website and companion Android app. One simple monthly fee, no hidden charges, no platform fees.
           </p>
         </div>
 
@@ -200,7 +200,7 @@ export default function Services() {
         {/* Footer */}
         <div className="text-center mt-12 pt-8 border-t">
           <p className="text-gray-600 mb-2">
-            Ajay Choudhary • Bus Transport Service • Proprietorship
+            Meena Devi • Bus Transport Service • Proprietorship
           </p>
           <p className="text-sm text-gray-500 mb-4">
             V.P.O. Ghurkari, Tehsil & District Kangra, Himachal Pradesh - 176001, India

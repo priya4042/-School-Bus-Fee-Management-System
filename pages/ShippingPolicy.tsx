@@ -21,10 +21,10 @@ export default function ShippingPolicy() {
             <h1 className="text-3xl font-bold text-gray-900">Shipping & Delivery Policy</h1>
           </div>
           <p className="text-gray-600">
-            Ajay Choudhary – Bus Transport Service &mdash; Fee Payment & Bus Management
+            Meena Devi – Bus Transport Service &mdash; Fee Payment & Bus Management
           </p>
           <p className="text-sm text-gray-500 mt-1">Last Updated: April 2026</p>
-          <p className="text-sm text-gray-500">Operated by: Ajay Choudhary (Proprietor – Bus Transport Service), V.P.O. Ghurkari, Tehsil & District Kangra, Himachal Pradesh - 176001, India</p>
+          <p className="text-sm text-gray-500">Operated by: Meena Devi (Proprietor – Bus Transport Service), V.P.O. Ghurkari, Tehsil & District Kangra, Himachal Pradesh - 176001, India</p>
         </div>
 
         <div className="space-y-8 text-gray-700 leading-relaxed">
@@ -36,11 +36,11 @@ export default function ShippingPolicy() {
               <h2 className="text-xl font-bold text-gray-900">1. Nature of Service</h2>
             </div>
             <p>
-              Ajay Choudhary – Bus Transport Service is a <strong>digital platform</strong> that provides an online fee payment and school bus management service.
+              Meena Devi – Bus Transport Service is a <strong>digital platform</strong> that provides an online fee payment and school bus management service.
               This is <strong>not a physical product</strong> &mdash; no physical goods are shipped or delivered.
             </p>
             <div className="mt-3 bg-blue-50 rounded-lg p-4">
-              <p className="font-semibold text-blue-800">What Ajay Choudhary – Bus Transport Service provides:</p>
+              <p className="font-semibold text-blue-800">What Meena Devi – Bus Transport Service provides:</p>
               <ul className="list-disc pl-6 mt-2 space-y-1 text-blue-700">
                 <li>Online payment of monthly school bus transportation fees</li>
                 <li>Digital payment receipts (downloadable PDF)</li>
@@ -58,7 +58,7 @@ export default function ShippingPolicy() {
               <h2 className="text-xl font-bold text-gray-900">2. Service Delivery</h2>
             </div>
             <p className="mb-3">
-              Since Ajay Choudhary – Bus Transport Service is a digital service, all deliverables are provided electronically and instantly:
+              Since Meena Devi – Bus Transport Service is a digital service, all deliverables are provided electronically and instantly:
             </p>
             <div className="space-y-4">
               <div className="flex items-start gap-4 bg-gray-50 rounded-lg p-4">
@@ -107,14 +107,14 @@ export default function ShippingPolicy() {
               <h2 className="text-xl font-bold text-gray-900">3. Bus Transportation Service</h2>
             </div>
             <p>
-              The actual school bus transportation service is provided by the <strong>school/institution</strong>, not by Ajay Choudhary – Bus Transport Service.
-              Ajay Choudhary – Bus Transport Service acts solely as a technology platform to facilitate fee collection, tracking, and communication
+              The actual school bus transportation service is provided by the <strong>school/institution</strong>, not by Meena Devi – Bus Transport Service.
+              Meena Devi – Bus Transport Service acts solely as a technology platform to facilitate fee collection, tracking, and communication
               between schools and parents.
             </p>
             <ul className="list-disc pl-6 mt-3 space-y-2">
               <li>Bus routes, schedules, and operations are managed by the school administration.</li>
               <li>Any queries regarding bus service availability, pickup/drop timings, or route changes should be directed to the school's bus administration office.</li>
-              <li>Ajay Choudhary – Bus Transport Service provides real-time GPS tracking of buses as an informational service to parents.</li>
+              <li>Meena Devi – Bus Transport Service provides real-time GPS tracking of buses as an informational service to parents.</li>
             </ul>
           </section>
 
@@ -125,7 +125,7 @@ export default function ShippingPolicy() {
               <h2 className="text-xl font-bold text-gray-900">4. Service Availability</h2>
             </div>
             <ul className="list-disc pl-6 space-y-2">
-              <li><strong>Platform:</strong> Ajay Choudhary – Bus Transport Service is accessible 24/7 via web browser and Android mobile app.</li>
+              <li><strong>Platform:</strong> Meena Devi – Bus Transport Service is accessible 24/7 via web browser and Android mobile app.</li>
               <li><strong>Coverage:</strong> The service is available across India wherever the partnered school operates bus services.</li>
               <li><strong>Downtime:</strong> Scheduled maintenance windows, if any, will be communicated via in-app notifications. We aim for 99.9% uptime.</li>
             </ul>

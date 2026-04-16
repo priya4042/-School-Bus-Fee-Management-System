@@ -10,10 +10,10 @@ export default function AboutUs() {
         <div className="bg-gradient-to-r from-blue-600 to-blue-800 rounded-lg shadow-lg p-12 text-white mb-12">
           <div className="flex items-center gap-4 mb-4">
             <Globe className="w-10 h-10" />
-            <h1 className="text-4xl font-bold">About Ajay Choudhary – Bus Transport Service</h1>
+            <h1 className="text-4xl font-bold">About Meena Devi – Bus Transport Service</h1>
           </div>
           <p className="text-blue-100 text-lg">
-            Independent bus pickup & drop service for students of Mount Carmel School, Gaggal — serving over 100 students daily.
+            Independent bus pickup & drop service for students of Mount Carmel School, Gaggal — serving over 100 students daily. Managed through this website and companion Android app (currently in closed testing).
           </p>
         </div>
 
@@ -23,11 +23,11 @@ export default function AboutUs() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
               <p className="text-xs font-bold text-gray-500 uppercase mb-1">Legal Business Name</p>
-              <p className="text-lg font-semibold text-gray-900">Ajay Choudhary – Bus Transport Service</p>
+              <p className="text-lg font-semibold text-gray-900">Meena Devi – Bus Transport Service</p>
             </div>
             <div>
               <p className="text-xs font-bold text-gray-500 uppercase mb-1">Proprietor</p>
-              <p className="text-lg font-semibold text-gray-900">Ajay Choudhary</p>
+              <p className="text-lg font-semibold text-gray-900">Meena Devi</p>
             </div>
             <div>
               <p className="text-xs font-bold text-gray-500 uppercase mb-1">Business Type</p>
@@ -277,7 +277,7 @@ export default function AboutUs() {
         {/* Footer */}
         <div className="text-center mt-12 pt-8 border-t">
           <p className="text-gray-600 mb-2">
-            © 2026 Ajay Choudhary – Bus Transport Service. All rights reserved.
+            © 2026 Meena Devi – Bus Transport Service. All rights reserved.
           </p>
           <div className="flex flex-wrap justify-center gap-4 mt-3 text-xs text-gray-500">
             <a href="/services" className="hover:underline">Services</a>
