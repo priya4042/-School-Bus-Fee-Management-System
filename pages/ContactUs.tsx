@@ -18,13 +18,39 @@ export default function ContactUs() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    // Here you would send the form data to your backend
-    console.log('Form submitted:', formData);
+
+    const categoryLabel: Record<string, string> = {
+      general: 'General Inquiry',
+      technical: 'Technical Issue',
+      payment: 'Payment Issue',
+      privacy: 'Privacy/Security',
+      billing: 'Billing',
+      feature: 'Feature Request',
+      feedback: 'Feedback',
+    };
+
+    const subject = `[${categoryLabel[formData.category] || 'Inquiry'}] ${formData.subject}`;
+    const body = [
+      `Name: ${formData.name}`,
+      `Email: ${formData.email}`,
+      `Category: ${categoryLabel[formData.category] || formData.category}`,
+      ``,
+      `Message:`,
+      formData.message,
+      ``,
+      `---`,
+      `Sent via Contact Us form on Meena Devi - Bus Transport Service website`,
+    ].join('\n');
+
+    const mailtoUrl = `mailto:choudharyajay533@gmail.com?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+
+    window.location.href = mailtoUrl;
+
     setSubmitted(true);
     setTimeout(() => {
       setFormData({ name: '', email: '', subject: '', category: 'general', message: '' });
       setSubmitted(false);
-    }, 3000);
+    }, 4000);
   };
 
   return (
@@ -140,9 +166,9 @@ export default function ContactUs() {
             {submitted ? (
               <div className="p-6 bg-green-50 border border-green-200 rounded-lg flex flex-col items-center justify-center text-center">
                 <CheckCircle className="w-12 h-12 text-green-600 mb-4" />
-                <h3 className="text-lg font-semibold text-green-900 mb-2">Thank You!</h3>
+                <h3 className="text-lg font-semibold text-green-900 mb-2">Email Opened</h3>
                 <p className="text-green-800">
-                  Your message has been sent successfully. We'll get back to you soon.
+                  Your default email app has opened with your message pre-filled. Please review and click <strong>Send</strong> in your email app to deliver it to us. We will get back to you within 24-48 hours.
                 </p>
               </div>
             ) : (
@@ -236,7 +262,7 @@ export default function ContactUs() {
                 </button>
 
                 <p className="text-xs text-gray-500">
-                  * Required fields. We'll respond to your inquiry within 24-48 hours.
+                  * Required fields. Clicking <strong>Send Message</strong> will open your default email app with your message pre-filled. Please click Send in your email app to deliver it. We'll respond within 24-48 hours.
                 </p>
               </form>
             )}
