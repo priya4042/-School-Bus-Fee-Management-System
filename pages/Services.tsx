@@ -5,88 +5,27 @@ export default function Services() {
   const services = [
     {
       icon: <Bus className="w-10 h-10 text-blue-600" />,
-      title: 'Monthly School Bus Service',
-      description: 'Safe and reliable pickup & drop service for students between home and school. Includes morning pickup and evening drop.',
+      title: 'Monthly School Bus Pickup & Drop Service',
+      description: 'The only paid service. Safe and reliable pickup & drop service for students between their assigned stop and Mount Carmel School, Gaggal. Includes morning pickup and evening drop, six days a week.',
       price: '₹1,500',
       priceUnit: '/ month per student',
       features: [
         'Morning pickup from assigned stop',
-        'Evening drop to assigned stop',
+        'Evening drop back to assigned stop',
         'Trained and verified drivers',
-        'GPS tracked buses',
-        'Daily attendance marking',
+        'Service Monday to Saturday',
+        'Fee fixed monthly by admin',
       ],
     },
-    {
-      icon: <MapPin className="w-10 h-10 text-green-600" />,
-      title: 'Live GPS Bus Tracking',
-      description: 'Real-time bus location tracking so parents know exactly where their child is. View live map in the app.',
-      price: '₹200',
-      priceUnit: '/ month add-on',
-      features: [
-        'Real-time GPS location',
-        'Estimated arrival time',
-        'Route history',
-        'Live map view in app',
-        'Location alerts',
-      ],
-    },
-    {
-      icon: <Bell className="w-10 h-10 text-amber-600" />,
-      title: 'SMS & Push Notifications',
-      description: 'Instant alerts for bus departure, arrival, delays, and fee reminders via SMS and in-app notifications.',
-      price: '₹100',
-      priceUnit: '/ month add-on',
-      features: [
-        'Bus departure alerts',
-        'Arrival notifications',
-        'Delay notifications',
-        'Fee payment reminders',
-        'Emergency alerts',
-      ],
-    },
-    {
-      icon: <Shield className="w-10 h-10 text-purple-600" />,
-      title: 'Yearly Bus Service Package',
-      description: 'Full academic year bus service at a discounted rate. Better value for parents committing to yearly service.',
-      price: '₹15,000',
-      priceUnit: '/ academic year (10 months)',
-      features: [
-        '10 months of bus service',
-        'Savings vs monthly rate',
-        'Priority boarding point',
-        'Free GPS tracking included',
-        'Free SMS notifications',
-      ],
-    },
-    {
-      icon: <Users className="w-10 h-10 text-rose-600" />,
-      title: 'Multi-Child Family Package',
-      description: 'Discounted pricing for families with 2 or more children using the school bus service.',
-      price: '₹2,700',
-      priceUnit: '/ month for 2 children',
-      features: [
-        '10% off for 2 children',
-        '15% off for 3+ children',
-        'Single family account',
-        'Consolidated billing',
-        'One-click payment for all',
-      ],
-    },
-    {
-      icon: <FileText className="w-10 h-10 text-indigo-600" />,
-      title: 'Digital Receipts & Invoices',
-      description: 'Automated digital receipts and tax invoices for all fee payments. Download anytime from the app.',
-      price: 'Free',
-      priceUnit: 'with any package',
-      features: [
-        'PDF receipt after payment',
-        'Monthly statements',
-        'Annual tax invoice',
-        'Email delivery',
-        'Download from app',
-      ],
-    },
+  ];
+
+  const freeFeatures = [
+    { icon: <MapPin className="w-6 h-6 text-green-600" />, title: 'Live GPS Bus Tracking', desc: 'Real-time bus location and ETA in the app.' },
+    { icon: <Bell className="w-6 h-6 text-amber-600" />, title: 'Notifications', desc: 'In-app alerts for bus arrival, departure and fee reminders.' },
+    { icon: <Shield className="w-6 h-6 text-purple-600" />, title: 'Daily Attendance', desc: 'Automatic pickup and drop attendance for every student.' },
+    { icon: <FileText className="w-6 h-6 text-indigo-600" />, title: 'Digital Receipts', desc: 'PDF receipt generated automatically after every successful payment.' },
+    { icon: <Users className="w-6 h-6 text-rose-600" />, title: 'Multi-Child Support', desc: 'Manage and pay for multiple children from a single parent account.' },
+    { icon: <CreditCard className="w-6 h-6 text-blue-600" />, title: 'Secure Online Payment', desc: 'Pay monthly bus fee via PayU using Cards, UPI, Netbanking, or Wallets.' },
   ];
 
   return (
@@ -96,10 +35,10 @@ export default function Services() {
         {/* Header */}
         <div className="bg-gradient-to-r from-blue-600 to-blue-800 rounded-lg shadow-lg p-12 text-white mb-12 text-center">
           <Bus className="w-16 h-16 mx-auto mb-4" />
-          <h1 className="text-4xl font-bold mb-4">Our Services & Pricing</h1>
+          <h1 className="text-4xl font-bold mb-4">Our Service & Pricing</h1>
           <p className="text-blue-100 text-lg max-w-2xl mx-auto">
-            Mount Carmel School Bus — Safe, reliable, and affordable bus transportation for Mount Carmel School, Gaggal.
-            Serving 100+ students across 2 buses with transparent pricing.
+            Independent bus pickup & drop service for students of Mount Carmel School, Gaggal — operated by Ajay Choudhary.
+            One simple monthly fee, no hidden charges, no platform fees.
           </p>
         </div>
 
@@ -189,6 +128,28 @@ export default function Services() {
           ))}
         </div>
 
+        {/* Free Features Included */}
+        <div className="bg-white rounded-lg shadow-md p-8 mb-12 border-l-4 border-green-600">
+          <h2 className="text-2xl font-bold text-gray-900 mb-2 flex items-center gap-3">
+            <CheckCircle2 className="w-7 h-7 text-green-600" />
+            Free Features Included with Bus Service
+          </h2>
+          <p className="text-gray-700 mb-6">
+            All app and tracking features below are provided <strong>free of cost</strong> to every parent enrolled in the bus service. Parents only pay the monthly bus fee — no extra charges for any feature.
+          </p>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {freeFeatures.map((f, idx) => (
+              <div key={idx} className="p-4 bg-green-50 rounded-lg border border-green-100 flex items-start gap-3">
+                <div className="shrink-0">{f.icon}</div>
+                <div>
+                  <p className="font-semibold text-gray-900">{f.title} <span className="text-xs text-green-700 font-bold">FREE</span></p>
+                  <p className="text-xs text-gray-600 mt-1">{f.desc}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
         {/* Terms & Info */}
         <div className="bg-white rounded-lg shadow-md p-8 mb-8">
           <h2 className="text-2xl font-bold text-gray-900 mb-4">Important Information</h2>
@@ -207,8 +168,8 @@ export default function Services() {
               <ul className="space-y-1 list-disc list-inside">
                 <li>Service operates Monday to Saturday</li>
                 <li>No service on Sundays and school holidays</li>
-                <li>Routes pre-approved by school administration</li>
-                <li>Parents receive SMS for delays or changes</li>
+                <li>2 routes: Kangra → Gaggal and Shahpur → Gaggal</li>
+                <li>Parents receive in-app alerts for delays or changes</li>
               </ul>
             </div>
           </div>
@@ -218,7 +179,7 @@ export default function Services() {
         <div className="bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg p-8 text-center border border-blue-200">
           <h2 className="text-2xl font-bold text-gray-900 mb-3">Ready to Enroll?</h2>
           <p className="text-gray-700 mb-6">
-            Contact us to register your child for bus service. Our team will help you choose the right package.
+            Contact us to register your child for the bus service. We will assign your child to a route and stop based on your home location.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <a
@@ -239,7 +200,7 @@ export default function Services() {
         {/* Footer */}
         <div className="text-center mt-12 pt-8 border-t">
           <p className="text-gray-600 mb-2">
-            Mount Carmel School Bus • Proprietorship (Singal)
+            Ajay Choudhary • Bus Transport Service • Proprietorship
           </p>
           <p className="text-sm text-gray-500 mb-4">
             V.P.O. Ghurkari, Tehsil & District Kangra, Himachal Pradesh - 176001, India

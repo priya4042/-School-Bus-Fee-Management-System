@@ -48,11 +48,11 @@ export default function ContactUs() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
               <p className="text-xs font-bold text-gray-500 uppercase mb-1">Legal Business Name</p>
-              <p className="text-lg font-semibold text-gray-900">Mount Carmel School Bus</p>
+              <p className="text-lg font-semibold text-gray-900">Ajay Choudhary – Bus Transport Service</p>
             </div>
             <div>
               <p className="text-xs font-bold text-gray-500 uppercase mb-1">Proprietor</p>
-              <p className="text-lg font-semibold text-gray-900">Singal</p>
+              <p className="text-lg font-semibold text-gray-900">Ajay Choudhary</p>
             </div>
             <div>
               <p className="text-xs font-bold text-gray-500 uppercase mb-1">Business Type</p>
@@ -340,7 +340,7 @@ export default function ContactUs() {
             <a href="/shipping-policy" className="hover:underline">Shipping Policy</a>
           </div>
           <p className="text-xs text-gray-500">
-            © 2026 Mount Carmel School Bus. All rights reserved.
+            © 2026 Ajay Choudhary – Bus Transport Service. All rights reserved.
           </p>
         </div>
       </div>

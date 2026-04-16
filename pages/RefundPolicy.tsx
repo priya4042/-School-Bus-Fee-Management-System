@@ -21,10 +21,10 @@ export default function RefundPolicy() {
             <h1 className="text-3xl font-bold text-gray-900">Refund & Cancellation Policy</h1>
           </div>
           <p className="text-gray-600">
-            Mount Carmel School Bus &mdash; Fee Payment & Bus Management
+            Ajay Choudhary – Bus Transport Service &mdash; Fee Payment & Bus Management
           </p>
           <p className="text-sm text-gray-500 mt-1">Last Updated: April 2026</p>
-          <p className="text-sm text-gray-500">Operated by: Mount Carmel School Bus (Proprietor: Singal), V.P.O. Ghurkari, Tehsil & District Kangra, Himachal Pradesh - 176001, India</p>
+          <p className="text-sm text-gray-500">Operated by: Ajay Choudhary (Proprietor – Bus Transport Service), V.P.O. Ghurkari, Tehsil & District Kangra, Himachal Pradesh - 176001, India</p>
         </div>
 
         <div className="space-y-8 text-gray-700 leading-relaxed">
@@ -36,7 +36,7 @@ export default function RefundPolicy() {
               <h2 className="text-xl font-bold text-gray-900">1. Overview</h2>
             </div>
             <p>
-              Mount Carmel School Bus operates a digital platform that enables parents to pay school bus transportation fees online.
+              Ajay Choudhary – Bus Transport Service operates a digital platform that enables parents to pay school bus transportation fees online.
               All payments made through this platform are for <strong>school bus transportation services</strong> provided
               to students of Mount Carmel School, Gaggal. This policy outlines the conditions under which refunds and
               cancellations are processed.
@@ -147,7 +147,7 @@ export default function RefundPolicy() {
             <p>
               All online payments are securely processed through <strong>PayU</strong>, a PCI DSS compliant payment gateway.
               PayU supports Credit Cards, Debit Cards, UPI (Google Pay, PhonePe, BHIM), Net Banking, and Wallets.
-              Mount Carmel School Bus does not store any card or bank account details. All payment data is handled directly by PayU
+              Ajay Choudhary – Bus Transport Service does not store any card or bank account details. All payment data is handled directly by PayU
               under their security protocols.
             </p>
           </section>
@@ -159,7 +159,7 @@ export default function RefundPolicy() {
               <h2 className="text-xl font-bold text-gray-900">8. Amendments</h2>
             </div>
             <p>
-              Mount Carmel School Bus reserves the right to modify this Refund & Cancellation Policy at any time.
+              Ajay Choudhary – Bus Transport Service reserves the right to modify this Refund & Cancellation Policy at any time.
               Changes will be posted on this page with an updated revision date. Continued use of the
               platform after changes constitutes acceptance of the revised policy.
             </p>
@@ -177,7 +177,7 @@ export default function RefundPolicy() {
             <a href="/shipping-policy" className="hover:underline">Shipping & Delivery</a>
             <a href="/contact-us" className="hover:underline">Contact Us</a>
           </div>
-          <p className="text-sm text-gray-500 mt-3">&copy; {new Date().getFullYear()} Mount Carmel School Bus. All rights reserved.</p>
+          <p className="text-sm text-gray-500 mt-3">&copy; {new Date().getFullYear()} Ajay Choudhary – Bus Transport Service. All rights reserved.</p>
         </div>
       </div>
     </div>
