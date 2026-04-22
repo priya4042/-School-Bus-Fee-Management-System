@@ -10,11 +10,12 @@ interface PaymentPortalProps {
   onClose: () => void;
   onInitiateRazorpay: () => void;
   onInitiatePayU?: () => void;
+  onInitiateEasebuzz?: () => void;
   onInitiateUpi?: () => void;
   onConfirmUpi?: (refId: string) => void;
 }
 
-const PaymentPortal: React.FC<PaymentPortalProps> = ({ state, onClose, onInitiateRazorpay, onInitiatePayU, onInitiateUpi, onConfirmUpi }) => {
+const PaymentPortal: React.FC<PaymentPortalProps> = ({ state, onClose, onInitiateRazorpay, onInitiatePayU, onInitiateEasebuzz, onInitiateUpi, onConfirmUpi }) => {
   const handlePayU = onInitiatePayU || onInitiateRazorpay;
   const { downloadReceipt, downloading } = useReceipts();
   const [runtimeQrUrl, setRuntimeQrUrl] = useState('');
@@ -156,6 +157,26 @@ const PaymentPortal: React.FC<PaymentPortalProps> = ({ state, onClose, onInitiat
                   <div className="text-left">
                     <p className="font-black text-white text-sm">Pay via UPI App</p>
                     <p className="text-[9px] font-bold text-white/60 uppercase tracking-wider">Google Pay, PhonePe, BHIM, Paytm</p>
+                  </div>
+                </div>
+                <i className="fas fa-chevron-right text-white/60"></i>
+              </button>
+            )}
+
+            {/* Easebuzz - Alternate gateway (Cards, UPI, Netbanking, Wallets) */}
+            {onInitiateEasebuzz && (
+              <button
+                onClick={onInitiateEasebuzz}
+                disabled={state.loading}
+                className="group w-full flex items-center justify-between p-5 bg-gradient-to-r from-indigo-600 to-violet-600 border border-indigo-500 rounded-2xl hover:from-indigo-700 hover:to-violet-700 transition-all active:scale-[0.98] text-white shadow-xl shadow-indigo-600/20 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <div className="flex items-center gap-4">
+                  <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center text-white border border-white/20 group-hover:scale-110 transition-transform">
+                    {state.loading ? <i className="fas fa-circle-notch fa-spin"></i> : <i className="fas fa-bolt text-xl"></i>}
+                  </div>
+                  <div className="text-left">
+                    <p className="font-black text-white text-sm">Pay via Easebuzz</p>
+                    <p className="text-[9px] font-bold text-white/60 uppercase tracking-wider">Cards, UPI, Netbanking, Wallets</p>
                   </div>
                 </div>
                 <i className="fas fa-chevron-right text-white/60"></i>

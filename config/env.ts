@@ -12,6 +12,11 @@ export const ENV = {
 
   PAYU_MERCHANT_KEY: import.meta.env.VITE_PAYU_MERCHANT_KEY || '',
 
+  EASEBUZZ_KEY: import.meta.env.VITE_EASEBUZZ_KEY || '',
+  EASEBUZZ_ENV: (import.meta.env.VITE_EASEBUZZ_ENV || 'test') as 'test' | 'prod',
+
+  PAYMENT_GATEWAY: (import.meta.env.VITE_PAYMENT_GATEWAY || 'payu') as 'payu' | 'easebuzz',
+
   GOOGLE_MAPS_API_KEY: import.meta.env.VITE_GOOGLE_MAPS_API_KEY || '',
 
   CAMERA_STREAM_BASE_URL: import.meta.env.VITE_CAMERA_STREAM_BASE_URL || '',

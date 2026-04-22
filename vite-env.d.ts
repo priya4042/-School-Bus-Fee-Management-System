@@ -20,6 +20,9 @@ interface ImportMetaEnv {
   readonly VITE_MSG91_TEMPLATE_ID: string
   readonly VITE_MSG91_SENDER_ID: string
   readonly VITE_PAYU_ENV?: string
+  readonly VITE_EASEBUZZ_KEY?: string
+  readonly VITE_EASEBUZZ_ENV?: 'test' | 'prod'
+  readonly VITE_PAYMENT_GATEWAY?: 'payu' | 'easebuzz'
   readonly VITE_ADMIN_PAYMENT_QR_URL?: string
   readonly VITE_ADMIN_UPI_ID?: string
   readonly VITE_CAMERA_STREAM_BASE_URL: string

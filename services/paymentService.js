@@ -1,6 +1,7 @@
 import axios from 'axios';
 import { ENV } from '../config/env';
 import { loadPayU } from '../lib/razorpay';
+import { openEasebuzzCheckout } from '../lib/easebuzz';
 
 export const paymentService = {
   /**
@@ -48,6 +49,104 @@ export const paymentService = {
       console.error('Failed to verify payment:', error);
       return { success: false, error: error.response?.data?.error || error.message };
     }
+  },
+
+  /**
+   * Create an Easebuzz payment link (returns access_key for checkout.js)
+   */
+  createEasebuzzOrder: async ({ amount, studentId, month, dueId, studentName, email, phone }) => {
+    if (!ENV.EASEBUZZ_KEY) {
+      console.warn('EASEBUZZ_KEY is missing. Easebuzz gateway is being configured.');
+      return { success: false, error: 'Easebuzz is being configured. Please try again later.' };
+    }
+
+    try {
+      const response = await axios.post(`${ENV.API_BASE_URL}/api/v1/payments/easebuzzInitiate`, {
+        amount,
+        studentId,
+        month,
+        dueId,
+        studentName,
+        email,
+        phone,
+      });
+
+      return {
+        success: true,
+        accessKey: response.data.accessKey,
+        merchantKey: response.data.key,
+        env: response.data.env,
+        txnid: response.data.txnid,
+        amount: response.data.amount,
+      };
+    } catch (error) {
+      console.error('Failed to create Easebuzz order:', error);
+      return { success: false, error: error.response?.data?.error || error.message };
+    }
+  },
+
+  /**
+   * Open Easebuzz checkout and resolve with the gateway response on close.
+   * The caller is responsible for forwarding the response to verifyEasebuzzPayment.
+   */
+  openEasebuzzCheckout: ({ accessKey, merchantKey, env }) =>
+    new Promise((resolve) => {
+      openEasebuzzCheckout({
+        accessKey,
+        merchantKey,
+        env,
+        onResponse: (response) => resolve(response),
+      }).then((launched) => {
+        if (!launched) resolve({ status: 'launch_failed' });
+      });
+    }),
+
+  /**
+   * Verify the Easebuzz response hash server-side and record the payment.
+   */
+  verifyEasebuzzPayment: async (paymentData) => {
+    try {
+      const response = await axios.post(
+        `${ENV.API_BASE_URL}/api/v1/payments/verifyEasebuzz`,
+        paymentData
+      );
+      return { success: true, message: 'Payment verified successfully', data: response.data };
+    } catch (error) {
+      console.error('Failed to verify Easebuzz payment:', error);
+      return { success: false, error: error.response?.data?.error || error.message };
+    }
+  },
+
+  /**
+   * Full Easebuzz flow: create order → open checkout → verify.
+   * Returns { success, data } or { success: false, error }.
+   */
+  payWithEasebuzz: async ({ amount, studentId, month, dueId, studentName, email, phone }) => {
+    const order = await paymentService.createEasebuzzOrder({
+      amount,
+      studentId,
+      month,
+      dueId,
+      studentName,
+      email,
+      phone,
+    });
+    if (!order.success) return order;
+
+    const response = await paymentService.openEasebuzzCheckout({
+      accessKey: order.accessKey,
+      merchantKey: order.merchantKey,
+      env: order.env,
+    });
+
+    if (!response || response.status === 'launch_failed') {
+      return { success: false, error: 'Failed to open Easebuzz checkout' };
+    }
+    if (String(response.status).toLowerCase() !== 'success') {
+      return { success: false, error: `Payment ${response.status}`, data: response };
+    }
+
+    return paymentService.verifyEasebuzzPayment({ ...response, dueId });
   },
 
   /**
