@@ -2,8 +2,8 @@
 @tailwind components;
 @tailwind utilities;
 
-body { 
-  font-family: 'Plus Jakarta Sans', sans-serif; 
+body {
+  font-family: 'Plus Jakarta Sans', sans-serif;
   -webkit-tap-highlight-color: transparent;
 }
 .scrollbar-hide::-webkit-scrollbar { display: none; }
@@ -20,3 +20,59 @@ body {
 .responsive-table {
   min-width: 850px;
 }
+
+/* ============================================================
+   Platform-aware styles
+   .platform-web     — browser / PWA
+   .platform-native  — Capacitor shell (Android/iOS)
+   ============================================================ */
+
+html.platform-native,
+html.platform-native body {
+  overscroll-behavior: none;
+  touch-action: manipulation;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+html.platform-native input,
+html.platform-native textarea,
+html.platform-native [contenteditable="true"] {
+  user-select: auto;
+  -webkit-user-select: auto;
+}
+
+html.platform-native .web-only,
+html.platform-web .native-only {
+  display: none !important;
+}
+
+html.platform-native a[href^="http://"],
+html.platform-native a[href^="https://"]:not([data-allow-external]) {
+  /* External links without explicit opt-in get a subtle underline hint */
+}
+
+html.platform-native main {
+  padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 1rem) !important;
+}
+
+html.platform-android .modal-native-safe {
+  padding-top: calc(env(safe-area-inset-top, 0px) + 0.5rem);
+}
+
+html.platform-native ::-webkit-scrollbar { width: 0; height: 0; }
+
+html.platform-native img,
+html.platform-native button {
+  -webkit-touch-callout: none;
+}
+
+html.platform-native button:active {
+  transform: scale(0.97);
+  transition: transform 0.08s ease-out;
+}
+
+html.platform-web body {
+  background-color: #f8fafc;
+}
+

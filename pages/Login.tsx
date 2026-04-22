@@ -146,7 +146,7 @@ const Login: React.FC<LoginProps> = ({ onLogin, onGoToRegister }) => {
                   {loginRole === UserRole.PARENT ? 'Access Bus admin Terminal' : 'Back to Parent Portal'}
                 </button>
               </div>
-              <div className="pt-6 flex justify-center flex-wrap gap-3 text-[9px] font-bold text-slate-300 uppercase tracking-widest">
+              <div className="web-only pt-6 flex justify-center flex-wrap gap-3 text-[9px] font-bold text-slate-300 uppercase tracking-widest">
                 <a href="/about" className="hover:text-primary transition-colors">About Us</a>
                 <span className="opacity-20">|</span>
                 <a href="/services" className="hover:text-primary transition-colors">Services</a>
@@ -160,6 +160,13 @@ const Login: React.FC<LoginProps> = ({ onLogin, onGoToRegister }) => {
                 <a href="/refund-policy" className="hover:text-primary transition-colors">Refund</a>
                 <span className="opacity-20">|</span>
                 <a href="/shipping-policy" className="hover:text-primary transition-colors">Shipping</a>
+              </div>
+              <div className="native-only pt-4 flex justify-center flex-wrap gap-3 text-[9px] font-bold text-slate-300 uppercase tracking-widest">
+                <a href="/privacy-policy" className="hover:text-primary transition-colors">Privacy</a>
+                <span className="opacity-20">|</span>
+                <a href="/terms-of-service" className="hover:text-primary transition-colors">Terms</a>
+                <span className="opacity-20">|</span>
+                <a href="/refund-policy" className="hover:text-primary transition-colors">Refund</a>
               </div>
             </div>
           </div>

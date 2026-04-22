@@ -27,6 +27,10 @@ import AppLoader from './components/AppLoader';
 import BottomTabs from './components/BottomTabs';
 import { useAuthStore } from './store/authStore';
 import { isSupabaseConfigured } from './lib/supabase';
+import { applyPlatformClass } from './lib/platform';
+import { initNativeBridge } from './lib/nativeBridge';
+
+applyPlatformClass();
 
 import Privacy from './pages/Privacy';
 import Terms from './pages/Terms';
@@ -112,6 +116,7 @@ const App: React.FC = () => {
   useEffect(() => {
     // Initialize auth store regardless of Supabase config to allow UI to render
     init();
+    initNativeBridge();
   }, [init]);
 
   useEffect(() => {
