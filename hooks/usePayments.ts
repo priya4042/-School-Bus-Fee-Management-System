@@ -490,24 +490,49 @@
         }));
 
         const settings = loadFeeSettings();
-        // Check for new UPI config first, then fall back to admin UPI
-        const upiId = String(
-          settings.upiId || 
-          import.meta.env.VITE_UPI_ID || 
-          settings.adminUpiId || 
-          import.meta.env.VITE_ADMIN_UPI_ID || 
-          ''
-        ).trim();
+        
+        // Try to fetch from database first
+        let upiId = '';
+        let businessName = '';
+        
+        try {
+          const { data: dbSettings } = await supabase
+            .from('payment_settings')
+            .select('upi_id, business_name')
+            .limit(1)
+            .single();
+          
+          if (dbSettings) {
+            upiId = String(dbSettings.upi_id || '').trim();
+            businessName = String(dbSettings.business_name || '').trim();
+          }
+        } catch (err) {
+          console.log('Payment settings not in database, trying environment variables');
+        }
+
+        // Fall back to environment variables and settings
+        if (!upiId) {
+          upiId = String(
+            settings.upiId || 
+            import.meta.env.VITE_UPI_ID || 
+            settings.adminUpiId || 
+            import.meta.env.VITE_ADMIN_UPI_ID || 
+            ''
+          ).trim();
+        }
+        
+        if (!businessName) {
+          businessName = String(settings.businessName || import.meta.env.VITE_BUSINESS_NAME || 'School Bus WayPro').trim();
+        }
 
         if (!upiId) {
-          showAlert('UPI Not Available', 'UPI payment is not configured yet. Please set VITE_UPI_ID in environment variables or contact bus administrator to enable UPI.', 'info');
+          showAlert('UPI Not Available', 'UPI payment is not configured yet. Please configure UPI settings in Payment Settings or contact administrator.', 'info');
           setPaymentState(prev => ({ ...prev, loading: false }));
           return;
         }
 
         const amount = paymentState.amount;
         const studentName = dueStudent?.full_name || paymentState.studentName || 'Student';
-        const businessName = String(import.meta.env.VITE_BUSINESS_NAME || 'School Bus WayPro').trim();
         const txnRef = `BUSWAY${Date.now()}`;
         const note = `Bus Fee - ${studentName}`;
 

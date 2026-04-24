@@ -20,6 +20,7 @@ import AdminManagement from './pages/AdminManagement';
 import UserDirectory from './pages/UserDirectory';
 import LiveTracking from './pages/LiveTracking';
 import Documentation from './pages/Documentation';
+import PaymentSettings from './pages/PaymentSettings';
 import Sidebar from './components/Sidebar';
 import Topbar from './components/Topbar';
 import SupportChat from './components/SupportChat';
@@ -66,6 +67,7 @@ const getAllowedTabs = (user?: User | null) => {
       'Students',
       'Buses',
       'Payments',
+      'Payment Settings',
       'Settings',
       'Attendance',
       'Notifications',
@@ -157,6 +159,7 @@ const App: React.FC = () => {
         case 'Buses': return <Buses />;
         case 'Payments': return <AdminPayments />;
         case 'Reports': return <AdminPayments />;
+        case 'Payment Settings': return <PaymentSettings />;
         case 'Settings': return <Settings />;
         case 'Attendance': return <Attendance />;
         case 'Notifications': return <AdminNotifications focusNotificationId={selectedNotificationId} onFocusHandled={() => setSelectedNotificationId(undefined)} />;

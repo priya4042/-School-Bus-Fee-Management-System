@@ -62,6 +62,18 @@ CREATE TABLE public.profiles (
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
+-- Payment Settings for UPI and other payment gateways
+CREATE TABLE public.payment_settings (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  upi_id TEXT,
+  business_name TEXT,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Ensure only one row exists (use a constraint or trigger)
+ALTER TABLE public.payment_settings ADD CONSTRAINT one_row_only CHECK (id IS NOT NULL);
+
 CREATE TABLE public.routes (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
   route_name TEXT NOT NULL,
