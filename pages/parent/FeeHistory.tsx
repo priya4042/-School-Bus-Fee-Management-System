@@ -258,7 +258,7 @@ const FeeHistory: React.FC<{ user: User }> = ({ user }) => {
 
   return (
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
-      <PaymentPortal state={paymentState} onClose={closePortal} onInitiateRazorpay={initiateRazorpay} onInitiatePayU={initiatePayU} onInitiateUpi={initiateUpiIntent} onConfirmUpi={confirmUpiPayment} />
+      <PaymentPortal state={paymentState} onClose={closePortal} onInitiateRazorpay={initiateRazorpay} onInitiatePayU={initiatePayU} onInitiateUpi={initiateUpiIntent} onConfirmUpi={confirmUpiPayment} user={user} />
 
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
         <div>

@@ -25,6 +25,8 @@ interface ImportMetaEnv {
   readonly VITE_PAYMENT_GATEWAY?: 'payu' | 'easebuzz'
   readonly VITE_ADMIN_PAYMENT_QR_URL?: string
   readonly VITE_ADMIN_UPI_ID?: string
+  readonly VITE_UPI_ID?: string
+  readonly VITE_BUSINESS_NAME?: string
   readonly VITE_CAMERA_STREAM_BASE_URL: string
   readonly VITE_TWILIO_ACCOUNT_SID: string
   readonly VITE_TWILIO_AUTH_TOKEN: string

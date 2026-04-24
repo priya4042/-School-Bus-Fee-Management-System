@@ -3,6 +3,7 @@ import React, { useState } from 'react';
 import { User, UserRole } from '../types';
 import { APP_NAME } from '../constants';
 import { useLanguage } from '../lib/i18n';
+import { useWindowSize } from '../hooks/useWindowSize';
 
 interface SidebarProps {
   user: User;
@@ -22,6 +23,7 @@ interface NavItem {
 
 const Sidebar: React.FC<SidebarProps> = ({ user, onLogout, activeTab, setActiveTab, isOpen, onClose }) => {
   const { t } = useLanguage();
+  const { isMobile, isTablet } = useWindowSize();
   const [expandedGroup, setExpandedGroup] = useState<string | null>(null);
   const isSuperAdmin = user.role === UserRole.SUPER_ADMIN;
   const isAdmin = user.role === UserRole.ADMIN || isSuperAdmin;
@@ -101,8 +103,8 @@ const Sidebar: React.FC<SidebarProps> = ({ user, onLogout, activeTab, setActiveT
   }, [activeTab]);
 
   const sidebarClasses = `
-    fixed inset-y-0 left-0 z-[2000] w-[70vw] max-w-60 bg-slate-950 text-white flex flex-col transition-transform duration-300 lg:relative lg:w-60 lg:max-w-none lg:translate-x-0
-    ${isOpen ? 'translate-x-0' : '-translate-x-full'}
+    fixed inset-y-0 left-0 z-[2000] w-[70vw] max-w-60 bg-slate-950 text-white flex flex-col transition-transform duration-300 lg:relative lg:w-60 lg:max-w-none lg:translate-x-0 lg:z-auto
+    ${(isMobile || isTablet) ? (isOpen ? 'translate-x-0' : '-translate-x-full') : 'translate-x-0'}
   `;
 
   return (

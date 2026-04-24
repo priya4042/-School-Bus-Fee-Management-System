@@ -27,8 +27,9 @@ import AppLoader from './components/AppLoader';
 import BottomTabs from './components/BottomTabs';
 import { useAuthStore } from './store/authStore';
 import { isSupabaseConfigured } from './lib/supabase';
-import { applyPlatformClass } from './lib/platform';
+import { applyPlatformClass, usePlatform } from './lib/platform';
 import { initNativeBridge } from './lib/nativeBridge';
+import { useWindowSize } from './hooks/useWindowSize';
 
 applyPlatformClass();
 
@@ -112,12 +113,21 @@ const App: React.FC = () => {
   const [isRegistering, setIsRegistering] = useState(false);
   const [registerRole, setRegisterRole] = useState<UserRole | undefined>();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const { isMobile, isTablet, isDesktop, screenSize } = useWindowSize();
+  const platformInfo = usePlatform();
 
   useEffect(() => {
     // Initialize auth store regardless of Supabase config to allow UI to render
     init();
     initNativeBridge();
   }, [init]);
+
+  useEffect(() => {
+    // Close sidebar when screen becomes desktop
+    if (isDesktop && isSidebarOpen) {
+      setIsSidebarOpen(false);
+    }
+  }, [isDesktop, isSidebarOpen]);
 
   useEffect(() => {
     if (!user?.id || !user?.role) return;
@@ -217,20 +227,23 @@ const App: React.FC = () => {
 
         return (
           <div className="flex min-h-screen min-h-[100dvh] bg-slate-50 font-sans">
-            {/* Sidebar: hidden on mobile, visible on lg+ */}
-            <div className="hidden lg:block">
-              <Sidebar
-                user={user}
-                onLogout={logout}
-                activeTab={activeTab}
-                setActiveTab={setActiveTab}
-                isOpen={isSidebarOpen}
-                onClose={() => setIsSidebarOpen(false)}
-              />
-            </div>
-            {/* Mobile sidebar overlay (only when hamburger clicked) */}
-            {isSidebarOpen && (
-              <div className="lg:hidden">
+            {/* Desktop Sidebar: visible on lg+ screens (1024px+) */}
+            {isDesktop && !platformInfo.isNative && (
+              <div className="hidden lg:block">
+                <Sidebar
+                  user={user}
+                  onLogout={logout}
+                  activeTab={activeTab}
+                  setActiveTab={setActiveTab}
+                  isOpen={true}
+                  onClose={() => {}}
+                />
+              </div>
+            )}
+
+            {/* Mobile Sidebar Overlay: only on mobile/tablet when hamburger is clicked */}
+            {(isMobile || isTablet) && isSidebarOpen && (
+              <div className="absolute inset-0 z-[1999]">
                 <Sidebar
                   user={user}
                   onLogout={logout}
@@ -241,10 +254,12 @@ const App: React.FC = () => {
                 />
               </div>
             )}
+
+            {/* Main Content Area */}
             <div className="flex-1 flex flex-col min-w-0">
               <Topbar
                 user={user}
-                onMenuClick={() => setIsSidebarOpen(true)}
+                onMenuClick={() => setIsSidebarOpen(!isSidebarOpen)}
                 onNavigateTab={setActiveTab}
                 onOpenNotifications={(notificationId) => {
                   setSelectedNotificationId(notificationId);
@@ -257,8 +272,8 @@ const App: React.FC = () => {
                 </div>
               </main>
             </div>
-            {/* Bottom tabs: visible on mobile only */}
-            <BottomTabs user={user} activeTab={activeTab} setActiveTab={setActiveTab} />
+            {/* Bottom tabs: visible on mobile/tablet only */}
+            {(isMobile || isTablet) && <BottomTabs user={user} activeTab={activeTab} setActiveTab={setActiveTab} />}
             <SupportChat user={user} />
           </div>
         );

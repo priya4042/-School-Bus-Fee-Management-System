@@ -6,6 +6,7 @@ import { showToast } from '../lib/swal';
 import { supabase } from '../lib/supabase';
 import { formatNotificationMessage } from '../utils/notificationMessage';
 import { useLanguage } from '../lib/i18n';
+import { useWindowSize } from '../hooks/useWindowSize';
 
 interface TopbarProps {
   user: User;
@@ -17,6 +18,7 @@ interface TopbarProps {
 const Topbar: React.FC<TopbarProps> = ({ user, onMenuClick, onOpenNotifications, onNavigateTab }) => {
   const { setUser } = useAuthStore();
   const { lang, setLang, t } = useLanguage();
+  const { isMobile, isTablet } = useWindowSize();
   const [showNotifications, setShowNotifications] = useState(false);
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [notifications, setNotifications] = useState<Notification[]>([]);
@@ -173,9 +175,12 @@ const Topbar: React.FC<TopbarProps> = ({ user, onMenuClick, onOpenNotifications,
   return (
     <header className="bg-white/80 backdrop-blur-md border-b border-slate-100 px-4 md:px-10 flex items-center justify-between sticky top-0 z-[1001]" style={{ paddingTop: 'calc(env(safe-area-inset-top, 0px) + 0.5rem)', paddingBottom: '0.5rem', minHeight: 'calc(env(safe-area-inset-top, 0px) + 3.5rem)' }}>
       <div className="flex items-center gap-6">
-        <button onClick={onMenuClick} className="p-2 text-slate-600 hover:bg-slate-100 rounded-xl lg:hidden transition-colors">
-          <i className="fas fa-bars"></i>
-        </button>
+        {/* Show menu button only on mobile/tablet */}
+        {(isMobile || isTablet) && (
+          <button onClick={onMenuClick} className="p-2 text-slate-600 hover:bg-slate-100 rounded-xl transition-colors">
+            <i className="fas fa-bars"></i>
+          </button>
+        )}
         <div className="hidden md:flex items-center gap-3">
           <div className="w-2 h-2 bg-success rounded-full animate-pulse"></div>
           <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{t('global_fleet')} • {t('online')}</span>
