@@ -490,20 +490,28 @@
         }));
 
         const settings = loadFeeSettings();
-        const upiId = String(settings.adminUpiId || import.meta.env.VITE_ADMIN_UPI_ID || '').trim();
+        // Check for new UPI config first, then fall back to admin UPI
+        const upiId = String(
+          settings.upiId || 
+          import.meta.env.VITE_UPI_ID || 
+          settings.adminUpiId || 
+          import.meta.env.VITE_ADMIN_UPI_ID || 
+          ''
+        ).trim();
 
         if (!upiId) {
-          showAlert('UPI Not Available', 'UPI payment is not configured yet. Please use Card/Netbanking option or contact bus administrator to enable UPI.', 'info');
+          showAlert('UPI Not Available', 'UPI payment is not configured yet. Please set VITE_UPI_ID in environment variables or contact bus administrator to enable UPI.', 'info');
           setPaymentState(prev => ({ ...prev, loading: false }));
           return;
         }
 
         const amount = paymentState.amount;
         const studentName = dueStudent?.full_name || paymentState.studentName || 'Student';
+        const businessName = String(import.meta.env.VITE_BUSINESS_NAME || 'School Bus WayPro').trim();
         const txnRef = `BUSWAY${Date.now()}`;
         const note = `Bus Fee - ${studentName}`;
 
-        const upiUrl = `upi://pay?pa=${encodeURIComponent(upiId)}&pn=${encodeURIComponent('School Bus WayPro')}&am=${amount}&cu=INR&tn=${encodeURIComponent(note)}&tr=${txnRef}`;
+        const upiUrl = `upi://pay?pa=${encodeURIComponent(upiId)}&pn=${encodeURIComponent(businessName)}&am=${amount}&cu=INR&tn=${encodeURIComponent(note)}&tr=${txnRef}`;
 
         // Try to open UPI app
         window.location.href = upiUrl;
