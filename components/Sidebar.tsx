@@ -51,13 +51,6 @@ const Sidebar: React.FC<SidebarProps> = ({ user, onLogout, activeTab, setActiveT
     { name: 'Routes', label: t('routes'), icon: 'fa-route' },
     ...(parentTrackingEnabled ? [{ name: 'Live Tracking', label: t('live_tracking'), icon: 'fa-location-dot' }] : []),
     ...(parentCameraEnabled ? [{ name: 'Bus Camera', label: t('bus_camera'), icon: 'fa-video' }] : []),
-    {
-      name: 'Payments', label: t('payments'), icon: 'fa-credit-card',
-      children: [
-        { name: 'Fees', label: t('fee_history'), icon: 'fa-file-invoice' },
-        { name: 'Receipts', label: 'Receipts', icon: 'fa-receipt' },
-      ],
-    },
     { name: 'Notifications', label: t('notifications'), icon: 'fa-bell' },
     {
       name: 'Profile', label: t('profile'), icon: 'fa-user',
