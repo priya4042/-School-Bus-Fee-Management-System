@@ -230,32 +230,32 @@ const App: React.FC = () => {
 
         return (
           <div className="flex min-h-screen min-h-[100dvh] bg-slate-50 font-sans">
-            {/* Desktop Sidebar: visible on lg+ screens (1024px+) */}
+            {/* Desktop Sidebar: visible on lg+ screens (1024px+) - ALWAYS rendered but positioned relatively */}
             {isDesktop && !platformInfo.isNative && (
-              <div className="hidden lg:block">
-                <Sidebar
-                  user={user}
-                  onLogout={logout}
-                  activeTab={activeTab}
-                  setActiveTab={setActiveTab}
-                  isOpen={true}
-                  onClose={() => {}}
-                />
-              </div>
+              <Sidebar
+                user={user}
+                onLogout={logout}
+                activeTab={activeTab}
+                setActiveTab={setActiveTab}
+                isOpen={true}
+                onClose={() => {}}
+              />
             )}
 
             {/* Mobile Sidebar Overlay: only on mobile/tablet when hamburger is clicked */}
             {(isMobile || isTablet) && isSidebarOpen && (
-              <div className="absolute inset-0 z-[1999]">
-                <Sidebar
-                  user={user}
-                  onLogout={logout}
-                  activeTab={activeTab}
-                  setActiveTab={setActiveTab}
-                  isOpen={isSidebarOpen}
-                  onClose={() => setIsSidebarOpen(false)}
-                />
-              </div>
+              <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[1999] lg:hidden" onClick={() => setIsSidebarOpen(false)}></div>
+            )}
+            
+            {(isMobile || isTablet) && (
+              <Sidebar
+                user={user}
+                onLogout={logout}
+                activeTab={activeTab}
+                setActiveTab={setActiveTab}
+                isOpen={isSidebarOpen}
+                onClose={() => setIsSidebarOpen(false)}
+              />
             )}
 
             {/* Main Content Area */}
