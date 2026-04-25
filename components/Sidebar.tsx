@@ -176,8 +176,8 @@ const Sidebar: React.FC<SidebarProps> = ({ user, onLogout, activeTab, setActiveT
         </nav>
 
         {/* Logout */}
-        <div className="px-3 lg:px-4 py-3 mt-auto border-t border-white/5">
-          <button onClick={onLogout} className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all group hover:bg-gradient-to-r hover:from-red-500/10 hover:to-red-600/5 border border-transparent hover:border-red-500/20">
+        <div className="px-3 lg:px-4 py-2 lg:py-1.5 mt-auto border-t border-white/5">
+          <button onClick={onLogout} className="w-full flex items-center gap-3 px-3 py-2 lg:py-1.5 rounded-xl transition-all group hover:bg-gradient-to-r hover:from-red-500/10 hover:to-red-600/5 border border-transparent hover:border-red-500/20">
             <div className="w-7 h-7 rounded-lg bg-red-500/10 flex items-center justify-center group-hover:bg-red-500 transition-all">
               <i className="fas fa-arrow-right-from-bracket text-red-400 text-[10px] group-hover:text-white transition-colors"></i>
             </div>
