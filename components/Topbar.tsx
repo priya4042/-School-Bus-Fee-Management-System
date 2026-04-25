@@ -13,9 +13,10 @@ interface TopbarProps {
   onMenuClick?: () => void;
   onOpenNotifications?: (notificationId?: string) => void;
   onNavigateTab?: (tab: string) => void;
+  onLogout?: () => void;
 }
 
-const Topbar: React.FC<TopbarProps> = ({ user, onMenuClick, onOpenNotifications, onNavigateTab }) => {
+const Topbar: React.FC<TopbarProps> = ({ user, onMenuClick, onOpenNotifications, onNavigateTab, onLogout }) => {
   const { setUser } = useAuthStore();
   const { lang, setLang, t } = useLanguage();
   const { isMobile, isTablet } = useWindowSize();
@@ -273,7 +274,7 @@ const Topbar: React.FC<TopbarProps> = ({ user, onMenuClick, onOpenNotifications,
             )}
           </button>
           {showUserMenu && (
-            <div className="absolute right-0 top-14 md:top-16 w-56 bg-white rounded-2xl border border-slate-100 shadow-2xl p-2 z-50">
+            <div className="absolute right-0 top-14 md:top-16 w-56 bg-white rounded-2xl border border-slate-100 shadow-2xl p-2 z-50 max-h-[80vh] overflow-y-auto">
               {user?.role === UserRole.PARENT && (
                 <button
                   onClick={() => handleNavigate('Profile')}
@@ -316,6 +317,21 @@ const Topbar: React.FC<TopbarProps> = ({ user, onMenuClick, onOpenNotifications,
                   </button>
                 </div>
               </div>
+              {onLogout && (
+                <>
+                  <div className="my-1 border-t border-slate-100"></div>
+                  <button
+                    onClick={() => {
+                      setShowUserMenu(false);
+                      onLogout();
+                    }}
+                    className="w-full text-left px-4 py-2.5 rounded-xl hover:bg-red-50 text-[11px] font-bold text-red-600 flex items-center gap-3"
+                  >
+                    <i className="fas fa-sign-out-alt w-4 text-red-600 text-xs"></i>
+                    {t('logout')}
+                  </button>
+                </>
+              )}
             </div>
           )}
         </div>
