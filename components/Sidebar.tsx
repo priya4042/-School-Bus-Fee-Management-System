@@ -112,9 +112,9 @@ const Sidebar: React.FC<SidebarProps> = ({ user, onLogout, activeTab, setActiveT
     <>
       {isOpen && <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[1999] lg:hidden" onClick={onClose}></div>}
 
-      <div className={sidebarClasses} style={{ paddingTop: 'env(safe-area-inset-top, 0px)', paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}>
+      <div className={sidebarClasses} style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}>
         {/* Header */}
-        <div className="px-4 py-4 lg:px-5 lg:py-6 flex items-center gap-2.5">
+        <div className="px-4 py-4 lg:px-5 lg:py-6 flex items-center gap-2.5 flex-shrink-0">
           <div className="bg-primary p-2 rounded-xl shadow-lg shadow-primary/30 flex-shrink-0">
             <i className="fas fa-bus-alt text-lg text-white"></i>
           </div>
@@ -125,7 +125,7 @@ const Sidebar: React.FC<SidebarProps> = ({ user, onLogout, activeTab, setActiveT
         </div>
 
         {/* Navigation */}
-        <nav className="flex-1 mt-1 px-2 lg:px-3 space-y-0.5 overflow-y-auto scrollbar-hide pb-3">
+        <nav className="flex-1 mt-1 px-2 lg:px-3 space-y-0.5 overflow-y-auto scrollbar-hide pb-3 min-h-0">
           {links.map((item) => {
             const hasChildren = item.children && item.children.length > 0;
             const isExpanded = expandedGroup === item.name;

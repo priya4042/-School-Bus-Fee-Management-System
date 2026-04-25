@@ -243,7 +243,7 @@ const App: React.FC = () => {
             />
 
             {/* Main layout: Sidebar + Content */}
-            <div className="flex flex-1 min-w-0">
+            <div className="flex flex-1 min-w-0 min-h-0">
               {/* Desktop Sidebar: visible on lg+ screens (1024px+) */}
               {isDesktop && !platformInfo.isNative && (
                 <Sidebar
