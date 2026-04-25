@@ -229,52 +229,57 @@ const App: React.FC = () => {
         }
 
         return (
-          <div className="flex min-h-screen min-h-[100dvh] bg-slate-50 font-sans">
-            {/* Desktop Sidebar: visible on lg+ screens (1024px+) - ALWAYS rendered but positioned relatively */}
-            {isDesktop && !platformInfo.isNative && (
-              <Sidebar
-                user={user}
-                onLogout={logout}
-                activeTab={activeTab}
-                setActiveTab={setActiveTab}
-                isOpen={true}
-                onClose={() => {}}
-              />
-            )}
+          <div className="flex flex-col min-h-screen min-h-[100dvh] bg-slate-50 font-sans">
+            {/* Topbar spans full width across all breakpoints */}
+            <Topbar
+              user={user}
+              onMenuClick={() => setIsSidebarOpen(!isSidebarOpen)}
+              onNavigateTab={setActiveTab}
+              onOpenNotifications={(notificationId) => {
+                setSelectedNotificationId(notificationId);
+                setActiveTab('Notifications');
+              }}
+              onLogout={logout}
+            />
 
-            {/* Mobile Sidebar Overlay: only on mobile/tablet when hamburger is clicked */}
-            {(isMobile || isTablet) && isSidebarOpen && (
-              <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[1999] lg:hidden" onClick={() => setIsSidebarOpen(false)}></div>
-            )}
-            
-            {(isMobile || isTablet) && (
-              <Sidebar
-                user={user}
-                onLogout={logout}
-                activeTab={activeTab}
-                setActiveTab={setActiveTab}
-                isOpen={isSidebarOpen}
-                onClose={() => setIsSidebarOpen(false)}
-              />
-            )}
+            {/* Main layout: Sidebar + Content */}
+            <div className="flex flex-1 min-w-0">
+              {/* Desktop Sidebar: visible on lg+ screens (1024px+) */}
+              {isDesktop && !platformInfo.isNative && (
+                <Sidebar
+                  user={user}
+                  onLogout={logout}
+                  activeTab={activeTab}
+                  setActiveTab={setActiveTab}
+                  isOpen={true}
+                  onClose={() => {}}
+                />
+              )}
 
-            {/* Main Content Area */}
-            <div className="flex-1 flex flex-col min-w-0">
-              <Topbar
-                user={user}
-                onMenuClick={() => setIsSidebarOpen(!isSidebarOpen)}
-                onNavigateTab={setActiveTab}
-                onOpenNotifications={(notificationId) => {
-                  setSelectedNotificationId(notificationId);
-                  setActiveTab('Notifications');
-                }}
-              />
+              {/* Mobile Sidebar Overlay: only on mobile/tablet when hamburger is clicked */}
+              {(isMobile || isTablet) && isSidebarOpen && (
+                <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[1999] lg:hidden" onClick={() => setIsSidebarOpen(false)}></div>
+              )}
+              
+              {(isMobile || isTablet) && (
+                <Sidebar
+                  user={user}
+                  onLogout={logout}
+                  activeTab={activeTab}
+                  setActiveTab={setActiveTab}
+                  isOpen={isSidebarOpen}
+                  onClose={() => setIsSidebarOpen(false)}
+                />
+              )}
+
+              {/* Main Content Area */}
               <main className="p-3 md:p-8 flex-1 overflow-auto bg-slate-50 pb-20 lg:pb-8">
                 <div className="max-w-7xl mx-auto">
                   {renderContent()}
                 </div>
               </main>
             </div>
+
             {/* Bottom tabs: visible on mobile/tablet only */}
             {(isMobile || isTablet) && <BottomTabs user={user} activeTab={activeTab} setActiveTab={setActiveTab} />}
             <SupportChat user={user} />
