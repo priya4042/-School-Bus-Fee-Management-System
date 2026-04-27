@@ -76,3 +76,8 @@ html.platform-web body {
   background-color: #f8fafc;
 }
 
+/* Shimmer keyframe used by Skeleton loader */
+@keyframes shimmer {
+  100% { transform: translateX(100%); }
+}
+

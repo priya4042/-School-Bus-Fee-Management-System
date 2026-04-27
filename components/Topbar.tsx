@@ -7,6 +7,7 @@ import { supabase } from '../lib/supabase';
 import { formatNotificationMessage } from '../utils/notificationMessage';
 import { useLanguage } from '../lib/i18n';
 import { useWindowSize } from '../hooks/useWindowSize';
+import FamilySwitcher from './FamilySwitcher';
 
 interface TopbarProps {
   user: User;
@@ -188,9 +189,13 @@ const Topbar: React.FC<TopbarProps> = ({ user, onMenuClick, onOpenNotifications,
         </div>
       </div>
 
-      <div className="flex items-center gap-4 md:gap-8">
+      <div className="flex items-center gap-2 md:gap-6">
+        {user?.role === UserRole.PARENT && user?.id && (
+          <FamilySwitcher parentId={String(user.id)} />
+        )}
+
         <div className="relative">
-          <button 
+          <button
             onClick={() => setShowNotifications(!showNotifications)}
             className="p-3 text-slate-400 hover:text-primary hover:bg-primary/5 rounded-2xl transition-all relative"
           >

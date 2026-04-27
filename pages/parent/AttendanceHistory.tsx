@@ -4,6 +4,8 @@ import { CheckCircle2, XCircle, Filter, Calendar, Bus, ArrowUpCircle, ArrowDownC
 import { supabase } from '../../lib/supabase';
 import MiniLoader from '../../components/MiniLoader';
 import { useLanguage } from '../../lib/i18n';
+import { SkeletonList } from '../../components/ui/Skeleton';
+import { EmptyState } from '../../components/ui/EmptyState';
 
 interface AttendanceRecord {
   id: string;
@@ -333,19 +335,16 @@ const AttendanceHistory: React.FC<{ user: User }> = ({ user }) => {
             </div>
 
             {loading ? (
-              <div className="py-20 text-center">
-                <MiniLoader />
+              <div className="p-4 md:p-6">
+                <SkeletonList count={4} />
               </div>
             ) : Object.keys(byDate).length === 0 ? (
-              <div className="py-32 text-center">
-                <div className="w-20 h-20 bg-slate-50 rounded-[2rem] flex items-center justify-center text-slate-300 mx-auto mb-6">
-                  <Calendar size={40} />
-                </div>
-                <h3 className="text-xl font-black text-slate-900 tracking-tight">No Records Found</h3>
-                <p className="text-slate-500 font-bold uppercase text-[10px] tracking-widest mt-2">
-                  No attendance data available for this student
-                </p>
-              </div>
+              <EmptyState
+                icon="fa-calendar-day"
+                title="No Records Found"
+                message="No attendance data available for this student"
+                className="!shadow-none !border-0"
+              />
             ) : (
               <div className="divide-y divide-slate-50">
                 {Object.entries(byDate).map(([date, dayRecords]) => (

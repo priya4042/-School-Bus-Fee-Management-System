@@ -4,8 +4,9 @@ import { Bell, Info, AlertTriangle, CheckCircle2, Clock, Trash2, Mail, MessageSq
 import { supabase } from '../../lib/supabase';
 import { showToast } from '../../lib/swal';
 import { formatNotificationMessage } from '../../utils/notificationMessage';
-import MiniLoader from '../../components/MiniLoader';
 import { useLanguage } from '../../lib/i18n';
+import { SkeletonList } from '../../components/ui/Skeleton';
+import { EmptyState } from '../../components/ui/EmptyState';
 
 interface Notification {
   id: string;
@@ -203,11 +204,7 @@ const Notifications: React.FC<{ user: User; focusNotificationId?: string; onFocu
         </div>
 
         <div className="lg:col-span-3 space-y-4">
-          {loading && (
-            <div className="py-20 text-center">
-              <MiniLoader />
-            </div>
-          )}
+          {loading && <SkeletonList count={4} />}
 
           {!loading && filteredNotifications.map((notif, idx) => (
             <div
@@ -271,15 +268,12 @@ const Notifications: React.FC<{ user: User; focusNotificationId?: string; onFocu
           ))}
 
           {!loading && filteredNotifications.length === 0 && (
-            <div className="py-32 text-center bg-white rounded-[3rem] border border-slate-100 shadow-sm">
-              <div className="w-24 h-24 bg-slate-50 rounded-[2rem] flex items-center justify-center text-slate-300 mx-auto mb-6">
-                <Bell size={48} />
-              </div>
-              <h3 className="text-xl font-black text-slate-900 tracking-tight">All Caught Up</h3>
-              <p className="text-slate-500 font-bold uppercase text-[10px] tracking-widest mt-2">
-                {filter === 'unread' ? 'No unread notifications' : 'No notifications yet'}
-              </p>
-            </div>
+            <EmptyState
+              icon="fa-bell"
+              tone={filter === 'unread' ? 'success' : 'neutral'}
+              title={filter === 'unread' ? 'All Caught Up' : filter === 'all' ? 'No Notifications Yet' : `No ${filter} notifications`}
+              message={filter === 'unread' ? 'You have read everything — nice work.' : 'New alerts will land here in real time.'}
+            />
           )}
         </div>
       </div>
