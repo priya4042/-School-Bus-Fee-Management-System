@@ -195,20 +195,20 @@ const Settings: React.FC<{ user: User; section?: 'profile' | 'security' | 'langu
     'w-full px-6 py-4 rounded-2xl bg-slate-50 border border-slate-100 text-sm font-bold focus:ring-4 ring-primary/10 outline-none transition-all';
 
   return (
-    <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
+    <div className="space-y-4 md:space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
       <div>
-        <h1 className="text-2xl md:text-4xl font-black text-slate-900 tracking-tight">
+        <h1 className="text-xl md:text-4xl font-black text-slate-900 tracking-tight">
           {activeTab === 'profile' ? t('edit_profile') : activeTab === 'security' ? t('password_reset') : t('select_language')}
         </h1>
-        <p className="text-slate-500 font-bold text-[10px] tracking-widest mt-1">
+        <p className="text-slate-500 font-bold text-[9px] md:text-[10px] tracking-widest mt-1">
           {activeTab === 'profile' ? t('update_info') : activeTab === 'security' ? t('change_password') : t('choose_language')}
         </p>
       </div>
 
-      <div className="space-y-8">
+      <div className="space-y-4 md:space-y-8" key={activeTab}>
           {/* Profile Tab */}
           {activeTab === 'profile' && (
-            <div className="bg-white rounded-2xl md:rounded-[3rem] p-5 md:p-10 shadow-sm border border-slate-100">
+            <div className="bg-white rounded-2xl md:rounded-[3rem] p-5 md:p-10 shadow-sm border border-slate-100 animate-in fade-in slide-in-from-bottom-2 duration-500">
               <div className="flex items-center gap-8 mb-12 pb-12 border-b border-slate-50">
                 <div className="relative group">
                   <div className="w-32 h-32 bg-slate-50 rounded-2xl md:rounded-[2.5rem] flex items-center justify-center text-slate-300 overflow-hidden border-4 border-white shadow-xl">
@@ -316,7 +316,7 @@ const Settings: React.FC<{ user: User; section?: 'profile' | 'security' | 'langu
 
           {/* Password Reset Tab */}
           {activeTab === 'security' && (
-            <div className="bg-white rounded-2xl md:rounded-[3rem] p-5 md:p-10 shadow-sm border border-slate-100">
+            <div className="bg-white rounded-2xl md:rounded-[3rem] p-5 md:p-10 shadow-sm border border-slate-100 animate-in fade-in slide-in-from-bottom-2 duration-500">
               <h3 className="text-xl font-black text-slate-900 tracking-tight mb-10">Password Reset</h3>
               <div className="space-y-6 max-w-md">
                 <div className="space-y-2">
@@ -375,7 +375,7 @@ const Settings: React.FC<{ user: User; section?: 'profile' | 'security' | 'langu
           )}
 
           {activeTab === 'language' && (
-            <div className="bg-white rounded-2xl md:rounded-[3rem] p-5 md:p-10 shadow-sm border border-slate-100">
+            <div className="bg-white rounded-2xl md:rounded-[3rem] p-5 md:p-10 shadow-sm border border-slate-100 animate-in fade-in slide-in-from-bottom-2 duration-500">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-w-xl">
                 {[
                   { code: 'en', flag: '🇬🇧', name: 'English', sub: 'Default', available: true },
@@ -390,11 +390,11 @@ const Settings: React.FC<{ user: User; section?: 'profile' | 'security' | 'langu
                   <button
                     key={l.code}
                     onClick={() => l.available && setLang(l.code as any)}
-                    className={`p-4 rounded-2xl border-2 transition-all flex items-center gap-3 ${
+                    className={`p-4 rounded-2xl border-2 transition-all flex items-center gap-3 active:scale-95 ${
                       lang === l.code
-                        ? 'border-primary bg-primary/5 shadow-md'
+                        ? 'border-primary bg-primary/5 shadow-md scale-[1.02]'
                         : l.available
-                        ? 'border-slate-100 hover:border-primary/30'
+                        ? 'border-slate-100 hover:border-primary/30 hover:-translate-y-0.5'
                         : 'border-slate-50 opacity-50 cursor-not-allowed'
                     }`}
                   >

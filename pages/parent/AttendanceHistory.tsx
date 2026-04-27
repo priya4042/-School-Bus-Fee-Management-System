@@ -83,6 +83,24 @@ const AttendanceHistory: React.FC<{ user: User }> = ({ user }) => {
   const attendanceRate =
     records.length > 0 ? Math.round((stats.totalPresent / records.length) * 100) : 0;
 
+  // Compute consecutive-days-present streak (most recent first)
+  const computeStreak = () => {
+    const dateStatus: Record<string, boolean> = {};
+    records.forEach((r) => {
+      if (!(r.date in dateStatus)) dateStatus[r.date] = r.status;
+      else dateStatus[r.date] = dateStatus[r.date] && r.status;
+    });
+    const sortedDates = Object.keys(dateStatus).sort((a, b) => (a < b ? 1 : -1));
+    let streak = 0;
+    for (const d of sortedDates) {
+      if (dateStatus[d]) streak += 1;
+      else break;
+    }
+    return streak;
+  };
+  const streak = computeStreak();
+  const ringCircumference = 2 * Math.PI * 44; // r=44
+
   // Group records by date for display
   const byDate: Record<string, AttendanceRecord[]> = {};
   filteredRecords.forEach((r) => {
@@ -93,23 +111,23 @@ const AttendanceHistory: React.FC<{ user: User }> = ({ user }) => {
   const selectedStudent = students.find((s) => s.id === selectedStudentId);
 
   return (
-    <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+    <div className="space-y-4 md:space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 md:gap-6">
         <div>
-          <h1 className="text-2xl md:text-4xl font-black text-slate-900 tracking-tight">Attendance History</h1>
-          <p className="text-slate-500 font-bold uppercase text-[10px] tracking-widest mt-1">
+          <h1 className="text-xl md:text-4xl font-black text-slate-900 tracking-tight">Attendance History</h1>
+          <p className="text-slate-500 font-bold uppercase text-[9px] md:text-[10px] tracking-widest mt-1">
             Daily Pickup & Drop Records
           </p>
         </div>
 
         {/* Student selector */}
         {students.length > 1 && (
-          <div className="flex gap-2 p-1.5 bg-slate-100 rounded-2xl border border-slate-200/50">
+          <div className="flex gap-2 p-1.5 bg-slate-100 rounded-2xl border border-slate-200/50 overflow-x-auto scrollbar-hide">
             {students.map((s) => (
               <button
                 key={s.id}
                 onClick={() => setSelectedStudentId(s.id)}
-                className={`px-6 py-3 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all ${
+                className={`flex-shrink-0 px-4 md:px-6 py-2.5 md:py-3 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all active:scale-95 ${
                   selectedStudentId === s.id
                     ? 'bg-primary text-white shadow-sm'
                     : 'text-slate-400 hover:text-slate-600'
@@ -164,35 +182,69 @@ const AttendanceHistory: React.FC<{ user: User }> = ({ user }) => {
             </div>
           </div>
 
-          {/* Attendance rate bar */}
+          {/* Attendance rate ring + streak */}
           {records.length > 0 && (
-            <div className="bg-white p-4 md:p-8 rounded-2xl md:rounded-[2.5rem] border border-slate-100 shadow-sm">
-              <div className="flex items-center justify-between mb-4">
-                <p className="font-black text-slate-800 uppercase text-sm tracking-tight">
-                  Overall Attendance Rate
+            <div className="bg-white p-5 md:p-8 rounded-2xl md:rounded-[2.5rem] border border-slate-100 shadow-sm flex flex-col sm:flex-row items-center gap-5 md:gap-8">
+              <div className="relative w-28 h-28 md:w-32 md:h-32 flex-shrink-0">
+                <svg className="w-full h-full -rotate-90" viewBox="0 0 100 100">
+                  <circle cx="50" cy="50" r="44" fill="none" stroke="#f1f5f9" strokeWidth="10" />
+                  <circle
+                    cx="50"
+                    cy="50"
+                    r="44"
+                    fill="none"
+                    stroke={attendanceRate >= 75 ? '#10b981' : '#ef4444'}
+                    strokeWidth="10"
+                    strokeLinecap="round"
+                    strokeDasharray={ringCircumference}
+                    strokeDashoffset={ringCircumference - (ringCircumference * attendanceRate) / 100}
+                    style={{ transition: 'stroke-dashoffset 1s ease-out' }}
+                  />
+                </svg>
+                <div className="absolute inset-0 flex flex-col items-center justify-center">
+                  <p className={`text-2xl md:text-3xl font-black tracking-tighter ${attendanceRate >= 75 ? 'text-emerald-600' : 'text-red-500'}`}>
+                    {attendanceRate}<span className="text-base">%</span>
+                  </p>
+                  <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest">Rate</p>
+                </div>
+              </div>
+
+              <div className="flex-1 min-w-0 text-center sm:text-left">
+                <p className="font-black text-slate-800 uppercase text-xs md:text-sm tracking-tight">
+                  Attendance Overview
                   {selectedStudent && (
-                    <span className="text-slate-400 font-bold text-[10px] ml-2 normal-case">
+                    <span className="block sm:inline text-slate-400 font-bold text-[10px] sm:ml-2 normal-case mt-1 sm:mt-0">
                       — {selectedStudent.full_name}
                     </span>
                   )}
                 </p>
-                <p className={`text-2xl font-black tracking-tight ${
-                  attendanceRate >= 75 ? 'text-emerald-600' : 'text-red-500'
-                }`}>
-                  {attendanceRate}%
-                </p>
+
+                <div className="grid grid-cols-2 gap-3 mt-4">
+                  <div className="bg-orange-50 border border-orange-100 rounded-2xl p-3 flex items-center gap-3">
+                    <div className="w-9 h-9 rounded-xl bg-orange-500 text-white flex items-center justify-center text-sm">
+                      <i className="fas fa-fire"></i>
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-[8px] font-black text-orange-700 uppercase tracking-widest">Streak</p>
+                      <p className="text-base md:text-lg font-black text-slate-800 leading-none mt-0.5">
+                        {streak} <span className="text-[10px] font-bold text-slate-500">day{streak === 1 ? '' : 's'}</span>
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="bg-blue-50 border border-blue-100 rounded-2xl p-3 flex items-center gap-3">
+                    <div className="w-9 h-9 rounded-xl bg-primary text-white flex items-center justify-center text-sm">
+                      <i className="fas fa-list"></i>
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-[8px] font-black text-primary uppercase tracking-widest">Records</p>
+                      <p className="text-base md:text-lg font-black text-slate-800 leading-none mt-0.5">
+                        {records.length}
+                      </p>
+                    </div>
+                  </div>
+                </div>
               </div>
-              <div className="h-3 bg-slate-100 rounded-full overflow-hidden">
-                <div
-                  className={`h-full rounded-full transition-all duration-700 ${
-                    attendanceRate >= 75 ? 'bg-emerald-500' : 'bg-red-500'
-                  }`}
-                  style={{ width: `${attendanceRate}%` }}
-                />
-              </div>
-              <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mt-3">
-                Last {records.length} records shown
-              </p>
             </div>
           )}
 

@@ -210,23 +210,24 @@ const BoardingLocations: React.FC<{ user: User }> = ({ user }) => {
 
 
   return (
-    <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+    <div className="space-y-4 md:space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 md:gap-6">
         <div>
-          <h1 className="text-4xl font-black text-slate-900 tracking-tight">Boarding Points</h1>
-          <p className="text-slate-500 font-medium mt-2">Manage pickup and drop locations for your children</p>
+          <h1 className="text-xl md:text-4xl font-black text-slate-900 tracking-tight">Boarding Points</h1>
+          <p className="text-slate-500 font-medium text-xs md:text-base mt-1 md:mt-2">Manage pickup and drop locations for your children</p>
         </div>
-        <button 
+        <button
           onClick={() => setIsAdding(true)}
-          className="bg-primary text-white px-8 py-4 rounded-2xl font-bold text-sm shadow-lg shadow-primary/20 hover:bg-primary-dark transition-all flex items-center gap-2"
+          className="bg-primary text-white px-4 md:px-8 py-3 md:py-4 rounded-2xl font-bold text-xs md:text-sm shadow-lg shadow-primary/20 hover:bg-primary-dark transition-all flex items-center justify-center gap-2 active:scale-95"
         >
-          <Plus size={20} />
-          Add New Location
+          <Plus size={18} />
+          <span className="hidden sm:inline">Add New Location</span>
+          <span className="sm:hidden">Add Location</span>
         </button>
       </div>
 
       {students.length > 1 && (
-        <div className="flex gap-4 overflow-x-auto pb-2 scrollbar-hide">
+        <div className="flex gap-2 md:gap-4 overflow-x-auto pb-2 scrollbar-hide -mx-3 px-3 md:mx-0 md:px-0">
           {students.map((student) => (
             <button
               key={student.id}
@@ -235,7 +236,7 @@ const BoardingLocations: React.FC<{ user: User }> = ({ user }) => {
                 setSelectedStudent(studentId);
                 fetchLocations(studentId);
               }}
-              className={`px-6 py-3 rounded-2xl text-xs font-black uppercase tracking-widest whitespace-nowrap transition-all ${
+              className={`px-4 md:px-6 py-2.5 md:py-3 rounded-2xl text-[10px] md:text-xs font-black uppercase tracking-widest whitespace-nowrap transition-all flex-shrink-0 active:scale-95 ${
                 selectedStudent === String(student.id) ? 'bg-primary text-white shadow-lg shadow-primary/20' : 'bg-white text-slate-500 hover:bg-slate-50 border border-slate-100'
               }`}
             >
@@ -245,9 +246,13 @@ const BoardingLocations: React.FC<{ user: User }> = ({ user }) => {
         </div>
       )}
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {locations.map((loc) => (
-          <div key={loc.id} className="bg-white rounded-[2.5rem] p-8 shadow-premium border border-slate-100 group hover:border-primary/20 transition-all flex flex-col">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
+        {locations.map((loc, idx) => (
+          <div
+            key={loc.id}
+            style={{ animationDelay: `${idx * 70}ms` }}
+            className="bg-white rounded-2xl md:rounded-[2.5rem] p-5 md:p-8 shadow-premium border border-slate-100 group hover:border-primary/20 hover:-translate-y-1 transition-all flex flex-col animate-in fade-in slide-in-from-bottom-4 fill-mode-both"
+          >
             <div className="flex justify-between items-start mb-6">
               <div className="w-14 h-14 bg-primary/10 rounded-2xl flex items-center justify-center text-primary">
                 <MapPin size={28} />

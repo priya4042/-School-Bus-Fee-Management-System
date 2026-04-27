@@ -19,7 +19,7 @@ interface Notification {
 const Notifications: React.FC<{ user: User; focusNotificationId?: string; onFocusHandled?: () => void }> = ({ user, focusNotificationId, onFocusHandled }) => {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [loading, setLoading] = useState(true);
-  const [filter, setFilter] = useState<'all' | 'unread'>('all');
+  const [filter, setFilter] = useState<'all' | 'unread' | 'payment' | 'bus' | 'alert'>('all');
   const [highlightedId, setHighlightedId] = useState<string | null>(null);
 
   useEffect(() => {
@@ -122,43 +122,65 @@ const Notifications: React.FC<{ user: User; focusNotificationId?: string; onFocu
   };
 
   const unreadCount = notifications.filter((n) => !n.is_read).length;
+  const isPayment = (n: any) => n.type === 'PAYMENT_SUCCESS' || n.type === 'FEE_DUE' || /payment|fee|paid/i.test(String(n.title || ''));
+  const isBus = (n: any) => n.type === 'BUS_UPDATE' || /bus|route|driver|arriv/i.test(String(n.title || ''));
+  const isAlert = (n: any) => n.type === 'WARNING' || n.type === 'DANGER' || /alert|emergency|delay/i.test(String(n.title || ''));
   const filteredNotifications =
-    filter === 'all' ? notifications : notifications.filter((n) => !n.is_read);
+    filter === 'all'
+      ? notifications
+      : filter === 'unread'
+        ? notifications.filter((n) => !n.is_read)
+        : filter === 'payment'
+          ? notifications.filter(isPayment)
+          : filter === 'bus'
+            ? notifications.filter(isBus)
+            : notifications.filter(isAlert);
+
+  const FILTER_OPTIONS: { id: typeof filter; label: string; icon: string }[] = [
+    { id: 'all', label: 'All', icon: 'fa-inbox' },
+    { id: 'unread', label: `Unread${unreadCount > 0 ? ` (${unreadCount})` : ''}`, icon: 'fa-circle' },
+    { id: 'payment', label: 'Payment', icon: 'fa-credit-card' },
+    { id: 'bus', label: 'Bus', icon: 'fa-bus' },
+    { id: 'alert', label: 'Alerts', icon: 'fa-exclamation-triangle' },
+  ];
 
   return (
-    <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+    <div className="space-y-4 md:space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 md:gap-6">
         <div>
-          <h1 className="text-2xl md:text-4xl font-black text-slate-900 tracking-tight">Alert Center</h1>
-          <p className="text-slate-500 font-bold uppercase text-[10px] tracking-widest mt-1">
+          <h1 className="text-xl md:text-4xl font-black text-slate-900 tracking-tight">Alert Center</h1>
+          <p className="text-slate-500 font-bold uppercase text-[9px] md:text-[10px] tracking-widest mt-1">
             System Notifications & Updates
           </p>
         </div>
         {unreadCount > 0 && (
           <button
             onClick={markAllRead}
-            className="bg-primary/10 text-primary px-6 py-4 rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-primary/20 transition-all"
+            className="bg-primary/10 text-primary px-4 md:px-6 py-3 md:py-4 rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-primary/20 active:scale-95 transition-all flex items-center justify-center gap-2 self-start md:self-auto"
           >
-            Mark All Read ({unreadCount})
+            <i className="fas fa-check-double"></i>
+            <span>Mark All Read</span>
+            <span className="bg-primary text-white text-[9px] px-2 py-0.5 rounded-full animate-pulse">{unreadCount}</span>
           </button>
         )}
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 md:gap-8">
         <div className="lg:col-span-1 space-y-4 lg:space-y-6">
-          <div className="bg-white rounded-2xl md:rounded-[2.5rem] p-3 md:p-8 shadow-sm border border-slate-100">
-            <div className="flex lg:flex-col gap-2">
-              {(['all', 'unread'] as const).map((f) => (
+          <div className="bg-white rounded-2xl md:rounded-[2.5rem] p-3 md:p-6 shadow-sm border border-slate-100">
+            <div className="flex lg:flex-col gap-2 overflow-x-auto scrollbar-hide -mx-1 px-1">
+              {FILTER_OPTIONS.map((opt) => (
                 <button
-                  key={f}
-                  onClick={() => setFilter(f)}
-                  className={`w-full px-6 py-4 rounded-2xl text-[10px] font-black uppercase tracking-widest text-left transition-all ${
-                    filter === f
+                  key={opt.id}
+                  onClick={() => setFilter(opt.id)}
+                  className={`flex-shrink-0 w-auto lg:w-full px-4 md:px-6 py-3 md:py-4 rounded-xl md:rounded-2xl text-[10px] font-black uppercase tracking-widest text-left transition-all flex items-center gap-2 active:scale-95 ${
+                    filter === opt.id
                       ? 'bg-primary text-white shadow-lg shadow-primary/20'
                       : 'text-slate-500 hover:bg-slate-50'
                   }`}
                 >
-                  {f === 'all' ? 'All Notifications' : `Unread (${unreadCount})`}
+                  <i className={`fas ${opt.icon} text-[11px] flex-shrink-0`}></i>
+                  <span className="whitespace-nowrap">{opt.label}</span>
                 </button>
               ))}
             </div>
@@ -187,16 +209,17 @@ const Notifications: React.FC<{ user: User; focusNotificationId?: string; onFocu
             </div>
           )}
 
-          {!loading && filteredNotifications.map((notif) => (
+          {!loading && filteredNotifications.map((notif, idx) => (
             <div
               key={notif.id}
               id={`notif-${notif.id}`}
-              className={`bg-white rounded-[2.5rem] p-4 md:p-8 shadow-sm border transition-all group ${
+              style={{ animationDelay: `${Math.min(idx, 8) * 60}ms` }}
+              className={`bg-white rounded-2xl md:rounded-[2.5rem] p-4 md:p-8 shadow-sm border transition-all group hover:-translate-y-0.5 animate-in fade-in slide-in-from-bottom-2 fill-mode-both ${
                 highlightedId === notif.id
-                  ? 'border-primary ring-2 ring-primary/20'
+                  ? 'border-primary ring-2 ring-primary/20 scale-[1.01]'
                   : notif.is_read
                     ? 'border-slate-100 opacity-80'
-                    : 'border-primary/20'
+                    : 'border-primary/30 shadow-md'
               }`}
             >
               <div className="flex items-start gap-6">
