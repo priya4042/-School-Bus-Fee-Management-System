@@ -438,36 +438,54 @@ const ForgotPassword: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-slate-900 flex items-center justify-center p-6 relative overflow-hidden font-sans">
+    <div
+      className="min-h-screen min-h-[100dvh] bg-slate-900 flex items-start md:items-center justify-center p-3 md:p-6 relative overflow-hidden font-sans"
+      style={{ paddingTop: 'calc(env(safe-area-inset-top, 0px) + 0.75rem)', paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}
+    >
       {/* Background Accents */}
       <div className="absolute top-0 left-0 w-full h-full pointer-events-none">
-        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-primary/10 rounded-full blur-[120px]"></div>
-        <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-blue-500/10 rounded-full blur-[120px]"></div>
+        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-primary/10 rounded-full blur-[120px] animate-pulse"></div>
+        <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-blue-500/10 rounded-full blur-[120px] animate-pulse" style={{ animationDelay: '1.4s' }}></div>
       </div>
 
-      <div className="w-full max-w-md relative z-10">
-        <div className="bg-white rounded-[3rem] p-12 shadow-2xl border border-white/10">
-          <div className="text-center mb-8">
-            <div className="w-20 h-20 bg-primary/10 text-primary rounded-[2rem] flex items-center justify-center mx-auto mb-6">
-              <ShieldCheck size={40} />
+      <div className="w-full max-w-md relative z-10 animate-in fade-in zoom-in-95 duration-500">
+        <div className="bg-white rounded-2xl md:rounded-[3rem] p-6 md:p-12 shadow-2xl border border-white/10">
+          <div className="text-center mb-6 md:mb-8">
+            <div className="w-16 h-16 md:w-20 md:h-20 bg-primary/10 text-primary rounded-2xl md:rounded-[2rem] flex items-center justify-center mx-auto mb-4 md:mb-6 hover:scale-110 transition-transform">
+              <ShieldCheck size={36} />
             </div>
-            <h1 className="text-3xl font-black text-slate-900 tracking-tight">Reset Access</h1>
+            <h1 className="text-2xl md:text-3xl font-black text-slate-900 tracking-tight">Reset Access</h1>
             <p className="text-slate-500 font-bold uppercase text-[10px] tracking-widest mt-2">Recover your account credentials</p>
           </div>
 
+          {/* Step progress dots */}
+          <div className="flex items-center justify-center gap-2 mb-6 md:mb-8">
+            {[1, 2, 3, 4].map((s) => (
+              <span
+                key={s}
+                className={`h-1.5 rounded-full transition-all duration-300 ${
+                  step >= s ? 'w-8 bg-primary' : 'w-2 bg-slate-200'
+                }`}
+              ></span>
+            ))}
+          </div>
+
           {error && (
-            <div className="mb-6 p-4 rounded-xl text-[12px] font-semibold flex items-center gap-3 bg-red-50 text-red-600 border border-red-100 animate-in fade-in slide-in-from-top-2">
-              <p>{error}</p>
+            <div className="mb-5 md:mb-6 p-4 rounded-xl text-[12px] font-semibold flex items-start gap-3 bg-red-50 text-red-600 border border-red-100 animate-in fade-in slide-in-from-top-2 duration-300">
+              <i className="fas fa-exclamation-triangle flex-shrink-0 mt-1"></i>
+              <p className="break-words min-w-0">{error}</p>
             </div>
           )}
 
-          {renderStep()}
+          <div key={step} className="animate-in fade-in slide-in-from-bottom-2 duration-400">
+            {renderStep()}
+          </div>
 
-          <div className="mt-12 pt-10 border-t border-slate-50 text-center">
+          <div className="mt-8 md:mt-12 pt-6 md:pt-10 border-t border-slate-50 text-center">
             <a
               href="/"
               onClick={(e) => { e.preventDefault(); window.location.href = '/'; }}
-              className="inline-flex items-center gap-2 text-[10px] font-black text-slate-400 uppercase tracking-widest hover:text-primary transition-colors"
+              className="inline-flex items-center gap-2 text-[10px] font-black text-slate-400 uppercase tracking-widest hover:text-primary active:scale-95 transition-all"
             >
               <ArrowLeft size={14} />
               Back to Sign In

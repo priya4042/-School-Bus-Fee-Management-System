@@ -189,16 +189,22 @@ const Register: React.FC<RegisterProps> = ({ onRegister, onBackToLogin, initialR
 
   if (regStep === 'success') {
     return (
-      <div className="min-h-screen bg-slate-900 flex items-center justify-center p-6 text-center">
-        <div className="max-w-md w-full bg-white rounded-[3rem] p-12 shadow-2xl animate-in zoom-in">
-          <div className="w-20 h-20 bg-emerald-500 text-white rounded-3xl flex items-center justify-center text-4xl mx-auto mb-8 shadow-xl">
+      <div
+        className="min-h-screen min-h-[100dvh] bg-slate-900 flex items-center justify-center p-4 md:p-6 text-center bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-emerald-900/30 via-slate-900 to-black"
+        style={{ paddingTop: 'env(safe-area-inset-top, 0px)', paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}
+      >
+        <div className="max-w-md w-full bg-white rounded-2xl md:rounded-[3rem] p-8 md:p-12 shadow-2xl animate-in zoom-in duration-500">
+          <div className="relative w-20 h-20 md:w-24 md:h-24 bg-emerald-500 text-white rounded-3xl flex items-center justify-center text-3xl md:text-4xl mx-auto mb-6 md:mb-8 shadow-xl shadow-emerald-500/40 animate-in zoom-in-50 duration-700">
             <i className="fas fa-check"></i>
+            <span className="absolute inset-0 rounded-3xl bg-emerald-500 animate-ping opacity-20"></span>
           </div>
-          <h2 className="text-2xl font-black text-slate-800 tracking-tighter mb-4">Registration Complete</h2>
-          <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-10 leading-loose">
+          <h2 className="text-xl md:text-2xl font-black text-slate-800 tracking-tighter mb-3 md:mb-4">Registration Complete</h2>
+          <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-8 md:mb-10 leading-loose">
             Your account has been successfully created. You can now log in.
           </p>
-          <button onClick={onBackToLogin} className="w-full py-5 bg-primary text-white font-black uppercase text-[10px] tracking-widest rounded-2xl">Go to Login</button>
+          <button onClick={onBackToLogin} className="w-full py-4 md:py-5 bg-primary text-white font-black uppercase text-[10px] tracking-widest rounded-2xl shadow-xl shadow-primary/30 active:scale-95 hover:scale-[1.01] transition-all">
+            Go to Login
+          </button>
         </div>
       </div>
     );
@@ -209,48 +215,48 @@ const Register: React.FC<RegisterProps> = ({ onRegister, onBackToLogin, initialR
 
   if (showLangPicker) {
     return (
-      <div className="min-h-screen bg-slate-900 flex items-center justify-center p-6 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-primary/20 via-slate-900 to-black">
+      <div
+        className="min-h-screen min-h-[100dvh] bg-slate-900 flex items-center justify-center p-4 md:p-6 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-primary/20 via-slate-900 to-black"
+        style={{ paddingTop: 'env(safe-area-inset-top, 0px)', paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}
+      >
         <div className="max-w-md w-full animate-in fade-in zoom-in duration-500">
-          <div className="text-center mb-10">
-            <div className="w-20 h-20 bg-primary rounded-3xl flex items-center justify-center mx-auto shadow-2xl border-2 border-white/10 mb-6">
-              <i className="fas fa-globe text-4xl text-white"></i>
+          <div className="text-center mb-6 md:mb-10">
+            <div className="w-16 h-16 md:w-20 md:h-20 bg-primary rounded-2xl md:rounded-3xl flex items-center justify-center mx-auto shadow-2xl shadow-primary/30 border-2 border-white/10 mb-4 md:mb-6 hover:scale-110 transition-transform">
+              <i className="fas fa-globe text-3xl md:text-4xl text-white"></i>
             </div>
-            <h1 className="text-3xl font-black text-white tracking-tighter uppercase">Choose Language</h1>
-            <p className="text-white/40 text-[10px] font-bold uppercase tracking-widest mt-3">भाषा चुनें • Select your preferred language</p>
+            <h1 className="text-2xl md:text-3xl font-black text-white tracking-tighter uppercase">Choose Language</h1>
+            <p className="text-white/40 text-[10px] font-bold uppercase tracking-widest mt-2 md:mt-3">भाषा चुनें • Select your preferred language</p>
           </div>
 
-          <div className="bg-white rounded-[3rem] p-10 shadow-2xl space-y-4">
-            <button
-              onClick={() => { setLang('en'); setShowLangPicker(false); }}
-              className={`w-full p-6 rounded-2xl border-2 transition-all flex items-center gap-5 ${
-                lang === 'en' ? 'border-primary bg-primary/5 shadow-lg' : 'border-slate-100 hover:border-primary/30'
-              }`}
-            >
-              <span className="text-4xl">🇬🇧</span>
-              <div className="text-left flex-1">
-                <p className="font-black text-lg text-slate-800">English</p>
-                <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mt-1">Default language</p>
-              </div>
-              {lang === 'en' && <div className="w-6 h-6 bg-primary rounded-full flex items-center justify-center"><i className="fas fa-check text-white text-xs"></i></div>}
-            </button>
-
-            <button
-              onClick={() => { setLang('hi'); setShowLangPicker(false); }}
-              className={`w-full p-6 rounded-2xl border-2 transition-all flex items-center gap-5 ${
-                lang === 'hi' ? 'border-primary bg-primary/5 shadow-lg' : 'border-slate-100 hover:border-primary/30'
-              }`}
-            >
-              <span className="text-4xl">🇮🇳</span>
-              <div className="text-left flex-1">
-                <p className="font-black text-lg text-slate-800">हिन्दी</p>
-                <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mt-1">Hindi language</p>
-              </div>
-              {lang === 'hi' && <div className="w-6 h-6 bg-primary rounded-full flex items-center justify-center"><i className="fas fa-check text-white text-xs"></i></div>}
-            </button>
+          <div className="bg-white rounded-2xl md:rounded-[3rem] p-5 md:p-10 shadow-2xl space-y-3 md:space-y-4">
+            {[
+              { code: 'en', flag: '🇬🇧', name: 'English', sub: 'Default language' },
+              { code: 'hi', flag: '🇮🇳', name: 'हिन्दी', sub: 'Hindi language' },
+            ].map((option, idx) => (
+              <button
+                key={option.code}
+                onClick={() => { setLang(option.code as any); setShowLangPicker(false); }}
+                style={{ animationDelay: `${idx * 100}ms` }}
+                className={`w-full p-4 md:p-6 rounded-2xl border-2 transition-all flex items-center gap-4 md:gap-5 active:scale-95 animate-in fade-in slide-in-from-bottom-2 fill-mode-both ${
+                  lang === option.code ? 'border-primary bg-primary/5 shadow-lg' : 'border-slate-100 hover:border-primary/30 hover:-translate-y-0.5'
+                }`}
+              >
+                <span className="text-3xl md:text-4xl">{option.flag}</span>
+                <div className="text-left flex-1 min-w-0">
+                  <p className="font-black text-base md:text-lg text-slate-800">{option.name}</p>
+                  <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mt-1">{option.sub}</p>
+                </div>
+                {lang === option.code && (
+                  <div className="w-6 h-6 bg-primary rounded-full flex items-center justify-center animate-in zoom-in duration-200">
+                    <i className="fas fa-check text-white text-xs"></i>
+                  </div>
+                )}
+              </button>
+            ))}
 
             <button
               onClick={() => setShowLangPicker(false)}
-              className="w-full mt-4 py-4 bg-slate-100 text-slate-500 rounded-2xl font-black uppercase text-[10px] tracking-widest hover:bg-slate-200 transition-all"
+              className="w-full mt-3 md:mt-4 py-3 md:py-4 bg-slate-100 text-slate-500 rounded-2xl font-black uppercase text-[10px] tracking-widest hover:bg-slate-200 active:scale-95 transition-all"
             >
               {t('cancel')}
             </button>
@@ -261,31 +267,86 @@ const Register: React.FC<RegisterProps> = ({ onRegister, onBackToLogin, initialR
   }
 
   return (
-    <div className="min-h-screen min-h-[100dvh] bg-slate-900 flex items-start md:items-center justify-center p-3 md:p-6 bg-[radial-gradient(circle_at_bottom_right,_var(--tw-gradient-stops))] from-slate-800 via-slate-900 to-black overflow-y-auto"
-      style={{ paddingTop: 'calc(env(safe-area-inset-top, 0px) + 0.75rem)' }}
+    <div className="relative min-h-screen min-h-[100dvh] bg-slate-900 flex items-start md:items-center justify-center p-3 md:p-6 bg-[radial-gradient(circle_at_bottom_right,_var(--tw-gradient-stops))] from-slate-800 via-slate-900 to-black overflow-y-auto"
+      style={{ paddingTop: 'calc(env(safe-area-inset-top, 0px) + 0.75rem)', paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}
     >
-      <div className="max-w-4xl w-full bg-white rounded-2xl md:rounded-[3rem] shadow-2xl overflow-hidden flex flex-col md:flex-row animate-in fade-in zoom-in duration-500">
-        <div className={`md:w-80 px-6 py-5 md:p-12 text-white flex items-center md:items-start md:flex-col justify-between md:justify-start gap-4 transition-colors ${role === UserRole.ADMIN ? 'bg-slate-950' : 'bg-primary'}`}>
-           <div className="flex items-center md:flex-col md:items-start gap-3 md:gap-0">
-              <div className="w-10 h-10 md:w-14 md:h-14 bg-white/20 rounded-xl md:rounded-2xl flex items-center justify-center border border-white/20 flex-shrink-0 md:mb-8">
-                 <i className={`fas ${role === UserRole.ADMIN ? 'fa-shield-halved' : 'fa-user-plus'} text-base md:text-xl`}></i>
-              </div>
-              <div>
-                <h1 className="text-lg md:text-3xl font-black tracking-tighter leading-none uppercase">Enrollment Hub</h1>
-                <p className="text-white/60 text-[8px] md:text-[10px] font-bold uppercase tracking-widest leading-relaxed mt-1 md:mt-4">
-                  {role === UserRole.ADMIN ? 'Setup Bus admin authentication.' : 'Connect your family to the transport core.'}
-                </p>
-              </div>
-           </div>
+      {/* Decorative orbs */}
+      <div className="pointer-events-none absolute inset-0 overflow-hidden">
+        <div className="absolute -top-32 right-1/4 w-72 h-72 rounded-full bg-primary/15 blur-3xl animate-pulse"></div>
+        <div className="absolute -bottom-40 -left-32 w-96 h-96 rounded-full bg-emerald-500/10 blur-3xl animate-pulse" style={{ animationDelay: '1.2s' }}></div>
+      </div>
+
+      <div className="relative max-w-4xl w-full bg-white rounded-2xl md:rounded-[3rem] shadow-2xl overflow-hidden flex flex-col md:flex-row animate-in fade-in zoom-in duration-500">
+        <div className={`relative md:w-80 px-6 py-5 md:p-12 text-white flex items-center md:items-start md:flex-col justify-between md:justify-start gap-4 transition-colors duration-500 overflow-hidden ${role === UserRole.ADMIN ? 'bg-slate-950' : 'bg-primary'}`}>
+          <div className="absolute inset-0 opacity-10 pointer-events-none">
+            <i className={`fas ${role === UserRole.ADMIN ? 'fa-shield-halved' : 'fa-user-plus'} absolute -right-6 -bottom-6 text-[140px] md:-right-10 md:-bottom-10 md:text-[220px]`}></i>
+          </div>
+          <div className="relative flex items-center md:flex-col md:items-start gap-3 md:gap-0">
+            <div className="w-10 h-10 md:w-14 md:h-14 bg-white/20 backdrop-blur-md rounded-xl md:rounded-2xl flex items-center justify-center border border-white/20 flex-shrink-0 md:mb-8">
+              <i className={`fas ${role === UserRole.ADMIN ? 'fa-shield-halved' : 'fa-user-plus'} text-base md:text-xl`}></i>
+            </div>
+            <div>
+              <h1 className="text-lg md:text-3xl font-black tracking-tighter leading-none uppercase">Enrollment Hub</h1>
+              <p className="text-white/70 text-[8px] md:text-[10px] font-bold uppercase tracking-widest leading-relaxed mt-1 md:mt-4">
+                {role === UserRole.ADMIN ? 'Setup Bus admin authentication.' : 'Connect your family to the transport core.'}
+              </p>
+            </div>
+          </div>
+
+          {/* Animated role toggle (desktop only — mobile reuses the toggleRole button below) */}
+          <div className="relative hidden md:block w-full mt-auto">
+            <div className="bg-white/10 backdrop-blur-md p-1 rounded-2xl border border-white/10 grid grid-cols-2">
+              <span
+                className={`absolute top-1 bottom-1 left-1 w-[calc(50%-0.25rem)] rounded-xl transition-transform duration-300 ease-out ${role === UserRole.ADMIN ? 'bg-white translate-x-full' : 'bg-white'}`}
+              ></span>
+              <button
+                type="button"
+                onClick={() => { if (role !== UserRole.PARENT) toggleRole(); }}
+                className={`relative z-10 py-2.5 text-[10px] font-black uppercase tracking-widest transition-colors ${role === UserRole.PARENT ? 'text-primary' : 'text-white/60'}`}
+              >
+                Parent
+              </button>
+              <button
+                type="button"
+                onClick={() => { if (role !== UserRole.ADMIN) toggleRole(); }}
+                className={`relative z-10 py-2.5 text-[10px] font-black uppercase tracking-widest transition-colors ${role === UserRole.ADMIN ? 'text-slate-900' : 'text-white/60'}`}
+              >
+                Admin
+              </button>
+            </div>
+          </div>
         </div>
 
-        <div className="flex-1 p-5 md:p-12">
-           <div className="flex items-center justify-between mb-6 md:mb-10">
-              <h2 className="text-xl md:text-2xl font-black text-slate-800 tracking-tight">Registration</h2>
-              <button onClick={onBackToLogin} className="text-[9px] font-black text-primary uppercase tracking-widest hover:underline">
-                 <i className="fas fa-arrow-left mr-2"></i> Exit
-              </button>
-           </div>
+        <div className="flex-1 p-5 md:p-12 animate-in fade-in slide-in-from-right-4 duration-500" style={{ animationDelay: '120ms', animationFillMode: 'both' }}>
+          <div className="flex items-center justify-between mb-5 md:mb-10">
+            <h2 className="text-xl md:text-2xl font-black text-slate-800 tracking-tight">Registration</h2>
+            <button onClick={onBackToLogin} className="text-[9px] font-black text-primary uppercase tracking-widest hover:underline active:scale-95 flex items-center gap-2">
+              <i className="fas fa-arrow-left"></i>
+              <span className="hidden sm:inline">Exit</span>
+              <span className="sm:hidden">Back</span>
+            </button>
+          </div>
+
+          {/* Mobile role toggle */}
+          <div className="md:hidden mb-5 bg-slate-100 p-1 rounded-2xl grid grid-cols-2 relative">
+            <span
+              className={`absolute top-1 bottom-1 left-1 w-[calc(50%-0.25rem)] rounded-xl bg-white shadow-sm transition-transform duration-300 ease-out ${role === UserRole.ADMIN ? 'translate-x-full' : ''}`}
+            ></span>
+            <button
+              type="button"
+              onClick={() => { if (role !== UserRole.PARENT) toggleRole(); }}
+              className={`relative z-10 py-2.5 text-[10px] font-black uppercase tracking-widest transition-colors ${role === UserRole.PARENT ? 'text-primary' : 'text-slate-400'}`}
+            >
+              Parent
+            </button>
+            <button
+              type="button"
+              onClick={() => { if (role !== UserRole.ADMIN) toggleRole(); }}
+              className={`relative z-10 py-2.5 text-[10px] font-black uppercase tracking-widest transition-colors ${role === UserRole.ADMIN ? 'text-slate-900' : 'text-slate-400'}`}
+            >
+              Admin
+            </button>
+          </div>
 
            {error && (
              <div className="bg-red-50 text-red-600 p-4 rounded-xl text-[12px] font-semibold mb-6 border border-red-100">
