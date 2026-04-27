@@ -194,21 +194,23 @@ const Topbar: React.FC<TopbarProps> = ({ user, onMenuClick, onOpenNotifications,
           <FamilySwitcher parentId={String(user.id)} />
         )}
 
-        <div className="relative">
+        <div ref={modalRef} className="relative">
           <button
-            onClick={() => setShowNotifications(!showNotifications)}
-            className="p-3 text-slate-400 hover:text-primary hover:bg-primary/5 rounded-2xl transition-all relative"
+            onClick={() => setShowNotifications((prev) => !prev)}
+            className={`p-3 rounded-2xl transition-all relative ${showNotifications ? 'bg-primary/10 text-primary' : 'text-slate-400 hover:text-primary hover:bg-primary/5'}`}
+            aria-expanded={showNotifications}
+            aria-label="Toggle notifications"
           >
             <i className="far fa-bell text-xl"></i>
             {unreadCount > 0 && (
-              <span className="absolute top-2 right-2 w-4 h-4 bg-red-500 text-white text-[8px] font-black rounded-full flex items-center justify-center border-2 border-white">
+              <span className="absolute top-2 right-2 w-4 h-4 bg-red-500 text-white text-[8px] font-black rounded-full flex items-center justify-center border-2 border-white animate-pulse">
                 {unreadCount}
               </span>
             )}
           </button>
-          
+
           {showNotifications && (
-            <div ref={modalRef} className="absolute right-0 mt-2 w-72 sm:w-80 bg-white border border-slate-100 rounded-2xl shadow-2xl z-[1100] animate-in fade-in slide-in-from-top-2 duration-200 overflow-hidden">
+            <div className="absolute right-0 mt-2 w-72 sm:w-80 bg-white border border-slate-100 rounded-2xl shadow-2xl z-[1100] animate-in fade-in slide-in-from-top-2 duration-200 overflow-hidden">
               <div className="px-4 py-3 border-b border-slate-50 flex justify-between items-center bg-slate-50/50">
                 <span className="text-[10px] font-black text-slate-800 uppercase tracking-widest">{t('alert_center')}</span>
                 <button onClick={async () => {

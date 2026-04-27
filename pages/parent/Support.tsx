@@ -218,7 +218,7 @@ const Support: React.FC<{ user: User; onOpenDocumentation?: () => void; section?
           <div className="flex min-h-full items-start justify-center p-4 pt-20 pb-6 md:pt-24">
           <div className="bg-white rounded-2xl md:rounded-[3rem] p-5 md:p-10 max-w-lg w-full shadow-2xl animate-in fade-in zoom-in duration-300 max-h-[calc(100vh-6rem)] overflow-y-auto">
             <div className="flex items-center justify-between mb-8">
-              <h2 className="text-2xl font-black text-slate-900 uppercase tracking-tight">Submit Support Ticket</h2>
+              <h2 className="text-xl md:text-2xl font-black text-slate-900 tracking-tight">Submit Support Ticket</h2>
               <button
                 onClick={() => setShowTicketForm(false)}
                 className="w-10 h-10 bg-slate-100 rounded-xl flex items-center justify-center text-slate-500 hover:bg-slate-200 transition-colors"
@@ -387,7 +387,7 @@ const Support: React.FC<{ user: User; onOpenDocumentation?: () => void; section?
           <div className="flex min-h-full items-start justify-center p-4 pt-20 pb-6 md:pt-24">
           <div className="bg-white rounded-[2.5rem] p-8 md:p-10 max-w-3xl w-full max-h-[calc(100vh-6rem)] overflow-y-auto shadow-2xl">
             <div className="flex items-center justify-between mb-6">
-              <h3 className="text-2xl font-black text-slate-900 uppercase tracking-tight">{docDetails[activeDocument].title}</h3>
+              <h3 className="text-xl md:text-2xl font-black text-slate-900 tracking-tight">{docDetails[activeDocument].title}</h3>
               <button
                 onClick={() => setActiveDocument(null)}
                 className="w-10 h-10 bg-slate-100 rounded-xl flex items-center justify-center text-slate-500 hover:bg-slate-200 transition-colors"

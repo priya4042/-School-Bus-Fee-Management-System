@@ -224,7 +224,7 @@ const Register: React.FC<RegisterProps> = ({ onRegister, onBackToLogin, initialR
             <div className="w-16 h-16 md:w-20 md:h-20 bg-primary rounded-2xl md:rounded-3xl flex items-center justify-center mx-auto shadow-2xl shadow-primary/30 border-2 border-white/10 mb-4 md:mb-6 hover:scale-110 transition-transform">
               <i className="fas fa-globe text-3xl md:text-4xl text-white"></i>
             </div>
-            <h1 className="text-2xl md:text-3xl font-black text-white tracking-tighter uppercase">Choose Language</h1>
+            <h1 className="text-2xl md:text-3xl font-black text-white tracking-tighter">Choose Language</h1>
             <p className="text-white/40 text-[10px] font-bold uppercase tracking-widest mt-2 md:mt-3">भाषा चुनें • Select your preferred language</p>
           </div>
 
@@ -286,7 +286,7 @@ const Register: React.FC<RegisterProps> = ({ onRegister, onBackToLogin, initialR
               <i className={`fas ${role === UserRole.ADMIN ? 'fa-shield-halved' : 'fa-user-plus'} text-base md:text-xl`}></i>
             </div>
             <div>
-              <h1 className="text-lg md:text-3xl font-black tracking-tighter leading-none uppercase">Enrollment Hub</h1>
+              <h1 className="text-lg md:text-3xl font-black tracking-tighter leading-none">Enrollment Hub</h1>
               <p className="text-white/70 text-[8px] md:text-[10px] font-bold uppercase tracking-widest leading-relaxed mt-1 md:mt-4">
                 {role === UserRole.ADMIN ? 'Setup Bus admin authentication.' : 'Connect your family to the transport core.'}
               </p>

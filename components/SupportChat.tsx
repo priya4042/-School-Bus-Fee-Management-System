@@ -4,6 +4,7 @@ import { supabase } from '../lib/supabase';
 import { User } from '../types';
 import { getBotReply } from '../lib/chatBot';
 import { useLanguage } from '../lib/i18n';
+import { useBodyScrollLock } from '../hooks/useBodyScrollLock';
 
 interface ChatMessage {
   id: string;
@@ -197,19 +198,32 @@ const SupportChat: React.FC<{ user: User }> = ({ user }) => {
       d.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' });
   };
 
+  // Lock background scroll while chat is open
+  useBodyScrollLock(isOpen);
+
   return (
     <>
-      {/* Floating chat button */}
+      {/* Backdrop (only when chat is open) — covers BottomTabs and other surfaces below */}
+      {isOpen && (
+        <div
+          className="fixed inset-0 z-[1900] bg-slate-900/40 backdrop-blur-sm animate-in fade-in duration-200"
+          onClick={() => setIsOpen(false)}
+          aria-hidden="true"
+        />
+      )}
+
+      {/* Floating chat button — sits above panel when open so X stays clickable */}
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className={`fixed right-3 z-[1500] w-12 h-12 rounded-full shadow-2xl flex items-center justify-center hover:scale-110 transition-all ${
-          isOpen ? 'bg-slate-800 text-white shadow-slate-800/40' : 'bg-primary text-white shadow-primary/40'
+        className={`fixed right-3 w-12 h-12 rounded-full shadow-2xl flex items-center justify-center hover:scale-110 active:scale-95 transition-all ${
+          isOpen ? 'z-[2100] bg-slate-800 text-white shadow-slate-800/40' : 'z-[1500] bg-primary text-white shadow-primary/40'
         }`}
         style={{ bottom: 'calc(env(safe-area-inset-bottom, 0px) + 4rem)' }}
+        aria-label={isOpen ? 'Close chat' : 'Open chat'}
       >
         {isOpen ? <X size={22} /> : <MessageCircle size={22} />}
         {unread > 0 && !isOpen && (
-          <span className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white text-[9px] font-black rounded-full flex items-center justify-center border-2 border-white">
+          <span className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white text-[9px] font-black rounded-full flex items-center justify-center border-2 border-white animate-pulse">
             {unread}
           </span>
         )}

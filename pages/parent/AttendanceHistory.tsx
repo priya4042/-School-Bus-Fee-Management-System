@@ -6,6 +6,7 @@ import MiniLoader from '../../components/MiniLoader';
 import { useLanguage } from '../../lib/i18n';
 import { SkeletonList } from '../../components/ui/Skeleton';
 import { EmptyState } from '../../components/ui/EmptyState';
+import { CollapsibleList } from '../../components/ui/CollapsibleList';
 import AttendanceHeatmap from '../../components/Attendance/AttendanceHeatmap';
 
 interface AttendanceRecord {
@@ -374,7 +375,11 @@ const AttendanceHistory: React.FC<{ user: User }> = ({ user }) => {
                 className="!shadow-none !border-0"
               />
             ) : (
-              <div className="divide-y divide-slate-50">
+              <CollapsibleList
+                initialCount={10}
+                showMoreLabel="View"
+                className="divide-y divide-slate-50"
+              >
                 {Object.entries(byDate).map(([date, dayRecords]) => (
                   <div key={date} className="p-6 hover:bg-slate-50/50 transition-colors">
                     <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4">
@@ -409,7 +414,7 @@ const AttendanceHistory: React.FC<{ user: User }> = ({ user }) => {
                     </div>
                   </div>
                 ))}
-              </div>
+              </CollapsibleList>
             )}
           </div>
           )}

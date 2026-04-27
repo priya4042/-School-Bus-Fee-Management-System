@@ -311,7 +311,7 @@ const generateReceiptPDF = async (due: any) => {
   doc.text('This is a computer-generated invoice and does not require a physical signature.', margin, 285);
   doc.text(`Generated on ${new Date().toLocaleString('en-IN')} | Reference: ${due.id || 'N/A'}`, margin, 289);
 
-  await savePDF(doc, `Invoice_${txnId}.pdf`);
+  await savePDF(doc, buildHumanFileName('Receipt', due, txnId));
 };
 
 const generateCompactReceipt = async (due: any) => {
@@ -398,7 +398,7 @@ const generateCompactReceipt = async (due: any) => {
   doc.text('Computer generated receipt.', w / 2, y, { align: 'center' });
   doc.text('No signature required.', w / 2, y + 3.5, { align: 'center' });
 
-  await savePDF(doc, `Receipt_${txnId}.pdf`);
+  await savePDF(doc, buildHumanFileName('Receipt', due, txnId));
 };
 
 const generateDetailedInvoice = async (due: any) => {
@@ -534,13 +534,34 @@ const generateDetailedInvoice = async (due: any) => {
   doc.text('This is a computer-generated tax invoice and does not require a physical signature.', margin, 280);
   doc.text(`Generated on ${new Date().toLocaleString('en-IN')} | Txn: ${txnId}`, margin, 285);
 
-  await savePDF(doc, `Invoice_${txnId}.pdf`);
+  await savePDF(doc, buildHumanFileName('Invoice', due, txnId));
 };
 
 // Module-scoped preview mode: when set, savePDF resolves the URL instead of saving.
 let previewSink: ((url: string) => void) | null = null;
 const enterPreviewMode = (sink: (url: string) => void) => { previewSink = sink; };
 const exitPreviewMode = () => { previewSink = null; };
+
+// Build a human-readable file name like "Receipt_Rahul_Verma_April_2026.pdf"
+const buildHumanFileName = (kind: 'Receipt' | 'Invoice', due: any, txnId?: string) => {
+  const rawStudent = Array.isArray(due?.students) ? due.students[0] : due?.students;
+  const studentName = String(
+    rawStudent?.full_name || due?.student?.full_name || due?.student_name || due?.studentName || 'Student'
+  ).trim();
+  const safeName = studentName.replace(/[^a-zA-Z0-9 ]+/g, '').replace(/\s+/g, '_').slice(0, 40) || 'Student';
+
+  const monthIdx = Number(due?.month || 0) - 1;
+  const monthName = monthIdx >= 0 && monthIdx < 12 ? MONTHS[monthIdx] : '';
+  const year = due?.year ? String(due.year) : '';
+
+  let period = '';
+  if (monthName && year) period = `${monthName}_${year}`;
+  else if (due?.billing_period_label) period = String(due.billing_period_label).replace(/[^a-zA-Z0-9]+/g, '_').slice(0, 40);
+  else if (txnId) period = String(txnId).slice(-6);
+  else period = 'Bus_Fee';
+
+  return `${kind}_${safeName}_${period}.pdf`;
+};
 
 const savePDF = async (doc: any, fileName: string) => {
   if (previewSink) {

@@ -1,4 +1,5 @@
 import React, { useEffect } from 'react';
+import { useBodyScrollLock } from '../../hooks/useBodyScrollLock';
 
 interface ReceiptViewerProps {
   isOpen: boolean;
@@ -17,6 +18,8 @@ const ReceiptViewer: React.FC<ReceiptViewerProps> = ({
   onClose,
   onDownload,
 }) => {
+  useBodyScrollLock(isOpen);
+
   useEffect(() => {
     if (!isOpen) return;
     const onKey = (e: KeyboardEvent) => {

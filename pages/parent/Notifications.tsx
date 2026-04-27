@@ -7,6 +7,7 @@ import { formatNotificationMessage } from '../../utils/notificationMessage';
 import { useLanguage } from '../../lib/i18n';
 import { SkeletonList } from '../../components/ui/Skeleton';
 import { EmptyState } from '../../components/ui/EmptyState';
+import { CollapsibleList } from '../../components/ui/CollapsibleList';
 
 interface Notification {
   id: string;
@@ -203,10 +204,12 @@ const Notifications: React.FC<{ user: User; focusNotificationId?: string; onFocu
           </div>
         </div>
 
-        <div className="lg:col-span-3 space-y-4">
+        <div className="lg:col-span-3">
           {loading && <SkeletonList count={4} />}
 
-          {!loading && filteredNotifications.map((notif, idx) => (
+          {!loading && (
+          <CollapsibleList initialCount={5} showMoreLabel="View" className="space-y-3 md:space-y-4">
+          {filteredNotifications.map((notif, idx) => (
             <div
               key={notif.id}
               id={`notif-${notif.id}`}
@@ -266,6 +269,8 @@ const Notifications: React.FC<{ user: User; focusNotificationId?: string; onFocu
               </div>
             </div>
           ))}
+          </CollapsibleList>
+          )}
 
           {!loading && filteredNotifications.length === 0 && (
             <EmptyState
