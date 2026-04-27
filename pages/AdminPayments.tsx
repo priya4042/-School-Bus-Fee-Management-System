@@ -141,12 +141,12 @@ const AdminPayments: React.FC = () => {
   };
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+    <div className="space-y-4 md:space-y-6">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 md:gap-4">
         {view === 'payments' ? (
           <div>
-            <h2 className="text-3xl font-black text-slate-800 tracking-tighter">Payment Hub</h2>
-            <p className="text-slate-500 font-bold uppercase text-[10px] tracking-widest mt-1">System-Wide Payment Tracking</p>
+            <h2 className="text-xl md:text-3xl font-black text-slate-800 tracking-tighter">Payment Hub</h2>
+            <p className="text-slate-500 font-bold uppercase text-[9px] md:text-[10px] tracking-widest mt-1">System-Wide Payment Tracking</p>
           </div>
         ) : <div />}
         <div className="flex bg-white p-1 rounded-xl border border-slate-200 overflow-x-auto scrollbar-hide">
@@ -231,18 +231,55 @@ const AdminPayments: React.FC = () => {
 
       {/* Payments Table */}
       <div className="bg-white rounded-2xl md:rounded-[2.5rem] border border-slate-200 shadow-premium overflow-hidden">
-        <div className="overflow-x-auto">
-          {loading ? (
-            <div className="py-20 text-center">
-              <MiniLoader />
-              <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-4">Loading payments...</p>
-            </div>
-          ) : filteredPayments.length === 0 ? (
-            <div className="py-20 text-center">
-              <i className="fas fa-inbox text-slate-200 text-3xl mb-4"></i>
-              <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">No payments found</p>
-            </div>
-          ) : (
+        {loading ? (
+          <div className="py-20 text-center">
+            <MiniLoader />
+            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-4">Loading payments...</p>
+          </div>
+        ) : filteredPayments.length === 0 ? (
+          <div className="py-20 text-center">
+            <i className="fas fa-inbox text-slate-200 text-3xl mb-4"></i>
+            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">No payments found</p>
+          </div>
+        ) : (
+          <>
+          {/* Mobile cards */}
+          <div className="md:hidden divide-y divide-slate-50">
+            {filteredPayments.map((payment) => (
+              <div key={payment.id} className="p-4 space-y-2">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <p className="font-black text-slate-800 text-sm truncate">{payment.student_name}</p>
+                    <p className="text-[10px] text-slate-400 font-black uppercase tracking-widest">
+                      {payment.admission_number} · {MONTHS[payment.month - 1]} {payment.year}
+                    </p>
+                  </div>
+                  <span className={`px-2 py-1 rounded-full text-[8px] font-black uppercase tracking-widest border flex-shrink-0 ${getStatusStyle(payment.status)}`}>
+                    {payment.status}
+                  </span>
+                </div>
+                <div className="flex items-end justify-between gap-3">
+                  <div>
+                    <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest">Amount</p>
+                    <p className="text-base font-black text-slate-800">₹{Number(payment.total_due || payment.amount || 0).toLocaleString()}</p>
+                    {payment.late_fee > 0 && (
+                      <p className="text-[9px] font-black text-danger">+ ₹{payment.late_fee} late</p>
+                    )}
+                  </div>
+                  {(payment.paid_at || payment.due_date) && (
+                    <p className="text-[10px] font-bold text-slate-500 text-right">
+                      {new Date(payment.paid_at || payment.due_date).toLocaleDateString('en-IN', {
+                        day: '2-digit', month: 'short', year: '2-digit'
+                      })}
+                    </p>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Desktop table */}
+          <div className="hidden md:block overflow-x-auto">
             <table className="w-full text-left">
               <thead>
                 <tr className="bg-slate-50/50 text-slate-400 text-[9px] font-black uppercase tracking-[0.2em] border-b border-slate-100">
@@ -308,8 +345,9 @@ const AdminPayments: React.FC = () => {
                 ))}
               </tbody>
             </table>
-          )}
-        </div>
+          </div>
+          </>
+        )}
       </div>
         </>
       )}

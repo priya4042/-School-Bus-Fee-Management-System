@@ -196,7 +196,7 @@ const PaymentSettings: React.FC = () => {
       </div>
 
       {/* Configuration Card */}
-      <div className="bg-white rounded-3xl border border-slate-200 shadow-premium p-8 space-y-6">
+      <div className="bg-white rounded-2xl md:rounded-3xl border border-slate-200 shadow-premium p-5 md:p-8 space-y-5 md:space-y-6">
         <div className="space-y-4">
           <div>
             <label className="block text-[11px] font-black text-slate-600 uppercase tracking-widest mb-2">
@@ -253,7 +253,7 @@ const PaymentSettings: React.FC = () => {
         </div>
 
         {/* Action Buttons */}
-        <div className="flex gap-4 pt-4">
+        <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 pt-4">
           <button
             onClick={handleSave}
             disabled={!hasChanges || saving}
@@ -289,7 +289,7 @@ const PaymentSettings: React.FC = () => {
       </div>
 
       {/* Documentation Card */}
-      <div className="bg-gradient-to-br from-primary/5 to-primary/10 rounded-3xl border border-primary/20 p-8">
+      <div className="bg-gradient-to-br from-primary/5 to-primary/10 rounded-2xl md:rounded-3xl border border-primary/20 p-5 md:p-8">
         <h3 className="text-lg font-black text-slate-800 mb-4 flex items-center gap-2">
           <i className="fas fa-book text-primary"></i>
           How It Works

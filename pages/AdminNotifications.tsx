@@ -408,27 +408,27 @@ const AdminNotifications: React.FC<{ focusNotificationId?: string; onFocusHandle
   };
 
   return (
-    <div className="max-w-5xl space-y-8 pb-10">
+    <div className="max-w-5xl space-y-4 md:space-y-8 pb-10">
       {view === 'notifications' ? (
         <div>
-          <h2 className="text-3xl font-black text-slate-800 tracking-tight">Notification Center</h2>
-          <p className="text-slate-500 font-bold uppercase text-[10px] tracking-[0.3em] mt-2">Broadcast to Parents</p>
+          <h2 className="text-xl md:text-3xl font-black text-slate-800 tracking-tight">Notification Center</h2>
+          <p className="text-slate-500 font-bold uppercase text-[9px] md:text-[10px] tracking-[0.3em] mt-2">Broadcast to Parents</p>
         </div>
       ) : <div />}
 
-      <div className="flex bg-white p-1 rounded-xl border border-slate-200 w-fit">
-        <button onClick={() => setView('notifications')} className={`px-4 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest ${view === 'notifications' ? 'bg-primary text-white' : 'text-slate-500'}`}>Notifications</button>
-        <button onClick={() => setView('audit')} className={`px-4 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest ${view === 'audit' ? 'bg-primary text-white' : 'text-slate-500'}`}>Audit Logs</button>
+      <div className="flex bg-white p-1 rounded-xl border border-slate-200 overflow-x-auto scrollbar-hide">
+        <button onClick={() => setView('notifications')} className={`px-3 md:px-4 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest flex-shrink-0 ${view === 'notifications' ? 'bg-primary text-white' : 'text-slate-500'}`}>Notifications</button>
+        <button onClick={() => setView('audit')} className={`px-3 md:px-4 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest flex-shrink-0 ${view === 'audit' ? 'bg-primary text-white' : 'text-slate-500'}`}>Audit Logs</button>
       </div>
 
       {view === 'audit' ? (
         <AuditLogs />
       ) : (
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-8">
         <div className="lg:col-span-2">
           <form onSubmit={handleBroadcast} className="bg-white rounded-2xl md:rounded-[2.5rem] border border-slate-200 shadow-premium overflow-hidden">
-            <div className="p-8 border-b border-slate-100 bg-slate-50/50 flex items-center justify-between">
+            <div className="p-4 md:p-8 border-b border-slate-100 bg-slate-50/50 flex items-center justify-between">
               <div className="flex items-center gap-4">
                 <div className="w-10 h-10 bg-primary rounded-xl flex items-center justify-center text-white shadow-lg">
                   <i className="fas fa-bullhorn"></i>
@@ -437,8 +437,8 @@ const AdminNotifications: React.FC<{ focusNotificationId?: string; onFocusHandle
               </div>
             </div>
 
-            <div className="p-8 md:p-10 space-y-8">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="p-5 md:p-10 space-y-6 md:space-y-8">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
                 <div>
                   <label className="block text-[10px] font-black text-primary uppercase tracking-[0.2em] mb-3 ml-1">Message Type</label>
                   <select value={msgType} onChange={(e) => setMsgType(e.target.value)} className={selectClass}>
@@ -494,7 +494,7 @@ const AdminNotifications: React.FC<{ focusNotificationId?: string; onFocusHandle
         </div>
 
         <div className="space-y-8">
-          <div className="bg-white p-8 rounded-2xl md:rounded-[2.5rem] border border-slate-200 shadow-sm">
+          <div className="bg-white p-5 md:p-8 rounded-2xl md:rounded-[2.5rem] border border-slate-200 shadow-sm">
             <h4 className="font-black text-slate-800 uppercase tracking-widest text-[10px] mb-8 flex items-center gap-3">
               <i className="fas fa-user-check text-primary"></i>
               Parent Name Requests
@@ -532,7 +532,7 @@ const AdminNotifications: React.FC<{ focusNotificationId?: string; onFocusHandle
             )}
           </div>
 
-          <div className="bg-white p-8 rounded-2xl md:rounded-[2.5rem] border border-slate-200 shadow-sm">
+          <div className="bg-white p-5 md:p-8 rounded-2xl md:rounded-[2.5rem] border border-slate-200 shadow-sm">
             <h4 className="font-black text-slate-800 uppercase tracking-widest text-[10px] mb-8 flex items-center gap-3">
               <i className="fas fa-clipboard-check text-primary"></i>
               Name Request History
@@ -559,7 +559,7 @@ const AdminNotifications: React.FC<{ focusNotificationId?: string; onFocusHandle
             )}
           </div>
 
-          <div className="bg-white p-8 rounded-2xl md:rounded-[2.5rem] border border-slate-200 shadow-sm">
+          <div className="bg-white p-5 md:p-8 rounded-2xl md:rounded-[2.5rem] border border-slate-200 shadow-sm">
             <h4 className="font-black text-slate-800 uppercase tracking-widest text-[10px] mb-8 flex items-center gap-3">
               <i className="fas fa-receipt text-primary"></i>
               Payment Confirmations
@@ -616,7 +616,7 @@ const AdminNotifications: React.FC<{ focusNotificationId?: string; onFocusHandle
             )}
           </div>
 
-          <div className="bg-white p-8 rounded-2xl md:rounded-[2.5rem] border border-slate-200 shadow-sm">
+          <div className="bg-white p-5 md:p-8 rounded-2xl md:rounded-[2.5rem] border border-slate-200 shadow-sm">
             <h4 className="font-black text-slate-800 uppercase tracking-widest text-[10px] mb-8 flex items-center gap-3">
               <i className="fas fa-history text-primary"></i>
               Recent Broadcasts
@@ -733,8 +733,8 @@ const ChatSection: React.FC = () => {
   if (chatMessages.length === 0) return null;
 
   return (
-    <div className="bg-white rounded-2xl md:rounded-[2.5rem] border border-slate-200 p-8 shadow-sm">
-      <h3 className="font-black text-slate-800 tracking-tight text-lg mb-6 flex items-center gap-3">
+    <div className="bg-white rounded-2xl md:rounded-[2.5rem] border border-slate-200 p-4 md:p-8 shadow-sm">
+      <h3 className="font-black text-slate-800 tracking-tight text-base md:text-lg mb-4 md:mb-6 flex items-center gap-3">
         <i className="fas fa-comments text-primary"></i>
         Parent Chat Messages
       </h3>

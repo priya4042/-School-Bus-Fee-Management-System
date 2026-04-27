@@ -73,12 +73,12 @@ const Documentation: React.FC = () => {
   };
 
   return (
-    <div className="space-y-8 pb-8">
-      <div className="bg-white border border-slate-200 rounded-3xl p-8 shadow-sm">
+    <div className="space-y-4 md:space-y-8 pb-8">
+      <div className="bg-white border border-slate-200 rounded-2xl md:rounded-3xl p-5 md:p-8 shadow-sm">
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
           <div>
-            <h2 className="text-2xl md:text-3xl font-black text-slate-800 tracking-tight">Platform Documentation</h2>
-            <p className="text-slate-500 text-sm mt-3 max-w-4xl leading-relaxed">
+            <h2 className="text-xl md:text-3xl font-black text-slate-800 tracking-tight">Platform Documentation</h2>
+            <p className="text-slate-500 text-xs md:text-sm mt-2 md:mt-3 max-w-4xl leading-relaxed">
               This page gives a complete product-level reference for Admin and Parent modules, architecture,
               integrations, and what is free vs paid in your current application setup.
             </p>
@@ -97,7 +97,7 @@ const Documentation: React.FC = () => {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <section className="bg-white border border-slate-200 rounded-3xl p-8 shadow-sm">
+        <section className="bg-white border border-slate-200 rounded-2xl md:rounded-3xl p-5 md:p-8 shadow-sm">
           <h3 className="text-xs font-black uppercase tracking-[0.2em] text-primary mb-5">Admin Modules</h3>
           <div className="space-y-4">
             {adminModules.map((item) => (
@@ -109,7 +109,7 @@ const Documentation: React.FC = () => {
           </div>
         </section>
 
-        <section className="bg-white border border-slate-200 rounded-3xl p-8 shadow-sm">
+        <section className="bg-white border border-slate-200 rounded-2xl md:rounded-3xl p-5 md:p-8 shadow-sm">
           <h3 className="text-xs font-black uppercase tracking-[0.2em] text-primary mb-5">Parent Modules</h3>
           <div className="space-y-4">
             {parentModules.map((item) => (
@@ -122,7 +122,7 @@ const Documentation: React.FC = () => {
         </section>
       </div>
 
-      <section className="bg-white border border-slate-200 rounded-3xl p-8 shadow-sm overflow-x-auto">
+      <section className="bg-white border border-slate-200 rounded-2xl md:rounded-3xl p-5 md:p-8 shadow-sm overflow-x-auto">
         <h3 className="text-xs font-black uppercase tracking-[0.2em] text-primary mb-5">Technology And Cost Matrix</h3>
         <table className="min-w-full text-left">
           <thead>
@@ -146,7 +146,7 @@ const Documentation: React.FC = () => {
         </table>
       </section>
 
-      <section className="bg-white border border-slate-200 rounded-3xl p-8 shadow-sm">
+      <section className="bg-white border border-slate-200 rounded-2xl md:rounded-3xl p-5 md:p-8 shadow-sm">
         <h3 className="text-xs font-black uppercase tracking-[0.2em] text-primary mb-5">Production Checklist</h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs text-slate-700">
           <div className="border border-slate-100 rounded-2xl p-4 bg-slate-50/50">
@@ -168,7 +168,7 @@ const Documentation: React.FC = () => {
         </div>
       </section>
 
-      <section className="bg-white border border-slate-200 rounded-3xl p-8 shadow-sm">
+      <section className="bg-white border border-slate-200 rounded-2xl md:rounded-3xl p-5 md:p-8 shadow-sm">
         <h3 className="text-xs font-black uppercase tracking-[0.2em] text-primary mb-5">Play Store Deployment: Complete Guide</h3>
         <div className="space-y-4">
           {playStoreChecklist.map((item) => (
@@ -180,7 +180,7 @@ const Documentation: React.FC = () => {
         </div>
       </section>
 
-      <section className="bg-white border border-slate-200 rounded-3xl p-8 shadow-sm overflow-x-auto">
+      <section className="bg-white border border-slate-200 rounded-2xl md:rounded-3xl p-5 md:p-8 shadow-sm overflow-x-auto">
         <h3 className="text-xs font-black uppercase tracking-[0.2em] text-primary mb-5">Environment Variables Used In Deployment</h3>
         <table className="min-w-full text-left">
           <thead>
@@ -200,7 +200,7 @@ const Documentation: React.FC = () => {
         </table>
       </section>
 
-      <section className="bg-white border border-slate-200 rounded-3xl p-8 shadow-sm">
+      <section className="bg-white border border-slate-200 rounded-2xl md:rounded-3xl p-5 md:p-8 shadow-sm">
         <h3 className="text-xs font-black uppercase tracking-[0.2em] text-primary mb-5">Play Store Release Flow</h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs text-slate-700">
           <div className="border border-slate-100 rounded-2xl p-4 bg-slate-50/50">

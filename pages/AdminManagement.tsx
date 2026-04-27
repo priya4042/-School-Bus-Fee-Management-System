@@ -55,29 +55,68 @@ const AdminManagement: React.FC = () => {
   const selectClass = "w-full px-5 py-4 rounded-2xl bg-primary/5 border border-primary/20 focus:border-primary focus:ring-4 focus:ring-primary/10 outline-none font-bold bg-white text-slate-800 cursor-pointer transition-all";
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+    <div className="space-y-4 md:space-y-6">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 md:gap-4">
         <div>
-          <h2 className="text-2xl font-black text-slate-800 tracking-tight">Access Control</h2>
-          <p className="text-slate-500 font-bold uppercase text-[10px] tracking-widest">Manage Administrative Personnel</p>
+          <h2 className="text-xl md:text-2xl font-black text-slate-800 tracking-tight">Access Control</h2>
+          <p className="text-slate-500 font-bold uppercase text-[9px] md:text-[10px] tracking-widest">Manage Administrative Personnel</p>
         </div>
-        <button 
+        <button
           onClick={() => setIsModalOpen(true)}
-          className="bg-primary text-white px-8 py-3 rounded-2xl font-black text-[10px] uppercase tracking-widest flex items-center gap-3 hover:bg-blue-700 transition-all shadow-xl shadow-primary/20"
+          className="bg-primary text-white px-4 md:px-8 py-3 rounded-2xl font-black text-[10px] uppercase tracking-widest flex items-center justify-center gap-2 md:gap-3 hover:bg-blue-700 transition-all shadow-xl shadow-primary/20 flex-shrink-0"
         >
           <i className="fas fa-user-shield"></i>
-          Provision New Bus admin
+          <span className="hidden md:inline">Provision New Bus admin</span>
+          <span className="md:hidden">New Admin</span>
         </button>
       </div>
 
-      <div className="bg-white rounded-[2rem] border border-slate-200 shadow-sm overflow-hidden">
-        <div className="overflow-x-auto min-h-[400px]">
-          {loading ? (
-            <div className="flex flex-col items-center justify-center h-80 gap-4">
-              <i className="fas fa-circle-notch fa-spin text-primary text-3xl"></i>
-              <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Syncing Permissions...</p>
-            </div>
-          ) : (
+      <div className="bg-white rounded-2xl md:rounded-[2rem] border border-slate-200 shadow-sm overflow-hidden">
+        {loading ? (
+          <div className="flex flex-col items-center justify-center h-80 gap-4">
+            <i className="fas fa-circle-notch fa-spin text-primary text-3xl"></i>
+            <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Syncing Permissions...</p>
+          </div>
+        ) : admins.length === 0 ? (
+          <div className="p-12 md:p-20 text-center">
+            <i className="fas fa-user-shield text-3xl md:text-4xl text-slate-200 mb-3 md:mb-4"></i>
+            <p className="text-[10px] md:text-[11px] font-black text-slate-300 uppercase tracking-[0.3em]">No bus admins yet</p>
+          </div>
+        ) : (
+          <>
+          {/* Mobile cards */}
+          <div className="md:hidden divide-y divide-slate-50">
+            {admins.map((admin) => (
+              <div key={admin.id} className="p-4 flex items-start gap-3">
+                <div className="w-10 h-10 rounded-xl bg-slate-900 text-white flex items-center justify-center font-black flex-shrink-0">
+                  {admin.fullName.charAt(0)}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <p className="font-black text-slate-800 tracking-tight text-sm truncate">{admin.fullName}</p>
+                    <span className={`px-2 py-0.5 rounded-full text-[8px] font-black uppercase tracking-widest ${
+                      admin.is_active ? 'bg-success/10 text-success' : 'bg-red-100 text-red-600'
+                    }`}>
+                      {admin.is_active ? 'Active' : 'Off'}
+                    </span>
+                  </div>
+                  <p className="text-[10px] text-slate-500 lowercase truncate mt-0.5">{admin.email}</p>
+                  <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mt-1">{admin.role.replace('_', ' ')}</p>
+                </div>
+                <button
+                  onClick={() => handleToggleStatus(admin.id, !admin.is_active, admin.fullName)}
+                  className={`text-[9px] font-black uppercase tracking-widest px-3 py-2 rounded-xl flex-shrink-0 ${
+                    admin.is_active ? 'text-danger bg-danger/5' : 'text-success bg-success/5'
+                  }`}
+                >
+                  {admin.is_active ? 'Off' : 'On'}
+                </button>
+              </div>
+            ))}
+          </div>
+
+          {/* Desktop table */}
+          <div className="hidden md:block overflow-x-auto min-h-[400px]">
             <table className="w-full text-left">
               <thead>
                 <tr className="bg-slate-50/50 text-slate-400 text-[9px] font-black uppercase tracking-[0.2em] border-b border-slate-100">
@@ -126,8 +165,9 @@ const AdminManagement: React.FC = () => {
                 ))}
               </tbody>
             </table>
-          )}
-        </div>
+          </div>
+          </>
+        )}
       </div>
 
       <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title="Provision Bus admin" maxWidthClass="max-w-2xl" bodyClassName="p-6 md:p-8">

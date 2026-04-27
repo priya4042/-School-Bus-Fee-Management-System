@@ -74,10 +74,10 @@ const Settings: React.FC = () => {
 
   if (view === 'users') {
     return (
-      <div className="space-y-6">
-        <div className="flex bg-white p-1.5 rounded-[1.5rem] border border-slate-200 shadow-sm w-fit">
-          <button onClick={() => setView('settings')} className="px-8 py-2.5 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all text-slate-400">System Settings</button>
-          <button onClick={() => setView('users')} className="px-8 py-2.5 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all bg-primary text-white shadow-lg shadow-primary/20">User Directory</button>
+      <div className="space-y-4 md:space-y-6">
+        <div className="flex bg-white p-1 md:p-1.5 rounded-2xl border border-slate-200 shadow-sm overflow-x-auto scrollbar-hide">
+          <button onClick={() => setView('settings')} className="px-4 md:px-8 py-2.5 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all text-slate-400 flex-shrink-0">System Settings</button>
+          <button onClick={() => setView('users')} className="px-4 md:px-8 py-2.5 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all bg-primary text-white shadow-lg shadow-primary/20 flex-shrink-0">User Directory</button>
         </div>
         <UserDirectory />
       </div>
@@ -85,20 +85,20 @@ const Settings: React.FC = () => {
   }
 
   return (
-    <div className="max-w-5xl space-y-10 pb-20">
-      <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
+    <div className="max-w-5xl space-y-6 md:space-y-10 pb-20">
+      <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-4 md:gap-6">
         <div>
-          <h2 className="text-3xl font-black text-slate-800 tracking-tight">System Core Configuration</h2>
-          <p className="text-slate-500 font-bold uppercase text-[10px] tracking-[0.2em]">Manage Financial Rules & Fleet Policies</p>
+          <h2 className="text-xl md:text-3xl font-black text-slate-800 tracking-tight">System Core Configuration</h2>
+          <p className="text-slate-500 font-bold uppercase text-[9px] md:text-[10px] tracking-[0.2em]">Manage Financial Rules & Fleet Policies</p>
         </div>
-        <div className="flex flex-wrap gap-2">
-          <div className="flex bg-white p-1.5 rounded-[1.5rem] border border-slate-200 shadow-sm">
-            <button onClick={() => setView('settings')} className={`px-8 py-2.5 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all ${view === 'settings' ? 'bg-primary text-white shadow-lg shadow-primary/20' : 'text-slate-400'}`}>System Settings</button>
-            <button onClick={() => setView('users')} className="px-8 py-2.5 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all text-slate-400">User Directory</button>
+        <div className="flex flex-col sm:flex-row gap-2">
+          <div className="flex bg-white p-1 md:p-1.5 rounded-2xl border border-slate-200 shadow-sm overflow-x-auto scrollbar-hide">
+            <button onClick={() => setView('settings')} className={`px-4 md:px-8 py-2.5 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all flex-shrink-0 ${view === 'settings' ? 'bg-primary text-white shadow-lg shadow-primary/20' : 'text-slate-400'}`}>System Settings</button>
+            <button onClick={() => setView('users')} className="px-4 md:px-8 py-2.5 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all text-slate-400 flex-shrink-0">User Directory</button>
           </div>
-          <div className="flex bg-white p-1.5 rounded-[1.5rem] border border-slate-200 shadow-sm">
-           <button onClick={() => setActiveTab('fees')} className={`px-8 py-2.5 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all ${activeTab === 'fees' ? 'bg-primary text-white shadow-lg shadow-primary/20' : 'text-slate-400'}`}>Fee Engine</button>
-           <button onClick={() => setActiveTab('security')} className={`px-8 py-2.5 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all ${activeTab === 'security' ? 'bg-primary text-white shadow-lg shadow-primary/20' : 'text-slate-400'}`}>Security</button>
+          <div className="flex bg-white p-1 md:p-1.5 rounded-2xl border border-slate-200 shadow-sm overflow-x-auto scrollbar-hide">
+           <button onClick={() => setActiveTab('fees')} className={`px-4 md:px-8 py-2.5 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all flex-shrink-0 ${activeTab === 'fees' ? 'bg-primary text-white shadow-lg shadow-primary/20' : 'text-slate-400'}`}>Fee Engine</button>
+           <button onClick={() => setActiveTab('security')} className={`px-4 md:px-8 py-2.5 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all flex-shrink-0 ${activeTab === 'security' ? 'bg-primary text-white shadow-lg shadow-primary/20' : 'text-slate-400'}`}>Security</button>
           </div>
         </div>
       </div>
