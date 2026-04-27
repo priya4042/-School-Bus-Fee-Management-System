@@ -537,7 +537,22 @@ const generateDetailedInvoice = async (due: any) => {
   await savePDF(doc, `Invoice_${txnId}.pdf`);
 };
 
+// Module-scoped preview mode: when set, savePDF resolves the URL instead of saving.
+let previewSink: ((url: string) => void) | null = null;
+const enterPreviewMode = (sink: (url: string) => void) => { previewSink = sink; };
+const exitPreviewMode = () => { previewSink = null; };
+
 const savePDF = async (doc: any, fileName: string) => {
+  if (previewSink) {
+    try {
+      const url = doc.output('bloburl') as unknown as string;
+      previewSink(String(url));
+    } catch (err) {
+      console.error('Preview generation failed:', err);
+    }
+    return;
+  }
+
   const isCapacitor = !!(window as any).Capacitor?.isNativePlatform?.();
 
   if (!isCapacitor) {
@@ -704,5 +719,29 @@ export const useReceipts = () => {
     }
   };
 
-  return { downloadReceipt, downloading };
+  const previewReceipt = async (
+    paymentId: string | number,
+    txnId?: string,
+    dueSnapshot?: any,
+    format: 'pdf' | 'invoice' | 'receipt' = 'pdf'
+  ): Promise<string | null> => {
+    return new Promise((resolve) => {
+      let resolved = false;
+      const finish = (url: string | null) => {
+        if (resolved) return;
+        resolved = true;
+        exitPreviewMode();
+        resolve(url);
+      };
+      enterPreviewMode((url) => finish(url));
+      downloadReceipt(paymentId, txnId, dueSnapshot, format)
+        .then(() => {
+          // If savePDF was never called (failure path), resolve null after a tick
+          setTimeout(() => finish(null), 0);
+        })
+        .catch(() => finish(null));
+    });
+  };
+
+  return { downloadReceipt, previewReceipt, downloading };
 };

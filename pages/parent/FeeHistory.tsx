@@ -9,6 +9,8 @@ import { useReceipts } from '../../hooks/useReceipts';
 import PaymentPortal from '../../components/PaymentPortal';
 import MiniLoader from '../../components/MiniLoader';
 import { useLanguage } from '../../lib/i18n';
+import SpendingSummary from '../../components/Fees/SpendingSummary';
+import ReceiptViewer from '../../components/Receipts/ReceiptViewer';
 
 const ReceiptDropdown: React.FC<{
   dueId: string;
@@ -16,7 +18,8 @@ const ReceiptDropdown: React.FC<{
   due: any;
   downloading: string | null;
   onDownload: (id: string, txn: string, due: any, format: 'pdf' | 'invoice' | 'receipt') => void;
-}> = ({ dueId, txnId, due, downloading, onDownload }) => {
+  onPreview: (id: string, txn: string, due: any, format: 'pdf' | 'invoice' | 'receipt') => void;
+}> = ({ dueId, txnId, due, downloading, onDownload, onPreview }) => {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
@@ -42,7 +45,7 @@ const ReceiptDropdown: React.FC<{
         onClick={() => setOpen(!open)}
         disabled={isLoading}
         className="w-9 h-9 flex items-center justify-center rounded-full hover:bg-slate-100 transition-all disabled:opacity-50"
-        title="Download Receipt"
+        title="View Receipt"
       >
         {isLoading ? (
           <i className="fas fa-circle-notch fa-spin text-sm text-primary"></i>
@@ -51,25 +54,36 @@ const ReceiptDropdown: React.FC<{
         )}
       </button>
       {open && (
-        <div className="absolute right-0 bottom-full mb-2 w-52 bg-white rounded-2xl border border-slate-100 shadow-2xl z-50 p-2 animate-in fade-in slide-in-from-bottom-2 duration-200">
-          <p className="text-[8px] font-black text-slate-400 tracking-widest px-3 py-2">Download As</p>
+        <div className="absolute right-0 bottom-full mb-2 w-60 bg-white rounded-2xl border border-slate-100 shadow-2xl z-50 p-2 animate-in fade-in slide-in-from-bottom-2 duration-200">
+          <p className="text-[8px] font-black text-slate-400 tracking-widest px-3 py-2">View / Download As</p>
           {items.map((item) => (
-            <button
-              key={item.format}
-              onClick={() => {
-                setOpen(false);
-                onDownload(dueId, txnId, due, item.format);
-              }}
-              className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-primary/5 transition-all text-left group"
-            >
-              <div className="w-8 h-8 bg-slate-50 rounded-lg flex items-center justify-center text-primary group-hover:bg-primary group-hover:text-white transition-all">
-                {item.icon}
-              </div>
-              <div>
-                <p className="text-[11px] font-black text-slate-800 tracking-widest">{item.label}</p>
-                <p className="text-[8px] font-bold text-slate-400">{item.desc}</p>
-              </div>
-            </button>
+            <div key={item.format} className="flex items-center gap-1 px-1">
+              <button
+                onClick={() => {
+                  setOpen(false);
+                  onPreview(dueId, txnId, due, item.format);
+                }}
+                className="flex-1 flex items-center gap-3 px-2 py-2.5 rounded-xl hover:bg-primary/5 transition-all text-left group"
+              >
+                <div className="w-8 h-8 bg-slate-50 rounded-lg flex items-center justify-center text-primary group-hover:bg-primary group-hover:text-white transition-all">
+                  {item.icon}
+                </div>
+                <div>
+                  <p className="text-[11px] font-black text-slate-800 tracking-widest">{item.label}</p>
+                  <p className="text-[8px] font-bold text-slate-400">{item.desc}</p>
+                </div>
+              </button>
+              <button
+                onClick={() => {
+                  setOpen(false);
+                  onDownload(dueId, txnId, due, item.format);
+                }}
+                className="w-8 h-8 rounded-lg bg-slate-50 text-slate-400 hover:bg-primary hover:text-white flex items-center justify-center transition-all flex-shrink-0"
+                title={`Download ${item.label}`}
+              >
+                <i className="fas fa-download text-[10px]"></i>
+              </button>
+            </div>
           ))}
         </div>
       )}
@@ -86,7 +100,37 @@ const FeeHistory: React.FC<{ user: User }> = ({ user }) => {
   const [loading, setLoading] = useState(true);
 
   const { paymentState, openPortal, closePortal, initiatePayU, initiateRazorpay, initiateUpiIntent, confirmUpiPayment } = usePayments();
-  const { downloadReceipt, downloading } = useReceipts();
+  const { downloadReceipt, previewReceipt, downloading } = useReceipts();
+
+  const [viewer, setViewer] = useState<{
+    open: boolean;
+    url: string | null;
+    loading: boolean;
+    title: string;
+    pendingDownload?: () => void;
+  }>({ open: false, url: null, loading: false, title: 'Receipt Preview' });
+
+  const handlePreviewReceipt = async (
+    paymentId: string,
+    txnId: string,
+    due: any,
+    format: 'pdf' | 'invoice' | 'receipt'
+  ) => {
+    const titleMap: Record<typeof format, string> = {
+      pdf: 'Receipt PDF',
+      invoice: 'Tax Invoice',
+      receipt: 'Compact Receipt',
+    };
+    setViewer({
+      open: true,
+      url: null,
+      loading: true,
+      title: titleMap[format],
+      pendingDownload: () => downloadReceipt(paymentId, txnId, due, format),
+    });
+    const url = await previewReceipt(paymentId, txnId, due, format);
+    setViewer((prev) => ({ ...prev, url, loading: false }));
+  };
 
   const getFinancialYearLabel = (month: number, year: number) => {
     const startsInCurrentYear = month >= 3;
@@ -260,6 +304,15 @@ const FeeHistory: React.FC<{ user: User }> = ({ user }) => {
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
       <PaymentPortal state={paymentState} onClose={closePortal} onInitiateRazorpay={initiateRazorpay} onInitiatePayU={initiatePayU} onInitiateUpi={initiateUpiIntent} onConfirmUpi={confirmUpiPayment} user={user} />
 
+      <ReceiptViewer
+        isOpen={viewer.open}
+        pdfUrl={viewer.url}
+        loading={viewer.loading}
+        title={viewer.title}
+        onClose={() => setViewer({ open: false, url: null, loading: false, title: 'Receipt Preview' })}
+        onDownload={viewer.pendingDownload}
+      />
+
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
         <div>
           <h1 className="text-2xl md:text-4xl font-black text-slate-900 tracking-tight">Fee Ledger</h1>
@@ -268,6 +321,9 @@ const FeeHistory: React.FC<{ user: User }> = ({ user }) => {
           </p>
         </div>
       </div>
+
+      {/* Spending summary chart for current FY */}
+      <SpendingSummary dues={dues as any} />
 
       {/* Stats */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -370,7 +426,7 @@ const FeeHistory: React.FC<{ user: User }> = ({ user }) => {
                   )}
                   {!isPaid && !isLocked && <div />}
                   {isPaid ? (
-                    <ReceiptDropdown dueId={due.id} txnId={due.transaction_id || due.id} due={due} downloading={downloading} onDownload={downloadReceipt} />
+                    <ReceiptDropdown dueId={due.id} txnId={due.transaction_id || due.id} due={due} downloading={downloading} onDownload={downloadReceipt} onPreview={handlePreviewReceipt} />
                   ) : isLocked ? (
                     <p className="text-[8px] font-bold text-slate-400"><i className="fas fa-lock mr-1"></i>Pay previous first</p>
                   ) : (
@@ -473,6 +529,7 @@ const FeeHistory: React.FC<{ user: User }> = ({ user }) => {
                           due={due}
                           downloading={downloading}
                           onDownload={downloadReceipt}
+                          onPreview={handlePreviewReceipt}
                         />
                       ) : isLocked ? (
                         <div className="inline-flex items-center gap-2 text-slate-400">

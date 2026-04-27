@@ -6,6 +6,7 @@ import MiniLoader from '../../components/MiniLoader';
 import { useLanguage } from '../../lib/i18n';
 import { SkeletonList } from '../../components/ui/Skeleton';
 import { EmptyState } from '../../components/ui/EmptyState';
+import AttendanceHeatmap from '../../components/Attendance/AttendanceHeatmap';
 
 interface AttendanceRecord {
   id: string;
@@ -27,6 +28,7 @@ const AttendanceHistory: React.FC<{ user: User }> = ({ user }) => {
   const [monthFilter, setMonthFilter] = useState<string>('ALL');
   const [yearFilter, setYearFilter] = useState<string>('ALL');
   const [showMonthFilter, setShowMonthFilter] = useState(false);
+  const [view, setView] = useState<'list' | 'calendar'>('calendar');
 
   // Fetch parent's students
   useEffect(() => {
@@ -152,6 +154,28 @@ const AttendanceHistory: React.FC<{ user: User }> = ({ user }) => {
 
       {students.length > 0 && (
         <>
+          {/* View toggle */}
+          <div className="flex p-1 bg-white border border-slate-200 rounded-2xl shadow-sm w-full md:w-fit overflow-x-auto scrollbar-hide">
+            <button
+              onClick={() => setView('calendar')}
+              className={`flex-1 md:flex-none flex items-center justify-center gap-2 px-4 md:px-6 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all flex-shrink-0 active:scale-95 ${
+                view === 'calendar' ? 'bg-primary text-white shadow-lg shadow-primary/20' : 'text-slate-500'
+              }`}
+            >
+              <i className="fas fa-calendar-day text-[11px]"></i>
+              <span>Calendar</span>
+            </button>
+            <button
+              onClick={() => setView('list')}
+              className={`flex-1 md:flex-none flex items-center justify-center gap-2 px-4 md:px-6 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all flex-shrink-0 active:scale-95 ${
+                view === 'list' ? 'bg-primary text-white shadow-lg shadow-primary/20' : 'text-slate-500'
+              }`}
+            >
+              <i className="fas fa-list text-[11px]"></i>
+              <span>List</span>
+            </button>
+          </div>
+
           {/* Stats row */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-6">
             <div className="bg-white p-4 md:p-6 rounded-xl md:rounded-[2.5rem] border border-slate-100 shadow-sm text-center">
@@ -250,7 +274,11 @@ const AttendanceHistory: React.FC<{ user: User }> = ({ user }) => {
             </div>
           )}
 
-          {/* Filter + Records */}
+          {/* Calendar view */}
+          {view === 'calendar' && <AttendanceHeatmap records={records} />}
+
+          {/* Filter + Records (list view only) */}
+          {view === 'list' && (
           <div className="bg-white rounded-2xl md:rounded-[3rem] shadow-sm border border-slate-100 overflow-hidden">
             <div className="p-6 md:p-8 border-b border-slate-50 space-y-4">
               <div className="flex items-center gap-4">
@@ -384,6 +412,7 @@ const AttendanceHistory: React.FC<{ user: User }> = ({ user }) => {
               </div>
             )}
           </div>
+          )}
         </>
       )}
     </div>
