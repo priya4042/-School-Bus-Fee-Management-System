@@ -201,6 +201,28 @@ const UpiPaymentFlow: React.FC<UpiPaymentFlowProps> = ({
 
       if (insertError) throw insertError;
 
+      // Notify all admins so their Topbar toast fires
+      try {
+        const { data: admins } = await supabase
+          .from('profiles')
+          .select('id')
+          .in('role', ['ADMIN', 'SUPER_ADMIN']);
+
+        const adminIds = (admins || []).map((a: any) => a.id).filter(Boolean);
+        if (adminIds.length > 0) {
+          await supabase.from('notifications').insert(
+            adminIds.map((adminId: string) => ({
+              user_id: adminId,
+              title: 'New UPI Payment Pending',
+              message: `${studentName} submitted ₹${amount.toLocaleString()} (UTR: ${utrInput.trim()}). Verify in Payments → Verify UPI.`,
+              type: 'INFO',
+            }))
+          );
+        }
+      } catch (err) {
+        console.warn('Failed to notify admins (continuing):', err);
+      }
+
       // Show success
       setSubmitted(true);
       showToast('Payment submitted successfully. Awaiting verification.', 'success');

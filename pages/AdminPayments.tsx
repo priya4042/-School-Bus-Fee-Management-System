@@ -4,9 +4,11 @@ import { calculateCurrentLedger } from '../utils/feeCalculator';
 import { MONTHS } from '../constants';
 import Reports from './Reports';
 import MiniLoader from '../components/MiniLoader';
+import PendingUpiVerifications from '../components/Admin/PendingUpiVerifications';
 
 const AdminPayments: React.FC = () => {
-  const [view, setView] = useState<'payments' | 'reports'>('payments');
+  const [view, setView] = useState<'payments' | 'verify' | 'reports'>('payments');
+  const [pendingCount, setPendingCount] = useState(0);
   const [payments, setPayments] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [filterStatus, setFilterStatus] = useState<'all' | 'paid' | 'pending' | 'overdue'>('all');
@@ -14,7 +16,35 @@ const AdminPayments: React.FC = () => {
 
   useEffect(() => {
     fetchPayments();
+    fetchPendingCount();
+
+    const channel = supabase
+      .channel('admin-pending-upi-badge')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'payments' },
+        () => fetchPendingCount()
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, []);
+
+  const fetchPendingCount = async () => {
+    try {
+      const { count, error } = await supabase
+        .from('payments')
+        .select('id', { count: 'exact', head: true })
+        .eq('status', 'pending')
+        .eq('payment_method', 'upi');
+      if (error) throw error;
+      setPendingCount(count || 0);
+    } catch (err) {
+      console.warn('Failed to fetch pending count:', err);
+    }
+  };
 
   const fetchPayments = async () => {
     try {
@@ -119,14 +149,24 @@ const AdminPayments: React.FC = () => {
             <p className="text-slate-500 font-bold uppercase text-[10px] tracking-widest mt-1">System-Wide Payment Tracking</p>
           </div>
         ) : <div />}
-        <div className="flex bg-white p-1 rounded-xl border border-slate-200">
-          <button onClick={() => setView('payments')} className={`px-4 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest ${view === 'payments' ? 'bg-primary text-white' : 'text-slate-500'}`}>Payments</button>
-          <button onClick={() => setView('reports')} className={`px-4 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest ${view === 'reports' ? 'bg-primary text-white' : 'text-slate-500'}`}>Reports</button>
+        <div className="flex bg-white p-1 rounded-xl border border-slate-200 overflow-x-auto scrollbar-hide">
+          <button onClick={() => setView('payments')} className={`px-3 md:px-4 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest flex-shrink-0 ${view === 'payments' ? 'bg-primary text-white' : 'text-slate-500'}`}>Payments</button>
+          <button onClick={() => setView('verify')} className={`px-3 md:px-4 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest flex-shrink-0 flex items-center gap-2 ${view === 'verify' ? 'bg-amber-500 text-white' : 'text-slate-500'}`}>
+            <span>Verify UPI</span>
+            {pendingCount > 0 && (
+              <span className={`min-w-[18px] h-[18px] px-1 rounded-full text-[9px] font-black flex items-center justify-center ${view === 'verify' ? 'bg-white text-amber-600' : 'bg-amber-500 text-white'}`}>
+                {pendingCount}
+              </span>
+            )}
+          </button>
+          <button onClick={() => setView('reports')} className={`px-3 md:px-4 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest flex-shrink-0 ${view === 'reports' ? 'bg-primary text-white' : 'text-slate-500'}`}>Reports</button>
         </div>
       </div>
 
       {view === 'reports' ? (
         <Reports />
+      ) : view === 'verify' ? (
+        <PendingUpiVerifications />
       ) : (
         <>
 

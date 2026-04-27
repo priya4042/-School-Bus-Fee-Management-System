@@ -549,6 +549,25 @@ export const useFees = () => {
 
   useEffect(() => {
     fetchDues();
+
+    // Refresh when admin confirms/rejects a payment elsewhere
+    const channel = supabase
+      .channel('fees-dues-watch')
+      .on(
+        'postgres_changes',
+        { event: 'UPDATE', schema: 'public', table: 'monthly_dues' },
+        () => fetchDues()
+      )
+      .on(
+        'postgres_changes',
+        { event: 'INSERT', schema: 'public', table: 'receipts' },
+        () => fetchDues()
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, []);
 
   return {
