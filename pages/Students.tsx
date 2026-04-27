@@ -313,36 +313,38 @@ const Students: React.FC = () => {
   };
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+    <div className="space-y-4 md:space-y-6">
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3 md:gap-4">
         {activeSection === 'students' ? (
           <div>
             <h2 className="text-xl md:text-2xl font-black text-slate-800 tracking-tight">Student & Fee Management</h2>
-            <p className="text-secondary font-bold uppercase text-[10px] tracking-widest">Enrollment, Fleet Mapping, Monthly & Financial Year Fees</p>
+            <p className="text-secondary font-bold uppercase text-[9px] md:text-[10px] tracking-widest">Enrollment, Fleet Mapping, Monthly & Financial Year Fees</p>
           </div>
         ) : <div />}
-        <div className="flex gap-3">
-          <div className="flex p-1 bg-white border border-slate-200 rounded-2xl shadow-sm">
+        <div className="flex gap-2 md:gap-3">
+          <div className="flex p-1 bg-white border border-slate-200 rounded-2xl shadow-sm flex-1 lg:flex-none">
             <button
               onClick={() => setActiveSection('students')}
-              className={`px-5 py-2.5 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all ${activeSection === 'students' ? 'bg-primary text-white shadow-lg shadow-primary/20' : 'text-slate-500'}`}
+              className={`flex-1 lg:flex-none px-3 md:px-5 py-2.5 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all ${activeSection === 'students' ? 'bg-primary text-white shadow-lg shadow-primary/20' : 'text-slate-500'}`}
             >
               Students
             </button>
             <button
               onClick={() => setActiveSection('fees')}
-              className={`px-5 py-2.5 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all ${activeSection === 'fees' ? 'bg-primary text-white shadow-lg shadow-primary/20' : 'text-slate-500'}`}
+              className={`flex-1 lg:flex-none px-3 md:px-5 py-2.5 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all ${activeSection === 'fees' ? 'bg-primary text-white shadow-lg shadow-primary/20' : 'text-slate-500'}`}
             >
-              Fee Management
+              <span className="hidden md:inline">Fee Management</span>
+              <span className="md:hidden">Fees</span>
             </button>
           </div>
           {activeSection === 'students' && (
-            <button 
+            <button
               onClick={() => { resetForm(); setIsModalOpen(true); }}
-              className="bg-primary text-white px-8 py-3 rounded-2xl font-black text-[10px] uppercase tracking-widest flex items-center justify-center gap-3 hover:bg-blue-700 transition-all shadow-xl shadow-primary/20"
+              className="bg-primary text-white px-4 md:px-8 py-3 rounded-2xl font-black text-[10px] uppercase tracking-widest flex items-center justify-center gap-2 md:gap-3 hover:bg-blue-700 transition-all shadow-xl shadow-primary/20 flex-shrink-0"
             >
               <i className="fas fa-plus"></i>
-              Register Student
+              <span className="hidden md:inline">Register Student</span>
+              <span className="md:hidden">Add</span>
             </button>
           )}
         </div>
@@ -355,25 +357,76 @@ const Students: React.FC = () => {
       ) : (
 
       <div className="bg-white rounded-2xl md:rounded-[2.5rem] border border-slate-200 shadow-premium overflow-hidden">
-        <div className="p-6 bg-slate-50/50 border-b border-slate-100">
-          <div className="relative max-w-md">
-            <i className="fas fa-search absolute left-5 top-1/2 -translate-y-1/2 text-slate-400"></i>
-            <input 
-              type="text" 
-              placeholder="Search by student name or admission number..." 
+        <div className="p-4 md:p-6 bg-slate-50/50 border-b border-slate-100">
+          <div className="relative md:max-w-md">
+            <i className="fas fa-search absolute left-4 md:left-5 top-1/2 -translate-y-1/2 text-slate-400 text-xs md:text-sm"></i>
+            <input
+              type="text"
+              placeholder="Search by name or admission..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-12 pr-6 py-3 rounded-2xl border border-primary/20 bg-primary/5 focus:border-primary focus:ring-4 focus:ring-primary/10 outline-none transition-all font-bold text-sm"
+              className="w-full pl-10 md:pl-12 pr-4 md:pr-6 py-3 rounded-2xl border border-primary/20 bg-primary/5 focus:border-primary focus:ring-4 focus:ring-primary/10 outline-none transition-all font-bold text-sm"
             />
           </div>
         </div>
 
-        <div className="responsive-table-container">
-          {loading ? (
-            <div className="flex flex-col items-center justify-center h-80">
-              <i className="fas fa-circle-notch fa-spin text-primary text-3xl"></i>
-            </div>
-          ) : (
+        {loading ? (
+          <div className="flex flex-col items-center justify-center h-80">
+            <i className="fas fa-circle-notch fa-spin text-primary text-3xl"></i>
+          </div>
+        ) : (
+          <>
+          {/* Mobile cards (<md) */}
+          <div className="md:hidden divide-y divide-slate-50">
+            {filteredStudents.map((student) => (
+              <div key={student.id} className="p-4 space-y-3">
+                <div className="flex items-start gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center font-black flex-shrink-0">
+                    {student.full_name?.charAt(0) || '?'}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="font-black text-slate-800 tracking-tight text-sm truncate">{student.full_name}</p>
+                    <p className="text-[10px] text-slate-400 font-black uppercase tracking-widest">
+                      Adm {student.admission_number} · {student.grade}-{student.section}
+                    </p>
+                  </div>
+                  <p className="text-sm font-black text-slate-800 flex-shrink-0">₹{student.monthly_fee || student.base_fee || 0}</p>
+                </div>
+                <div className="grid grid-cols-2 gap-2 pl-13 ml-13">
+                  <div>
+                    <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest">Route / Bus</p>
+                    <p className="text-[11px] font-bold text-slate-700 truncate">{student.routes?.route_name || 'No Route'}</p>
+                    <p className="text-[10px] text-slate-400 font-bold truncate">{getBusDisplay(student)}</p>
+                  </div>
+                  <div>
+                    <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest">Parent</p>
+                    <p className="text-[11px] font-bold text-slate-700 truncate">{student.profiles?.full_name || student.parent_name || 'Unassigned'}</p>
+                    <p className="text-[10px] text-slate-400 font-bold truncate">{student.profiles?.phone_number || student.parent_phone || ''}</p>
+                  </div>
+                </div>
+                <div className="flex gap-2 pt-1">
+                  <button onClick={() => handleViewFees(student)} className="flex-1 h-10 flex items-center justify-center gap-1 bg-indigo-50 text-indigo-600 rounded-xl text-[10px] font-black uppercase tracking-widest">
+                    <i className="fas fa-receipt text-xs"></i> Fees
+                  </button>
+                  <button onClick={() => handleEdit(student)} className="flex-1 h-10 flex items-center justify-center gap-1 bg-primary/10 text-primary rounded-xl text-[10px] font-black uppercase tracking-widest">
+                    <i className="fas fa-edit text-xs"></i> Edit
+                  </button>
+                  <button onClick={() => handleDelete(student.id, student.full_name)} className="w-10 h-10 flex items-center justify-center bg-red-50 text-red-500 rounded-xl">
+                    <i className="fas fa-trash-alt text-xs"></i>
+                  </button>
+                </div>
+              </div>
+            ))}
+            {filteredStudents.length === 0 && (
+              <div className="p-12 text-center">
+                <i className="fas fa-user-graduate text-3xl text-slate-100 mb-3"></i>
+                <p className="text-[10px] font-black text-slate-300 uppercase tracking-widest">No students found</p>
+              </div>
+            )}
+          </div>
+
+          {/* Desktop table (≥md) */}
+          <div className="hidden md:block responsive-table-container">
             <table className="w-full text-left responsive-table">
               <thead>
                 <tr className="bg-slate-50 text-slate-400 text-[9px] font-black uppercase tracking-widest border-b border-slate-100">
@@ -419,8 +472,9 @@ const Students: React.FC = () => {
                 ))}
               </tbody>
             </table>
-          )}
-        </div>
+          </div>
+          </>
+        )}
       </div>
       )}
 

@@ -96,7 +96,7 @@ const Sidebar: React.FC<SidebarProps> = ({ user, onLogout, activeTab, setActiveT
   }, [activeTab]);
 
   const sidebarClasses = `
-    ${isMobile || isTablet ? 'fixed inset-y-0 left-0 z-[2000] w-[70vw] max-w-60 top-16' : 'relative w-60 h-full flex-shrink-0'} 
+    ${isMobile || isTablet ? 'fixed inset-y-0 left-0 z-[2000] w-[70vw] max-w-60 top-16' : 'sticky top-0 w-60 h-screen flex-shrink-0'}
     bg-slate-950 text-white flex flex-col transition-all duration-300
     ${(isMobile || isTablet) && !isOpen ? '-translate-x-full' : 'translate-x-0'}
   `;

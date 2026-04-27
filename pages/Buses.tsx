@@ -103,26 +103,27 @@ const Buses: React.FC = () => {
   const selectClass = "w-full px-5 py-4 rounded-2xl bg-primary/5 border border-primary/20 focus:border-primary focus:ring-4 focus:ring-primary/10 outline-none font-bold bg-white text-slate-800 cursor-pointer transition-all";
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+    <div className="space-y-4 md:space-y-6">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 md:gap-4">
         {view === 'buses' ? (
           <div>
-            <h2 className="text-2xl font-black text-slate-800 tracking-tight">Fleet Asset Control</h2>
-            <p className="text-slate-500 font-bold uppercase text-[10px] tracking-widest">Active vehicle inventory and monitoring</p>
+            <h2 className="text-xl md:text-2xl font-black text-slate-800 tracking-tight">Fleet Asset Control</h2>
+            <p className="text-slate-500 font-bold uppercase text-[9px] md:text-[10px] tracking-widest">Active vehicle inventory and monitoring</p>
           </div>
         ) : <div />}
-        <div className="flex items-center gap-3">
-          <div className="flex bg-white p-1 rounded-xl border border-slate-200">
-            <button onClick={() => setView('buses')} className={`px-4 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest ${view === 'buses' ? 'bg-primary text-white' : 'text-slate-500'}`}>Buses</button>
-            <button onClick={() => setView('routes')} className={`px-4 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest ${view === 'routes' ? 'bg-primary text-white' : 'text-slate-500'}`}>Routes</button>
+        <div className="flex items-center gap-2 md:gap-3">
+          <div className="flex bg-white p-1 rounded-xl border border-slate-200 flex-1 md:flex-none">
+            <button onClick={() => setView('buses')} className={`flex-1 md:flex-none px-4 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest ${view === 'buses' ? 'bg-primary text-white' : 'text-slate-500'}`}>Buses</button>
+            <button onClick={() => setView('routes')} className={`flex-1 md:flex-none px-4 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest ${view === 'routes' ? 'bg-primary text-white' : 'text-slate-500'}`}>Routes</button>
           </div>
           {view === 'buses' && (
-            <button 
+            <button
               onClick={() => { resetForm(); setIsModalOpen(true); }}
-              className="bg-primary text-white px-8 py-3 rounded-2xl font-black text-[10px] uppercase tracking-widest flex items-center gap-3 hover:bg-blue-700 transition-all shadow-xl shadow-primary/20"
+              className="bg-primary text-white px-4 md:px-8 py-3 rounded-2xl font-black text-[10px] uppercase tracking-widest flex items-center gap-2 md:gap-3 hover:bg-blue-700 transition-all shadow-xl shadow-primary/20 flex-shrink-0"
             >
               <i className="fas fa-bus-alt"></i>
-              Register Fleet Asset
+              <span className="hidden md:inline">Register Fleet Asset</span>
+              <span className="md:hidden">Register</span>
             </button>
           )}
         </div>
@@ -134,13 +135,63 @@ const Buses: React.FC = () => {
         <>
 
       <div className="bg-white rounded-2xl md:rounded-[2.5rem] border border-slate-200 overflow-hidden shadow-premium">
-        <div className="overflow-x-auto min-h-[400px]">
-          {loading ? (
-             <div className="flex flex-col items-center justify-center h-80 gap-4">
-                <i className="fas fa-circle-notch fa-spin text-primary text-3xl"></i>
-                <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Scanning Hangar...</p>
-             </div>
-          ) : (
+        {loading ? (
+          <div className="flex flex-col items-center justify-center h-80 gap-4">
+            <i className="fas fa-circle-notch fa-spin text-primary text-3xl"></i>
+            <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Scanning Hangar...</p>
+          </div>
+        ) : buses.length === 0 ? (
+          <div className="p-12 md:p-32 text-center">
+            <i className="fas fa-truck-monster text-4xl md:text-5xl text-slate-100 mb-4 md:mb-6 block"></i>
+            <p className="text-[10px] md:text-[11px] font-black text-slate-300 uppercase tracking-[0.3em] md:tracking-[0.4em]">Zero assets logged in fleet</p>
+          </div>
+        ) : (
+          <>
+          {/* Mobile cards (<md) */}
+          <div className="md:hidden divide-y divide-slate-50">
+            {buses.map((bus) => (
+              <div key={bus.id} className="p-4 space-y-3">
+                <div className="flex items-start gap-3">
+                  <div className="w-11 h-11 rounded-2xl bg-slate-900 text-white flex items-center justify-center flex-shrink-0">
+                    <i className="fas fa-bus text-base"></i>
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <p className="font-black text-slate-800 tracking-tight text-sm uppercase truncate">{bus.bus_number}</p>
+                      <span className={`px-2 py-0.5 rounded-full text-[8px] font-black uppercase tracking-widest border ${
+                        bus.status === 'active' ? 'bg-success/10 text-success border-success/10' :
+                        bus.status === 'maintenance' ? 'bg-danger/10 text-danger border-danger/10' : 'bg-slate-100 text-slate-500 border-slate-200'
+                      }`}>{bus.status?.toUpperCase()}</span>
+                    </div>
+                    <p className="text-[10px] text-slate-400 font-black uppercase tracking-widest mt-0.5 truncate">{bus.plate || bus.vehicle_number}</p>
+                  </div>
+                  <div className="flex gap-2 flex-shrink-0">
+                    <button onClick={() => handleEdit(bus)} className="w-9 h-9 bg-slate-50 rounded-xl text-slate-400 flex items-center justify-center">
+                      <i className="fas fa-edit text-xs"></i>
+                    </button>
+                    <button onClick={() => handleDelete(bus.id, bus.plate || bus.vehicle_number)} className="w-9 h-9 bg-slate-50 rounded-xl text-slate-400 flex items-center justify-center">
+                      <i className="fas fa-trash-alt text-xs"></i>
+                    </button>
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-2 pl-14">
+                  <div>
+                    <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest">Driver</p>
+                    <p className="text-xs font-bold text-slate-700 truncate">{bus.driver_name || 'Unassigned'}</p>
+                    {bus.driver_phone && <p className="text-[10px] text-slate-400 font-bold">{bus.driver_phone}</p>}
+                  </div>
+                  <div>
+                    <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest">Route</p>
+                    <p className="text-xs font-bold text-slate-700 truncate">{bus.route?.route_name || bus.routes?.route_name || 'Unassigned'}</p>
+                    <p className="text-[10px] text-slate-400 font-bold">{bus.capacity} Seats</p>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Desktop table (≥md) */}
+          <div className="hidden md:block overflow-x-auto min-h-[400px]">
             <table className="w-full text-left">
               <thead>
                 <tr className="bg-slate-50/50 text-slate-400 text-[9px] font-black uppercase tracking-[0.2em] border-b border-slate-100">
@@ -213,8 +264,9 @@ const Buses: React.FC = () => {
                 )}
               </tbody>
             </table>
-          )}
-        </div>
+          </div>
+          </>
+        )}
       </div>
 
       <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title={editingId ? "Edit Fleet Asset" : "Register Fleet Asset"} maxWidthClass="max-w-4xl" bodyClassName="p-6 md:p-8">
