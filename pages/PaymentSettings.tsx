@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
 import { showToast, showLoading, closeSwal } from '../lib/swal';
+import { notifyUpiSettingsUpdated } from '../lib/upiSettings';
 
 interface PaymentConfig {
   id?: string;
@@ -108,6 +109,7 @@ const PaymentSettings: React.FC = () => {
 
         if (error) throw error;
         showToast('Payment settings updated successfully', 'success');
+        notifyUpiSettingsUpdated();
       } else {
         // Insert new
         const { data, error } = await supabase
@@ -137,6 +139,7 @@ const PaymentSettings: React.FC = () => {
         }
         showToast('Payment settings created successfully', 'success');
       }
+      notifyUpiSettingsUpdated();
       closeSwal();
     } catch (err: any) {
       console.error('Error saving payment settings:', err);
@@ -166,11 +169,30 @@ const PaymentSettings: React.FC = () => {
     );
   }
 
+  const isLive = !!settings.id && !!settings.upi_id?.includes('@');
+
   return (
-    <div className="max-w-3xl space-y-10 pb-20">
+    <div className="max-w-3xl space-y-6 md:space-y-10 pb-20">
       <div>
-        <h2 className="text-3xl font-black text-slate-800 tracking-tight">Payment Gateway Configuration</h2>
-        <p className="text-slate-500 font-bold uppercase text-[10px] tracking-[0.2em]">Manage UPI and Payment Settings</p>
+        <h2 className="text-xl md:text-3xl font-black text-slate-800 tracking-tight">Payment Gateway Configuration</h2>
+        <p className="text-slate-500 font-bold uppercase text-[9px] md:text-[10px] tracking-[0.2em]">Manage UPI and Payment Settings</p>
+      </div>
+
+      {/* Live status banner */}
+      <div className={`p-4 md:p-5 rounded-2xl border ${isLive ? 'bg-success/5 border-success/20' : 'bg-amber-50 border-amber-200'}`}>
+        <div className="flex items-start gap-3">
+          <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${isLive ? 'bg-success/10 text-success' : 'bg-amber-100 text-amber-600'}`}>
+            <i className={`fas ${isLive ? 'fa-check-circle' : 'fa-exclamation-triangle'} text-lg`}></i>
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className={`text-[11px] font-black uppercase tracking-widest ${isLive ? 'text-success' : 'text-amber-700'}`}>
+              {isLive ? 'Live — parents see your UPI ID' : 'Not configured — parents see fallback'}
+            </p>
+            <p className="text-[10px] font-bold text-slate-600 mt-1 break-all">
+              {isLive ? `Active UPI: ${settings.upi_id} (${settings.business_name})` : 'Save your UPI ID below to start collecting payments.'}
+            </p>
+          </div>
+        </div>
       </div>
 
       {/* Configuration Card */}

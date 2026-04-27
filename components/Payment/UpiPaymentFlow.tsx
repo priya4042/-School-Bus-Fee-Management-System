@@ -2,6 +2,33 @@ import React, { useState, useEffect, useRef } from 'react';
 import QRCode from 'qrcode';
 import { supabase } from '../../lib/supabase';
 import { showToast } from '../../lib/swal';
+import { useUpiSettings } from '../../lib/upiSettings';
+
+type UpiApp = 'gpay' | 'phonepe' | 'paytm' | 'bhim' | 'any';
+
+const buildUpiLink = (app: UpiApp, params: { upiId: string; businessName: string; amount: number; note: string }) => {
+  const query = `pa=${encodeURIComponent(params.upiId)}&pn=${encodeURIComponent(params.businessName)}&am=${params.amount}&cu=INR&tn=${encodeURIComponent(params.note)}`;
+  switch (app) {
+    case 'gpay':
+      return `tez://upi/pay?${query}`;
+    case 'phonepe':
+      return `phonepe://pay?${query}`;
+    case 'paytm':
+      return `paytmmp://pay?${query}`;
+    case 'bhim':
+      return `bhim://pay?${query}`;
+    case 'any':
+    default:
+      return `upi://pay?${query}`;
+  }
+};
+
+const UPI_APPS: { id: UpiApp; label: string; icon: string; color: string }[] = [
+  { id: 'gpay', label: 'Google Pay', icon: 'fab fa-google-pay', color: 'from-blue-500 to-sky-600' },
+  { id: 'phonepe', label: 'PhonePe', icon: 'fas fa-mobile-alt', color: 'from-purple-600 to-violet-700' },
+  { id: 'paytm', label: 'Paytm', icon: 'fas fa-wallet', color: 'from-cyan-500 to-blue-600' },
+  { id: 'bhim', label: 'BHIM', icon: 'fas fa-rupee-sign', color: 'from-orange-500 to-amber-600' },
+];
 
 interface UpiPaymentFlowProps {
   amount: number;
@@ -28,19 +55,19 @@ const UpiPaymentFlow: React.FC<UpiPaymentFlowProps> = ({
   const [error, setError] = useState('');
   const screenshotInputRef = useRef<HTMLInputElement>(null);
 
-  const UPI_ID = import.meta.env.VITE_UPI_ID || 'business@upi';
-  const BUSINESS_NAME = import.meta.env.VITE_BUSINESS_NAME || 'SchoolBusWay';
+  const { settings: upiSettings, configured: upiConfigured } = useUpiSettings();
+  const UPI_ID = upiSettings.upiId;
+  const BUSINESS_NAME = upiSettings.businessName;
+  const [showAppPicker, setShowAppPicker] = useState(false);
 
-  // Generate UPI Link
-  const generateUpiLink = (): string => {
-    return `upi://pay?pa=${UPI_ID}&pn=${encodeURIComponent(BUSINESS_NAME)}&am=${amount}&cu=INR&tn=Bus%20Fee%20${encodeURIComponent(studentName)}`;
-  };
+  const note = `Bus Fee ${studentName}`;
+  const linkParams = { upiId: UPI_ID, businessName: BUSINESS_NAME, amount, note };
 
-  // Generate QR Code
+  // Generate QR Code (always universal upi:// scheme so any app can scan)
   useEffect(() => {
     const generateQr = async () => {
       try {
-        const upiLink = generateUpiLink();
+        const upiLink = buildUpiLink('any', linkParams);
         const qrDataUrl = await QRCode.toDataURL(upiLink, {
           errorCorrectionLevel: 'H',
           type: 'image/png',
@@ -56,12 +83,19 @@ const UpiPaymentFlow: React.FC<UpiPaymentFlowProps> = ({
     };
 
     generateQr();
-  }, [amount, studentName]);
+  }, [amount, studentName, UPI_ID, BUSINESS_NAME]);
 
-  // Handle Pay Button - Open UPI Intent
-  const handlePayViaUpi = () => {
-    const upiLink = generateUpiLink();
-    window.location.href = upiLink;
+  // Open the picked UPI app
+  const handlePayWithApp = (app: UpiApp) => {
+    const link = buildUpiLink(app, linkParams);
+    window.location.href = link;
+    // If the app isn't installed, deep links silently fail. Fallback to universal upi:// after a brief moment.
+    if (app !== 'any') {
+      setTimeout(() => {
+        window.location.href = buildUpiLink('any', linkParams);
+      }, 1500);
+    }
+    setShowAppPicker(false);
   };
 
   // Validate UTR
@@ -222,9 +256,22 @@ const UpiPaymentFlow: React.FC<UpiPaymentFlowProps> = ({
         <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mt-3">{studentName}</p>
       </div>
 
-      {/* UPI Payment Button */}
+      {/* Configuration warning */}
+      {!upiConfigured && (
+        <div className="p-4 rounded-2xl border border-amber-200 bg-amber-50">
+          <p className="text-[10px] font-black text-amber-700 uppercase tracking-widest flex items-center gap-2">
+            <i className="fas fa-exclamation-triangle"></i>
+            UPI not configured by admin yet
+          </p>
+          <p className="text-[10px] font-bold text-amber-600 mt-1">
+            Using fallback ID — payments may not reach the correct account.
+          </p>
+        </div>
+      )}
+
+      {/* Primary "Pay Now" button — opens app picker */}
       <button
-        onClick={handlePayViaUpi}
+        onClick={() => setShowAppPicker(!showAppPicker)}
         disabled={loading}
         className="group w-full flex items-center justify-between p-5 bg-gradient-to-r from-green-600 to-emerald-600 border border-green-500 rounded-2xl hover:from-green-700 hover:to-emerald-700 transition-all active:scale-[0.98] text-white shadow-xl shadow-green-600/20 disabled:opacity-50 disabled:cursor-not-allowed"
       >
@@ -234,11 +281,40 @@ const UpiPaymentFlow: React.FC<UpiPaymentFlowProps> = ({
           </div>
           <div className="text-left">
             <p className="font-black text-white text-base">Pay via UPI App</p>
-            <p className="text-[9px] font-bold text-white/70 uppercase tracking-wider">Google Pay, PhonePe, BHIM, Paytm</p>
+            <p className="text-[9px] font-bold text-white/70 uppercase tracking-wider">
+              {showAppPicker ? 'Pick your preferred UPI app below' : 'Google Pay, PhonePe, BHIM, Paytm'}
+            </p>
           </div>
         </div>
-        <i className="fas fa-chevron-right text-white/60"></i>
+        <i className={`fas fa-chevron-${showAppPicker ? 'up' : 'down'} text-white/60`}></i>
       </button>
+
+      {/* App picker grid */}
+      {showAppPicker && (
+        <div className="grid grid-cols-2 gap-3 animate-in slide-in-from-top-2 duration-200">
+          {UPI_APPS.map((app) => (
+            <button
+              key={app.id}
+              onClick={() => handlePayWithApp(app.id)}
+              className={`group relative overflow-hidden rounded-2xl bg-gradient-to-br ${app.color} text-white p-4 shadow-lg active:scale-95 transition-all`}
+            >
+              <div className="flex flex-col items-center gap-2">
+                <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center border border-white/20">
+                  <i className={`${app.icon} text-base`}></i>
+                </div>
+                <p className="text-[10px] font-black uppercase tracking-widest">{app.label}</p>
+              </div>
+            </button>
+          ))}
+          <button
+            onClick={() => handlePayWithApp('any')}
+            className="col-span-2 rounded-2xl border-2 border-dashed border-slate-200 bg-white text-slate-700 p-3 active:scale-95 transition-all flex items-center justify-center gap-2"
+          >
+            <i className="fas fa-th-large text-slate-400"></i>
+            <p className="text-[10px] font-black uppercase tracking-widest">Any other UPI app</p>
+          </button>
+        </div>
+      )}
 
       {/* OR Divider */}
       <div className="relative flex items-center gap-3 py-2">
