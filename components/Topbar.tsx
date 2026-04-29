@@ -61,6 +61,7 @@ const Topbar: React.FC<TopbarProps> = ({ user, onMenuClick, onOpenNotifications,
       .from('notifications')
       .select('*')
       .eq('user_id', user.id)
+      .not('title', 'ilike', '%[CHAT]%')
       .order('created_at', { ascending: false })
       .limit(30);
 
@@ -88,8 +89,12 @@ const Topbar: React.FC<TopbarProps> = ({ user, onMenuClick, onOpenNotifications,
         (payload: any) => {
           if (payload?.eventType === 'INSERT' && payload.new) {
             const inserted = mapNotification(payload.new);
-            setNotifications((prev) => [inserted, ...prev].slice(0, 30));
-            showToast(inserted.title || 'New notification', inserted.type === 'WARNING' ? 'warning' : 'info');
+            const isChatMessage = String(inserted.title || '').includes('[CHAT]');
+            // Don't list chat messages in the alert dropdown — they live inside the SupportChat panel
+            if (!isChatMessage) {
+              setNotifications((prev) => [inserted, ...prev].slice(0, 30));
+              showToast(inserted.title || 'New notification', inserted.type === 'WARNING' ? 'warning' : 'info');
+            }
           } else if (payload?.eventType === 'UPDATE' && payload.new) {
             const updated = mapNotification(payload.new);
             setNotifications((prev) => prev.map((item) => (item.id === updated.id ? updated : item)));
