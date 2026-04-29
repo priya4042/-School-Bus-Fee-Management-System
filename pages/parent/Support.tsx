@@ -7,6 +7,7 @@ import {
 import { supabase } from '../../lib/supabase';
 import { showToast } from '../../lib/swal';
 import { useLanguage } from '../../lib/i18n';
+import Modal from '../../components/Modal';
 
 const Support: React.FC<{ user: User; onOpenDocumentation?: () => void; section?: 'ticket' | 'faq' }> = ({ user, section = 'ticket' }) => {
   const [searchQuery, setSearchQuery] = useState('');
@@ -216,91 +217,81 @@ const Support: React.FC<{ user: User; onOpenDocumentation?: () => void; section?
       </div>
 
       {/* Ticket Form Modal */}
-      {showTicketForm && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[2000] overflow-y-auto">
-          <div className="flex min-h-full items-start justify-center p-4 pt-20 pb-6 md:pt-24">
-          <div className="bg-white rounded-2xl md:rounded-[3rem] p-5 md:p-10 max-w-lg w-full shadow-2xl animate-in fade-in zoom-in duration-300 max-h-[calc(100vh-6rem)] overflow-y-auto">
-            <div className="flex items-center justify-between mb-8">
-              <h2 className="text-xl md:text-2xl font-black text-slate-900 tracking-tight">Submit Support Ticket</h2>
-              <button
-                onClick={() => setShowTicketForm(false)}
-                className="w-10 h-10 bg-slate-100 rounded-xl flex items-center justify-center text-slate-500 hover:bg-slate-200 transition-colors"
-              >
-                ✕
-              </button>
-            </div>
+      <Modal
+        isOpen={showTicketForm}
+        onClose={() => setShowTicketForm(false)}
+        title="Submit Support Ticket"
+        maxWidthClass="max-w-lg"
+        bodyClassName="p-4 md:p-8"
+      >
+        <div className="space-y-4 md:space-y-6">
+          <div className="space-y-2">
+            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Subject</label>
+            <input
+              type="text"
+              value={ticketSubject}
+              onChange={(e) => setTicketSubject(e.target.value)}
+              className="w-full px-4 md:px-5 py-3 md:py-4 rounded-xl md:rounded-2xl bg-slate-50 border border-slate-200 font-bold text-sm outline-none focus:ring-4 ring-primary/10 focus:border-primary"
+              placeholder="Briefly describe your issue"
+            />
+          </div>
 
-            <div className="space-y-6">
-              <div className="space-y-2">
-                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Subject</label>
-                <input
-                  type="text"
-                  value={ticketSubject}
-                  onChange={(e) => setTicketSubject(e.target.value)}
-                  className="w-full px-5 py-4 rounded-2xl bg-slate-50 border border-slate-200 font-bold text-sm outline-none focus:ring-4 ring-primary/10 focus:border-primary"
-                  placeholder="Briefly describe your issue"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Priority</label>
-                <div className="flex gap-3">
-                  {(['LOW', 'MEDIUM', 'HIGH'] as const).map((p) => (
-                    <button
-                      key={p}
-                      onClick={() => setTicketPriority(p)}
-                      className={`flex-1 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${
-                        ticketPriority === p
-                          ? p === 'HIGH'
-                            ? 'bg-red-500 text-white'
-                            : p === 'MEDIUM'
-                            ? 'bg-amber-500 text-white'
-                            : 'bg-emerald-500 text-white'
-                          : 'bg-slate-100 text-slate-500 hover:bg-slate-200'
-                      }`}
-                    >
-                      {p}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Description</label>
-                <textarea
-                  value={ticketMessage}
-                  onChange={(e) => setTicketMessage(e.target.value)}
-                  rows={5}
-                  className="w-full px-5 py-4 rounded-2xl bg-slate-50 border border-slate-200 font-bold text-sm outline-none focus:ring-4 ring-primary/10 focus:border-primary resize-none"
-                  placeholder="Describe your issue in detail..."
-                />
-              </div>
-
-              <div className="flex gap-4">
+          <div className="space-y-2">
+            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Priority</label>
+            <div className="flex gap-2 md:gap-3">
+              {(['LOW', 'MEDIUM', 'HIGH'] as const).map((p) => (
                 <button
-                  onClick={() => setShowTicketForm(false)}
-                  className="flex-1 py-4 bg-slate-100 text-slate-600 rounded-2xl font-black uppercase text-[10px] tracking-widest hover:bg-slate-200 transition-all"
+                  key={p}
+                  onClick={() => setTicketPriority(p)}
+                  className={`flex-1 py-2.5 md:py-3 rounded-lg md:rounded-xl text-[10px] font-black uppercase tracking-widest transition-all active:scale-95 ${
+                    ticketPriority === p
+                      ? p === 'HIGH'
+                        ? 'bg-red-500 text-white'
+                        : p === 'MEDIUM'
+                        ? 'bg-amber-500 text-white'
+                        : 'bg-emerald-500 text-white'
+                      : 'bg-slate-100 text-slate-500 hover:bg-slate-200'
+                  }`}
                 >
-                  Cancel
+                  {p}
                 </button>
-                <button
-                  onClick={handleSubmitTicket}
-                  disabled={submitting}
-                  className="flex-1 py-4 bg-primary text-white rounded-2xl font-black uppercase text-[10px] tracking-widest shadow-xl shadow-primary/20 hover:bg-blue-800 transition-all disabled:opacity-60 flex items-center justify-center gap-2"
-                >
-                  {submitting ? (
-                    <i className="fas fa-circle-notch fa-spin"></i>
-                  ) : (
-                    <Send size={16} />
-                  )}
-                  {submitting ? 'Sending...' : 'Submit Ticket'}
-                </button>
-              </div>
+              ))}
             </div>
           </div>
+
+          <div className="space-y-2">
+            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Description</label>
+            <textarea
+              value={ticketMessage}
+              onChange={(e) => setTicketMessage(e.target.value)}
+              rows={5}
+              className="w-full px-4 md:px-5 py-3 md:py-4 rounded-xl md:rounded-2xl bg-slate-50 border border-slate-200 font-bold text-sm outline-none focus:ring-4 ring-primary/10 focus:border-primary resize-none"
+              placeholder="Describe your issue in detail..."
+            />
+          </div>
+
+          <div className="flex gap-2 md:gap-4 pt-2">
+            <button
+              onClick={() => setShowTicketForm(false)}
+              className="flex-1 py-3 md:py-4 bg-slate-100 text-slate-600 rounded-xl md:rounded-2xl font-black uppercase text-[10px] tracking-widest hover:bg-slate-200 active:scale-95 transition-all"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={handleSubmitTicket}
+              disabled={submitting}
+              className="flex-1 py-3 md:py-4 bg-primary text-white rounded-xl md:rounded-2xl font-black uppercase text-[10px] tracking-widest shadow-xl shadow-primary/20 hover:bg-blue-800 active:scale-95 transition-all disabled:opacity-60 flex items-center justify-center gap-2"
+            >
+              {submitting ? (
+                <i className="fas fa-circle-notch fa-spin"></i>
+              ) : (
+                <Send size={16} />
+              )}
+              {submitting ? 'Sending...' : 'Submit Ticket'}
+            </button>
           </div>
         </div>
-      )}
+      </Modal>
 
       {/* Success banner */}
       {submitted && (
