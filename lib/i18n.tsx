@@ -79,6 +79,75 @@ const translations: Record<Lang, Record<string, string>> = {
     support_active: 'Support Active', open_ticket: 'Open Ticket', call_now: 'Call Now',
     send_email: 'Send Email', all_caught_up: 'All Caught Up',
     sign_out: 'Sign Out', confirm_sign_out: 'Are you sure you want to sign out?',
+
+    // Login / Register / Forgot
+    secure_sign_in: 'Secure Sign In', sign_in: 'Sign In', signing_in: 'Signing in...',
+    email_or_phone: 'Email or Phone', enter_email_or_phone: 'Enter Email or Phone',
+    enter_admission: 'Enter Admission Number', enter_password: 'Enter Password',
+    legal_and_info: 'Legal & Info', more_information: 'More Information',
+    about_us: 'About Us', services: 'Services', contact: 'Contact',
+    refund: 'Refund', shipping: 'Shipping',
+    incorrect_password: 'Incorrect password. If you have forgotten your password, please reset it.',
+    login_failed: 'Login failed. Please check your credentials.',
+    login_successful: 'Login successful',
+    parent_short: 'Parent', admin_short: 'Admin',
+    family_gateway: 'Secure Family Gateway', operations_hub: 'Global Operations Hub',
+    bus_admin_terminal: 'Bus Admin Terminal',
+
+    // Parent Dashboard
+    family_hub_title: 'Family Hub', students_registered: 'Students Registered',
+    consolidated_dues: 'Consolidated Dues',
+    live_monitor: 'Live Monitor', establish_uplink: 'Establish Uplink',
+    access_restricted: 'Access Restricted', tracking_not_enabled: 'Tracking access not enabled — contact Bus Administrator',
+    encrypted_stream: 'Connect to encrypted satellite stream',
+    bus_at_school: 'Bus at Campus • Final Stop', live_telemetry: 'Live Telemetry',
+    set_boarding: 'Set Boarding', live_cam: 'Live Cam', disconnect: 'Disconnect',
+    pay_now_short: 'Pay Now', wait_clear_prior: 'Wait: Clear Prior',
+    no_dues_yet: 'No Dues Yet', no_dues_msg: 'No fee dues found yet for this child.',
+    upcoming_dues: 'Upcoming Dues', dues_caught_up: 'All dues caught up',
+
+    // Fees / FeeHistory
+    fee_ledger_title: 'Fee Ledger', payment_history_subtitle: 'Comprehensive Payment History & Dues',
+    spending_summary: 'Spending Summary', total_paid: 'Paid', avg_per_month: 'Avg / Month',
+    paid_only: 'Paid only', already_absorbed: 'Already absorbed',
+    months_label: 'Months', records_label: 'Records', streak_label: 'Streak',
+    fee_due: 'Due', fees_due: 'Due',
+    download_invoice: 'Download Invoice', view_receipt: 'View Receipt',
+    receipt_preview: 'Receipt Preview',
+
+    // Notifications page
+    alert_center_title: 'Alert Center', system_notifications: 'System Notifications & Updates',
+    mark_all: 'Mark All Read', filter_all: 'All', filter_unread: 'Unread',
+    filter_payment: 'Payment', filter_bus: 'Bus', filter_alerts: 'Alerts',
+    no_notifications_yet: 'No Notifications Yet',
+    new_alerts_realtime: 'New alerts will land here in real time.',
+    you_have_read_everything: 'You have read everything — nice work.',
+    view_more: 'View', show_less: 'Show less',
+
+    // Attendance
+    daily_pickup_drop: 'Daily Pickup & Drop Records',
+    calendar_view: 'Calendar', list_view: 'List',
+    attendance_overview: 'Attendance Overview', attendance_calendar: 'Attendance Calendar',
+    rate_label: 'Rate', no_record: 'No record',
+
+    // Routes
+    family_routes: 'Child Route Details', boarding_point_label: 'Boarding Point',
+    not_set: 'Not Set', not_assigned: 'Not Assigned',
+
+    // Generic actions
+    add: 'Add', edit: 'Edit', delete: 'Delete', confirm: 'Confirm', remove: 'Remove',
+    update: 'Update', refresh: 'Refresh', retry: 'Retry', open: 'Open',
+
+    // Misc parent
+    your_family: 'Your Family', viewing: 'Viewing', child: 'Child',
+    pay_via_upi: 'Pay via UPI App', any_upi_app: 'Any other UPI app',
+    upi_not_configured: 'UPI not configured by admin yet',
+    fallback_warning: 'Using fallback ID — payments may not reach the correct account.',
+    paying_to: 'Paying to', amount_to_pay: 'Amount to Pay',
+    submitted_awaiting: 'Awaiting verification from admin',
+    submit_payment: 'Submit Payment', submitting: 'Submitting...',
+    utr_label: 'UTR / Transaction ID', screenshot_optional: 'Payment Screenshot (Optional)',
+    upload_screenshot: 'Click to upload screenshot',
   },
   hi: {
     // Navigation
@@ -156,6 +225,75 @@ const translations: Record<Lang, Record<string, string>> = {
     support_active: 'सहायता सक्रिय', open_ticket: 'टिकट खोलें', call_now: 'अभी कॉल करें',
     send_email: 'ईमेल भेजें', all_caught_up: 'सब कुछ पढ़ लिया',
     sign_out: 'साइन आउट', confirm_sign_out: 'क्या आप साइन आउट करना चाहते हैं?',
+
+    // Login / Register / Forgot
+    secure_sign_in: 'सुरक्षित साइन इन', sign_in: 'साइन इन', signing_in: 'साइन इन हो रहा है...',
+    email_or_phone: 'ईमेल या फ़ोन', enter_email_or_phone: 'ईमेल या फ़ोन दर्ज करें',
+    enter_admission: 'प्रवेश संख्या दर्ज करें', enter_password: 'पासवर्ड दर्ज करें',
+    legal_and_info: 'कानूनी और जानकारी', more_information: 'अधिक जानकारी',
+    about_us: 'हमारे बारे में', services: 'सेवाएं', contact: 'संपर्क',
+    refund: 'रिफंड', shipping: 'शिपिंग',
+    incorrect_password: 'गलत पासवर्ड। यदि आप पासवर्ड भूल गए हैं, तो कृपया रीसेट करें।',
+    login_failed: 'लॉगिन विफल। कृपया अपनी जानकारी जांचें।',
+    login_successful: 'लॉगिन सफल',
+    parent_short: 'अभिभावक', admin_short: 'एडमिन',
+    family_gateway: 'सुरक्षित परिवार पोर्टल', operations_hub: 'ग्लोबल ऑपरेशन हब',
+    bus_admin_terminal: 'बस एडमिन पोर्टल',
+
+    // Parent Dashboard
+    family_hub_title: 'परिवार हब', students_registered: 'पंजीकृत छात्र',
+    consolidated_dues: 'कुल बकाया',
+    live_monitor: 'लाइव मॉनिटर', establish_uplink: 'कनेक्शन शुरू करें',
+    access_restricted: 'पहुंच प्रतिबंधित', tracking_not_enabled: 'ट्रैकिंग सक्रिय नहीं — बस एडमिन से संपर्क करें',
+    encrypted_stream: 'एन्क्रिप्टेड सैटेलाइट स्ट्रीम से जुड़ें',
+    bus_at_school: 'बस स्कूल पहुँच गई • अंतिम स्टॉप', live_telemetry: 'लाइव टेलीमेट्री',
+    set_boarding: 'बोर्डिंग सेट करें', live_cam: 'लाइव कैम', disconnect: 'डिस्कनेक्ट',
+    pay_now_short: 'अभी भुगतान', wait_clear_prior: 'प्रतीक्षा: पिछला साफ़ करें',
+    no_dues_yet: 'अभी कोई बकाया नहीं', no_dues_msg: 'इस बच्चे के लिए अभी तक कोई शुल्क बकाया नहीं।',
+    upcoming_dues: 'आगामी बकाया', dues_caught_up: 'सभी बकाया साफ़ हैं',
+
+    // Fees / FeeHistory
+    fee_ledger_title: 'शुल्क खाता', payment_history_subtitle: 'विस्तृत भुगतान इतिहास और बकाया',
+    spending_summary: 'खर्च का सारांश', total_paid: 'भुगतान किया', avg_per_month: 'मासिक औसत',
+    paid_only: 'केवल भुगतान', already_absorbed: 'पहले से शामिल',
+    months_label: 'महीने', records_label: 'रिकॉर्ड', streak_label: 'लगातार',
+    fee_due: 'बकाया', fees_due: 'बकाया',
+    download_invoice: 'चालान डाउनलोड करें', view_receipt: 'रसीद देखें',
+    receipt_preview: 'रसीद पूर्वावलोकन',
+
+    // Notifications page
+    alert_center_title: 'अलर्ट सेंटर', system_notifications: 'सिस्टम सूचनाएं और अपडेट',
+    mark_all: 'सभी पढ़ा हुआ करें', filter_all: 'सभी', filter_unread: 'नई',
+    filter_payment: 'भुगतान', filter_bus: 'बस', filter_alerts: 'अलर्ट',
+    no_notifications_yet: 'अभी कोई सूचना नहीं',
+    new_alerts_realtime: 'नई सूचनाएं तुरंत यहाँ दिखेंगी।',
+    you_have_read_everything: 'सब कुछ पढ़ लिया — बढ़िया!',
+    view_more: 'देखें', show_less: 'कम दिखाएं',
+
+    // Attendance
+    daily_pickup_drop: 'दैनिक पिकअप और ड्रॉप रिकॉर्ड',
+    calendar_view: 'कैलेंडर', list_view: 'सूची',
+    attendance_overview: 'उपस्थिति विवरण', attendance_calendar: 'उपस्थिति कैलेंडर',
+    rate_label: 'दर', no_record: 'कोई रिकॉर्ड नहीं',
+
+    // Routes
+    family_routes: 'बच्चे के मार्ग विवरण', boarding_point_label: 'बोर्डिंग पॉइंट',
+    not_set: 'सेट नहीं', not_assigned: 'असाइन नहीं',
+
+    // Generic actions
+    add: 'जोड़ें', edit: 'संपादित', delete: 'हटाएं', confirm: 'पुष्टि', remove: 'हटाएं',
+    update: 'अपडेट', refresh: 'रीफ्रेश', retry: 'पुनः प्रयास', open: 'खोलें',
+
+    // Misc parent
+    your_family: 'आपका परिवार', viewing: 'देख रहे हैं', child: 'बच्चा',
+    pay_via_upi: 'UPI ऐप से भुगतान', any_upi_app: 'कोई अन्य UPI ऐप',
+    upi_not_configured: 'UPI अभी कॉन्फ़िगर नहीं',
+    fallback_warning: 'फ़ॉलबैक ID प्रयोग में — भुगतान सही खाते में नहीं पहुँच सकता।',
+    paying_to: 'भुगतान प्राप्तकर्ता', amount_to_pay: 'भुगतान राशि',
+    submitted_awaiting: 'एडमिन की पुष्टि की प्रतीक्षा',
+    submit_payment: 'भुगतान जमा करें', submitting: 'जमा हो रहा है...',
+    utr_label: 'UTR / लेनदेन ID', screenshot_optional: 'भुगतान स्क्रीनशॉट (वैकल्पिक)',
+    upload_screenshot: 'स्क्रीनशॉट अपलोड करें',
   },
 };
 

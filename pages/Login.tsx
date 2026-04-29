@@ -4,6 +4,7 @@ import { APP_NAME } from '../constants';
 import { showToast } from '../lib/swal';
 import { useAuthStore } from '../store/authStore';
 import LegalLinks from '../components/auth/LegalLinks';
+import { useLanguage } from '../lib/i18n';
 
 interface LoginProps {
   onLogin: (user: any) => void;
@@ -11,13 +12,14 @@ interface LoginProps {
 }
 
 const Login: React.FC<LoginProps> = ({ onLogin, onGoToRegister }) => {
+  const { t } = useLanguage();
   const [loginRole, setLoginRole] = useState<UserRole>(UserRole.PARENT);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [identifier, setIdentifier] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
-  
+
   const { loginWithCredentials } = useAuthStore();
 
   const handleLogin = async (e: React.FormEvent) => {
@@ -35,13 +37,13 @@ const Login: React.FC<LoginProps> = ({ onLogin, onGoToRegister }) => {
       }
 
       const user = await loginWithCredentials(identifier, password, type);
-      showToast('Login successful', 'success');
+      showToast(t('login_successful'), 'success');
       if (onLogin) onLogin(user);
     } catch (err: any) {
       if (err.message.includes('401') || err.message.includes('Invalid login credentials')) {
-        setError('Incorrect password. If you have forgotten your password, please reset it.');
+        setError(t('incorrect_password'));
       } else {
-        setError(err.message || 'Login failed. Please check your credentials.');
+        setError(err.message || t('login_failed'));
       }
     } finally {
       setLoading(false);
@@ -78,7 +80,7 @@ const Login: React.FC<LoginProps> = ({ onLogin, onGoToRegister }) => {
             <i className="fas fa-bus-alt text-3xl md:text-4xl text-white"></i>
           </div>
           <h1 className="text-2xl md:text-4xl font-black text-white tracking-tighter">{APP_NAME}</h1>
-          <p className="text-[9px] md:text-[10px] font-bold uppercase tracking-widest text-white/40 mt-1 md:mt-2">Secure Sign In</p>
+          <p className="text-[9px] md:text-[10px] font-bold uppercase tracking-widest text-white/40 mt-1 md:mt-2">{t('secure_sign_in')}</p>
         </div>
 
         {/* Role toggle pill */}
@@ -94,7 +96,7 @@ const Login: React.FC<LoginProps> = ({ onLogin, onGoToRegister }) => {
               }`}
             >
               <i className="fas fa-user"></i>
-              Parent
+              {t('parent_short')}
             </button>
             <button
               onClick={() => { if (!isAdmin) togglePortal(); }}
@@ -103,7 +105,7 @@ const Login: React.FC<LoginProps> = ({ onLogin, onGoToRegister }) => {
               }`}
             >
               <i className="fas fa-shield-halved"></i>
-              Admin
+              {t('admin_short')}
             </button>
           </div>
         </div>
@@ -111,10 +113,10 @@ const Login: React.FC<LoginProps> = ({ onLogin, onGoToRegister }) => {
         <div className="bg-white rounded-t-[2rem] md:rounded-[2.5rem] shadow-2xl overflow-hidden animate-in fade-in slide-in-from-bottom-4 duration-500 flex-1 md:flex-none" style={{ animationDelay: '200ms', animationFillMode: 'both' }}>
           <div className={`px-6 md:px-8 py-5 md:py-8 text-white transition-colors duration-500 ${isAdmin ? 'bg-slate-950' : 'bg-primary'}`}>
             <h2 className="text-lg md:text-2xl font-black tracking-tight">
-              {isAdmin ? 'Bus Admin Terminal' : 'Parent Terminal'}
+              {isAdmin ? t('bus_admin_terminal') : t('parent_terminal')}
             </h2>
             <p className="text-[9px] md:text-[10px] font-bold uppercase tracking-widest text-white/50 mt-1">
-              {isAdmin ? 'Global Operations Hub' : 'Secure Family Gateway'}
+              {isAdmin ? t('operations_hub') : t('family_gateway')}
             </p>
           </div>
 
@@ -135,7 +137,7 @@ const Login: React.FC<LoginProps> = ({ onLogin, onGoToRegister }) => {
               <div className="space-y-2">
                 <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1 flex items-center gap-2">
                   <i className={`fas ${isAdmin ? 'fa-envelope' : 'fa-id-card'} text-primary`}></i>
-                  {isAdmin ? 'Email or Phone' : 'Admission Number'}
+                  {isAdmin ? t('email_or_phone') : t('admission_number')}
                 </label>
                 <input
                   required
@@ -145,14 +147,14 @@ const Login: React.FC<LoginProps> = ({ onLogin, onGoToRegister }) => {
                   value={identifier}
                   onChange={(e) => setIdentifier(e.target.value)}
                   className={isAdmin ? adminInputClass : inputBaseClass}
-                  placeholder={isAdmin ? 'Enter Email or Phone' : 'Enter Admission Number'}
+                  placeholder={isAdmin ? t('enter_email_or_phone') : t('enter_admission')}
                 />
               </div>
 
               <div className="space-y-2">
                 <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1 flex items-center gap-2">
                   <i className="fas fa-lock text-primary"></i>
-                  Password
+                  {t('password')}
                 </label>
                 <div className="relative">
                   <input
@@ -162,7 +164,7 @@ const Login: React.FC<LoginProps> = ({ onLogin, onGoToRegister }) => {
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     className={(isAdmin ? adminInputClass : inputBaseClass) + ' pr-12'}
-                    placeholder="Enter Password"
+                    placeholder={t('enter_password')}
                   />
                   <button
                     type="button"
@@ -174,7 +176,7 @@ const Login: React.FC<LoginProps> = ({ onLogin, onGoToRegister }) => {
                   </button>
                 </div>
                 <div className="text-right">
-                  <a href="/forgot-password" className="text-[10px] font-black text-primary uppercase tracking-widest hover:underline">Forgot Password?</a>
+                  <a href="/forgot-password" className="text-[10px] font-black text-primary uppercase tracking-widest hover:underline">{t('forgot_password')}</a>
                 </div>
               </div>
 
@@ -188,11 +190,11 @@ const Login: React.FC<LoginProps> = ({ onLogin, onGoToRegister }) => {
                 {loading ? (
                   <>
                     <i className="fas fa-circle-notch fa-spin"></i>
-                    <span className="text-xs">Signing in...</span>
+                    <span className="text-xs">{t('signing_in')}</span>
                   </>
                 ) : (
                   <>
-                    <span>Sign In</span>
+                    <span>{t('sign_in')}</span>
                     <i className="fas fa-arrow-right text-xs opacity-0 group-hover:opacity-100 group-hover:translate-x-1 transition-all"></i>
                   </>
                 )}
@@ -201,9 +203,9 @@ const Login: React.FC<LoginProps> = ({ onLogin, onGoToRegister }) => {
 
             <div className="mt-8 md:mt-10 text-center space-y-3 md:space-y-4 pt-5 md:pt-6 border-t border-slate-50">
               <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
-                New User?
+                {t('new_user')}
                 <button onClick={() => onGoToRegister(loginRole)} className="text-primary font-black ml-1 hover:underline active:scale-95 inline-block">
-                  Register Account
+                  {t('register_account')}
                 </button>
               </p>
 

@@ -15,6 +15,7 @@ import MiniLoader from '../components/MiniLoader';
 import { useLanguage } from '../lib/i18n';
 
 const ParentDashboard: React.FC<{ user: User }> = ({ user }) => {
+  const { t } = useLanguage();
   const { paymentState, openPortal, closePortal, initiatePayU, initiateRazorpay, initiateUpiIntent, confirmUpiPayment } = usePayments();
   const { downloadReceipt } = useReceipts();
   const [familyStudents, setFamilyStudents] = useState<Student[]>([]);
@@ -72,8 +73,8 @@ const ParentDashboard: React.FC<{ user: User }> = ({ user }) => {
   if (!selectedStudent && !loading) return (
      <div className="p-8 md:p-20 text-center bg-white rounded-3xl shadow-sm">
         <i className="fas fa-user-graduate text-slate-300 text-6xl mb-4"></i>
-        <h2 className="text-xl font-bold text-slate-700">No Students Found</h2>
-        <p className="text-slate-500 mt-2">Please contact the Bus Administrator to link your child's account.</p>
+        <h2 className="text-xl font-bold text-slate-700">{t('no_students')}</h2>
+        <p className="text-slate-500 mt-2">{t('link_child')}</p>
      </div>
   );
 
@@ -135,16 +136,16 @@ const ParentDashboard: React.FC<{ user: User }> = ({ user }) => {
             <i className="fas fa-home-user"></i>
           </div>
           <div>
-            <h2 className="text-2xl md:text-4xl font-black text-slate-800 tracking-tighter leading-none">Family Hub</h2>
+            <h2 className="text-2xl md:text-4xl font-black text-slate-800 tracking-tighter leading-none">{t('family_hub_title')}</h2>
             <div className="flex items-center gap-3 mt-2">
               <p className="text-slate-500 font-bold uppercase text-[9px] md:text-[10px] tracking-widest">
-                 {familyStudents.length} Students Registered
+                 {familyStudents.length} {t('students_registered')}
               </p>
             </div>
           </div>
         </div>
         <div className="text-center md:text-right relative z-10 w-full sm:w-auto">
-          <p className="text-[9px] md:text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Consolidated Dues</p>
+          <p className="text-[9px] md:text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">{t('consolidated_dues')}</p>
           <p className={`text-2xl md:text-5xl font-black tracking-tighter ${totalFamilyDue > 0 ? 'text-danger' : 'text-success'}`}>
              ₹{Number(totalFamilyDue || 0).toLocaleString()}
           </p>
@@ -180,11 +181,11 @@ const ParentDashboard: React.FC<{ user: User }> = ({ user }) => {
                         <i className="fas fa-satellite text-4xl md:text-6xl"></i>
                     </div>
                     <div>
-                       <h3 className="text-xl md:text-3xl font-black text-white tracking-tight mb-2">Live Monitor</h3>
+                       <h3 className="text-xl md:text-3xl font-black text-white tracking-tight mb-2">{t('live_monitor')}</h3>
                        <p className="text-white/30 font-black uppercase text-[8px] md:text-[10px] tracking-[0.4em] max-w-[250px] mx-auto">
                           {(user as any).preferences?.tracking === true
-                            ? 'Connect to encrypted satellite stream'
-                            : 'Tracking access not enabled — contact Bus Administrator'}
+                            ? t('encrypted_stream')
+                            : t('tracking_not_enabled')}
                        </p>
                     </div>
                     {(user as any).preferences?.tracking === true ? (
@@ -192,11 +193,11 @@ const ParentDashboard: React.FC<{ user: User }> = ({ user }) => {
                          onClick={() => setTrackingActive(true)}
                          className="bg-primary text-white px-8 md:px-12 py-3 md:py-5 rounded-xl md:rounded-2xl font-black uppercase text-[9px] md:text-[11px] tracking-widest shadow-2xl hover:scale-105 transition-all shadow-primary/20 active:scale-95"
                       >
-                         Establish Uplink
+                         {t('establish_uplink')}
                       </button>
                     ) : (
                       <div className="px-6 py-3 bg-white/5 border border-white/10 rounded-2xl text-[9px] font-black text-white/40 uppercase tracking-widest">
-                        Access Restricted
+                        {t('access_restricted')}
                       </div>
                     )}
                  </div>
@@ -207,7 +208,7 @@ const ParentDashboard: React.FC<{ user: User }> = ({ user }) => {
                     <div className="bg-black/80 backdrop-blur-xl px-4 py-3 rounded-xl border border-white/10 text-white flex items-center gap-3">
                        <div className={`w-2 h-2 rounded-full animate-pulse ${hasArrived ? 'bg-blue-500' : 'bg-success'}`}></div>
                        <span className="text-[9px] font-black uppercase tracking-widest leading-none">
-                        {hasArrived ? 'Bus at Campus • Final Stop' : 'Bus KNG-01-A • Live Telemetry'}
+                        {hasArrived ? t('bus_at_school') : `Bus KNG-01-A • ${t('live_telemetry')}`}
                        </span>
                     </div>
                     <button 
@@ -215,20 +216,20 @@ const ParentDashboard: React.FC<{ user: User }> = ({ user }) => {
                        className="bg-white text-slate-900 px-4 py-3 rounded-xl border border-slate-200 font-black text-[9px] uppercase tracking-widest hover:bg-slate-50 transition-all flex items-center gap-2"
                     >
                        <i className="fas fa-map-marker-alt"></i>
-                       Set Boarding
+                       {t('set_boarding')}
                     </button>
-                    <button 
+                    <button
                        onClick={() => setIsCameraOpen(true)}
                        className="bg-slate-900/80 backdrop-blur-md text-white px-4 py-3 rounded-xl border border-white/10 font-black text-[9px] uppercase tracking-widest hover:bg-black transition-all flex items-center gap-2"
                     >
                        <i className="fas fa-video"></i>
-                       Live Cam
+                       {t('live_cam')}
                     </button>
-                    <button 
+                    <button
                        onClick={() => setTrackingActive(false)}
                        className="bg-white/10 backdrop-blur-md text-white px-4 py-3 rounded-xl border border-white/10 font-black text-[9px] uppercase tracking-widest hover:bg-white/20 transition-all"
                     >
-                       Disconnect
+                       {t('disconnect')}
                     </button>
                  </div>
               )}
@@ -293,7 +294,7 @@ const ParentDashboard: React.FC<{ user: User }> = ({ user }) => {
                        }}
                          className={`px-4 md:px-6 py-2 text-[8px] md:text-[9px] font-black uppercase tracking-widest rounded-lg md:rounded-xl transition-all ${isLocked ? 'bg-slate-100 text-slate-400 cursor-not-allowed' : 'bg-primary text-white hover:bg-blue-800 shadow-xl shadow-primary/20'}`}
                        >
-                         {isLocked ? 'Wait: Clear Prior' : 'Pay Now'}
+                         {isLocked ? t('wait_clear_prior') : t('pay_now_short')}
                        </button>
                      )}
                   </div>

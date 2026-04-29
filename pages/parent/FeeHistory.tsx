@@ -99,6 +99,7 @@ const FeeHistory: React.FC<{ user: User }> = ({ user }) => {
   const [showFutureScheduled, setShowFutureScheduled] = useState(false);
   const [loading, setLoading] = useState(true);
 
+  const { t } = useLanguage();
   const { paymentState, openPortal, closePortal, initiatePayU, initiateRazorpay, initiateUpiIntent, confirmUpiPayment } = usePayments();
   const { downloadReceipt, previewReceipt, downloading } = useReceipts();
 
@@ -315,9 +316,9 @@ const FeeHistory: React.FC<{ user: User }> = ({ user }) => {
 
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
         <div>
-          <h1 className="text-2xl md:text-4xl font-black text-slate-900 tracking-tight">Fee Ledger</h1>
+          <h1 className="text-2xl md:text-4xl font-black text-slate-900 tracking-tight">{t('fee_ledger_title')}</h1>
           <p className="text-slate-500 font-bold uppercase text-[10px] tracking-widest mt-1">
-            Comprehensive Payment History & Dues
+            {t('payment_history_subtitle')}
           </p>
         </div>
       </div>

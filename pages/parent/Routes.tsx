@@ -23,6 +23,7 @@ interface ParentRouteStudent {
 }
 
 const ParentRoutes: React.FC<{ user: User }> = ({ user }) => {
+  const { t } = useLanguage();
   const [students, setStudents] = useState<ParentRouteStudent[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -63,8 +64,8 @@ const ParentRoutes: React.FC<{ user: User }> = ({ user }) => {
         <div className="w-20 h-20 bg-slate-50 rounded-[2rem] flex items-center justify-center mx-auto mb-6">
           <i className="fas fa-route text-3xl text-slate-300"></i>
         </div>
-        <h3 className="text-xl font-black text-slate-900 uppercase tracking-tight">No Child Routes Found</h3>
-        <p className="text-slate-500 text-[10px] font-bold uppercase tracking-widest mt-2">Contact bus admin to assign routes to your children.</p>
+        <h3 className="text-xl font-black text-slate-900 uppercase tracking-tight">{t('no_child_routes')}</h3>
+        <p className="text-slate-500 text-[10px] font-bold uppercase tracking-widest mt-2">{t('contact_admin')}</p>
       </div>
     );
   }
@@ -72,8 +73,8 @@ const ParentRoutes: React.FC<{ user: User }> = ({ user }) => {
   return (
     <div className="space-y-4 md:space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-700">
       <div>
-        <h1 className="text-xl md:text-4xl font-black text-slate-900 tracking-tight">Child Route Details</h1>
-        <p className="text-slate-500 font-bold text-[9px] md:text-[10px] tracking-widest mt-1">Only routes assigned to your children are shown</p>
+        <h1 className="text-xl md:text-4xl font-black text-slate-900 tracking-tight">{t('child_route_details')}</h1>
+        <p className="text-slate-500 font-bold text-[9px] md:text-[10px] tracking-widest mt-1">{t('only_routes_shown')}</p>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
@@ -83,9 +84,9 @@ const ParentRoutes: React.FC<{ user: User }> = ({ user }) => {
 
           // Build a stop sequence with safe fallbacks
           const stops = [
-            { label: 'Start', value: route?.start_point || 'N/A', icon: 'fa-flag', accent: 'bg-emerald-500' },
-            { label: 'Boarding Point', value: student.boarding_point || 'Not Set', icon: 'fa-map-pin', accent: 'bg-primary', highlight: true },
-            { label: 'End', value: route?.end_point || 'N/A', icon: 'fa-school', accent: 'bg-amber-500' },
+            { label: t('start'), value: route?.start_point || 'N/A', icon: 'fa-flag', accent: 'bg-emerald-500' },
+            { label: t('boarding_point_label'), value: student.boarding_point || t('not_set'), icon: 'fa-map-pin', accent: 'bg-primary', highlight: true },
+            { label: t('end'), value: route?.end_point || 'N/A', icon: 'fa-school', accent: 'bg-amber-500' },
           ];
 
           return (

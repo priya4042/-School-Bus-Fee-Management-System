@@ -19,6 +19,7 @@ interface Notification {
 }
 
 const Notifications: React.FC<{ user: User; focusNotificationId?: string; onFocusHandled?: () => void }> = ({ user, focusNotificationId, onFocusHandled }) => {
+  const { t } = useLanguage();
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<'all' | 'unread' | 'payment' | 'bus' | 'alert'>('all');
@@ -139,20 +140,20 @@ const Notifications: React.FC<{ user: User; focusNotificationId?: string; onFocu
             : notifications.filter(isAlert);
 
   const FILTER_OPTIONS: { id: typeof filter; label: string; icon: string }[] = [
-    { id: 'all', label: 'All', icon: 'fa-inbox' },
-    { id: 'unread', label: `Unread${unreadCount > 0 ? ` (${unreadCount})` : ''}`, icon: 'fa-circle' },
-    { id: 'payment', label: 'Payment', icon: 'fa-credit-card' },
-    { id: 'bus', label: 'Bus', icon: 'fa-bus' },
-    { id: 'alert', label: 'Alerts', icon: 'fa-exclamation-triangle' },
+    { id: 'all', label: t('filter_all'), icon: 'fa-inbox' },
+    { id: 'unread', label: `${t('filter_unread')}${unreadCount > 0 ? ` (${unreadCount})` : ''}`, icon: 'fa-circle' },
+    { id: 'payment', label: t('filter_payment'), icon: 'fa-credit-card' },
+    { id: 'bus', label: t('filter_bus'), icon: 'fa-bus' },
+    { id: 'alert', label: t('filter_alerts'), icon: 'fa-exclamation-triangle' },
   ];
 
   return (
     <div className="space-y-4 md:space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 md:gap-6">
         <div>
-          <h1 className="text-xl md:text-4xl font-black text-slate-900 tracking-tight">Alert Center</h1>
+          <h1 className="text-xl md:text-4xl font-black text-slate-900 tracking-tight">{t('alert_center_title')}</h1>
           <p className="text-slate-500 font-bold uppercase text-[9px] md:text-[10px] tracking-widest mt-1">
-            System Notifications & Updates
+            {t('system_notifications')}
           </p>
         </div>
         {unreadCount > 0 && (
@@ -161,7 +162,7 @@ const Notifications: React.FC<{ user: User; focusNotificationId?: string; onFocu
             className="bg-primary/10 text-primary px-4 md:px-6 py-3 md:py-4 rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-primary/20 active:scale-95 transition-all flex items-center justify-center gap-2 self-start md:self-auto"
           >
             <i className="fas fa-check-double"></i>
-            <span>Mark All Read</span>
+            <span>{t('mark_all')}</span>
             <span className="bg-primary text-white text-[9px] px-2 py-0.5 rounded-full animate-pulse">{unreadCount}</span>
           </button>
         )}
@@ -276,8 +277,8 @@ const Notifications: React.FC<{ user: User; focusNotificationId?: string; onFocu
             <EmptyState
               icon="fa-bell"
               tone={filter === 'unread' ? 'success' : 'neutral'}
-              title={filter === 'unread' ? 'All Caught Up' : filter === 'all' ? 'No Notifications Yet' : `No ${filter} notifications`}
-              message={filter === 'unread' ? 'You have read everything — nice work.' : 'New alerts will land here in real time.'}
+              title={filter === 'unread' ? t('all_caught_up') : filter === 'all' ? t('no_notifications_yet') : `No ${filter} notifications`}
+              message={filter === 'unread' ? t('you_have_read_everything') : t('new_alerts_realtime')}
             />
           )}
         </div>

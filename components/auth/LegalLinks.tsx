@@ -1,21 +1,23 @@
 import React, { useEffect, useRef, useState } from 'react';
+import { useLanguage } from '../../lib/i18n';
 
 interface LegalLinkItem {
   href: string;
-  label: string;
+  labelKey: string;
+  fallback: string;
   icon: string;
   /** True if link should appear in the native app build too. Marketing links are web-only. */
   native?: boolean;
 }
 
 const LINKS: LegalLinkItem[] = [
-  { href: '/about', label: 'About Us', icon: 'fa-circle-info' },
-  { href: '/services', label: 'Services', icon: 'fa-bus-simple' },
-  { href: '/contact-us', label: 'Contact', icon: 'fa-envelope' },
-  { href: '/privacy-policy', label: 'Privacy', icon: 'fa-lock', native: true },
-  { href: '/terms-of-service', label: 'Terms', icon: 'fa-file-contract', native: true },
-  { href: '/refund-policy', label: 'Refund', icon: 'fa-rotate-left', native: true },
-  { href: '/shipping-policy', label: 'Shipping', icon: 'fa-truck' },
+  { href: '/about', labelKey: 'about_us', fallback: 'About Us', icon: 'fa-circle-info' },
+  { href: '/services', labelKey: 'services', fallback: 'Services', icon: 'fa-bus-simple' },
+  { href: '/contact-us', labelKey: 'contact', fallback: 'Contact', icon: 'fa-envelope' },
+  { href: '/privacy-policy', labelKey: 'privacy_policy', fallback: 'Privacy', icon: 'fa-lock', native: true },
+  { href: '/terms-of-service', labelKey: 'terms_of_service', fallback: 'Terms', icon: 'fa-file-contract', native: true },
+  { href: '/refund-policy', labelKey: 'refund', fallback: 'Refund', icon: 'fa-rotate-left', native: true },
+  { href: '/shipping-policy', labelKey: 'shipping', fallback: 'Shipping', icon: 'fa-truck' },
 ];
 
 interface LegalLinksProps {
@@ -23,6 +25,7 @@ interface LegalLinksProps {
 }
 
 const LegalLinks: React.FC<LegalLinksProps> = ({ className = '' }) => {
+  const { t } = useLanguage();
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
@@ -57,7 +60,7 @@ const LegalLinks: React.FC<LegalLinksProps> = ({ className = '' }) => {
         aria-haspopup="menu"
       >
         <i className="fas fa-shield-halved text-[11px]"></i>
-        <span>Legal &amp; Info</span>
+        <span>{t('legal_and_info')}</span>
         <i className={`fas fa-chevron-${open ? 'up' : 'down'} text-[9px] transition-transform`}></i>
       </button>
 
@@ -67,7 +70,7 @@ const LegalLinks: React.FC<LegalLinksProps> = ({ className = '' }) => {
           role="menu"
         >
           <div className="px-4 py-3 border-b border-slate-50 bg-slate-50/60 flex items-center justify-between">
-            <p className="text-[9px] font-black text-slate-500 uppercase tracking-widest">More Information</p>
+            <p className="text-[9px] font-black text-slate-500 uppercase tracking-widest">{t('more_information')}</p>
             <button
               type="button"
               onClick={() => setOpen(false)}
@@ -89,7 +92,7 @@ const LegalLinks: React.FC<LegalLinksProps> = ({ className = '' }) => {
                   <i className={`fas ${link.icon} text-[10px]`}></i>
                 </span>
                 <span className="text-[10px] font-black text-slate-700 group-hover:text-primary uppercase tracking-widest truncate">
-                  {link.label}
+                  {t(link.labelKey) === link.labelKey ? link.fallback : t(link.labelKey)}
                 </span>
               </a>
             ))}

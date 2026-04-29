@@ -21,6 +21,7 @@ interface AttendanceRecord {
 const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
 
 const AttendanceHistory: React.FC<{ user: User }> = ({ user }) => {
+  const { t } = useLanguage();
   const [students, setStudents] = useState<Student[]>([]);
   const [selectedStudentId, setSelectedStudentId] = useState<string>('');
   const [records, setRecords] = useState<AttendanceRecord[]>([]);
@@ -119,9 +120,9 @@ const AttendanceHistory: React.FC<{ user: User }> = ({ user }) => {
     <div className="space-y-4 md:space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 md:gap-6">
         <div>
-          <h1 className="text-xl md:text-4xl font-black text-slate-900 tracking-tight">Attendance History</h1>
+          <h1 className="text-xl md:text-4xl font-black text-slate-900 tracking-tight">{t('attendance_history')}</h1>
           <p className="text-slate-500 font-bold uppercase text-[9px] md:text-[10px] tracking-widest mt-1">
-            Daily Pickup & Drop Records
+            {t('daily_pickup_drop')}
           </p>
         </div>
 
@@ -164,7 +165,7 @@ const AttendanceHistory: React.FC<{ user: User }> = ({ user }) => {
               }`}
             >
               <i className="fas fa-calendar-day text-[11px]"></i>
-              <span>Calendar</span>
+              <span>{t('calendar_view')}</span>
             </button>
             <button
               onClick={() => setView('list')}
@@ -173,7 +174,7 @@ const AttendanceHistory: React.FC<{ user: User }> = ({ user }) => {
               }`}
             >
               <i className="fas fa-list text-[11px]"></i>
-              <span>List</span>
+              <span>{t('list_view')}</span>
             </button>
           </div>
 
@@ -370,8 +371,8 @@ const AttendanceHistory: React.FC<{ user: User }> = ({ user }) => {
             ) : Object.keys(byDate).length === 0 ? (
               <EmptyState
                 icon="fa-calendar-day"
-                title="No Records Found"
-                message="No attendance data available for this student"
+                title={t('no_records')}
+                message={t('no_attendance_data')}
                 className="!shadow-none !border-0"
               />
             ) : (
