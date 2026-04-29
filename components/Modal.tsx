@@ -55,17 +55,22 @@ const Modal: React.FC<ModalProps> = ({ isOpen, onClose, title, children, maxWidt
     <div
       className="fixed inset-0 z-[9999] overflow-y-auto bg-slate-900/60 backdrop-blur-sm overscroll-contain"
       onClick={onClose}
+      style={{
+        paddingTop: 'env(safe-area-inset-top, 0px)',
+        paddingBottom: 'env(safe-area-inset-bottom, 0px)',
+      }}
     >
-      <div className="flex min-h-full items-start justify-center p-4 pt-20 pb-6 md:pt-24">
+      <div className="flex min-h-full items-center justify-center px-3 py-6 sm:px-4 md:py-12">
         <div
-          className={`bg-white rounded-2xl w-full ${maxWidthClass} shadow-2xl animate-in fade-in zoom-in duration-200 max-h-[calc(100vh-6rem)] overflow-hidden flex flex-col`}
+          className={`bg-white rounded-2xl w-full ${maxWidthClass} shadow-2xl animate-in fade-in zoom-in duration-200 max-h-[calc(100dvh-3rem)] sm:max-h-[calc(100dvh-6rem)] overflow-hidden flex flex-col`}
           onClick={(e) => e.stopPropagation()}
         >
-          <div className="flex items-center justify-between p-6 border-b border-slate-100 shrink-0">
-            <h3 className="text-xl font-bold text-slate-800">{title}</h3>
+          <div className="flex items-center justify-between gap-3 p-4 md:p-6 border-b border-slate-100 shrink-0">
+            <h3 className="text-base md:text-xl font-bold text-slate-800 truncate">{title}</h3>
             <button
               onClick={onClose}
-              className="w-10 h-10 rounded-full flex items-center justify-center text-slate-400 hover:bg-slate-100 transition-colors"
+              className="w-9 h-9 md:w-10 md:h-10 rounded-full flex items-center justify-center text-slate-400 hover:bg-slate-100 active:scale-95 transition-all flex-shrink-0"
+              aria-label="Close"
             >
               <i className="fas fa-times"></i>
             </button>

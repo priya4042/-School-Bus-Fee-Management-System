@@ -200,7 +200,7 @@ const PaymentPortal: React.FC<PaymentPortalProps> = ({ state, onClose, onInitiat
       onClose={onClose}
       title={state.step === 'SUCCESS' ? 'Payment Complete' : `Settle Fee: ${state.studentName}`}
       maxWidthClass="max-w-2xl"
-      bodyClassName="p-6 md:p-8"
+      bodyClassName="p-4 md:p-8"
     >
       {renderContent()}
     </Modal>
