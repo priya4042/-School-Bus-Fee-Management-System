@@ -24,10 +24,14 @@ const Attendance: React.FC = () => {
 
   useEffect(() => {
     const loadAttendance = async () => {
+      if (!selectedDate) {
+        setAttendance({});
+        return;
+      }
       const type = selectedShift === 'MORNING' ? 'PICKUP' : 'DROP';
       const records = await fetchAttendance(selectedDate, type);
       const attendanceMap: Record<string, boolean> = {};
-      
+
       records.forEach((r: any) => {
         attendanceMap[r.student_id] = r.status;
       });
@@ -41,7 +45,12 @@ const Attendance: React.FC = () => {
   const toggleStatus = async (studentId: string) => {
     const currentStatus = attendance[studentId] || false;
     const newStatus = !currentStatus;
-    
+
+    if (!selectedDate) {
+      showAlert('Select Date', 'Please pick a date before marking attendance.', 'warning');
+      return;
+    }
+
     setAttendance(prev => ({
       ...prev,
       [studentId]: newStatus
@@ -49,13 +58,13 @@ const Attendance: React.FC = () => {
 
     if (user) {
       const type = selectedShift === 'MORNING' ? 'PICKUP' : 'DROP';
-      const success = await markAttendance(studentId, type, newStatus, user.id);
-      if (!success) {
+      const result = await markAttendance(studentId, type, newStatus, user.id, selectedDate);
+      if (!result.success) {
         setAttendance(prev => ({
           ...prev,
           [studentId]: currentStatus
         }));
-        showAlert('Sync Failed', 'Could not save attendance. Please check your internet connection and try again.', 'error');
+        showAlert('Sync Failed', result.error || 'Could not save attendance. Please check your internet connection and try again.', 'error');
       }
     }
   };
@@ -82,12 +91,29 @@ const Attendance: React.FC = () => {
                 Drop
               </button>
            </div>
-           <input
-             type="date"
-             value={selectedDate}
-             onChange={(e) => setSelectedDate(e.target.value)}
-             className="flex-1 md:flex-none px-4 md:px-6 py-2 rounded-2xl border border-slate-200 bg-white font-black text-[10px] uppercase text-slate-600 focus:ring-4 focus:ring-primary/5 outline-none shadow-sm"
-           />
+           <div className="relative flex-1 md:flex-none">
+             <input
+               type="date"
+               value={selectedDate}
+               onChange={(e) => setSelectedDate(e.target.value)}
+               className={`peer w-full px-4 md:px-6 py-2 pr-10 rounded-2xl border border-slate-200 bg-white font-black text-[10px] uppercase focus:ring-4 focus:ring-primary/5 outline-none shadow-sm ${selectedDate ? 'text-slate-600' : 'text-transparent'}`}
+             />
+             {!selectedDate && (
+               <span className="pointer-events-none absolute left-4 md:left-6 top-1/2 -translate-y-1/2 text-[10px] font-black text-slate-400 uppercase tracking-widest">
+                 Select Date
+               </span>
+             )}
+             {selectedDate && (
+               <button
+                 type="button"
+                 onClick={() => setSelectedDate('')}
+                 className="absolute right-2 top-1/2 -translate-y-1/2 w-6 h-6 rounded-full bg-slate-100 text-slate-400 flex items-center justify-center hover:bg-slate-200 active:scale-95 transition-all"
+                 aria-label="Clear date"
+               >
+                 <i className="fas fa-times text-[9px]"></i>
+               </button>
+             )}
+           </div>
         </div>
       </div>
 

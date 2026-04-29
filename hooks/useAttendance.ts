@@ -23,23 +23,22 @@ export const useAttendance = () => {
     }
   };
 
-  const markAttendance = async (studentId: string | number, type: 'PICKUP' | 'DROP', status: boolean, userId: string) => {
+  const markAttendance = async (studentId: string | number, type: 'PICKUP' | 'DROP', status: boolean, userId: string, date?: string) => {
     setLoading(true);
     try {
-      const today = new Date().toISOString().split('T')[0];
+      const targetDate = date || new Date().toISOString().split('T')[0];
       const { error } = await supabase.from('attendance').upsert({
         student_id: String(studentId),
         type,
         status,
         marked_by: userId,
-        date: today,
-        timestamp: new Date().toISOString(),
+        date: targetDate,
       }, { onConflict: 'student_id,type,date' });
       if (error) throw error;
-      return true;
-    } catch (err) {
+      return { success: true as const };
+    } catch (err: any) {
       console.error('Attendance sync failed:', err);
-      return false;
+      return { success: false as const, error: err?.message || 'Unknown error' };
     } finally {
       setLoading(false);
     }
