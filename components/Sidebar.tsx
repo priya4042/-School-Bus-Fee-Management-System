@@ -4,6 +4,7 @@ import { User, UserRole } from '../types';
 import { APP_NAME } from '../constants';
 import { useLanguage } from '../lib/i18n';
 import { useWindowSize } from '../hooks/useWindowSize';
+import { useBodyScrollLock } from '../hooks/useBodyScrollLock';
 
 interface SidebarProps {
   user: User;
@@ -25,6 +26,9 @@ const Sidebar: React.FC<SidebarProps> = ({ user, onLogout, activeTab, setActiveT
   const { t } = useLanguage();
   const { isMobile, isTablet } = useWindowSize();
   const [expandedGroup, setExpandedGroup] = useState<string | null>(null);
+
+  // Lock background scroll while the mobile/tablet drawer is open
+  useBodyScrollLock(!!isOpen && (isMobile || isTablet));
   const isSuperAdmin = user.role === UserRole.SUPER_ADMIN;
   const isAdmin = user.role === UserRole.ADMIN || isSuperAdmin;
   const isParent = user.role === UserRole.PARENT;
@@ -110,25 +114,46 @@ const Sidebar: React.FC<SidebarProps> = ({ user, onLogout, activeTab, setActiveT
   }, [activeTab]);
 
   const sidebarClasses = `
-    ${isMobile || isTablet ? 'fixed inset-y-0 left-0 z-[2000] w-[70vw] max-w-60 top-16' : 'sticky top-0 w-60 h-screen flex-shrink-0'}
-    bg-slate-950 text-white flex flex-col transition-all duration-300
+    ${isMobile || isTablet ? 'fixed inset-y-0 left-0 z-[2000] w-[78vw] max-w-72' : 'sticky top-0 w-60 h-screen flex-shrink-0'}
+    bg-slate-950 text-white flex flex-col transition-transform duration-300 ease-out
     ${(isMobile || isTablet) && !isOpen ? '-translate-x-full' : 'translate-x-0'}
   `;
 
   return (
     <>
-      {isOpen && <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[1999] lg:hidden" onClick={onClose}></div>}
+      {isOpen && (
+        <div
+          className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[1999] lg:hidden animate-in fade-in duration-200"
+          onClick={onClose}
+        ></div>
+      )}
 
-      <div className={sidebarClasses} style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}>
+      <div
+        className={sidebarClasses}
+        style={{
+          paddingTop: isMobile || isTablet ? 'env(safe-area-inset-top, 0px)' : undefined,
+          paddingBottom: 'env(safe-area-inset-bottom, 0px)',
+        }}
+      >
         {/* Header */}
-        <div className="px-4 py-4 lg:px-5 lg:py-6 flex items-center gap-2.5 flex-shrink-0">
-          <div className="bg-primary p-2 rounded-xl shadow-lg shadow-primary/30 flex-shrink-0">
-            <i className="fas fa-bus-alt text-lg text-white"></i>
+        <div className="px-4 py-4 lg:px-5 lg:py-6 flex items-center justify-between gap-2.5 flex-shrink-0 border-b border-white/5 lg:border-b-0">
+          <div className="flex items-center gap-2.5 min-w-0">
+            <div className="bg-primary p-2 rounded-xl shadow-lg shadow-primary/30 flex-shrink-0">
+              <i className="fas fa-bus-alt text-lg text-white"></i>
+            </div>
+            <div className="flex flex-col min-w-0">
+              <span className="font-black text-sm lg:text-base tracking-tighter uppercase leading-none truncate">{APP_NAME}</span>
+              <span className="text-[6px] lg:text-[7px] font-black text-primary uppercase tracking-widest mt-0.5 truncate">{t('enterprise_fleet')}</span>
+            </div>
           </div>
-          <div className="flex flex-col min-w-0">
-            <span className="font-black text-sm lg:text-base tracking-tighter uppercase leading-none truncate">{APP_NAME}</span>
-            <span className="text-[6px] lg:text-[7px] font-black text-primary uppercase tracking-widest mt-0.5 truncate">{t('enterprise_fleet')}</span>
-          </div>
+          {/* Close button (mobile/tablet only) */}
+          <button
+            onClick={onClose}
+            className="lg:hidden w-9 h-9 rounded-xl bg-white/5 hover:bg-white/10 active:scale-95 flex items-center justify-center text-white/60 transition-all flex-shrink-0"
+            aria-label="Close menu"
+          >
+            <i className="fas fa-times text-sm"></i>
+          </button>
         </div>
 
         {/* Navigation */}
