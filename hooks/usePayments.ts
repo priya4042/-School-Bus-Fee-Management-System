@@ -513,16 +513,15 @@
         // Fall back to environment variables and settings
         if (!upiId) {
           upiId = String(
-            settings.upiId || 
-            import.meta.env.VITE_UPI_ID || 
-            settings.adminUpiId || 
-            import.meta.env.VITE_ADMIN_UPI_ID || 
+            settings.adminUpiId ||
+            import.meta.env.VITE_UPI_ID ||
+            import.meta.env.VITE_ADMIN_UPI_ID ||
             ''
           ).trim();
         }
-        
+
         if (!businessName) {
-          businessName = String(settings.businessName || import.meta.env.VITE_BUSINESS_NAME || 'School Bus WayPro').trim();
+          businessName = String(import.meta.env.VITE_BUSINESS_NAME || 'School Bus WayPro').trim();
         }
 
         if (!upiId) {
