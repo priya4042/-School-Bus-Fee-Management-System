@@ -273,9 +273,11 @@ const App: React.FC = () => {
               )}
 
               {/* Main Content Area */}
-              <main className="p-3 md:p-8 flex-1 overflow-auto bg-slate-50 pb-[calc(env(safe-area-inset-bottom,0px)+9rem)] lg:pb-8">
+              <main className="p-3 md:p-8 flex-1 overflow-auto bg-slate-50 pb-[calc(env(safe-area-inset-bottom,0px)+10rem)] lg:pb-8">
                 <div className="max-w-7xl mx-auto">
                   {renderContent()}
+                  {/* Bottom-nav clearance spacer — guarantees a visible gap on every phone */}
+                  {(isMobile || isTablet) && <div aria-hidden="true" className="h-2" />}
                 </div>
               </main>
             </div>
