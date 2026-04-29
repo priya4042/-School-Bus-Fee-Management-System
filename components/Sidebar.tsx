@@ -37,10 +37,17 @@ const Sidebar: React.FC<SidebarProps> = ({ user, onLogout, activeTab, setActiveT
     { name: 'Attendance', label: t('attendance'), icon: 'fa-clipboard-check' },
     { name: 'Buses', label: t('buses'), icon: 'fa-bus' },
     { name: 'Live Tracking', label: t('live_tracking'), icon: 'fa-location-dot' },
-    { name: 'Payments', label: t('payments'), icon: 'fa-credit-card' },
+    {
+      name: 'Payments', label: t('payments'), icon: 'fa-credit-card',
+      children: [
+        { name: 'Payments', label: 'Payment Hub', icon: 'fa-list-check' },
+        { name: 'Payment Settings', label: 'UPI / Gateway', icon: 'fa-mobile-screen' },
+      ],
+    },
     { name: 'Notifications', label: t('notifications'), icon: 'fa-bullhorn' },
     ...(isSuperAdmin ? [{ name: 'Bus admins', label: t('bus_admins'), icon: 'fa-user-shield' }] : []),
     { name: 'Settings', label: t('settings'), icon: 'fa-cog' },
+    { name: 'Documentation', label: t('documentation'), icon: 'fa-book-open' },
     { name: 'Support', label: t('support'), icon: 'fa-headset' },
   ];
 
