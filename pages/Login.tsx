@@ -3,6 +3,7 @@ import { UserRole } from '../types';
 import { APP_NAME } from '../constants';
 import { showToast } from '../lib/swal';
 import { useAuthStore } from '../store/authStore';
+import LegalLinks from '../components/auth/LegalLinks';
 
 interface LoginProps {
   onLogin: (user: any) => void;
@@ -206,27 +207,8 @@ const Login: React.FC<LoginProps> = ({ onLogin, onGoToRegister }) => {
                 </button>
               </p>
 
-              <div className="web-only pt-4 flex justify-center flex-wrap gap-x-3 gap-y-2 text-[9px] font-bold text-slate-300 uppercase tracking-widest">
-                <a href="/about" className="hover:text-primary transition-colors">About Us</a>
-                <span className="opacity-20">|</span>
-                <a href="/services" className="hover:text-primary transition-colors">Services</a>
-                <span className="opacity-20">|</span>
-                <a href="/contact-us" className="hover:text-primary transition-colors">Contact</a>
-                <span className="opacity-20">|</span>
-                <a href="/privacy-policy" className="hover:text-primary transition-colors">Privacy</a>
-                <span className="opacity-20">|</span>
-                <a href="/terms-of-service" className="hover:text-primary transition-colors">Terms</a>
-                <span className="opacity-20">|</span>
-                <a href="/refund-policy" className="hover:text-primary transition-colors">Refund</a>
-                <span className="opacity-20">|</span>
-                <a href="/shipping-policy" className="hover:text-primary transition-colors">Shipping</a>
-              </div>
-              <div className="native-only pt-3 flex justify-center flex-wrap gap-x-3 gap-y-2 text-[9px] font-bold text-slate-300 uppercase tracking-widest">
-                <a href="/privacy-policy" className="hover:text-primary transition-colors">Privacy</a>
-                <span className="opacity-20">|</span>
-                <a href="/terms-of-service" className="hover:text-primary transition-colors">Terms</a>
-                <span className="opacity-20">|</span>
-                <a href="/refund-policy" className="hover:text-primary transition-colors">Refund</a>
+              <div className="pt-4 flex justify-center">
+                <LegalLinks />
               </div>
             </div>
           </div>
