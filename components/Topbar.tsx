@@ -210,9 +210,12 @@ const Topbar: React.FC<TopbarProps> = ({ user, onMenuClick, onOpenNotifications,
           </button>
 
           {showNotifications && (
-            <div className="absolute right-0 mt-2 w-72 sm:w-80 bg-white border border-slate-100 rounded-2xl shadow-2xl z-[1100] animate-in fade-in slide-in-from-top-2 duration-200 overflow-hidden">
-              <div className="px-4 py-3 border-b border-slate-50 flex justify-between items-center bg-slate-50/50">
-                <span className="text-[10px] font-black text-slate-800 uppercase tracking-widest">{t('alert_center')}</span>
+            <div
+              className="absolute right-0 mt-2 bg-white border border-slate-100 rounded-2xl shadow-2xl z-[1100] animate-in fade-in slide-in-from-top-2 duration-200 overflow-hidden"
+              style={{ width: 'min(20rem, calc(100vw - 1rem))' }}
+            >
+              <div className="px-3 py-2.5 border-b border-slate-50 flex justify-between items-center bg-slate-50/50 gap-2">
+                <span className="text-[10px] font-black text-slate-800 uppercase tracking-widest truncate">{t('alert_center')}</span>
                 <button onClick={async () => {
                   const unreadIds = notifications.filter(n => !n.read).map(n => n.id);
                   if (unreadIds.length === 0) return;
@@ -224,31 +227,34 @@ const Topbar: React.FC<TopbarProps> = ({ user, onMenuClick, onOpenNotifications,
                   if (!error) {
                     setNotifications(prev => prev.map(n => ({ ...n, read: true, is_read: true })));
                   }
-                }} className="text-[8px] font-black text-primary uppercase tracking-widest">{t('mark_all_read')}</button>
+                }} className="text-[8px] font-black text-primary uppercase tracking-widest hover:underline flex-shrink-0">{t('mark_all_read')}</button>
               </div>
-              <div className="max-h-[300px] overflow-y-auto scrollbar-hide divide-y divide-slate-50">
+              <div className="max-h-[55vh] sm:max-h-[320px] overflow-y-auto scrollbar-hide divide-y divide-slate-50">
                 {notifications.length > 0 ? notifications.map((n) => (
                   <div
                     key={n.id}
                     onClick={() => handleOpenNotification(n)}
-                    className={`px-4 py-3 hover:bg-slate-50 transition-all cursor-pointer group ${!n.read ? 'bg-blue-50/20' : ''}`}
+                    className={`px-3 py-2.5 hover:bg-slate-50 transition-all cursor-pointer group ${!n.read ? 'bg-blue-50/30' : ''}`}
                   >
-                    <div className="flex items-start gap-4">
-                      <div className={`w-8 h-8 rounded-lg flex items-center justify-center text-xs mt-1 ${
-                        n.type === 'SUCCESS' ? 'bg-green-100 text-green-600' : 
+                    <div className="flex items-start gap-2.5">
+                      <div className={`w-7 h-7 rounded-lg flex items-center justify-center text-[11px] flex-shrink-0 ${
+                        n.type === 'SUCCESS' ? 'bg-green-100 text-green-600' :
                         n.type === 'WARNING' ? 'bg-orange-100 text-orange-600' : 'bg-blue-100 text-blue-600'
                       }`}>
                         <i className={`fas ${n.type === 'SUCCESS' ? 'fa-check' : n.type === 'WARNING' ? 'fa-exclamation-triangle' : 'fa-info-circle'}`}></i>
                       </div>
-                      <div className="flex-1">
-                        <p className="text-xs font-black text-slate-800 group-hover:text-primary transition-colors">{n.title}</p>
-                        <p className="text-[11px] text-slate-500 font-medium mt-1 leading-relaxed">{formatNotificationMessage(n.message)}</p>
-                        <p className="text-[9px] text-slate-300 font-bold uppercase mt-2 tracking-widest">{n.timestamp ? new Date(n.timestamp).toLocaleString('en-IN') : ''}</p>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-[11px] font-black text-slate-800 group-hover:text-primary transition-colors truncate">{n.title}</p>
+                        <p className="text-[10px] text-slate-500 font-medium mt-0.5 leading-snug line-clamp-2">{formatNotificationMessage(n.message)}</p>
+                        <p className="text-[8px] text-slate-300 font-bold uppercase mt-1 tracking-widest truncate">
+                          {n.timestamp ? new Date(n.timestamp).toLocaleString('en-IN', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' }) : ''}
+                        </p>
                       </div>
+                      {!n.read && <span className="w-2 h-2 rounded-full bg-primary mt-2 flex-shrink-0"></span>}
                     </div>
                   </div>
                 )) : (
-                  <div className="p-10 text-center text-slate-400 font-bold text-xs uppercase tracking-widest">{t('no_alerts')}</div>
+                  <div className="p-8 text-center text-slate-400 font-bold text-[10px] uppercase tracking-widest">{t('no_alerts')}</div>
                 )}
               </div>
             </div>
