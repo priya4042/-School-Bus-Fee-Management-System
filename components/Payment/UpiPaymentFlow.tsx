@@ -168,8 +168,8 @@ const UpiPaymentFlow: React.FC<UpiPaymentFlowProps> = ({
         await supabase.from('notifications').insert(
           adminIds.map((adminId: string) => ({
             user_id: adminId,
-            title: 'UPI Payment Failed / Cancelled',
-            message: `${studentName} attempted to pay ₹${amount.toLocaleString()} via UPI but the payment was cancelled or failed.`,
+            title: 'UPI Payment Cancelled',
+            message: `${studentName} attempted to pay ₹${amount.toLocaleString()} via UPI but cancelled the payment in their UPI app.`,
             type: 'WARNING',
           }))
         );
@@ -177,7 +177,7 @@ const UpiPaymentFlow: React.FC<UpiPaymentFlowProps> = ({
     } catch (err) {
       console.warn('Failed to log payment failure (continuing):', err);
     }
-    showToast('Payment failed. You can try again or close this window.', 'error');
+    showToast('Payment cancelled. Try again or close this window.', 'error');
   };
 
   // User confirms they paid — close prompt so they can enter the UTR
@@ -185,6 +185,13 @@ const UpiPaymentFlow: React.FC<UpiPaymentFlowProps> = ({
     setShowReturnPrompt(false);
     setPaymentInitiated(false);
     setPaymentFailed(false);
+  };
+
+  // User wants to try paying again after a cancel — reopen app picker
+  const handleTryAgain = () => {
+    setPaymentFailed(false);
+    setError('');
+    setShowAppPicker(true);
   };
 
   // Validate UTR
@@ -405,24 +412,41 @@ const UpiPaymentFlow: React.FC<UpiPaymentFlowProps> = ({
                 className="w-full py-3.5 bg-red-50 text-red-600 font-black uppercase text-[10px] tracking-widest rounded-xl border border-red-100 active:scale-95 transition-all flex items-center justify-center gap-2"
               >
                 <i className="fas fa-times"></i>
-                Cancelled / Payment Failed
+                Payment Cancelled
               </button>
             </div>
           </div>
         </div>
       )}
 
-      {/* Failed banner — shown after the user confirmed cancel */}
+      {/* Cancelled banner — shown after the user confirmed cancel */}
       {paymentFailed && (
-        <div className="p-4 bg-red-50 rounded-2xl border border-red-200 animate-in slide-in-from-top-2 duration-200 flex items-start gap-3">
-          <div className="w-9 h-9 bg-red-100 text-red-600 rounded-xl flex items-center justify-center flex-shrink-0">
-            <i className="fas fa-times-circle"></i>
+        <div className="p-4 bg-red-50 rounded-2xl border border-red-200 animate-in slide-in-from-top-2 duration-200 space-y-3">
+          <div className="flex items-start gap-3">
+            <div className="w-9 h-9 bg-red-100 text-red-600 rounded-xl flex items-center justify-center flex-shrink-0">
+              <i className="fas fa-times-circle"></i>
+            </div>
+            <div className="min-w-0">
+              <p className="text-[11px] font-black text-red-700 uppercase tracking-widest">Payment Cancelled</p>
+              <p className="text-[10px] font-bold text-red-600 mt-1 leading-relaxed">
+                Your payment was cancelled. Admin has been notified. You can try paying again or close this dialog.
+              </p>
+            </div>
           </div>
-          <div className="min-w-0">
-            <p className="text-[11px] font-black text-red-700 uppercase tracking-widest">Payment Failed</p>
-            <p className="text-[10px] font-bold text-red-600 mt-1 leading-relaxed">
-              The payment was cancelled or did not go through. Admin has been notified. You can try paying again.
-            </p>
+          <div className="flex gap-2">
+            <button
+              onClick={handleTryAgain}
+              className="flex-1 py-3 bg-primary text-white font-black uppercase text-[10px] tracking-widest rounded-xl shadow-lg shadow-primary/20 active:scale-95 transition-all flex items-center justify-center gap-2"
+            >
+              <i className="fas fa-redo"></i>
+              Try Again
+            </button>
+            <button
+              onClick={onClose}
+              className="flex-1 py-3 bg-white text-slate-600 font-black uppercase text-[10px] tracking-widest rounded-xl border border-slate-200 active:scale-95 transition-all"
+            >
+              Cancel
+            </button>
           </div>
         </div>
       )}
