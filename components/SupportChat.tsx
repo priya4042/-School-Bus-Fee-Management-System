@@ -218,7 +218,7 @@ const SupportChat: React.FC<{ user: User }> = ({ user }) => {
         className={`fixed right-3 w-12 h-12 rounded-full shadow-2xl flex items-center justify-center hover:scale-110 active:scale-95 transition-all ${
           isOpen ? 'z-[2100] bg-slate-800 text-white shadow-slate-800/40' : 'z-[1500] bg-primary text-white shadow-primary/40'
         }`}
-        style={{ bottom: 'calc(env(safe-area-inset-bottom, 0px) + 4rem)' }}
+        style={{ bottom: 'calc(env(safe-area-inset-bottom, 0px) + 5.5rem)' }}
         aria-label={isOpen ? 'Close chat' : 'Open chat'}
       >
         {isOpen ? <X size={22} /> : <MessageCircle size={22} />}
@@ -231,8 +231,8 @@ const SupportChat: React.FC<{ user: User }> = ({ user }) => {
 
       {/* Chat panel */}
       {isOpen && (
-        <div className="fixed left-2 right-2 sm:left-auto sm:right-4 sm:w-80 z-[2000] bg-white rounded-2xl shadow-2xl border border-slate-100 flex flex-col overflow-hidden animate-in fade-in slide-in-from-bottom-4 duration-200"
-          style={{ bottom: 'calc(env(safe-area-inset-bottom, 0px) + 4rem)', top: 'calc(env(safe-area-inset-top, 0px) + 4rem)' }}
+        <div className="fixed left-3 right-3 sm:left-auto sm:right-4 sm:w-[360px] z-[2000] bg-white rounded-2xl shadow-2xl border border-slate-100 flex flex-col overflow-hidden animate-in fade-in slide-in-from-bottom-4 duration-200 h-[28rem] max-h-[calc(100dvh-10rem)]"
+          style={{ bottom: 'calc(env(safe-area-inset-bottom, 0px) + 9rem)' }}
         >
           {/* Header */}
           <div className="bg-slate-950 px-6 py-4 flex items-center justify-between">
@@ -251,7 +251,7 @@ const SupportChat: React.FC<{ user: User }> = ({ user }) => {
           </div>
 
           {/* Messages */}
-          <div className="flex-1 overflow-y-auto p-3 space-y-2 bg-slate-50 min-h-[150px] max-h-[350px]">
+          <div className="flex-1 overflow-y-auto p-3 space-y-2 bg-slate-50">
             {messages.length === 0 && (
               <div className="text-center py-10">
                 <div className="w-12 h-12 bg-slate-100 rounded-2xl flex items-center justify-center mx-auto mb-3">

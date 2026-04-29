@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React from 'react';
 import { useLanguage } from '../../lib/i18n';
 
 interface LegalLinkItem {
@@ -11,7 +11,7 @@ interface LegalLinkItem {
 }
 
 const LINKS: LegalLinkItem[] = [
-  { href: '/about', labelKey: 'about_us', fallback: 'About Us', icon: 'fa-circle-info' },
+  { href: '/about', labelKey: 'about_us', fallback: 'About', icon: 'fa-circle-info' },
   { href: '/services', labelKey: 'services', fallback: 'Services', icon: 'fa-bus-simple' },
   { href: '/contact-us', labelKey: 'contact', fallback: 'Contact', icon: 'fa-envelope' },
   { href: '/privacy-policy', labelKey: 'privacy_policy', fallback: 'Privacy', icon: 'fa-lock', native: true },
@@ -26,79 +26,31 @@ interface LegalLinksProps {
 
 const LegalLinks: React.FC<LegalLinksProps> = ({ className = '' }) => {
   const { t } = useLanguage();
-  const [open, setOpen] = useState(false);
-  const ref = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    const onDocClick = (e: MouseEvent) => {
-      if (ref.current && !ref.current.contains(e.target as Node)) {
-        setOpen(false);
-      }
-    };
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') setOpen(false);
-    };
-    document.addEventListener('mousedown', onDocClick);
-    document.addEventListener('keydown', onKey);
-    return () => {
-      document.removeEventListener('mousedown', onDocClick);
-      document.removeEventListener('keydown', onKey);
-    };
-  }, []);
 
   return (
-    <div ref={ref} className={`relative inline-block ${className}`}>
-      <button
-        type="button"
-        onClick={() => setOpen((v) => !v)}
-        className={`inline-flex items-center gap-2 px-4 py-2 rounded-xl border text-[10px] font-black uppercase tracking-widest transition-all active:scale-95 ${
-          open
-            ? 'bg-primary text-white border-primary shadow-md shadow-primary/20'
-            : 'bg-white/5 text-slate-300 border-white/10 hover:bg-white/10 hover:text-white'
-        }`}
-        aria-expanded={open}
-        aria-haspopup="menu"
-      >
-        <i className="fas fa-shield-halved text-[11px]"></i>
-        <span>{t('legal_and_info')}</span>
-        <i className={`fas fa-chevron-${open ? 'up' : 'down'} text-[9px] transition-transform`}></i>
-      </button>
-
-      {open && (
-        <div
-          className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-72 rounded-2xl border border-slate-100 bg-white shadow-2xl overflow-hidden animate-in fade-in slide-in-from-bottom-2 duration-200 z-50"
-          role="menu"
-        >
-          <div className="px-4 py-3 border-b border-slate-50 bg-slate-50/60 flex items-center justify-between">
-            <p className="text-[9px] font-black text-slate-500 uppercase tracking-widest">{t('more_information')}</p>
-            <button
-              type="button"
-              onClick={() => setOpen(false)}
-              className="text-slate-400 hover:text-slate-700 text-xs"
-              aria-label="Close menu"
+    <div className={`w-full ${className}`}>
+      <div className="flex items-center gap-2 mb-3">
+        <div className="flex-1 h-px bg-slate-100"></div>
+        <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest">
+          {t('legal_and_info') === 'legal_and_info' ? 'Legal & Info' : t('legal_and_info')}
+        </p>
+        <div className="flex-1 h-px bg-slate-100"></div>
+      </div>
+      <div className="flex flex-wrap items-center justify-center gap-1.5">
+        {LINKS.map((link) => {
+          const label = t(link.labelKey) === link.labelKey ? link.fallback : t(link.labelKey);
+          return (
+            <a
+              key={link.href}
+              href={link.href}
+              className={`inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-slate-50 border border-slate-100 text-[9px] font-black uppercase tracking-widest text-slate-600 hover:bg-primary/5 hover:text-primary hover:border-primary/20 active:scale-95 transition-all ${link.native ? '' : 'web-only'}`}
             >
-              <i className="fas fa-times"></i>
-            </button>
-          </div>
-          <div className="p-2 grid grid-cols-2 gap-1">
-            {LINKS.map((link) => (
-              <a
-                key={link.href}
-                href={link.href}
-                className={`flex items-center gap-2 px-3 py-2.5 rounded-xl hover:bg-primary/5 active:bg-primary/10 active:scale-95 transition-all group ${link.native ? '' : 'web-only'}`}
-                role="menuitem"
-              >
-                <span className="w-7 h-7 rounded-lg bg-slate-50 group-hover:bg-primary/10 text-primary flex items-center justify-center flex-shrink-0">
-                  <i className={`fas ${link.icon} text-[10px]`}></i>
-                </span>
-                <span className="text-[10px] font-black text-slate-700 group-hover:text-primary uppercase tracking-widest truncate">
-                  {t(link.labelKey) === link.labelKey ? link.fallback : t(link.labelKey)}
-                </span>
-              </a>
-            ))}
-          </div>
-        </div>
-      )}
+              <i className={`fas ${link.icon} text-[8px] text-primary`}></i>
+              <span>{label}</span>
+            </a>
+          );
+        })}
+      </div>
     </div>
   );
 };
