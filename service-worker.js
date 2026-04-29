@@ -1,57 +1,88 @@
+// Bumped on every deploy to force re-cache. Old caches are deleted on activate.
+const CACHE_NAME = 'busway-pro-v3';
+const PRECACHE = ['/offline.html'];
 
-const CACHE_NAME = 'busway-pro-v1';
-const ASSETS_TO_CACHE = [
-  '/',
-  '/index.html',
-  '/offline.html'
-];
+const isNavigation = (request) =>
+  request.mode === 'navigate' ||
+  (request.method === 'GET' && (request.headers.get('accept') || '').includes('text/html'));
 
-// Only cache same-origin assets. Skip cross-origin (fonts, CDNs).
-function isSameOrigin(request) {
-  try {
-    const url = new URL(request.url);
-    return url.origin === self.location.origin;
-  } catch (e) {
-    return false;
-  }
-}
+const isHashedAsset = (url) => /\/assets\/[^/]+\.[a-zA-Z0-9]{6,}\.(js|css|png|jpg|svg|woff2?)$/i.test(url.pathname);
 
 self.addEventListener('install', (event) => {
+  // New SW takes over the page on next load
+  self.skipWaiting();
   event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => {
-      return cache.addAll(ASSETS_TO_CACHE).catch((err) => {
-        console.warn('[SW] Some assets failed to cache during install', err);
-      });
-    })
+    caches.open(CACHE_NAME).then((cache) =>
+      cache.addAll(PRECACHE).catch((err) => {
+        console.warn('[SW] Precache failed', err);
+      })
+    )
+  );
+});
+
+self.addEventListener('activate', (event) => {
+  event.waitUntil(
+    caches.keys().then((keys) =>
+      Promise.all(keys.filter((k) => k !== CACHE_NAME).map((k) => caches.delete(k)))
+    ).then(() => self.clients.claim())
   );
 });
 
 self.addEventListener('fetch', (event) => {
-  // Prefer cache for same-origin navigations and resources, but handle failures.
-  if (!isSameOrigin(event.request)) {
-    // For cross-origin requests (fonts, cdn), just attempt network fetch and fail safely.
+  const request = event.request;
+  let url;
+  try { url = new URL(request.url); } catch { return; }
+
+  // Skip cross-origin and non-GET — let browser handle them.
+  if (url.origin !== self.location.origin || request.method !== 'GET') return;
+
+  // Navigation / HTML: NETWORK-FIRST so deploys are picked up immediately.
+  // Falls back to cached index.html / offline.html only when offline.
+  if (isNavigation(request)) {
     event.respondWith(
-      fetch(event.request).catch(() => caches.match('/offline.html') || new Response('', { status: 503 }))
+      fetch(request)
+        .then((resp) => {
+          const copy = resp.clone();
+          caches.open(CACHE_NAME).then((cache) => cache.put(request, copy)).catch(() => {});
+          return resp;
+        })
+        .catch(() =>
+          caches.match(request).then((cached) => cached || caches.match('/offline.html'))
+        )
     );
     return;
   }
 
+  // Hashed assets (filenames include a content hash) are immutable —
+  // cache-first is safe and fastest.
+  if (isHashedAsset(url)) {
+    event.respondWith(
+      caches.match(request).then((cached) => {
+        if (cached) return cached;
+        return fetch(request).then((resp) => {
+          if (resp.ok) {
+            const copy = resp.clone();
+            caches.open(CACHE_NAME).then((cache) => cache.put(request, copy)).catch(() => {});
+          }
+          return resp;
+        });
+      })
+    );
+    return;
+  }
+
+  // Everything else (manifest.json, favicon, /api/* paths, etc.):
+  // network-first with cache fallback so we never serve stale data.
   event.respondWith(
-    caches.match(event.request).then((response) => {
-      if (response) return response;
-      return fetch(event.request).then((networkResp) => {
-        // Put a copy in cache for future navigations if it's a GET
-        if (event.request.method === 'GET') {
-          caches.open(CACHE_NAME).then((cache) => {
-            try { cache.put(event.request, networkResp.clone()); } catch (e) { /* ignore */ }
-          });
+    fetch(request)
+      .then((resp) => {
+        if (resp.ok) {
+          const copy = resp.clone();
+          caches.open(CACHE_NAME).then((cache) => cache.put(request, copy)).catch(() => {});
         }
-        return networkResp;
-      }).catch((err) => {
-        console.error('[SW] Fetch failed for', event.request.url, err);
-        return caches.match('/offline.html') || new Response('', { status: 503 });
-      });
-    })
+        return resp;
+      })
+      .catch(() => caches.match(request).then((cached) => cached || new Response('', { status: 503 })))
   );
 });
 
@@ -62,7 +93,7 @@ self.addEventListener('push', (event) => {
     icon: '/logo192.png',
     badge: '/favicon.ico',
     vibrate: [100, 50, 100],
-    data: { url: data.url || '/' }
+    data: { url: data.url || '/' },
   };
   event.waitUntil(self.registration.showNotification(data.title, options));
 });
@@ -70,4 +101,11 @@ self.addEventListener('push', (event) => {
 self.addEventListener('notificationclick', (event) => {
   event.notification.close();
   event.waitUntil(clients.openWindow(event.notification.data.url));
+});
+
+// Allow the page to trigger an immediate update via postMessage.
+self.addEventListener('message', (event) => {
+  if (event.data && event.data.type === 'SKIP_WAITING') {
+    self.skipWaiting();
+  }
 });
