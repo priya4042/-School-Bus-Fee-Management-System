@@ -20,12 +20,12 @@ export default function Services() {
   ];
 
   const freeFeatures = [
-    { icon: <MapPin className="w-6 h-6 text-green-600" />, title: 'Live GPS Bus Tracking', desc: 'Real-time bus location and ETA in the app.' },
-    { icon: <Bell className="w-6 h-6 text-amber-600" />, title: 'Notifications', desc: 'In-app alerts for bus arrival, departure and fee reminders.' },
-    { icon: <Shield className="w-6 h-6 text-purple-600" />, title: 'Daily Attendance', desc: 'Automatic pickup and drop attendance for every student.' },
-    { icon: <FileText className="w-6 h-6 text-indigo-600" />, title: 'Digital Receipts', desc: 'PDF receipt generated automatically after every successful payment.' },
+    { icon: <CreditCard className="w-6 h-6 text-blue-600" />, title: 'Direct UPI Payment', desc: 'Pay monthly bus fee in one tap via Google Pay, PhonePe, Paytm or BHIM.' },
+    { icon: <Bell className="w-6 h-6 text-amber-600" />, title: 'Notifications', desc: 'In-app alerts for fee reminders and payment confirmations.' },
+    { icon: <Shield className="w-6 h-6 text-purple-600" />, title: 'Daily Attendance', desc: 'Pickup and drop attendance with calendar view for every student.' },
+    { icon: <FileText className="w-6 h-6 text-indigo-600" />, title: 'Digital Receipts', desc: 'PDF receipt generated automatically once admin verifies your payment.' },
     { icon: <Users className="w-6 h-6 text-rose-600" />, title: 'Multi-Child Support', desc: 'Manage and pay for multiple children from a single parent account.' },
-    { icon: <CreditCard className="w-6 h-6 text-blue-600" />, title: 'Secure Online Payment', desc: 'Pay monthly bus fee via PayU using Cards, UPI, Netbanking, or Wallets.' },
+    { icon: <MapPin className="w-6 h-6 text-green-600" />, title: 'Spending Summary', desc: 'Monthly chart of paid versus pending fees for the academic year.' },
   ];
 
   return (

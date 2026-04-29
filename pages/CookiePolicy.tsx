@@ -76,7 +76,7 @@ export default function CookiePolicy() {
                 <strong>Purpose:</strong> Set by external services integrated with our app
               </p>
               <p className="text-gray-700 text-sm mt-1">
-                <strong>Examples:</strong> Google Maps (location services), PayU (payments), analytics providers
+                <strong>Examples:</strong> Supabase (database and authentication), Twilio (SMS notifications)
               </p>
               <p className="text-gray-700 text-sm mt-1 text-orange-800">
                 <strong>Can be disabled?</strong> Partially - depends on service requirements
@@ -114,7 +114,7 @@ export default function CookiePolicy() {
               <span className="text-orange-600 font-bold text-lg">4.</span>
               <div>
                 <h3 className="font-semibold text-gray-900">Feature Functionality</h3>
-                <p className="text-gray-700 text-sm">To provide real-time tracking, payments, and notifications</p>
+                <p className="text-gray-700 text-sm">To provide payments, attendance and notifications</p>
               </div>
             </div>
             <div className="flex gap-3">
@@ -215,18 +215,18 @@ export default function CookiePolicy() {
             External services used in our app may set their own cookies:
           </p>
           <div className="space-y-4">
-            <div className="p-4 border-l-4 border-red-500 bg-red-50">
-              <h3 className="font-semibold text-gray-900">Google Maps</h3>
-              <p className="text-gray-700 text-sm">For real-time location tracking</p>
-              <a href="https://policies.google.com/privacy" target="_blank" rel="noopener noreferrer" className="text-red-600 hover:underline text-sm">
-                Google Privacy Policy →
+            <div className="p-4 border-l-4 border-blue-500 bg-blue-50">
+              <h3 className="font-semibold text-gray-900">Supabase</h3>
+              <p className="text-gray-700 text-sm">For database hosting and authentication</p>
+              <a href="https://supabase.com/privacy" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline text-sm">
+                Supabase Privacy Policy →
               </a>
             </div>
             <div className="p-4 border-l-4 border-blue-500 bg-blue-50">
-              <h3 className="font-semibold text-gray-900">PayU</h3>
-              <p className="text-gray-700 text-sm">For secure payment processing</p>
-              <a href="https://payu.in/privacy-policy" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline text-sm">
-                PayU Privacy Policy →
+              <h3 className="font-semibold text-gray-900">Twilio</h3>
+              <p className="text-gray-700 text-sm">For SMS and OTP delivery</p>
+              <a href="https://www.twilio.com/legal/privacy" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline text-sm">
+                Twilio Privacy Policy →
               </a>
             </div>
             <div className="p-4 border-l-4 border-purple-500 bg-purple-50">

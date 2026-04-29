@@ -99,22 +99,22 @@ export default function AboutUs() {
             Why Choose BusWay Pro?
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            <div className="p-6 bg-blue-50 rounded-lg border-l-4 border-blue-600">
-              <h3 className="font-semibold text-gray-900 mb-2">Real-Time Tracking</h3>
-              <p className="text-gray-700 text-sm">
-                Live GPS tracking of buses with accurate arrival times and route optimization
-              </p>
-            </div>
             <div className="p-6 bg-green-50 rounded-lg border-l-4 border-green-600">
-              <h3 className="font-semibold text-gray-900 mb-2">Secure Payments</h3>
+              <h3 className="font-semibold text-gray-900 mb-2">Direct UPI Payments</h3>
               <p className="text-gray-700 text-sm">
-                PCI DSS compliant payment processing with PayU and Stripe integration
+                Pay monthly bus fees through Google Pay, PhonePe, Paytm or BHIM with one tap
               </p>
             </div>
             <div className="p-6 bg-purple-50 rounded-lg border-l-4 border-purple-600">
-              <h3 className="font-semibold text-gray-900 mb-2">Safety Monitoring</h3>
+              <h3 className="font-semibold text-gray-900 mb-2">Attendance Records</h3>
               <p className="text-gray-700 text-sm">
-                Live bus camera feeds and attendance tracking for enhanced student safety
+                Daily pickup and drop attendance with calendar view and monthly streak tracking
+              </p>
+            </div>
+            <div className="p-6 bg-blue-50 rounded-lg border-l-4 border-blue-600">
+              <h3 className="font-semibold text-gray-900 mb-2">Spending Summary</h3>
+              <p className="text-gray-700 text-sm">
+                Monthly breakdown of bus fee paid versus pending with clear charts
               </p>
             </div>
             <div className="p-6 bg-orange-50 rounded-lg border-l-4 border-orange-600">
@@ -193,8 +193,8 @@ export default function AboutUs() {
               <ul className="space-y-2 text-gray-700 text-sm">
                 <li>• Supabase for database and auth</li>
                 <li>• Node.js serverless functions</li>
-                <li>• Google Maps API for tracking</li>
-                <li>• PayU & Stripe for payments</li>
+                <li>• UPI deep links for direct payments</li>
+                <li>• Twilio for SMS and OTP delivery</li>
               </ul>
             </div>
             <div>

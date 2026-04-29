@@ -39,7 +39,7 @@ export default function DataProtection() {
             <div className="p-4 border-l-4 border-orange-500 bg-orange-50">
               <h3 className="font-semibold text-gray-900 text-orange-700">Sensitive (Level 2)</h3>
               <p className="text-gray-700">
-                Student information, parent contact details, location data, academic records
+                Student information, parent contact details, attendance records, payment transaction references
               </p>
               <p className="text-sm text-gray-600 mt-2">Protected by: Role-based access, encryption, audit trails</p>
             </div>
@@ -95,7 +95,7 @@ export default function DataProtection() {
                 </li>
                 <li className="flex gap-2">
                   <CheckCircle className="w-4 h-4 text-green-600 flex-shrink-0 mt-0.5" />
-                  <span>Device fingerprinting and location verification</span>
+                  <span>Device fingerprinting for fraud and unauthorised-access checks</span>
                 </li>
               </ul>
             </div>

@@ -15,27 +15,27 @@ export default function HelpSupport() {
     },
     {
       question: "What payment methods are accepted?",
-      answer: "We accept credit cards, debit cards, and digital payment methods through PayU and Stripe."
+      answer: "Direct UPI payment via Google Pay, PhonePe, Paytm or BHIM. Funds transfer straight from your UPI app to the operator's UPI ID — no card or gateway is involved."
     },
     {
       question: "How do I view my payment history?",
-      answer: "Navigate to Payments → Fee History to view all past payments and download receipts."
+      answer: "Navigate to Payments → Fees to view all past payments and download receipts."
     },
     {
       question: "Can I request a fee waiver?",
-      answer: "Yes, you can submit a waiver request through Payments → Request Waiver. Requests are reviewed by school administration."
+      answer: "Yes, you can submit a waiver request through Payments → Request Waiver. Requests are reviewed by the bus operator."
     },
     {
-      question: "How is my location data used?",
-      answer: "Location data is only used for real-time bus tracking and route optimization. It's never shared with third parties except for map services."
+      question: "How is my data used?",
+      answer: "Your data is used only to provide bus fee management — student records, attendance, payment verification and notifications. It is not sold or shared with marketing third parties."
     },
     {
       question: "How do I delete my account?",
-      answer: "Go to Settings → Account → Delete Account. Your data will be securely deleted within 30 days."
+      answer: "Email the operator from the Contact Us page to request account deletion. Your data will be securely removed within 30 days."
     },
     {
       question: "Is my payment information stored?",
-      answer: "No, payment information is never stored. We use secure payment gateways (PayU/Stripe) with PCI DSS compliance."
+      answer: "We never see or store your UPI PIN, card details or bank credentials. Authentication happens entirely inside your UPI app. We only record the transaction reference (UTR) you submit so the operator can match it against their bank statement."
     }
   ];
 

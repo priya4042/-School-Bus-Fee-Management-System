@@ -1,5 +1,5 @@
 import React from 'react';
-import { Shield, AlertCircle, Lock, Eye, Database } from 'lucide-react';
+import { Shield, AlertCircle, Lock, Database } from 'lucide-react';
 
 export default function PrivacyPolicy() {
   return (
@@ -45,35 +45,28 @@ export default function PrivacyPolicy() {
           <p className="text-gray-700 mb-4">We may collect information about you in a variety of ways:</p>
           <div className="space-y-4 ml-4">
             <div>
-              <h3 className="font-semibold text-gray-900 flex items-center gap-2">
-                <Eye className="w-5 h-5 text-blue-500" />
-                Camera Permission
-              </h3>
-              <p className="text-gray-700 ml-7">Used for livestreaming bus camera feeds for safety monitoring and documentation purposes</p>
-            </div>
-            <div>
-              <h3 className="font-semibold text-gray-900">Location Data (GPS)</h3>
-              <p className="text-gray-700 ml-7">Collected to track real-time bus location, route information, and estimated arrival times</p>
-            </div>
-            <div>
               <h3 className="font-semibold text-gray-900">Student Information</h3>
-              <p className="text-gray-700 ml-7">Name, ID, class, grade, assigned bus, boarding point, and linked parent/guardian details</p>
+              <p className="text-gray-700 ml-7">Name, admission number, class, grade, assigned bus, boarding point, and linked parent/guardian details</p>
             </div>
             <div>
               <h3 className="font-semibold text-gray-900">Parent/Guardian Information</h3>
-              <p className="text-gray-700 ml-7">Name, email, phone number, relationship to student, address</p>
+              <p className="text-gray-700 ml-7">Name, email, phone number, relationship to student</p>
             </div>
             <div>
               <h3 className="font-semibold text-gray-900">Financial Information</h3>
-              <p className="text-gray-700 ml-7">Payment details, transaction history, fee statements, receipts (processed via PayU and Stripe)</p>
+              <p className="text-gray-700 ml-7">UPI transaction reference (UTR) numbers, payment screenshots (optional), fee statements, and receipts. Payments are made directly via your UPI app (Google Pay, PhonePe, Paytm or BHIM) — the app does not process or hold funds.</p>
             </div>
             <div>
               <h3 className="font-semibold text-gray-900">Device Information</h3>
-              <p className="text-gray-700 ml-7">Device type, operating system, app version, unique device identifiers</p>
+              <p className="text-gray-700 ml-7">Device type, operating system, app version</p>
             </div>
             <div>
               <h3 className="font-semibold text-gray-900">Usage Information</h3>
               <p className="text-gray-700 ml-7">How you interact with the app, features used, pages visited, notifications received</p>
+            </div>
+            <div>
+              <h3 className="font-semibold text-gray-900">Optional Features (Disabled by Default)</h3>
+              <p className="text-gray-700 ml-7">If the bus operator enrolls a parent in optional GPS tracking or in-bus camera viewing, the relevant location or camera-feed data is processed only for that parent and only while those features are explicitly enabled. These features are off by default and require operator authorisation per parent.</p>
             </div>
           </div>
         </section>
@@ -85,19 +78,15 @@ export default function PrivacyPolicy() {
           <ul className="space-y-2 ml-4 text-gray-700">
             <li className="flex gap-2">
               <span className="text-blue-600 font-bold">•</span>
-              <span>Display live bus location tracking and real-time GPS updates</span>
-            </li>
-            <li className="flex gap-2">
-              <span className="text-blue-600 font-bold">•</span>
-              <span>Stream bus camera feeds for safety and security monitoring</span>
-            </li>
-            <li className="flex gap-2">
-              <span className="text-blue-600 font-bold">•</span>
               <span>Calculate, display, and manage monthly bus fee dues</span>
             </li>
             <li className="flex gap-2">
               <span className="text-blue-600 font-bold">•</span>
-              <span>Process payments through integrated payment gateways</span>
+              <span>Generate UPI payment requests so parents can pay directly via Google Pay, PhonePe, Paytm or BHIM</span>
+            </li>
+            <li className="flex gap-2">
+              <span className="text-blue-600 font-bold">•</span>
+              <span>Verify payments by matching the transaction reference (UTR) submitted by the parent</span>
             </li>
             <li className="flex gap-2">
               <span className="text-blue-600 font-bold">•</span>
@@ -132,20 +121,16 @@ export default function PrivacyPolicy() {
           <p className="text-gray-700 mb-4">We do not sell, trade, or rent your personal information to third parties for marketing purposes. However, we may share your information with:</p>
           <div className="space-y-3 ml-4">
             <div className="p-4 bg-blue-50 border-l-4 border-blue-600">
-              <h3 className="font-semibold text-gray-900">Payment Processors</h3>
-              <p className="text-gray-700">PayU and Stripe receive necessary information to process payments securely</p>
+              <h3 className="font-semibold text-gray-900">UPI Apps</h3>
+              <p className="text-gray-700">When you tap "Pay via UPI", the app generates a standard UPI deep link that opens your chosen UPI app (Google Pay, PhonePe, Paytm or BHIM). The UPI app, not us, handles the payment. We do not see your bank login or PIN.</p>
             </div>
             <div className="p-4 bg-blue-50 border-l-4 border-blue-600">
               <h3 className="font-semibold text-gray-900">Communication Services</h3>
               <p className="text-gray-700">Twilio receives phone numbers to send SMS notifications and OTP codes</p>
             </div>
             <div className="p-4 bg-blue-50 border-l-4 border-blue-600">
-              <h3 className="font-semibold text-gray-900">Maps Services</h3>
-              <p className="text-gray-700">Google Maps receives location data for route mapping and tracking</p>
-            </div>
-            <div className="p-4 bg-blue-50 border-l-4 border-blue-600">
-              <h3 className="font-semibold text-gray-900">School Administrators</h3>
-              <p className="text-gray-700">School staff access student and parent information for administrative purposes</p>
+              <h3 className="font-semibold text-gray-900">Bus Operator</h3>
+              <p className="text-gray-700">The bus operator who runs your child's bus accesses student and parent information needed for administrative purposes such as fee collection and attendance.</p>
             </div>
             <div className="p-4 bg-blue-50 border-l-4 border-blue-600">
               <h3 className="font-semibold text-gray-900">Legal Compliance</h3>

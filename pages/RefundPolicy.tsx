@@ -54,7 +54,7 @@ export default function RefundPolicy() {
               <li><strong>Duplicate Payment:</strong> If a parent is charged more than once for the same billing period due to a technical error, the duplicate amount will be refunded in full.</li>
               <li><strong>Excess Payment:</strong> If the amount charged exceeds the actual fee for the billing period, the excess amount will be refunded.</li>
               <li><strong>Service Not Provided:</strong> If the school bus transportation service is permanently discontinued for a student (e.g., student withdrawal, route cancellation by the school), a pro-rata refund for the unused period may be issued subject to school administration approval.</li>
-              <li><strong>Failed Transaction with Amount Debited:</strong> If a payment fails but the amount is debited from the parent's account, the amount will be automatically refunded by the payment gateway (PayU) within 5-7 business days. If not received, the parent may raise a request.</li>
+              <li><strong>Failed Transaction with Amount Debited:</strong> Since payments are made directly through your UPI app, any failed transaction is handled by your UPI app or bank. Most reversals happen automatically within 5-7 business days. If the operator did not receive the payment but your bank shows it was debited, raise a complaint with your UPI app first; if unresolved, contact the operator with your UTR for record reconciliation.</li>
             </ul>
           </section>
 
@@ -90,7 +90,7 @@ export default function RefundPolicy() {
               </div>
               <div className="flex items-start gap-3">
                 <span className="w-7 h-7 rounded-full bg-blue-600 text-white flex items-center justify-center text-sm font-bold shrink-0">3</span>
-                <p><strong>Approval & Processing:</strong> If approved, the refund is initiated via the original payment method (PayU gateway).</p>
+                <p><strong>Approval & Processing:</strong> If approved, the operator initiates the refund via UPI directly to the parent's UPI ID or bank account.</p>
               </div>
               <div className="flex items-start gap-3">
                 <span className="w-7 h-7 rounded-full bg-blue-600 text-white flex items-center justify-center text-sm font-bold shrink-0">4</span>
@@ -142,13 +142,12 @@ export default function RefundPolicy() {
           <section>
             <div className="flex items-center gap-2 mb-3">
               <CheckCircle className="w-5 h-5 text-blue-600" />
-              <h2 className="text-xl font-bold text-gray-900">7. Payment Gateway</h2>
+              <h2 className="text-xl font-bold text-gray-900">7. Payment Method</h2>
             </div>
             <p>
-              All online payments are securely processed through <strong>PayU</strong>, a PCI DSS compliant payment gateway.
-              PayU supports Credit Cards, Debit Cards, UPI (Google Pay, PhonePe, BHIM), Net Banking, and Wallets.
-              Meena Devi – Bus Transport Service does not store any card or bank account details. All payment data is handled directly by PayU
-              under their security protocols.
+              All online payments are processed directly through your chosen UPI app — <strong>Google Pay, PhonePe, Paytm or BHIM</strong>.
+              The app generates a standard UPI deep link with the operator's UPI ID and the fee amount; you authorise the payment inside your UPI app, and funds are transferred straight to the operator's bank-linked UPI account.
+              <strong>Meena Devi – Bus Transport Service</strong> does not store any card, bank account or UPI PIN details. All payment authorisation is handled by your UPI app under their own security and authentication protocols.
             </p>
           </section>
 

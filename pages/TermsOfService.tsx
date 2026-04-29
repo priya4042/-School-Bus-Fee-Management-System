@@ -129,7 +129,7 @@ export default function TermsOfService() {
           <h2 className="text-2xl font-bold text-gray-900 mb-4">10. Payment Terms</h2>
           <div className="space-y-3 text-gray-700">
             <p>
-              <strong>Fee Payment:</strong> All fees are to be paid according to the billing cycle specified by the school. Payment can be made through the integrated payment gateways (PayU or Stripe).
+              <strong>Fee Payment:</strong> All fees are to be paid according to the billing cycle specified by the operator. Payment is made directly via your UPI app (Google Pay, PhonePe, Paytm or BHIM). Funds are transferred straight to the operator's UPI ID — the app does not process or hold funds.
             </p>
             <p>
               <strong>Late Payments:</strong> Late payments may incur penalties as specified by the school administration.
