@@ -40,7 +40,27 @@ const TeacherDashboard: React.FC<{ user: User }> = ({ user }) => {
            <h3 className="font-bold text-slate-800">Student List & Status</h3>
            <button className="text-xs font-bold text-primary hover:underline">View All Students</button>
         </div>
-        <div className="overflow-x-auto">
+        {/* Mobile cards */}
+        <div className="md:hidden divide-y divide-slate-50">
+          {MOCK_STUDENTS.slice(0, 5).map(s => (
+            <div key={s.id} className="p-4 flex items-center gap-3">
+              <div className="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center font-bold text-slate-400 text-sm flex-shrink-0">
+                {s.full_name.charAt(0)}
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="font-semibold text-slate-700 truncate">{s.full_name}</p>
+                <p className="text-xs text-slate-500 truncate">{s.route_name}</p>
+              </div>
+              <span className="px-2 py-0.5 rounded-full bg-green-100 text-green-700 text-[10px] font-bold flex-shrink-0">PAID</span>
+              <button className="text-slate-400 hover:text-primary transition-colors flex-shrink-0">
+                <i className="fas fa-eye"></i>
+              </button>
+            </div>
+          ))}
+        </div>
+
+        {/* Desktop table */}
+        <div className="hidden md:block overflow-x-auto">
           <table className="w-full text-left">
             <thead>
               <tr className="bg-slate-50 text-slate-500 text-[10px] uppercase tracking-widest">
@@ -56,14 +76,11 @@ const TeacherDashboard: React.FC<{ user: User }> = ({ user }) => {
                   <td className="px-6 py-4">
                      <div className="flex items-center gap-3">
                         <div className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center font-bold text-slate-400 text-xs">
-                           {/* Fix: Use full_name */}
                            {s.full_name.charAt(0)}
                         </div>
-                        {/* Fix: Use full_name */}
                         <span className="font-semibold text-slate-700">{s.full_name}</span>
                      </div>
                   </td>
-                  {/* Fix: Use route_name */}
                   <td className="px-6 py-4 text-sm text-slate-500">{s.route_name}</td>
                   <td className="px-6 py-4 text-center">
                      <span className="px-2 py-0.5 rounded-full bg-green-100 text-green-700 text-[10px] font-bold">PAID</span>

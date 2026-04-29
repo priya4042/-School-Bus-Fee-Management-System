@@ -93,64 +93,101 @@ const Routes: React.FC = () => {
         </button>
       </div>
 
-      <div className="bg-white rounded-[3rem] border border-slate-200 overflow-hidden shadow-premium">
-        <div className="overflow-x-auto min-h-[300px]">
-          {loading ? (
-            <div className="p-20 text-center">
-               <MiniLoader />
+      <div className="bg-white rounded-2xl md:rounded-[3rem] border border-slate-200 overflow-hidden shadow-premium">
+        {loading ? (
+          <div className="p-20 text-center">
+             <MiniLoader />
+          </div>
+        ) : routes.length === 0 ? (
+          <div className="p-12 md:p-24 text-center">
+             <div className="w-16 h-16 md:w-20 md:h-20 bg-slate-50 rounded-2xl md:rounded-[2rem] flex items-center justify-center mx-auto mb-4 md:mb-6">
+                 <i className="fas fa-map-marked text-2xl md:text-3xl text-slate-200"></i>
+             </div>
+             <p className="text-[10px] font-black text-slate-300 uppercase tracking-[0.3em]">No routes registered in fleet</p>
+          </div>
+        ) : (
+          <>
+            {/* Mobile cards */}
+            <div className="md:hidden divide-y divide-slate-50">
+              {routes.map((route) => (
+                <div key={route.id} className="p-4 space-y-3">
+                  <div className="flex items-start gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary flex-shrink-0">
+                      <i className="fas fa-route"></i>
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <p className="font-black text-slate-800 tracking-tight text-sm truncate">{route.route_name}</p>
+                        <span className="text-[8px] font-black px-2 py-0.5 bg-slate-100 text-slate-500 rounded-full uppercase tracking-widest border border-slate-200">
+                          {route.code}
+                        </span>
+                      </div>
+                      <p className="text-[10px] font-bold text-slate-500 truncate mt-1">
+                        {route.start_point || '---'} → {route.end_point || '---'}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex items-center justify-between gap-2 pt-2 border-t border-slate-50">
+                    <div className="flex items-center gap-3">
+                      <span className="text-[10px] font-black text-slate-700">{route.distance_km} KM</span>
+                      <span className="text-[10px] font-black text-primary">₹{Number(route.base_fee || 0).toLocaleString()}</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <button onClick={() => handleEdit(route)} className="w-8 h-8 flex items-center justify-center bg-emerald-50 text-emerald-600 rounded-lg active:scale-95"><i className="fas fa-edit text-[10px]"></i></button>
+                      <button onClick={() => handleDelete(route.id, route.route_name)} className="w-8 h-8 flex items-center justify-center bg-red-50 text-red-600 rounded-lg active:scale-95"><i className="fas fa-trash-alt text-[10px]"></i></button>
+                    </div>
+                  </div>
+                </div>
+              ))}
             </div>
-          ) : routes.length > 0 ? (
-            <table className="w-full text-left">
-              <thead>
-                <tr className="bg-slate-50/50 text-slate-400 text-[9px] font-black uppercase tracking-[0.2em] border-b border-slate-100">
-                  <th className="px-8 py-5">Route Name</th>
-                  <th className="px-8 py-5">Code</th>
-                  <th className="px-8 py-5">Start Point</th>
-                  <th className="px-8 py-5">End Point</th>
-                  <th className="px-8 py-5 text-right">Distance</th>
-                  <th className="px-8 py-5 text-right">Base Fee</th>
-                  <th className="px-8 py-5 text-right">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-50">
-                {routes.map((route) => (
-                  <tr key={route.id} className="hover:bg-slate-50/50 transition-colors group">
-                    <td className="px-8 py-5">
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary transition-all">
-                           <i className="fas fa-route"></i>
-                        </div>
-                        <span className="font-black text-slate-800 tracking-tight text-sm">{route.route_name}</span>
-                      </div>
-                    </td>
-                    <td className="px-8 py-5">
-                      <span className="text-[10px] font-black px-2 py-0.5 bg-slate-100 text-slate-400 rounded-full uppercase tracking-widest border border-slate-200">
-                        {route.code}
-                      </span>
-                    </td>
-                    <td className="px-8 py-5 text-xs font-bold text-slate-600">{route.start_point || '---'}</td>
-                    <td className="px-8 py-5 text-xs font-bold text-slate-600">{route.end_point || '---'}</td>
-                    <td className="px-8 py-5 text-right font-black text-slate-700">{route.distance_km} KM</td>
-                    <td className="px-8 py-5 text-right font-black text-primary">₹{Number(route.base_fee || 0).toLocaleString()}</td>
-                    <td className="px-8 py-5 text-right">
-                      <div className="flex items-center justify-end gap-2">
-                        <button onClick={() => handleEdit(route)} className="w-8 h-8 flex items-center justify-center bg-white border border-slate-100 text-slate-400 hover:text-primary rounded-lg transition-all"><i className="fas fa-edit text-[10px]"></i></button>
-                        <button onClick={() => handleDelete(route.id, route.route_name)} className="w-8 h-8 flex items-center justify-center bg-white border border-slate-100 text-slate-400 hover:text-danger rounded-lg transition-all"><i className="fas fa-trash-alt text-[10px]"></i></button>
-                      </div>
-                    </td>
+
+            {/* Desktop table */}
+            <div className="hidden md:block overflow-x-auto min-h-[300px]">
+              <table className="w-full text-left">
+                <thead>
+                  <tr className="bg-slate-50/50 text-slate-400 text-[9px] font-black uppercase tracking-[0.2em] border-b border-slate-100">
+                    <th className="px-8 py-5">Route Name</th>
+                    <th className="px-8 py-5">Code</th>
+                    <th className="px-8 py-5">Start Point</th>
+                    <th className="px-8 py-5">End Point</th>
+                    <th className="px-8 py-5 text-right">Distance</th>
+                    <th className="px-8 py-5 text-right">Base Fee</th>
+                    <th className="px-8 py-5 text-right">Actions</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          ) : (
-            <div className="p-24 text-center">
-               <div className="w-20 h-20 bg-slate-50 rounded-[2rem] flex items-center justify-center mx-auto mb-6">
-                   <i className="fas fa-map-marked text-3xl text-slate-200"></i>
-               </div>
-               <p className="text-[10px] font-black text-slate-300 uppercase tracking-[0.3em]">No routes registered in fleet</p>
+                </thead>
+                <tbody className="divide-y divide-slate-50">
+                  {routes.map((route) => (
+                    <tr key={route.id} className="hover:bg-slate-50/50 transition-colors group">
+                      <td className="px-8 py-5">
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary transition-all">
+                             <i className="fas fa-route"></i>
+                          </div>
+                          <span className="font-black text-slate-800 tracking-tight text-sm">{route.route_name}</span>
+                        </div>
+                      </td>
+                      <td className="px-8 py-5">
+                        <span className="text-[10px] font-black px-2 py-0.5 bg-slate-100 text-slate-400 rounded-full uppercase tracking-widest border border-slate-200">
+                          {route.code}
+                        </span>
+                      </td>
+                      <td className="px-8 py-5 text-xs font-bold text-slate-600">{route.start_point || '---'}</td>
+                      <td className="px-8 py-5 text-xs font-bold text-slate-600">{route.end_point || '---'}</td>
+                      <td className="px-8 py-5 text-right font-black text-slate-700">{route.distance_km} KM</td>
+                      <td className="px-8 py-5 text-right font-black text-primary">₹{Number(route.base_fee || 0).toLocaleString()}</td>
+                      <td className="px-8 py-5 text-right">
+                        <div className="flex items-center justify-end gap-2">
+                          <button onClick={() => handleEdit(route)} className="w-8 h-8 flex items-center justify-center bg-white border border-slate-100 text-slate-400 hover:text-primary rounded-lg transition-all"><i className="fas fa-edit text-[10px]"></i></button>
+                          <button onClick={() => handleDelete(route.id, route.route_name)} className="w-8 h-8 flex items-center justify-center bg-white border border-slate-100 text-slate-400 hover:text-danger rounded-lg transition-all"><i className="fas fa-trash-alt text-[10px]"></i></button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
-          )}
-        </div>
+          </>
+        )}
       </div>
 
       <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title={editingId ? "Edit Route" : "Provision New Route"} maxWidthClass="max-w-4xl" bodyClassName="p-6 md:p-8">

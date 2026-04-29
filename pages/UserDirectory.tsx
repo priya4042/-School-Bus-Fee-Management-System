@@ -110,7 +110,46 @@ const UserDirectory: React.FC = () => {
            />
         </div>
 
-        <div className="overflow-x-auto">
+        {/* Mobile cards */}
+        <div className="md:hidden divide-y divide-slate-50">
+          {filteredUsers.map((u) => {
+            const family = getParentStudents(u);
+            const overdue = u.role === UserRole.PARENT && family.some(s => getBillingStatus(s.id).label === 'Overdue');
+            return (
+              <div key={u.id} className="p-4 flex items-start gap-3">
+                <div className="w-10 h-10 rounded-xl bg-slate-900 text-white flex items-center justify-center font-black flex-shrink-0">
+                  {(u.fullName || u.full_name || '?').charAt(0)}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <p className="font-black text-slate-800 tracking-tight text-sm truncate">{u.fullName || u.full_name}</p>
+                    <span className={`w-2 h-2 rounded-full flex-shrink-0 ${u.role === UserRole.PARENT ? (overdue ? 'bg-danger animate-pulse' : 'bg-success') : 'bg-slate-300'}`}></span>
+                  </div>
+                  <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mt-1">
+                    {u.role === UserRole.ADMIN || u.role === UserRole.SUPER_ADMIN ? 'Bus admin' : u.role}
+                  </p>
+                  {u.role === UserRole.PARENT && (
+                    <span className="inline-block mt-2 px-2 py-0.5 rounded-full bg-primary/5 text-primary text-[8px] font-black uppercase tracking-widest border border-primary/10">
+                      {family.length} Children Linked
+                    </span>
+                  )}
+                </div>
+                <button
+                  onClick={() => { setSelectedUser(u); setIsModalOpen(true); }}
+                  className="text-[9px] font-black uppercase tracking-widest px-3 py-2 rounded-xl text-primary bg-primary/5 flex-shrink-0"
+                >
+                  Audit
+                </button>
+              </div>
+            );
+          })}
+          {filteredUsers.length === 0 && (
+            <div className="p-12 text-center text-[10px] font-black text-slate-300 uppercase tracking-widest">No profiles found</div>
+          )}
+        </div>
+
+        {/* Desktop table */}
+        <div className="hidden md:block overflow-x-auto">
           <table className="w-full text-left">
             <thead>
               <tr className="bg-slate-50 text-slate-400 text-[9px] font-black uppercase tracking-widest border-b border-slate-100">

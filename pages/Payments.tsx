@@ -89,8 +89,82 @@ const Payments: React.FC<{ user: User }> = ({ user }) => {
         </div>
       </div>
 
-      <div className="bg-white rounded-[2.5rem] border border-slate-200 shadow-premium overflow-hidden">
-        <div className="overflow-x-auto">
+      <div className="bg-white rounded-2xl md:rounded-[2.5rem] border border-slate-200 shadow-premium overflow-hidden">
+        {/* Mobile cards */}
+        <div className="md:hidden divide-y divide-slate-50">
+          {dues.map(due => {
+            const isPaid = due.status === PaymentStatus.PAID;
+            const payable = isMonthPayable(due, dues);
+            const isLocked = !isPaid && !payable;
+            const { isFineApplied } = calculateCurrentLedger(due);
+            const isLate = new Date() > new Date(due.due_date);
+
+            return (
+              <div key={due.id} className={`p-4 space-y-3 ${isPaid ? 'bg-slate-50/20' : isLocked ? 'opacity-40 grayscale pointer-events-none' : ''}`}>
+                <div className="flex items-start justify-between gap-2">
+                  <div className="min-w-0">
+                    <p className="font-black text-slate-800 text-base tracking-tight leading-none">{MONTHS[due.month - 1]} {due.year}</p>
+                    <span className={`text-[8px] font-black px-2 py-0.5 mt-2 rounded-full uppercase tracking-widest border inline-flex items-center gap-1 ${
+                      isPaid ? 'bg-success/10 text-success border-success/10' :
+                      isLocked ? 'bg-slate-100 text-slate-400 border-slate-200' :
+                      isLate ? 'bg-danger/10 text-danger border-danger/10' : 'bg-blue-50 text-primary border-blue-100'
+                    }`}>
+                      {isLocked && <i className="fas fa-lock text-[7px]"></i>}
+                      {isPaid ? 'Settled' : isLocked ? 'Locked' : due.status}
+                    </span>
+                  </div>
+                  <div className="text-right flex-shrink-0">
+                    <p className="font-black text-slate-800 text-lg tracking-tighter leading-none">₹{Number(due.total_due || due.amount || 0).toLocaleString()}</p>
+                    <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mt-1">Total</p>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-2 text-[9px] font-black uppercase tracking-widest">
+                  <div className="bg-slate-50 rounded-lg p-2">
+                    <p className="text-slate-400">Due</p>
+                    <p className="text-slate-700 mt-0.5">{due.due_date}</p>
+                  </div>
+                  <div className="bg-slate-50 rounded-lg p-2">
+                    <p className="text-slate-400">Last Date</p>
+                    <p className={`mt-0.5 ${isFineApplied ? 'text-danger' : 'text-slate-700'}`}>{due.last_date || due.due_date}</p>
+                  </div>
+                </div>
+
+                <div className="flex items-center justify-between gap-2">
+                  <p className="text-[10px] font-bold text-slate-500">
+                    Fee ₹{due.amount || due.base_fee}
+                    {(due.late_fee || 0) > 0 && (
+                      <span className="text-danger font-black ml-2">+₹{due.late_fee} {isFineApplied ? 'Fine' : 'Late'}</span>
+                    )}
+                  </p>
+                  {isPaid ? (
+                    <button
+                      onClick={() => downloadReceipt(due.id, due.id, due)}
+                      className="text-[9px] font-black text-primary uppercase tracking-widest px-3 py-2 rounded-lg bg-primary/5 flex items-center gap-1.5"
+                    >
+                      <i className="fas fa-download text-[8px]"></i> Receipt
+                    </button>
+                  ) : isLocked ? (
+                    <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-1">
+                      <i className="fas fa-lock"></i> Locked
+                    </span>
+                  ) : (
+                    <button
+                      onClick={() => openPortal(due.id, due.total_due || due.amount, student.full_name)}
+                      className="bg-primary text-white font-black uppercase tracking-widest px-4 py-2.5 rounded-xl text-[10px] flex items-center justify-center gap-1.5 active:scale-95"
+                    >
+                      <i className="fas fa-credit-card text-[10px]"></i>
+                      Pay
+                    </button>
+                  )}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+
+        {/* Desktop table */}
+        <div className="hidden md:block overflow-x-auto">
           <table className="w-full text-left">
             <thead>
               <tr className="bg-slate-50/50 text-slate-400 text-[9px] font-black uppercase tracking-[0.2em] border-b border-slate-100">
@@ -114,7 +188,7 @@ const Payments: React.FC<{ user: User }> = ({ user }) => {
                     <td className="px-8 py-6">
                        <p className="font-black text-slate-800 text-lg tracking-tight leading-none mb-2">{MONTHS[due.month - 1]} {due.year}</p>
                        <span className={`text-[8px] font-black px-3 py-1 rounded-full uppercase tracking-widest border inline-flex items-center gap-1.5 ${
-                         isPaid ? 'bg-success/10 text-success border-success/10' : 
+                         isPaid ? 'bg-success/10 text-success border-success/10' :
                          isLocked ? 'bg-slate-100 text-slate-400 border-slate-200' :
                          isLate ? 'bg-danger/10 text-danger border-danger/10' : 'bg-blue-50 text-primary border-blue-100'
                        }`}>
@@ -125,11 +199,11 @@ const Payments: React.FC<{ user: User }> = ({ user }) => {
                     <td className="px-8 py-6">
                        <div className="space-y-1">
                           <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex justify-between">
-                            <span>Due:</span> 
+                            <span>Due:</span>
                             <span className="text-slate-600">{due.due_date}</span>
                           </p>
                           <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex justify-between">
-                            <span>Last Date:</span> 
+                            <span>Last Date:</span>
                             <span className={isFineApplied ? 'text-danger' : 'text-slate-600'}>{due.last_date || due.due_date}</span>
                           </p>
                        </div>
@@ -150,7 +224,7 @@ const Payments: React.FC<{ user: User }> = ({ user }) => {
                        {isPaid ? (
                          <div className="flex flex-col items-center gap-2">
                             <i className="fas fa-check-circle text-success text-xl"></i>
-                            <button 
+                            <button
                               onClick={() => downloadReceipt(due.id, due.id, due)}
                               className="text-[8px] font-black text-primary uppercase tracking-widest hover:underline flex items-center gap-1"
                             >
@@ -164,7 +238,7 @@ const Payments: React.FC<{ user: User }> = ({ user }) => {
                             <span className="text-[8px] font-black uppercase tracking-widest text-center">Clear previous<br/>months first</span>
                          </div>
                        ) : (
-                         <button 
+                         <button
                            onClick={() => openPortal(due.id, due.total_due || due.amount, student.full_name)}
                            className="bg-primary text-white font-black uppercase tracking-widest px-8 py-4 rounded-2xl text-[10px] hover:bg-blue-800 transition-all shadow-xl shadow-primary/20 flex items-center justify-center gap-3 active:scale-95 group-hover:scale-105"
                          >

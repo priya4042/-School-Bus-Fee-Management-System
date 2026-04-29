@@ -417,85 +417,148 @@ const Fees: React.FC = () => {
             <div className="flex flex-col items-center justify-center h-80">
               <i className="fas fa-circle-notch fa-spin text-primary text-3xl"></i>
             </div>
+          ) : uniqueStudentsFiltered.length === 0 ? (
+            <div className="px-8 py-12 text-center text-slate-400 font-bold">
+              No fees created yet. Use "Generate Monthly Dues" or "Generate Year Fees" to create fees.
+            </div>
           ) : (
-            <table className="w-full text-left responsive-table">
-              <thead>
-                <tr className="bg-slate-50 text-slate-400 text-[9px] font-black uppercase tracking-widest border-b border-slate-100">
-                  <th className="px-8 py-5">Student</th>
-                  <th className="px-8 py-5">Adm. No</th>
-                  <th className="px-8 py-5">Grade/Section</th>
-                  <th className="px-8 py-5">Total Due</th>
-                  <th className="px-8 py-5">Paid / Pending</th>
-                  <th className="px-8 py-5">Status Summary</th>
-                  <th className="px-8 py-5 text-right">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-50">
-                {uniqueStudentsFiltered.length > 0 ? (
-                  uniqueStudentsFiltered.map((student) => {
-                    const totalDue = getStudentTotalDue(student.studentDues);
-                    const paidAmount = getStudentPaidAmount(student.studentDues);
-                    const pendingAmount = getStudentPendingAmount(student.studentDues);
-                    const overdueCount = getStudentOverdueCount(student.studentDues);
-                    const paidCount = getStudentPaidCount(student.studentDues);
+            <>
+              {/* Mobile cards */}
+              <div className="md:hidden divide-y divide-slate-50">
+                {uniqueStudentsFiltered.map((student) => {
+                  const totalDue = getStudentTotalDue(student.studentDues);
+                  const paidAmount = getStudentPaidAmount(student.studentDues);
+                  const pendingAmount = getStudentPendingAmount(student.studentDues);
+                  const overdueCount = getStudentOverdueCount(student.studentDues);
+                  const paidCount = getStudentPaidCount(student.studentDues);
 
-                    return (
-                      <tr key={student.id} className="hover:bg-slate-50/50 transition-colors">
-                        <td className="px-8 py-5">
-                          <p className="font-black text-slate-800 tracking-tight text-sm">{student.full_name}</p>
-                        </td>
-                        <td className="px-8 py-5">
-                          <p className="text-[10px] text-slate-400 font-black uppercase tracking-widest">{student.admission_number}</p>
-                        </td>
-                        <td className="px-8 py-5">
-                          <span className="text-[10px] font-black uppercase tracking-widest text-primary bg-primary/5 px-3 py-1 rounded-lg border border-primary/10">
-                            {student.grade}-{student.section}
-                          </span>
-                        </td>
-                        <td className="px-8 py-5">
-                          <p className="text-lg font-black text-slate-800">₹{totalDue.toLocaleString('en-IN')}</p>
-                        </td>
-                        <td className="px-8 py-5">
-                          <div className="space-y-1">
-                            <p className="text-xs font-black text-success">✓ ₹{paidAmount.toLocaleString('en-IN')}</p>
-                            <p className="text-xs font-black text-danger">⏳ ₹{pendingAmount.toLocaleString('en-IN')}</p>
-                          </div>
-                        </td>
-                        <td className="px-8 py-5">
-                          <div className="flex gap-2 flex-wrap">
-                            <span className="px-2 py-1 rounded-lg text-[9px] font-black uppercase tracking-widest bg-success/10 text-success border border-success/10">
-                              {paidCount} Paid
+                  return (
+                    <div key={student.id} className="p-4 space-y-3">
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="min-w-0">
+                          <p className="font-black text-slate-800 tracking-tight text-sm truncate">{student.full_name}</p>
+                          <div className="flex items-center gap-2 mt-1">
+                            <span className="text-[8px] font-black uppercase tracking-widest text-primary bg-primary/5 px-2 py-0.5 rounded-md border border-primary/10">
+                              {student.grade}-{student.section}
                             </span>
-                            {overdueCount > 0 && (
-                              <span className="px-2 py-1 rounded-lg text-[9px] font-black uppercase tracking-widest bg-danger/10 text-danger border border-danger/10">
-                                {overdueCount} Overdue
+                            <span className="text-[9px] text-slate-400 font-black uppercase tracking-widest">{student.admission_number}</span>
+                          </div>
+                        </div>
+                        <button
+                          onClick={() => handleViewStudentFees(student)}
+                          className="w-9 h-9 flex items-center justify-center bg-primary/5 text-primary rounded-xl flex-shrink-0 active:scale-95"
+                          title="View All Fees"
+                        >
+                          <i className="fas fa-list text-xs"></i>
+                        </button>
+                      </div>
+
+                      <div className="bg-slate-50 rounded-xl p-3">
+                        <div className="flex items-center justify-between mb-2">
+                          <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Total Due</span>
+                          <p className="text-base font-black text-slate-800">₹{totalDue.toLocaleString('en-IN')}</p>
+                        </div>
+                        <div className="grid grid-cols-2 gap-2 pt-2 border-t border-slate-100">
+                          <div>
+                            <p className="text-[8px] font-black text-success uppercase tracking-widest">Paid</p>
+                            <p className="text-[11px] font-black text-success">₹{paidAmount.toLocaleString('en-IN')}</p>
+                          </div>
+                          <div>
+                            <p className="text-[8px] font-black text-danger uppercase tracking-widest">Pending</p>
+                            <p className="text-[11px] font-black text-danger">₹{pendingAmount.toLocaleString('en-IN')}</p>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="flex flex-wrap gap-1.5">
+                        <span className="px-2 py-0.5 rounded-md text-[8px] font-black uppercase tracking-widest bg-success/10 text-success border border-success/10">
+                          {paidCount} Paid
+                        </span>
+                        {overdueCount > 0 && (
+                          <span className="px-2 py-0.5 rounded-md text-[8px] font-black uppercase tracking-widest bg-danger/10 text-danger border border-danger/10">
+                            {overdueCount} Overdue
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+
+              {/* Desktop table */}
+              <div className="hidden md:block">
+                <table className="w-full text-left responsive-table">
+                  <thead>
+                    <tr className="bg-slate-50 text-slate-400 text-[9px] font-black uppercase tracking-widest border-b border-slate-100">
+                      <th className="px-8 py-5">Student</th>
+                      <th className="px-8 py-5">Adm. No</th>
+                      <th className="px-8 py-5">Grade/Section</th>
+                      <th className="px-8 py-5">Total Due</th>
+                      <th className="px-8 py-5">Paid / Pending</th>
+                      <th className="px-8 py-5">Status Summary</th>
+                      <th className="px-8 py-5 text-right">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-50">
+                    {uniqueStudentsFiltered.map((student) => {
+                      const totalDue = getStudentTotalDue(student.studentDues);
+                      const paidAmount = getStudentPaidAmount(student.studentDues);
+                      const pendingAmount = getStudentPendingAmount(student.studentDues);
+                      const overdueCount = getStudentOverdueCount(student.studentDues);
+                      const paidCount = getStudentPaidCount(student.studentDues);
+
+                      return (
+                        <tr key={student.id} className="hover:bg-slate-50/50 transition-colors">
+                          <td className="px-8 py-5">
+                            <p className="font-black text-slate-800 tracking-tight text-sm">{student.full_name}</p>
+                          </td>
+                          <td className="px-8 py-5">
+                            <p className="text-[10px] text-slate-400 font-black uppercase tracking-widest">{student.admission_number}</p>
+                          </td>
+                          <td className="px-8 py-5">
+                            <span className="text-[10px] font-black uppercase tracking-widest text-primary bg-primary/5 px-3 py-1 rounded-lg border border-primary/10">
+                              {student.grade}-{student.section}
+                            </span>
+                          </td>
+                          <td className="px-8 py-5">
+                            <p className="text-lg font-black text-slate-800">₹{totalDue.toLocaleString('en-IN')}</p>
+                          </td>
+                          <td className="px-8 py-5">
+                            <div className="space-y-1">
+                              <p className="text-xs font-black text-success">✓ ₹{paidAmount.toLocaleString('en-IN')}</p>
+                              <p className="text-xs font-black text-danger">⏳ ₹{pendingAmount.toLocaleString('en-IN')}</p>
+                            </div>
+                          </td>
+                          <td className="px-8 py-5">
+                            <div className="flex gap-2 flex-wrap">
+                              <span className="px-2 py-1 rounded-lg text-[9px] font-black uppercase tracking-widest bg-success/10 text-success border border-success/10">
+                                {paidCount} Paid
                               </span>
-                            )}
-                          </div>
-                        </td>
-                        <td className="px-8 py-5 text-right">
-                          <div className="flex justify-end gap-2">
-                            <button 
-                              onClick={() => handleViewStudentFees(student)}
-                              className="w-9 h-9 flex items-center justify-center bg-white border border-slate-100 text-slate-400 hover:text-indigo-600 rounded-xl transition-all shadow-sm"
-                              title="View All Fees"
-                            >
-                              <i className="fas fa-list text-xs"></i>
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
-                    );
-                  })
-                ) : (
-                  <tr>
-                    <td colSpan={7} className="px-8 py-8 text-center text-slate-400 font-bold">
-                      No fees created yet. Use "Generate Monthly Dues" or "Generate Year Fees" to create fees.
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
+                              {overdueCount > 0 && (
+                                <span className="px-2 py-1 rounded-lg text-[9px] font-black uppercase tracking-widest bg-danger/10 text-danger border border-danger/10">
+                                  {overdueCount} Overdue
+                                </span>
+                              )}
+                            </div>
+                          </td>
+                          <td className="px-8 py-5 text-right">
+                            <div className="flex justify-end gap-2">
+                              <button
+                                onClick={() => handleViewStudentFees(student)}
+                                className="w-9 h-9 flex items-center justify-center bg-white border border-slate-100 text-slate-400 hover:text-indigo-600 rounded-xl transition-all shadow-sm"
+                                title="View All Fees"
+                              >
+                                <i className="fas fa-list text-xs"></i>
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            </>
           )}
         </div>
       </div>
@@ -802,57 +865,103 @@ const Fees: React.FC = () => {
               </div>
             </div>
 
-            {/* Fees Table */}
+            {/* Fees List */}
             <div className="bg-white rounded-2xl border border-slate-100 overflow-hidden max-h-96 flex flex-col">
               <div className="overflow-y-auto flex-1">
-                <table className="w-full text-sm">
-                  <thead>
-                    <tr className="bg-slate-50 text-slate-400 text-[9px] font-black uppercase tracking-widest border-b border-slate-100 sticky top-0">
-                      <th className="px-4 py-3 text-left">Month/Year</th>
-                      <th className="px-4 py-3 text-left">Amount</th>
-                      <th className="px-4 py-3 text-left">Status</th>
-                      <th className="px-4 py-3 text-left">Total Due</th>
-                      <th className="px-4 py-3 text-left">Paid Date</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-50">
-                  {selectedStudentForFeesView.studentDues.sort((a: any, b: any) => {
+                {(() => {
+                  const sortedDues = selectedStudentForFeesView.studentDues.sort((a: any, b: any) => {
                     if (a.year !== b.year) return b.year - a.year;
                     return b.month - a.month;
-                  }).map((fee: any) => (
-                    <tr key={fee.id} className="hover:bg-slate-50/50 transition-colors">
-                      <td className="px-4 py-3">
-                        <p className="font-bold text-slate-700">{MONTHS[fee.month - 1]} {fee.year}</p>
-                      </td>
-                      <td className="px-4 py-3">
-                        <p className="font-black text-slate-800">₹{Number(fee.amount).toLocaleString('en-IN')}</p>
-                      </td>
-                      <td className="px-4 py-3">
-                        <span className={`px-2 py-1 rounded-lg text-[9px] font-black uppercase tracking-widest border ${
-                          fee.status === 'PAID'
-                            ? 'bg-success/10 text-success border-success/10'
-                            : fee.status === 'OVERDUE'
-                              ? 'bg-danger/10 text-danger border-danger/10'
-                              : 'bg-amber-50 text-amber-600 border-amber-100'
-                        }`}>
-                          {fee.status}
-                        </span>
-                      </td>
-                      <td className="px-4 py-3">
-                        <p className="font-bold text-slate-800">₹{(Number(fee.total_due) || Number(fee.amount)).toLocaleString('en-IN')}</p>
-                        {fee.late_fee > 0 && (
-                          <p className="text-[9px] font-bold text-danger">+₹{Number(fee.late_fee).toLocaleString('en-IN')} Fine</p>
-                        )}
-                      </td>
-                      <td className="px-4 py-3">
-                        <p className="text-[9px] font-bold text-slate-600">
-                          {fee.paid_at ? new Date(fee.paid_at).toLocaleDateString('en-IN') : '-'}
-                        </p>
-                      </td>
-                    </tr>
-                  ))}
-                  </tbody>
-                </table>
+                  });
+                  return (
+                    <>
+                      {/* Mobile cards */}
+                      <div className="md:hidden divide-y divide-slate-50">
+                        {sortedDues.map((fee: any) => (
+                          <div key={fee.id} className="p-3 space-y-2">
+                            <div className="flex items-start justify-between gap-2">
+                              <div>
+                                <p className="font-bold text-slate-700 text-sm">{MONTHS[fee.month - 1]} {fee.year}</p>
+                                <p className="text-[9px] font-bold text-slate-500 mt-0.5">
+                                  Paid: {fee.paid_at ? new Date(fee.paid_at).toLocaleDateString('en-IN') : '-'}
+                                </p>
+                              </div>
+                              <span className={`px-2 py-0.5 rounded-md text-[8px] font-black uppercase tracking-widest border flex-shrink-0 ${
+                                fee.status === 'PAID'
+                                  ? 'bg-success/10 text-success border-success/10'
+                                  : fee.status === 'OVERDUE'
+                                    ? 'bg-danger/10 text-danger border-danger/10'
+                                    : 'bg-amber-50 text-amber-600 border-amber-100'
+                              }`}>
+                                {fee.status}
+                              </span>
+                            </div>
+                            <div className="flex items-center justify-between gap-2 pt-2 border-t border-slate-50">
+                              <div>
+                                <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest">Amount</p>
+                                <p className="font-black text-slate-800 text-sm">₹{Number(fee.amount).toLocaleString('en-IN')}</p>
+                              </div>
+                              <div className="text-right">
+                                <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest">Total Due</p>
+                                <p className="font-black text-slate-800 text-sm">₹{(Number(fee.total_due) || Number(fee.amount)).toLocaleString('en-IN')}</p>
+                                {fee.late_fee > 0 && (
+                                  <p className="text-[8px] font-bold text-danger">+₹{Number(fee.late_fee).toLocaleString('en-IN')} Fine</p>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+
+                      {/* Desktop table */}
+                      <table className="hidden md:table w-full text-sm">
+                        <thead>
+                          <tr className="bg-slate-50 text-slate-400 text-[9px] font-black uppercase tracking-widest border-b border-slate-100 sticky top-0">
+                            <th className="px-4 py-3 text-left">Month/Year</th>
+                            <th className="px-4 py-3 text-left">Amount</th>
+                            <th className="px-4 py-3 text-left">Status</th>
+                            <th className="px-4 py-3 text-left">Total Due</th>
+                            <th className="px-4 py-3 text-left">Paid Date</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-slate-50">
+                        {sortedDues.map((fee: any) => (
+                          <tr key={fee.id} className="hover:bg-slate-50/50 transition-colors">
+                            <td className="px-4 py-3">
+                              <p className="font-bold text-slate-700">{MONTHS[fee.month - 1]} {fee.year}</p>
+                            </td>
+                            <td className="px-4 py-3">
+                              <p className="font-black text-slate-800">₹{Number(fee.amount).toLocaleString('en-IN')}</p>
+                            </td>
+                            <td className="px-4 py-3">
+                              <span className={`px-2 py-1 rounded-lg text-[9px] font-black uppercase tracking-widest border ${
+                                fee.status === 'PAID'
+                                  ? 'bg-success/10 text-success border-success/10'
+                                  : fee.status === 'OVERDUE'
+                                    ? 'bg-danger/10 text-danger border-danger/10'
+                                    : 'bg-amber-50 text-amber-600 border-amber-100'
+                              }`}>
+                                {fee.status}
+                              </span>
+                            </td>
+                            <td className="px-4 py-3">
+                              <p className="font-bold text-slate-800">₹{(Number(fee.total_due) || Number(fee.amount)).toLocaleString('en-IN')}</p>
+                              {fee.late_fee > 0 && (
+                                <p className="text-[9px] font-bold text-danger">+₹{Number(fee.late_fee).toLocaleString('en-IN')} Fine</p>
+                              )}
+                            </td>
+                            <td className="px-4 py-3">
+                              <p className="text-[9px] font-bold text-slate-600">
+                                {fee.paid_at ? new Date(fee.paid_at).toLocaleDateString('en-IN') : '-'}
+                              </p>
+                            </td>
+                          </tr>
+                        ))}
+                        </tbody>
+                      </table>
+                    </>
+                  );
+                })()}
               </div>
             </div>
 

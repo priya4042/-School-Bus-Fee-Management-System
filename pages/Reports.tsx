@@ -189,103 +189,164 @@ const Reports: React.FC = () => {
            </div>
         </div>
       ) : activeReport === 'defaulters' ? (
-        <div className="bg-white rounded-[3rem] border border-slate-200 overflow-hidden shadow-premium">
-          <div className="p-8 bg-slate-50 border-b border-slate-100 flex items-center justify-between">
-             <h3 className="font-black text-slate-800 uppercase tracking-widest text-[11px]">Fee Defaulter Ledger</h3>
-             <span className="px-4 py-1.5 bg-danger/10 text-danger rounded-full text-[9px] font-black uppercase tracking-widest">{defaulterData.length} Records Found</span>
+        <div className="bg-white rounded-2xl md:rounded-[3rem] border border-slate-200 overflow-hidden shadow-premium">
+          <div className="p-5 md:p-8 bg-slate-50 border-b border-slate-100 flex items-center justify-between gap-2">
+             <h3 className="font-black text-slate-800 uppercase tracking-widest text-[10px] md:text-[11px]">Fee Defaulter Ledger</h3>
+             <span className="px-3 md:px-4 py-1 md:py-1.5 bg-danger/10 text-danger rounded-full text-[8px] md:text-[9px] font-black uppercase tracking-widest">{defaulterData.length} Records</span>
           </div>
-          <table className="w-full text-left">
-            <thead>
-              <tr className="bg-slate-50/50 text-slate-400 text-[9px] font-black uppercase tracking-widest border-b border-slate-100">
-                <th className="px-10 py-5">Student Identity</th>
-                <th className="px-8 py-5">Assigned Route</th>
-                <th className="px-8 py-5">Billing Cycle</th>
-                <th className="px-8 py-5 text-right">Total Overdue</th>
-                <th className="px-10 py-5 text-right">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-50">
-              {defaulterData.length > 0 ? defaulterData.map((d, i) => (
-                <tr key={i} className="hover:bg-slate-50/50 transition-colors group">
-                  <td className="px-10 py-5">
-                     <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-lg bg-danger/10 text-danger flex items-center justify-center text-[10px] font-black">{d.full_name.charAt(0)}</div>
-                        <span className="font-black text-slate-800 tracking-tight">{d.full_name}</span>
-                     </div>
-                  </td>
-                  <td className="px-8 py-5 text-xs font-bold text-slate-500 uppercase tracking-widest">{d.route_name}</td>
-                  <td className="px-8 py-5 text-xs font-black text-slate-400 uppercase tracking-widest">Month {d.month} / {d.year}</td>
-                  <td className="px-8 py-5 text-right font-black text-danger text-lg">₹{Number(d.total_due || 0).toLocaleString()}</td>
-                  <td className="px-10 py-5 text-right">
-                    <button 
+          {defaulterData.length === 0 ? (
+            <div className="p-12 md:p-24 text-center">
+              <i className="fas fa-check-double text-3xl md:text-5xl text-success/20 mb-4 md:mb-6 block"></i>
+              <p className="text-slate-300 font-black uppercase text-[10px] md:text-xs tracking-[0.3em]">Zero Default Records</p>
+            </div>
+          ) : (
+            <>
+              {/* Mobile cards */}
+              <div className="md:hidden divide-y divide-slate-50">
+                {defaulterData.map((d, i) => (
+                  <div key={i} className="p-4 flex items-start gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-danger/10 text-danger flex items-center justify-center font-black flex-shrink-0">{d.full_name.charAt(0)}</div>
+                    <div className="flex-1 min-w-0">
+                      <p className="font-black text-slate-800 tracking-tight text-sm truncate">{d.full_name}</p>
+                      <p className="text-[9px] font-bold text-slate-500 uppercase tracking-widest truncate mt-0.5">{d.route_name}</p>
+                      <div className="flex items-center justify-between gap-2 mt-2">
+                        <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest">M{d.month}/{d.year}</span>
+                        <span className="font-black text-danger text-sm">₹{Number(d.total_due || 0).toLocaleString()}</span>
+                      </div>
+                    </div>
+                    <button
                       onClick={() => showToast('Reminder Sent', 'success')}
-                      className="text-[10px] font-black text-primary uppercase tracking-widest hover:underline transition-all"
+                      className="text-[9px] font-black text-primary uppercase tracking-widest px-3 py-2 rounded-xl bg-primary/5 flex-shrink-0 self-start"
                     >
-                      Send Notice
+                      Notice
                     </button>
-                  </td>
-                </tr>
-              )) : (
-                <tr>
-                  <td colSpan={5} className="p-24 text-center">
-                    <i className="fas fa-check-double text-5xl text-success/10 mb-6 block"></i>
-                    <p className="text-slate-300 font-black uppercase text-xs tracking-[0.4em]">Zero Default Records</p>
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
+                  </div>
+                ))}
+              </div>
+
+              {/* Desktop table */}
+              <div className="hidden md:block">
+                <table className="w-full text-left">
+                  <thead>
+                    <tr className="bg-slate-50/50 text-slate-400 text-[9px] font-black uppercase tracking-widest border-b border-slate-100">
+                      <th className="px-10 py-5">Student Identity</th>
+                      <th className="px-8 py-5">Assigned Route</th>
+                      <th className="px-8 py-5">Billing Cycle</th>
+                      <th className="px-8 py-5 text-right">Total Overdue</th>
+                      <th className="px-10 py-5 text-right">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-50">
+                    {defaulterData.map((d, i) => (
+                      <tr key={i} className="hover:bg-slate-50/50 transition-colors group">
+                        <td className="px-10 py-5">
+                           <div className="flex items-center gap-3">
+                              <div className="w-8 h-8 rounded-lg bg-danger/10 text-danger flex items-center justify-center text-[10px] font-black">{d.full_name.charAt(0)}</div>
+                              <span className="font-black text-slate-800 tracking-tight">{d.full_name}</span>
+                           </div>
+                        </td>
+                        <td className="px-8 py-5 text-xs font-bold text-slate-500 uppercase tracking-widest">{d.route_name}</td>
+                        <td className="px-8 py-5 text-xs font-black text-slate-400 uppercase tracking-widest">Month {d.month} / {d.year}</td>
+                        <td className="px-8 py-5 text-right font-black text-danger text-lg">₹{Number(d.total_due || 0).toLocaleString()}</td>
+                        <td className="px-10 py-5 text-right">
+                          <button
+                            onClick={() => showToast('Reminder Sent', 'success')}
+                            className="text-[10px] font-black text-primary uppercase tracking-widest hover:underline transition-all"
+                          >
+                            Send Notice
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </>
+          )}
         </div>
       ) : (
-        <div className="bg-white rounded-[3rem] border border-slate-200 overflow-hidden shadow-premium">
-          <div className="p-8 bg-slate-50 border-b border-slate-100 flex items-center justify-between">
-            <h3 className="font-black text-slate-800 uppercase tracking-widest text-[11px]">Deleted Student Archive</h3>
-            <span className="px-4 py-1.5 bg-indigo-50 text-indigo-600 rounded-full text-[9px] font-black uppercase tracking-widest">
-              {archivedStudents.length} Archived Students
+        <div className="bg-white rounded-2xl md:rounded-[3rem] border border-slate-200 overflow-hidden shadow-premium">
+          <div className="p-5 md:p-8 bg-slate-50 border-b border-slate-100 flex items-center justify-between gap-2">
+            <h3 className="font-black text-slate-800 uppercase tracking-widest text-[10px] md:text-[11px]">Deleted Student Archive</h3>
+            <span className="px-3 md:px-4 py-1 md:py-1.5 bg-indigo-50 text-indigo-600 rounded-full text-[8px] md:text-[9px] font-black uppercase tracking-widest whitespace-nowrap">
+              {archivedStudents.length} Archived
             </span>
           </div>
-          <table className="w-full text-left">
-            <thead>
-              <tr className="bg-slate-50/50 text-slate-400 text-[9px] font-black uppercase tracking-widest border-b border-slate-100">
-                <th className="px-8 py-5">Student</th>
-                <th className="px-8 py-5">Class</th>
-                <th className="px-8 py-5">Parent Snapshot</th>
-                <th className="px-8 py-5">Fee Records</th>
-                <th className="px-8 py-5 text-right">Outstanding</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-50">
-              {archivedStudents.length > 0 ? archivedStudents.map((student: any) => (
-                <tr key={student.id} className="hover:bg-slate-50/50 transition-colors">
-                  <td className="px-8 py-5">
-                    <p className="font-black text-slate-800 tracking-tight">{student.full_name}</p>
-                    <p className="text-[9px] text-slate-400 font-black uppercase tracking-widest mt-1">Adm: {student.admission_number}</p>
-                  </td>
-                  <td className="px-8 py-5">
-                    <p className="text-xs font-black text-slate-700 uppercase">{student.grade || '-'} {student.section ? `- ${student.section}` : ''}</p>
-                    <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mt-1">Status: {String(student.status || '').toUpperCase()}</p>
-                  </td>
-                  <td className="px-8 py-5">
-                    <p className="text-xs font-black text-slate-700">{student.parent_name || '-'}</p>
-                    <p className="text-[9px] font-bold text-slate-400 mt-1">{student.parent_phone || '-'}</p>
-                  </td>
-                  <td className="px-8 py-5">
-                    <p className="text-xs font-black text-slate-700 uppercase">{student.totalRecords} Total</p>
-                    <p className="text-[9px] font-bold text-emerald-600 uppercase tracking-widest mt-1">{student.paidRecords} Paid</p>
-                  </td>
-                  <td className="px-8 py-5 text-right">
-                    <p className="text-sm font-black text-amber-600">₹{Number(student.outstanding || 0).toLocaleString('en-IN')}</p>
-                  </td>
-                </tr>
-              )) : (
-                <tr>
-                  <td colSpan={5} className="p-20 text-center">
-                    <p className="text-slate-300 font-black uppercase text-xs tracking-[0.3em]">No Archived Students</p>
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
+          {archivedStudents.length === 0 ? (
+            <div className="p-12 md:p-20 text-center">
+              <p className="text-slate-300 font-black uppercase text-[10px] md:text-xs tracking-[0.3em]">No Archived Students</p>
+            </div>
+          ) : (
+            <>
+              {/* Mobile cards */}
+              <div className="md:hidden divide-y divide-slate-50">
+                {archivedStudents.map((student: any) => (
+                  <div key={student.id} className="p-4 space-y-2">
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="min-w-0">
+                        <p className="font-black text-slate-800 tracking-tight text-sm truncate">{student.full_name}</p>
+                        <p className="text-[9px] text-slate-400 font-black uppercase tracking-widest mt-0.5">Adm: {student.admission_number}</p>
+                      </div>
+                      <p className="text-sm font-black text-amber-600 flex-shrink-0">₹{Number(student.outstanding || 0).toLocaleString('en-IN')}</p>
+                    </div>
+                    <div className="grid grid-cols-2 gap-2 text-[9px] font-black uppercase tracking-widest">
+                      <div className="bg-slate-50 rounded-lg p-2">
+                        <p className="text-slate-400">Class</p>
+                        <p className="text-slate-700 mt-0.5">{student.grade || '-'} {student.section ? `- ${student.section}` : ''}</p>
+                      </div>
+                      <div className="bg-slate-50 rounded-lg p-2">
+                        <p className="text-slate-400">Parent</p>
+                        <p className="text-slate-700 mt-0.5 truncate">{student.parent_name || '-'}</p>
+                      </div>
+                    </div>
+                    <p className="text-[9px] font-black uppercase tracking-widest text-slate-500">
+                      {student.totalRecords} Records • <span className="text-emerald-600">{student.paidRecords} Paid</span>
+                    </p>
+                  </div>
+                ))}
+              </div>
+
+              {/* Desktop table */}
+              <div className="hidden md:block">
+                <table className="w-full text-left">
+                  <thead>
+                    <tr className="bg-slate-50/50 text-slate-400 text-[9px] font-black uppercase tracking-widest border-b border-slate-100">
+                      <th className="px-8 py-5">Student</th>
+                      <th className="px-8 py-5">Class</th>
+                      <th className="px-8 py-5">Parent Snapshot</th>
+                      <th className="px-8 py-5">Fee Records</th>
+                      <th className="px-8 py-5 text-right">Outstanding</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-50">
+                    {archivedStudents.map((student: any) => (
+                      <tr key={student.id} className="hover:bg-slate-50/50 transition-colors">
+                        <td className="px-8 py-5">
+                          <p className="font-black text-slate-800 tracking-tight">{student.full_name}</p>
+                          <p className="text-[9px] text-slate-400 font-black uppercase tracking-widest mt-1">Adm: {student.admission_number}</p>
+                        </td>
+                        <td className="px-8 py-5">
+                          <p className="text-xs font-black text-slate-700 uppercase">{student.grade || '-'} {student.section ? `- ${student.section}` : ''}</p>
+                          <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mt-1">Status: {String(student.status || '').toUpperCase()}</p>
+                        </td>
+                        <td className="px-8 py-5">
+                          <p className="text-xs font-black text-slate-700">{student.parent_name || '-'}</p>
+                          <p className="text-[9px] font-bold text-slate-400 mt-1">{student.parent_phone || '-'}</p>
+                        </td>
+                        <td className="px-8 py-5">
+                          <p className="text-xs font-black text-slate-700 uppercase">{student.totalRecords} Total</p>
+                          <p className="text-[9px] font-bold text-emerald-600 uppercase tracking-widest mt-1">{student.paidRecords} Paid</p>
+                        </td>
+                        <td className="px-8 py-5 text-right">
+                          <p className="text-sm font-black text-amber-600">₹{Number(student.outstanding || 0).toLocaleString('en-IN')}</p>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </>
+          )}
         </div>
       )}
     </div>

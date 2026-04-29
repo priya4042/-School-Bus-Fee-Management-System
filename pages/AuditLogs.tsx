@@ -89,61 +89,86 @@ const AuditLogs: React.FC = () => {
            <button className="text-[10px] font-black text-primary uppercase tracking-widest hover:underline">Export Full CSV Archive</button>
         </div>
 
-        <div className="overflow-x-auto min-h-[500px]">
-          {loading ? (
-            <div className="flex flex-col items-center justify-center h-80 gap-4">
-               <i className="fas fa-circle-notch fa-spin text-primary text-3xl"></i>
-               <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Fetching Audit Stream...</p>
+        {loading ? (
+          <div className="flex flex-col items-center justify-center h-80 gap-4">
+             <i className="fas fa-circle-notch fa-spin text-primary text-3xl"></i>
+             <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Fetching Audit Stream...</p>
+          </div>
+        ) : filteredLogs.length === 0 ? (
+          <div className="p-20 text-center">
+             <i className="fas fa-search-minus text-3xl text-slate-200 mb-4"></i>
+             <p className="text-[10px] font-black text-slate-300 uppercase tracking-widest">No matching logs found</p>
+          </div>
+        ) : (
+          <>
+            {/* Mobile cards */}
+            <div className="md:hidden divide-y divide-slate-50">
+              {filteredLogs.map(log => (
+                <div key={log.id} className="p-4 space-y-2">
+                  <div className="flex items-start justify-between gap-2">
+                    <span className="font-black text-slate-800 tracking-tight text-xs uppercase truncate">{log.action.replace(/_/g, ' ')}</span>
+                    <span className={`px-2 py-0.5 rounded-full text-[8px] font-black uppercase tracking-widest border flex-shrink-0 ${getStatusColor(log.status)}`}>
+                      {log.status}
+                    </span>
+                  </div>
+                  <p className="text-[10px] font-bold text-slate-500">{log.entity}</p>
+                  <div className="flex items-center justify-between gap-2 pt-2 border-t border-slate-50">
+                    <div className="flex items-center gap-2 min-w-0">
+                      <div className="w-6 h-6 rounded-lg bg-slate-100 flex items-center justify-center text-[9px] font-black text-slate-400 border border-slate-200 flex-shrink-0">
+                        {log.user.charAt(0)}
+                      </div>
+                      <span className="text-[10px] font-black text-slate-700 truncate">{log.user}</span>
+                    </div>
+                    <p className="text-[8px] font-bold text-slate-400 uppercase tracking-widest flex-shrink-0">{log.date}</p>
+                  </div>
+                </div>
+              ))}
             </div>
-          ) : (
-            <table className="w-full text-left">
-              <thead>
-                <tr className="bg-slate-50/50 text-slate-400 text-[9px] font-black uppercase tracking-[0.2em] border-b border-slate-100">
-                  <th className="px-8 py-5">Action Type</th>
-                  <th className="px-8 py-5">Entity Modified</th>
-                  <th className="px-8 py-5">Executed By</th>
-                  <th className="px-8 py-5">Timestamp</th>
-                  <th className="px-8 py-5 text-center">Category</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-50">
-                {filteredLogs.length > 0 ? filteredLogs.map(log => (
-                  <tr key={log.id} className="hover:bg-slate-50/50 transition-all group">
-                    <td className="px-8 py-5">
-                       <span className="font-black text-slate-800 tracking-tight text-sm uppercase">{log.action.replace(/_/g, ' ')}</span>
-                    </td>
-                    <td className="px-8 py-5">
-                       <p className="text-xs font-bold text-slate-500">{log.entity}</p>
-                    </td>
-                    <td className="px-8 py-5">
-                       <div className="flex items-center gap-3">
-                          <div className="w-8 h-8 rounded-lg bg-slate-100 flex items-center justify-center text-[10px] font-black text-slate-400 border border-slate-200">
-                             {log.user.charAt(0)}
-                          </div>
-                          <span className="text-xs font-black text-slate-700">{log.user}</span>
-                       </div>
-                    </td>
-                    <td className="px-8 py-5">
-                       <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{log.date}</p>
-                    </td>
-                    <td className="px-8 py-5 text-center">
-                       <span className={`px-4 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest border ${getStatusColor(log.status)}`}>
-                          {log.status}
-                       </span>
-                    </td>
+
+            {/* Desktop table */}
+            <div className="hidden md:block overflow-x-auto min-h-[500px]">
+              <table className="w-full text-left">
+                <thead>
+                  <tr className="bg-slate-50/50 text-slate-400 text-[9px] font-black uppercase tracking-[0.2em] border-b border-slate-100">
+                    <th className="px-8 py-5">Action Type</th>
+                    <th className="px-8 py-5">Entity Modified</th>
+                    <th className="px-8 py-5">Executed By</th>
+                    <th className="px-8 py-5">Timestamp</th>
+                    <th className="px-8 py-5 text-center">Category</th>
                   </tr>
-                )) : (
-                  <tr>
-                    <td colSpan={5} className="p-20 text-center">
-                       <i className="fas fa-search-minus text-3xl text-slate-200 mb-4"></i>
-                       <p className="text-[10px] font-black text-slate-300 uppercase tracking-widest">No matching logs found</p>
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
-          )}
-        </div>
+                </thead>
+                <tbody className="divide-y divide-slate-50">
+                  {filteredLogs.map(log => (
+                    <tr key={log.id} className="hover:bg-slate-50/50 transition-all group">
+                      <td className="px-8 py-5">
+                         <span className="font-black text-slate-800 tracking-tight text-sm uppercase">{log.action.replace(/_/g, ' ')}</span>
+                      </td>
+                      <td className="px-8 py-5">
+                         <p className="text-xs font-bold text-slate-500">{log.entity}</p>
+                      </td>
+                      <td className="px-8 py-5">
+                         <div className="flex items-center gap-3">
+                            <div className="w-8 h-8 rounded-lg bg-slate-100 flex items-center justify-center text-[10px] font-black text-slate-400 border border-slate-200">
+                               {log.user.charAt(0)}
+                            </div>
+                            <span className="text-xs font-black text-slate-700">{log.user}</span>
+                         </div>
+                      </td>
+                      <td className="px-8 py-5">
+                         <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{log.date}</p>
+                      </td>
+                      <td className="px-8 py-5 text-center">
+                         <span className={`px-4 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest border ${getStatusColor(log.status)}`}>
+                            {log.status}
+                         </span>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </>
+        )}
       </div>
     </div>
   );

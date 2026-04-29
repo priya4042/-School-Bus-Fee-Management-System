@@ -74,7 +74,7 @@ const Documentation: React.FC = () => {
 
   return (
     <div className="space-y-4 md:space-y-8 pb-8">
-      <div className="bg-white border border-slate-200 rounded-2xl md:rounded-3xl p-5 md:p-8 shadow-sm">
+      <div className="bg-white border border-slate-200 rounded-2xl md:rounded-3xl p-4 md:p-8 shadow-sm">
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
           <div>
             <h2 className="text-xl md:text-3xl font-black text-slate-800 tracking-tight">Platform Documentation</h2>
@@ -97,8 +97,8 @@ const Documentation: React.FC = () => {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <section className="bg-white border border-slate-200 rounded-2xl md:rounded-3xl p-5 md:p-8 shadow-sm">
-          <h3 className="text-xs font-black uppercase tracking-[0.2em] text-primary mb-5">Admin Modules</h3>
+        <section className="bg-white border border-slate-200 rounded-2xl md:rounded-3xl p-4 md:p-8 shadow-sm">
+          <h3 className="text-xs font-black uppercase tracking-[0.2em] text-primary mb-3 md:mb-5">Admin Modules</h3>
           <div className="space-y-4">
             {adminModules.map((item) => (
               <div key={item.name} className="border border-slate-100 rounded-2xl p-4 bg-slate-50/50">
@@ -109,8 +109,8 @@ const Documentation: React.FC = () => {
           </div>
         </section>
 
-        <section className="bg-white border border-slate-200 rounded-2xl md:rounded-3xl p-5 md:p-8 shadow-sm">
-          <h3 className="text-xs font-black uppercase tracking-[0.2em] text-primary mb-5">Parent Modules</h3>
+        <section className="bg-white border border-slate-200 rounded-2xl md:rounded-3xl p-4 md:p-8 shadow-sm">
+          <h3 className="text-xs font-black uppercase tracking-[0.2em] text-primary mb-3 md:mb-5">Parent Modules</h3>
           <div className="space-y-4">
             {parentModules.map((item) => (
               <div key={item.name} className="border border-slate-100 rounded-2xl p-4 bg-slate-50/50">
@@ -122,32 +122,59 @@ const Documentation: React.FC = () => {
         </section>
       </div>
 
-      <section className="bg-white border border-slate-200 rounded-2xl md:rounded-3xl p-5 md:p-8 shadow-sm overflow-x-auto">
-        <h3 className="text-xs font-black uppercase tracking-[0.2em] text-primary mb-5">Technology And Cost Matrix</h3>
-        <table className="min-w-full text-left">
-          <thead>
-            <tr className="text-[10px] uppercase tracking-widest text-slate-500 border-b border-slate-100">
-              <th className="py-3 pr-4">Area</th>
-              <th className="py-3 pr-4">What We Use</th>
-              <th className="py-3 pr-4">Free Or Paid</th>
-              <th className="py-3 pr-4">What You Need To Buy</th>
-            </tr>
-          </thead>
-          <tbody>
-            {stackRows.map((row) => (
-              <tr key={row.area} className="border-b border-slate-100 last:border-0">
-                <td className="py-4 pr-4 text-xs font-black text-slate-800 uppercase tracking-wide">{row.area}</td>
-                <td className="py-4 pr-4 text-xs text-slate-700">{row.used}</td>
-                <td className="py-4 pr-4 text-xs text-slate-700">{row.pricing}</td>
-                <td className="py-4 pr-4 text-xs text-slate-700">{row.buy}</td>
+      <section className="bg-white border border-slate-200 rounded-2xl md:rounded-3xl p-4 md:p-8 shadow-sm">
+        <h3 className="text-xs font-black uppercase tracking-[0.2em] text-primary mb-3 md:mb-5">Technology And Cost Matrix</h3>
+
+        {/* Mobile cards */}
+        <div className="md:hidden space-y-3">
+          {stackRows.map((row) => (
+            <div key={row.area} className="border border-slate-100 rounded-xl p-3 bg-slate-50/50 space-y-2">
+              <p className="text-[11px] font-black text-slate-800 uppercase tracking-wide">{row.area}</p>
+              <div className="grid grid-cols-2 gap-2 text-[10px]">
+                <div>
+                  <p className="text-slate-400 font-black uppercase tracking-widest text-[8px]">What We Use</p>
+                  <p className="text-slate-700 mt-0.5">{row.used}</p>
+                </div>
+                <div>
+                  <p className="text-slate-400 font-black uppercase tracking-widest text-[8px]">Pricing</p>
+                  <p className="text-slate-700 mt-0.5">{row.pricing}</p>
+                </div>
+              </div>
+              <div className="pt-2 border-t border-slate-100">
+                <p className="text-slate-400 font-black uppercase tracking-widest text-[8px]">You Buy</p>
+                <p className="text-slate-700 text-[10px] mt-0.5">{row.buy}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* Desktop table */}
+        <div className="hidden md:block overflow-x-auto">
+          <table className="min-w-full text-left">
+            <thead>
+              <tr className="text-[10px] uppercase tracking-widest text-slate-500 border-b border-slate-100">
+                <th className="py-3 pr-4">Area</th>
+                <th className="py-3 pr-4">What We Use</th>
+                <th className="py-3 pr-4">Free Or Paid</th>
+                <th className="py-3 pr-4">What You Need To Buy</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {stackRows.map((row) => (
+                <tr key={row.area} className="border-b border-slate-100 last:border-0">
+                  <td className="py-4 pr-4 text-xs font-black text-slate-800 uppercase tracking-wide">{row.area}</td>
+                  <td className="py-4 pr-4 text-xs text-slate-700">{row.used}</td>
+                  <td className="py-4 pr-4 text-xs text-slate-700">{row.pricing}</td>
+                  <td className="py-4 pr-4 text-xs text-slate-700">{row.buy}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       </section>
 
-      <section className="bg-white border border-slate-200 rounded-2xl md:rounded-3xl p-5 md:p-8 shadow-sm">
-        <h3 className="text-xs font-black uppercase tracking-[0.2em] text-primary mb-5">Production Checklist</h3>
+      <section className="bg-white border border-slate-200 rounded-2xl md:rounded-3xl p-4 md:p-8 shadow-sm">
+        <h3 className="text-xs font-black uppercase tracking-[0.2em] text-primary mb-3 md:mb-5">Production Checklist</h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs text-slate-700">
           <div className="border border-slate-100 rounded-2xl p-4 bg-slate-50/50">
             <p className="font-black text-slate-800 uppercase tracking-wide mb-2">Must Have</p>
@@ -168,8 +195,8 @@ const Documentation: React.FC = () => {
         </div>
       </section>
 
-      <section className="bg-white border border-slate-200 rounded-2xl md:rounded-3xl p-5 md:p-8 shadow-sm">
-        <h3 className="text-xs font-black uppercase tracking-[0.2em] text-primary mb-5">Play Store Deployment: Complete Guide</h3>
+      <section className="bg-white border border-slate-200 rounded-2xl md:rounded-3xl p-4 md:p-8 shadow-sm">
+        <h3 className="text-xs font-black uppercase tracking-[0.2em] text-primary mb-3 md:mb-5">Play Store Deployment: Complete Guide</h3>
         <div className="space-y-4">
           {playStoreChecklist.map((item) => (
             <div key={item} className="flex items-start gap-3 border border-slate-100 rounded-2xl p-4 bg-slate-50/50">
@@ -180,28 +207,42 @@ const Documentation: React.FC = () => {
         </div>
       </section>
 
-      <section className="bg-white border border-slate-200 rounded-2xl md:rounded-3xl p-5 md:p-8 shadow-sm overflow-x-auto">
-        <h3 className="text-xs font-black uppercase tracking-[0.2em] text-primary mb-5">Environment Variables Used In Deployment</h3>
-        <table className="min-w-full text-left">
-          <thead>
-            <tr className="text-[10px] uppercase tracking-widest text-slate-500 border-b border-slate-100">
-              <th className="py-3 pr-4">Variable</th>
-              <th className="py-3 pr-4">Purpose</th>
-            </tr>
-          </thead>
-          <tbody>
-            {envItems.map((row) => (
-              <tr key={row.key} className="border-b border-slate-100 last:border-0">
-                <td className="py-4 pr-4 text-xs font-black text-slate-800">{row.key}</td>
-                <td className="py-4 pr-4 text-xs text-slate-700">{row.purpose}</td>
+      <section className="bg-white border border-slate-200 rounded-2xl md:rounded-3xl p-4 md:p-8 shadow-sm">
+        <h3 className="text-xs font-black uppercase tracking-[0.2em] text-primary mb-3 md:mb-5">Environment Variables Used In Deployment</h3>
+
+        {/* Mobile cards */}
+        <div className="md:hidden space-y-2">
+          {envItems.map((row) => (
+            <div key={row.key} className="border border-slate-100 rounded-xl p-3 bg-slate-50/50">
+              <p className="text-[10px] font-black text-slate-800 break-all">{row.key}</p>
+              <p className="text-[10px] text-slate-600 mt-1.5 leading-relaxed">{row.purpose}</p>
+            </div>
+          ))}
+        </div>
+
+        {/* Desktop table */}
+        <div className="hidden md:block overflow-x-auto">
+          <table className="min-w-full text-left">
+            <thead>
+              <tr className="text-[10px] uppercase tracking-widest text-slate-500 border-b border-slate-100">
+                <th className="py-3 pr-4">Variable</th>
+                <th className="py-3 pr-4">Purpose</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {envItems.map((row) => (
+                <tr key={row.key} className="border-b border-slate-100 last:border-0">
+                  <td className="py-4 pr-4 text-xs font-black text-slate-800">{row.key}</td>
+                  <td className="py-4 pr-4 text-xs text-slate-700">{row.purpose}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       </section>
 
-      <section className="bg-white border border-slate-200 rounded-2xl md:rounded-3xl p-5 md:p-8 shadow-sm">
-        <h3 className="text-xs font-black uppercase tracking-[0.2em] text-primary mb-5">Play Store Release Flow</h3>
+      <section className="bg-white border border-slate-200 rounded-2xl md:rounded-3xl p-4 md:p-8 shadow-sm">
+        <h3 className="text-xs font-black uppercase tracking-[0.2em] text-primary mb-3 md:mb-5">Play Store Release Flow</h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs text-slate-700">
           <div className="border border-slate-100 rounded-2xl p-4 bg-slate-50/50">
             <p className="font-black text-slate-800 uppercase tracking-wide mb-2">1. Build And Sync</p>
