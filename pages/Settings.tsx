@@ -103,22 +103,22 @@ const Settings: React.FC = () => {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
-        <div className="lg:col-span-2 space-y-8">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-10">
+        <div className="lg:col-span-2 space-y-4 md:space-y-8">
            {activeTab === 'fees' ? (
              <>
-              <section className="bg-white rounded-2xl md:rounded-[2.5rem] border border-slate-200 p-5 md:p-10 shadow-sm relative overflow-hidden">
-                <div className="flex items-center gap-4 mb-10">
-                   <div className="w-12 h-12 bg-primary/10 text-primary rounded-2xl flex items-center justify-center">
+              <section className="bg-white rounded-2xl md:rounded-[2.5rem] border border-slate-200 p-4 md:p-10 shadow-sm relative overflow-hidden">
+                <div className="flex items-center gap-3 md:gap-4 mb-4 md:mb-10">
+                   <div className="w-10 h-10 md:w-12 md:h-12 bg-primary/10 text-primary rounded-xl md:rounded-2xl flex items-center justify-center flex-shrink-0">
                       <i className="fas fa-money-bill-wave"></i>
                    </div>
-                   <div>
-                      <h3 className="font-black text-slate-800 uppercase tracking-widest text-[11px]">Fee Lifecycle Configuration</h3>
-                      <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">Monthly Billing Schedule</p>
+                   <div className="min-w-0">
+                      <h3 className="font-black text-slate-800 uppercase tracking-widest text-[10px] md:text-[11px] leading-tight">Fee Lifecycle Configuration</h3>
+                      <p className="text-[9px] md:text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-0.5 md:mt-1">Monthly Billing Schedule</p>
                    </div>
                 </div>
-                
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-10">
                   <div className="space-y-3">
                     <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Monthly Due Cutoff (Day)</label>
                     <div className="relative">
@@ -148,18 +148,18 @@ const Settings: React.FC = () => {
                 </div>
               </section>
 
-              <section className="bg-white rounded-2xl md:rounded-[2.5rem] border border-slate-200 p-5 md:p-10 shadow-sm">
-                <div className="flex items-center gap-4 mb-10">
-                   <div className="w-12 h-12 bg-danger/10 text-danger rounded-2xl flex items-center justify-center">
+              <section className="bg-white rounded-2xl md:rounded-[2.5rem] border border-slate-200 p-4 md:p-10 shadow-sm">
+                <div className="flex items-center gap-3 md:gap-4 mb-4 md:mb-10">
+                   <div className="w-10 h-10 md:w-12 md:h-12 bg-danger/10 text-danger rounded-xl md:rounded-2xl flex items-center justify-center flex-shrink-0">
                       <i className="fas fa-clock"></i>
                    </div>
-                   <div>
-                      <h3 className="font-black text-slate-800 uppercase tracking-widest text-[11px]">Late Fee Calculation Engine</h3>
-                      <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">Penalty Algorithms</p>
+                   <div className="min-w-0">
+                      <h3 className="font-black text-slate-800 uppercase tracking-widest text-[10px] md:text-[11px] leading-tight">Late Fee Calculation Engine</h3>
+                      <p className="text-[9px] md:text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-0.5 md:mt-1">Penalty Algorithms</p>
                    </div>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-10">
                   <div className="space-y-3">
                     <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Grace Period (Days)</label>
                     <input 
@@ -198,18 +198,18 @@ const Settings: React.FC = () => {
                 </div>
               </section>
 
-              <section className="bg-white rounded-2xl md:rounded-[2.5rem] border border-slate-200 p-5 md:p-10 shadow-sm">
-                <div className="flex items-center gap-4 mb-10">
-                   <div className="w-12 h-12 bg-emerald-50 text-emerald-600 rounded-2xl flex items-center justify-center">
+              <section className="bg-white rounded-2xl md:rounded-[2.5rem] border border-slate-200 p-4 md:p-10 shadow-sm">
+                <div className="flex items-center gap-3 md:gap-4 mb-4 md:mb-10">
+                   <div className="w-10 h-10 md:w-12 md:h-12 bg-emerald-50 text-emerald-600 rounded-xl md:rounded-2xl flex items-center justify-center flex-shrink-0">
                       <i className="fas fa-qrcode"></i>
                    </div>
-                   <div>
-                      <h3 className="font-black text-slate-800 uppercase tracking-widest text-[11px]">Parent Payment QR</h3>
-                      <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">Manual UPI Alternative</p>
+                   <div className="min-w-0">
+                      <h3 className="font-black text-slate-800 uppercase tracking-widest text-[10px] md:text-[11px] leading-tight">Parent Payment QR</h3>
+                      <p className="text-[9px] md:text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-0.5 md:mt-1">Manual UPI Alternative</p>
                    </div>
                 </div>
 
-                <div className="grid grid-cols-1 gap-8">
+                <div className="grid grid-cols-1 gap-4 md:gap-8">
                   <div className="space-y-3">
                     <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Admin QR Image URL</label>
                     <input
@@ -247,25 +247,25 @@ const Settings: React.FC = () => {
               </section>
              </>
            ) : (
-             <section className="bg-slate-900 rounded-2xl md:rounded-[2.5rem] p-5 md:p-12 text-white shadow-2xl animate-in zoom-in duration-500">
-                <div className="flex items-center gap-6 mb-12">
-                   <div className="w-16 h-16 bg-white/10 rounded-3xl flex items-center justify-center border border-white/10">
-                      <i className="fas fa-shield-alt text-2xl"></i>
+             <section className="bg-slate-900 rounded-2xl md:rounded-[2.5rem] p-4 md:p-12 text-white shadow-2xl animate-in zoom-in duration-500">
+                <div className="flex items-center gap-3 md:gap-6 mb-4 md:mb-12">
+                   <div className="w-12 h-12 md:w-16 md:h-16 bg-white/10 rounded-2xl md:rounded-3xl flex items-center justify-center border border-white/10 flex-shrink-0">
+                      <i className="fas fa-shield-alt text-base md:text-2xl"></i>
                    </div>
-                   <div>
-                      <h3 className="text-2xl font-black tracking-tight">Access Control</h3>
-                      <p className="text-[10px] font-black text-white/30 uppercase tracking-[0.3em] mt-1">Audit & Encryption Policies</p>
+                   <div className="min-w-0">
+                      <h3 className="text-base md:text-2xl font-black tracking-tight">Access Control</h3>
+                      <p className="text-[9px] md:text-[10px] font-black text-white/30 uppercase tracking-[0.3em] mt-0.5 md:mt-1">Audit & Encryption Policies</p>
                    </div>
                 </div>
-                <div className="space-y-8">
-                   <div className="flex items-center justify-between p-6 bg-white/5 rounded-3xl border border-white/5">
-                      <div>
+                <div className="space-y-3 md:space-y-8">
+                   <div className="flex items-center justify-between gap-3 p-4 md:p-6 bg-white/5 rounded-2xl md:rounded-3xl border border-white/5">
+                      <div className="min-w-0">
                          <p className="font-black uppercase text-[10px] tracking-widest">Enforce 2FA for Staff</p>
                          <p className="text-[9px] font-bold text-white/40 uppercase mt-1">Drivers & Teachers require OTP login</p>
                       </div>
-                      <button 
+                      <button
                         onClick={() => setSettings({...settings, enforce2FA: !settings.enforce2FA})}
-                        className={`w-14 h-7 rounded-full relative transition-all ${settings.enforce2FA ? 'bg-success' : 'bg-slate-700'}`}
+                        className={`w-14 h-7 rounded-full relative transition-all flex-shrink-0 ${settings.enforce2FA ? 'bg-success' : 'bg-slate-700'}`}
                       >
                          <div className={`absolute top-1 w-5 h-5 bg-white rounded-full transition-all ${settings.enforce2FA ? 'right-1' : 'left-1'}`}></div>
                       </button>
@@ -275,37 +275,37 @@ const Settings: React.FC = () => {
            )}
         </div>
 
-        <div className="space-y-8">
-           <div className="bg-primary p-5 md:p-10 rounded-2xl md:rounded-[2.5rem] text-white shadow-2xl relative overflow-hidden group">
-              <div className="absolute top-0 right-0 p-8 opacity-10 group-hover:rotate-12 transition-transform">
-                 <i className="fas fa-save text-8xl"></i>
+        <div className="space-y-4 md:space-y-8">
+           <div className="bg-primary p-4 md:p-10 rounded-2xl md:rounded-[2.5rem] text-white shadow-2xl relative overflow-hidden group">
+              <div className="absolute top-0 right-0 p-6 md:p-8 opacity-10 group-hover:rotate-12 transition-transform">
+                 <i className="fas fa-save text-6xl md:text-8xl"></i>
               </div>
-              <h4 className="font-black text-[10px] uppercase tracking-[0.4em] text-white/40 mb-10">Configuration Vault</h4>
-              <p className="text-sm font-bold leading-relaxed mb-10 opacity-80">
+              <h4 className="font-black text-[10px] uppercase tracking-[0.4em] text-white/40 mb-3 md:mb-10">Configuration Vault</h4>
+              <p className="text-xs md:text-sm font-bold leading-relaxed mb-4 md:mb-10 opacity-80">
                  All system changes are logged and broadcasted to relevant stakeholders. Saving these updates will recalibrate the fee calculation engine instantly.
               </p>
-              <div className="space-y-4">
-                 <button 
+              <div className="space-y-2 md:space-y-4">
+                 <button
                    onClick={handleSave}
-                   className="w-full py-5 bg-white text-primary font-black uppercase text-[10px] tracking-widest rounded-2xl hover:shadow-2xl transition-all shadow-xl active:scale-[0.98]"
+                   className="w-full py-3.5 md:py-5 bg-white text-primary font-black uppercase text-[10px] tracking-widest rounded-xl md:rounded-2xl hover:shadow-2xl transition-all shadow-xl active:scale-[0.98]"
                  >
                     Commit Global Changes
                  </button>
-                 <button 
+                 <button
                    onClick={handleResetDefaults}
-                   className="w-full py-5 bg-white/10 text-white font-black uppercase text-[10px] tracking-widest rounded-2xl hover:bg-white/20 transition-all"
+                   className="w-full py-3.5 md:py-5 bg-white/10 text-white font-black uppercase text-[10px] tracking-widest rounded-xl md:rounded-2xl hover:bg-white/20 transition-all"
                  >
                     Reset To Session Defaults
                  </button>
               </div>
            </div>
 
-           <div className="bg-white p-5 md:p-10 rounded-2xl md:rounded-[2.5rem] border border-slate-200 shadow-sm">
-              <h4 className="font-black text-[10px] uppercase tracking-widest text-slate-400 mb-8 flex items-center gap-3">
+           <div className="bg-white p-4 md:p-10 rounded-2xl md:rounded-[2.5rem] border border-slate-200 shadow-sm">
+              <h4 className="font-black text-[10px] uppercase tracking-widest text-slate-400 mb-3 md:mb-8 flex items-center gap-2 md:gap-3">
                  <i className="fas fa-info-circle text-primary"></i>
                  Active Parameters
               </h4>
-              <div className="space-y-6">
+              <div className="space-y-3 md:space-y-6">
                  <div className="flex justify-between items-center">
                     <span className="text-[9px] font-black uppercase tracking-widest text-slate-500">App Version</span>
                     <span className="text-[10px] font-black text-slate-800">2.4.0</span>

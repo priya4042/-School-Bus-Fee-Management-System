@@ -43,28 +43,28 @@ const LiveTracking: React.FC = () => {
       </div>
 
       {/* Bus List */}
-      <div className="bg-white rounded-2xl md:rounded-[2.5rem] border border-slate-200 shadow-premium p-4 md:p-8">
-        <h3 className="text-base md:text-lg font-black text-slate-800 tracking-widest mb-4 md:mb-6">Active Buses</h3>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-4">
+      <div className="bg-white rounded-2xl md:rounded-[2.5rem] border border-slate-200 shadow-premium p-3 md:p-8">
+        <h3 className="text-sm md:text-lg font-black text-slate-800 tracking-tight md:tracking-widest mb-3 md:mb-6">Active Buses</h3>
+        <div className="grid grid-cols-2 lg:grid-cols-3 gap-2 md:gap-4">
           {buses && buses.map((bus) => (
             <button
               key={bus.id}
               onClick={() => setActiveBusId(bus.id)}
-              className={`p-4 rounded-2xl border-2 transition-all text-left ${
+              className={`p-3 md:p-4 rounded-xl md:rounded-2xl border-2 transition-all text-left active:scale-95 ${
                 activeBusId === bus.id
                   ? 'bg-primary/10 border-primary'
                   : 'bg-slate-50 border-slate-200 hover:border-primary/30'
               }`}
             >
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className={`w-3 h-3 rounded-full ${bus.status === 'active' ? 'bg-success animate-pulse' : 'bg-slate-300'}`}></div>
-                  <div>
-                    <p className="font-black text-slate-800 text-sm">{bus.bus_number || `Bus ${bus.id}`}</p>
-                    <p className="text-[9px] text-slate-500 uppercase tracking-widest">{bus.status}</p>
+              <div className="flex items-center justify-between gap-2">
+                <div className="flex items-center gap-2 md:gap-3 min-w-0">
+                  <div className={`w-2.5 h-2.5 md:w-3 md:h-3 rounded-full flex-shrink-0 ${bus.status === 'active' ? 'bg-success animate-pulse' : 'bg-slate-300'}`}></div>
+                  <div className="min-w-0">
+                    <p className="font-black text-slate-800 text-xs md:text-sm truncate">{bus.bus_number || `Bus ${bus.id}`}</p>
+                    <p className="text-[8px] md:text-[9px] text-slate-500 uppercase tracking-widest">{bus.status}</p>
                   </div>
                 </div>
-                <i className={`fas fa-arrow-right text-slate-300 transition-all ${activeBusId === bus.id ? 'text-primary translate-x-1' : ''}`}></i>
+                <i className={`fas fa-arrow-right text-slate-300 text-xs md:text-sm flex-shrink-0 transition-all ${activeBusId === bus.id ? 'text-primary translate-x-1' : ''}`}></i>
               </div>
             </button>
           ))}

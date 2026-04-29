@@ -437,10 +437,10 @@ const AdminNotifications: React.FC<{ focusNotificationId?: string; onFocusHandle
               </div>
             </div>
 
-            <div className="p-5 md:p-10 space-y-6 md:space-y-8">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
+            <div className="p-4 md:p-10 space-y-4 md:space-y-8">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-6">
                 <div>
-                  <label className="block text-[10px] font-black text-primary uppercase tracking-[0.2em] mb-3 ml-1">Message Type</label>
+                  <label className="block text-[10px] font-black text-primary uppercase tracking-[0.2em] mb-2 md:mb-3 ml-1">Message Type</label>
                   <select value={msgType} onChange={(e) => setMsgType(e.target.value)} className={selectClass}>
                     <option value="emergency">🚨 Emergency Alert</option>
                     <option value="announcement">📢 Announcement</option>
@@ -449,7 +449,7 @@ const AdminNotifications: React.FC<{ focusNotificationId?: string; onFocusHandle
                   </select>
                 </div>
                 <div>
-                  <label className="block text-[10px] font-black text-primary uppercase tracking-[0.2em] mb-3 ml-1">Target Recipients</label>
+                  <label className="block text-[10px] font-black text-primary uppercase tracking-[0.2em] mb-2 md:mb-3 ml-1">Target Recipients</label>
                   <select value={target} onChange={(e) => setTarget(e.target.value)} className={selectClass}>
                     <option value="all">All Parents</option>
                     <option value="parents">Parents Only</option>
@@ -461,29 +461,29 @@ const AdminNotifications: React.FC<{ focusNotificationId?: string; onFocusHandle
               </div>
 
               <div>
-                <label className="block text-xs font-black text-primary uppercase tracking-widest mb-3 ml-1">Message</label>
+                <label className="block text-xs font-black text-primary uppercase tracking-widest mb-2 md:mb-3 ml-1">Message</label>
                 <textarea
-                  rows={6}
+                  rows={5}
                   value={message}
                   onChange={(e) => setMessage(e.target.value)}
                   placeholder="Type your message here..."
-                  className="w-full px-6 py-6 rounded-[2rem] bg-primary border border-primary/20 outline-none focus:ring-4 focus:ring-primary/20 focus:border-white/40 font-bold text-white placeholder-white/50 transition-all resize-none shadow-inner leading-relaxed"
+                  className="w-full px-4 py-4 md:px-6 md:py-6 rounded-2xl md:rounded-[2rem] bg-primary border border-primary/20 outline-none focus:ring-4 focus:ring-primary/20 focus:border-white/40 font-bold text-sm md:text-base text-white placeholder-white/50 transition-all resize-none shadow-inner leading-relaxed"
                   required
                 ></textarea>
 
-                <div className="flex items-center gap-3 mt-4 p-4 bg-primary/5 rounded-2xl border border-primary/10">
-                  <i className={`fas ${msgType === 'emergency' ? 'fa-exclamation-triangle text-danger' : 'fa-info-circle text-primary'}`}></i>
-                  <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">
+                <div className="flex items-start gap-2 md:gap-3 mt-3 md:mt-4 p-3 md:p-4 bg-primary/5 rounded-xl md:rounded-2xl border border-primary/10">
+                  <i className={`fas ${msgType === 'emergency' ? 'fa-exclamation-triangle text-danger' : 'fa-info-circle text-primary'} mt-0.5 flex-shrink-0`}></i>
+                  <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest leading-relaxed">
                     {msgType === 'emergency' ? 'Priority: Critical — will appear as urgent for all recipients.' : 'Will appear as an in-app notification for all selected parents.'}
                   </p>
                 </div>
               </div>
 
-              <div className="pt-6 border-t border-slate-100 flex justify-end">
+              <div className="pt-4 md:pt-6 border-t border-slate-100">
                 <button
                   type="submit"
                   disabled={loading}
-                  className="bg-primary text-white font-black uppercase text-[11px] tracking-[0.2em] px-10 py-5 rounded-2xl hover:bg-blue-800 transition-all shadow-xl shadow-primary/20 flex items-center justify-center gap-4 disabled:opacity-50 active:scale-95"
+                  className="w-full md:w-auto md:ml-auto md:flex bg-primary text-white font-black uppercase text-[10px] md:text-[11px] tracking-[0.2em] px-6 md:px-10 py-4 md:py-5 rounded-xl md:rounded-2xl hover:bg-blue-800 transition-all shadow-xl shadow-primary/20 flex items-center justify-center gap-3 md:gap-4 disabled:opacity-50 active:scale-95"
                 >
                   {loading ? <i className="fas fa-circle-notch fa-spin"></i> : <i className="fas fa-paper-plane"></i>}
                   {loading ? 'Sending...' : 'Send Broadcast'}
@@ -493,16 +493,16 @@ const AdminNotifications: React.FC<{ focusNotificationId?: string; onFocusHandle
           </form>
         </div>
 
-        <div className="space-y-8">
-          <div className="bg-white p-5 md:p-8 rounded-2xl md:rounded-[2.5rem] border border-slate-200 shadow-sm">
-            <h4 className="font-black text-slate-800 uppercase tracking-widest text-[10px] mb-8 flex items-center gap-3">
+        <div className="space-y-4 md:space-y-8">
+          <div className="bg-white p-4 md:p-8 rounded-2xl md:rounded-[2.5rem] border border-slate-200 shadow-sm">
+            <h4 className="font-black text-slate-800 uppercase tracking-widest text-[10px] mb-4 md:mb-8 flex items-center gap-2 md:gap-3">
               <i className="fas fa-user-check text-primary"></i>
               Parent Name Requests
             </h4>
             {nameChangeRequests.length === 0 ? (
               <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest text-center py-6">No pending name requests</p>
             ) : (
-              <div className="space-y-6">
+              <div className="space-y-3 md:space-y-6">
                 {nameChangeRequests.map((item) => (
                   <div key={item.id} className="pb-6 border-b border-slate-50 last:border-0 last:pb-0 rounded-2xl px-3 py-2 -mx-3">
                     <p className="text-xs font-black text-slate-800 tracking-tight leading-snug">{item.currentName} → {item.requestedName}</p>
@@ -532,8 +532,8 @@ const AdminNotifications: React.FC<{ focusNotificationId?: string; onFocusHandle
             )}
           </div>
 
-          <div className="bg-white p-5 md:p-8 rounded-2xl md:rounded-[2.5rem] border border-slate-200 shadow-sm">
-            <h4 className="font-black text-slate-800 uppercase tracking-widest text-[10px] mb-8 flex items-center gap-3">
+          <div className="bg-white p-4 md:p-8 rounded-2xl md:rounded-[2.5rem] border border-slate-200 shadow-sm">
+            <h4 className="font-black text-slate-800 uppercase tracking-widest text-[10px] mb-4 md:mb-8 flex items-center gap-2 md:gap-3">
               <i className="fas fa-clipboard-check text-primary"></i>
               Name Request History
             </h4>
@@ -559,8 +559,8 @@ const AdminNotifications: React.FC<{ focusNotificationId?: string; onFocusHandle
             )}
           </div>
 
-          <div className="bg-white p-5 md:p-8 rounded-2xl md:rounded-[2.5rem] border border-slate-200 shadow-sm">
-            <h4 className="font-black text-slate-800 uppercase tracking-widest text-[10px] mb-8 flex items-center gap-3">
+          <div className="bg-white p-4 md:p-8 rounded-2xl md:rounded-[2.5rem] border border-slate-200 shadow-sm">
+            <h4 className="font-black text-slate-800 uppercase tracking-widest text-[10px] mb-4 md:mb-8 flex items-center gap-2 md:gap-3">
               <i className="fas fa-receipt text-primary"></i>
               Payment Confirmations
             </h4>
@@ -616,8 +616,8 @@ const AdminNotifications: React.FC<{ focusNotificationId?: string; onFocusHandle
             )}
           </div>
 
-          <div className="bg-white p-5 md:p-8 rounded-2xl md:rounded-[2.5rem] border border-slate-200 shadow-sm">
-            <h4 className="font-black text-slate-800 uppercase tracking-widest text-[10px] mb-8 flex items-center gap-3">
+          <div className="bg-white p-4 md:p-8 rounded-2xl md:rounded-[2.5rem] border border-slate-200 shadow-sm">
+            <h4 className="font-black text-slate-800 uppercase tracking-widest text-[10px] mb-4 md:mb-8 flex items-center gap-2 md:gap-3">
               <i className="fas fa-history text-primary"></i>
               Recent Broadcasts
             </h4>

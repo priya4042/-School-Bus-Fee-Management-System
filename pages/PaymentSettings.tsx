@@ -157,8 +157,8 @@ const PaymentSettings: React.FC = () => {
 
   const hasChanges = JSON.stringify(settings) !== JSON.stringify(originalSettings);
 
-  const themedInputClass = "w-full px-6 py-4 rounded-2xl bg-primary/5 border border-primary/20 focus:border-primary focus:ring-4 focus:ring-primary/10 outline-none font-black transition-all text-slate-800 placeholder-slate-400";
-  const themeButtonClass = "px-8 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all shadow-sm";
+  const themedInputClass = "w-full px-4 md:px-6 py-3 md:py-4 rounded-xl md:rounded-2xl bg-primary/5 border border-primary/20 focus:border-primary focus:ring-4 focus:ring-primary/10 outline-none font-bold text-sm md:text-base transition-all text-slate-800 placeholder-slate-400";
+  const themeButtonClass = "px-6 md:px-8 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all shadow-sm active:scale-95";
 
   if (loading) {
     return (

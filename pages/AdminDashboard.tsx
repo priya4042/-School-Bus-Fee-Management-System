@@ -118,31 +118,31 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onOpenDocumentation }) 
       <BusCameraModal isOpen={isCameraOpen} onClose={() => setIsCameraOpen(false)} />
 
       {view === 'stats' ? (
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-          <div className="lg:col-span-3 space-y-6">
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
-              <DashboardCard title="Revenue (MTD)" value={stats.totalCollection} icon="fa-wallet" color="blue" />
-              <DashboardCard title="Total Students" value={stats.activeStudents} icon="fa-user-graduate" color="green" />
-              <DashboardCard title="Active Fleet" value={stats.activeBuses} icon="fa-bus" color="orange" />
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 md:gap-6">
+          <div className="lg:col-span-3 space-y-4 md:space-y-6">
+            <div className="grid grid-cols-3 gap-2 md:gap-6">
+              <DashboardCard title="Revenue" value={stats.totalCollection} icon="fa-wallet" color="blue" />
+              <DashboardCard title="Students" value={stats.activeStudents} icon="fa-user-graduate" color="green" />
+              <DashboardCard title="Fleet" value={stats.activeBuses} icon="fa-bus" color="orange" />
             </div>
 
-            <div className="bg-white p-4 md:p-8 rounded-2xl md:rounded-[2.5rem] border border-slate-200 shadow-premium overflow-hidden">
-              <h3 className="font-black text-slate-800 uppercase tracking-widest text-[10px] mb-10">Monthly Revenue Growth</h3>
-              <div style={{ width: '100%', height: 320 }}>
+            <div className="bg-white p-3 md:p-8 rounded-2xl md:rounded-[2.5rem] border border-slate-200 shadow-premium overflow-hidden">
+              <h3 className="font-black text-slate-800 uppercase tracking-widest text-[10px] mb-4 md:mb-10">Monthly Revenue Growth</h3>
+              <div style={{ width: '100%', height: 240 }} className="md:!h-[320px]">
                 <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={stats.revenueTrend}>
+                  <BarChart data={stats.revenueTrend} margin={{ top: 5, right: 5, left: -20, bottom: 0 }}>
                     <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
                     <XAxis dataKey="month" axisLine={false} tickLine={false} tick={{ fill: '#64748b', fontSize: 10, fontWeight: 700 }} />
-                    <YAxis axisLine={false} tickLine={false} tick={{ fill: '#64748b', fontSize: 10, fontWeight: 700 }} />
+                    <YAxis axisLine={false} tickLine={false} tick={{ fill: '#64748b', fontSize: 9, fontWeight: 700 }} />
                     <Tooltip cursor={{ fill: '#f8fafc' }} contentStyle={{ borderRadius: '16px', border: 'none', boxShadow: '0 20px 40px -10px rgb(0 0 0 / 0.1)' }} />
-                    <Bar dataKey="revenue" fill="#1e40af" radius={[8, 8, 0, 0]} barSize={40} />
+                    <Bar dataKey="revenue" fill="#1e40af" radius={[8, 8, 0, 0]} />
                   </BarChart>
                 </ResponsiveContainer>
               </div>
             </div>
           </div>
-          
-          <div className="lg:col-span-1 space-y-6">
+
+          <div className="lg:col-span-1 space-y-4 md:space-y-6">
             <AIInsights />
           </div>
         </div>

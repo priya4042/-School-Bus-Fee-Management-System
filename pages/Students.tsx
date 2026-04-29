@@ -392,7 +392,7 @@ const Students: React.FC = () => {
                   </div>
                   <p className="text-sm font-black text-slate-800 flex-shrink-0">₹{student.monthly_fee || student.base_fee || 0}</p>
                 </div>
-                <div className="grid grid-cols-2 gap-2 pl-13 ml-13">
+                <div className="grid grid-cols-2 gap-2">
                   <div>
                     <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest">Route / Bus</p>
                     <p className="text-[11px] font-bold text-slate-700 truncate">{student.routes?.route_name || 'No Route'}</p>

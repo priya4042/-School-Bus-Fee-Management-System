@@ -171,59 +171,59 @@ const AdminPayments: React.FC = () => {
         <>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 md:gap-4">
-        <div className="bg-white rounded-2xl border border-slate-200 p-4 md:p-6 shadow-sm">
-          <p className="text-slate-500 font-black uppercase text-[8px] md:text-[9px] tracking-widest mb-1 md:mb-2">Total Dues</p>
-          <p className="text-2xl md:text-3xl font-black text-slate-800">{stats.totalDues}</p>
+      <div className="grid grid-cols-3 md:grid-cols-3 lg:grid-cols-6 gap-2 md:gap-4">
+        <div className="bg-white rounded-xl md:rounded-2xl border border-slate-200 p-2.5 md:p-6 shadow-sm">
+          <p className="text-slate-500 font-black uppercase text-[7px] md:text-[9px] tracking-widest mb-0.5 md:mb-2 truncate">Total Dues</p>
+          <p className="text-base md:text-3xl font-black text-slate-800">{stats.totalDues}</p>
         </div>
-        <div className="bg-white rounded-2xl border border-slate-200 p-4 md:p-6 shadow-sm">
-          <p className="text-slate-500 font-black uppercase text-[8px] md:text-[9px] tracking-widest mb-1 md:mb-2">Paid</p>
-          <p className="text-2xl md:text-3xl font-black text-success">{stats.totalPaid}</p>
+        <div className="bg-white rounded-xl md:rounded-2xl border border-slate-200 p-2.5 md:p-6 shadow-sm">
+          <p className="text-slate-500 font-black uppercase text-[7px] md:text-[9px] tracking-widest mb-0.5 md:mb-2">Paid</p>
+          <p className="text-base md:text-3xl font-black text-success">{stats.totalPaid}</p>
         </div>
-        <div className="bg-white rounded-2xl border border-slate-200 p-4 md:p-6 shadow-sm">
-          <p className="text-slate-500 font-black uppercase text-[8px] md:text-[9px] tracking-widest mb-1 md:mb-2">Pending</p>
-          <p className="text-2xl md:text-3xl font-black text-amber-600">{stats.totalPending}</p>
+        <div className="bg-white rounded-xl md:rounded-2xl border border-slate-200 p-2.5 md:p-6 shadow-sm">
+          <p className="text-slate-500 font-black uppercase text-[7px] md:text-[9px] tracking-widest mb-0.5 md:mb-2">Pending</p>
+          <p className="text-base md:text-3xl font-black text-amber-600">{stats.totalPending}</p>
         </div>
-        <div className="bg-white rounded-2xl border border-slate-200 p-4 md:p-6 shadow-sm">
-          <p className="text-slate-500 font-black uppercase text-[8px] md:text-[9px] tracking-widest mb-1 md:mb-2">Overdue</p>
-          <p className="text-2xl md:text-3xl font-black text-danger">{stats.totalOverdue}</p>
+        <div className="bg-white rounded-xl md:rounded-2xl border border-slate-200 p-2.5 md:p-6 shadow-sm">
+          <p className="text-slate-500 font-black uppercase text-[7px] md:text-[9px] tracking-widest mb-0.5 md:mb-2">Overdue</p>
+          <p className="text-base md:text-3xl font-black text-danger">{stats.totalOverdue}</p>
         </div>
-        <div className="bg-white rounded-2xl border border-slate-200 p-4 md:p-6 shadow-sm">
-          <p className="text-slate-500 font-black uppercase text-[8px] md:text-[9px] tracking-widest mb-1 md:mb-2">Future</p>
-          <p className="text-2xl md:text-3xl font-black text-slate-500">{stats.totalFuture}</p>
+        <div className="bg-white rounded-xl md:rounded-2xl border border-slate-200 p-2.5 md:p-6 shadow-sm">
+          <p className="text-slate-500 font-black uppercase text-[7px] md:text-[9px] tracking-widest mb-0.5 md:mb-2">Future</p>
+          <p className="text-base md:text-3xl font-black text-slate-500">{stats.totalFuture}</p>
         </div>
-        <div className="bg-white rounded-2xl border border-slate-200 p-4 md:p-6 shadow-sm col-span-2 md:col-span-1">
-          <p className="text-slate-500 font-black uppercase text-[8px] md:text-[9px] tracking-widest mb-1 md:mb-2">Total Revenue</p>
-          <p className="text-2xl md:text-3xl font-black text-primary">₹{(stats.totalRevenue / 100000).toFixed(1)}L</p>
+        <div className="bg-white rounded-xl md:rounded-2xl border border-slate-200 p-2.5 md:p-6 shadow-sm col-span-3 md:col-span-1">
+          <p className="text-slate-500 font-black uppercase text-[7px] md:text-[9px] tracking-widest mb-0.5 md:mb-2 truncate">Total Revenue</p>
+          <p className="text-base md:text-3xl font-black text-primary">₹{(stats.totalRevenue / 100000).toFixed(1)}L</p>
         </div>
       </div>
 
       {/* Filters */}
-      <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-          <div className="flex flex-wrap gap-2">
+      <div className="bg-white rounded-2xl border border-slate-200 p-3 md:p-6 shadow-sm">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 md:gap-4">
+          <div className="flex gap-1.5 md:gap-2 overflow-x-auto scrollbar-hide -mx-1 px-1">
             {(['all', 'paid', 'pending', 'overdue'] as const).map((status) => (
               <button
                 key={status}
                 onClick={() => setFilterStatus(status)}
-                className={`px-4 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${
+                className={`flex-shrink-0 px-3 md:px-4 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all active:scale-95 ${
                   filterStatus === status
                     ? 'bg-primary text-white shadow-lg shadow-primary/20'
                     : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
                 }`}
               >
-                {status === 'all' ? 'All Payments' : status}
+                {status === 'all' ? 'All' : status}
               </button>
             ))}
           </div>
-          <div className="relative flex-1 md:flex-initial">
-            <i className="fas fa-search absolute left-4 top-1/2 -translate-y-1/2 text-slate-300"></i>
+          <div className="relative flex-1 md:flex-initial md:max-w-xs">
+            <i className="fas fa-search absolute left-4 top-1/2 -translate-y-1/2 text-slate-300 text-xs"></i>
             <input
               type="text"
-              placeholder="Search by name or admission..."
+              placeholder="Search name or admission…"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-12 pr-4 py-2.5 rounded-lg border border-slate-200 outline-none focus:border-primary text-sm font-bold text-slate-700 bg-white"
+              className="w-full pl-10 md:pl-12 pr-4 py-2.5 rounded-lg border border-slate-200 outline-none focus:border-primary text-xs md:text-sm font-bold text-slate-700 bg-white"
             />
           </div>
         </div>
