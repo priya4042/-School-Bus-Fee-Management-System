@@ -211,8 +211,7 @@ const Topbar: React.FC<TopbarProps> = ({ user, onMenuClick, onOpenNotifications,
 
           {showNotifications && (
             <div
-              className="fixed top-16 left-1/2 -translate-x-1/2 sm:absolute sm:top-auto sm:left-auto sm:translate-x-0 sm:right-0 sm:mt-2 bg-white border border-slate-100 rounded-2xl shadow-2xl z-[1100] animate-in fade-in slide-in-from-top-2 duration-200 overflow-hidden"
-              style={{ width: 'min(20rem, calc(100vw - 1.5rem))' }}
+              className="fixed top-[calc(env(safe-area-inset-top,0px)+4rem)] left-3 right-3 sm:absolute sm:top-auto sm:left-auto sm:right-0 sm:mt-2 sm:w-80 sm:max-w-none bg-white border border-slate-100 rounded-2xl shadow-2xl z-[1100] animate-in fade-in slide-in-from-top-2 duration-200 overflow-hidden"
             >
               <div className="px-3 py-2.5 border-b border-slate-50 flex justify-between items-center bg-slate-50/50 gap-2">
                 <span className="text-[10px] font-black text-slate-800 uppercase tracking-widest truncate">{t('alert_center')}</span>

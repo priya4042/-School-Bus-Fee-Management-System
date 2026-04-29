@@ -231,8 +231,11 @@ const SupportChat: React.FC<{ user: User }> = ({ user }) => {
 
       {/* Chat panel */}
       {isOpen && (
-        <div className="fixed left-3 right-3 sm:left-auto sm:right-4 sm:w-[360px] z-[2000] bg-white rounded-2xl shadow-2xl border border-slate-100 flex flex-col overflow-hidden animate-in fade-in slide-in-from-bottom-4 duration-200 h-[28rem] max-h-[calc(100dvh-10rem)]"
-          style={{ bottom: 'calc(env(safe-area-inset-bottom, 0px) + 9rem)' }}
+        <div className="fixed left-3 right-3 sm:left-auto sm:right-4 sm:w-[360px] z-[2000] bg-white rounded-2xl shadow-2xl border border-slate-100 flex flex-col overflow-hidden animate-in fade-in slide-in-from-bottom-4 duration-200"
+          style={{
+            top: 'calc(env(safe-area-inset-top, 0px) + 4.5rem)',
+            bottom: 'calc(env(safe-area-inset-bottom, 0px) + 9rem)',
+          }}
         >
           {/* Header */}
           <div className="bg-slate-950 px-6 py-4 flex items-center justify-between">
