@@ -479,11 +479,11 @@ const AdminNotifications: React.FC<{ focusNotificationId?: string; onFocusHandle
                 </div>
               </div>
 
-              <div className="pt-4 md:pt-6 border-t border-slate-100">
+              <div className="pt-4 md:pt-6 border-t border-slate-100 sticky md:static bottom-[calc(env(safe-area-inset-bottom,0px)+5rem)] md:bottom-auto -mx-4 md:mx-0 px-4 md:px-0 pb-3 md:pb-0 bg-white md:bg-transparent z-10">
                 <button
                   type="submit"
                   disabled={loading}
-                  className="w-full md:w-auto md:ml-auto md:flex bg-primary text-white font-black uppercase text-[10px] md:text-[11px] tracking-[0.2em] px-6 md:px-10 py-4 md:py-5 rounded-xl md:rounded-2xl hover:bg-blue-800 transition-all shadow-xl shadow-primary/20 flex items-center justify-center gap-3 md:gap-4 disabled:opacity-50 active:scale-95"
+                  className="w-full md:w-auto md:ml-auto md:flex bg-primary text-white font-black uppercase text-[10px] md:text-[11px] tracking-[0.2em] px-6 md:px-10 py-4 md:py-5 rounded-xl md:rounded-2xl hover:bg-blue-800 active:scale-95 transition-all shadow-xl shadow-primary/20 flex items-center justify-center gap-3 md:gap-4 disabled:opacity-50"
                 >
                   {loading ? <i className="fas fa-circle-notch fa-spin"></i> : <i className="fas fa-paper-plane"></i>}
                   {loading ? 'Sending...' : 'Send Broadcast'}

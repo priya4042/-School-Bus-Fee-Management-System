@@ -86,15 +86,15 @@ const Receipts: React.FC<{ user: User }> = ({ user }) => {
   }, [user]);
 
   return (
-    <div className="space-y-5 md:space-y-6">
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+    <div className="space-y-4 md:space-y-6">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 md:gap-4">
         <div>
-          <h2 className="text-2xl md:text-3xl font-black text-slate-800 tracking-tight">Payment Receipts</h2>
-          <p className="text-slate-500 font-bold uppercase text-[10px] tracking-widest">Digital archive of settled fees</p>
+          <h2 className="text-xl md:text-3xl font-black text-slate-800 tracking-tight">Payment Receipts</h2>
+          <p className="text-slate-500 font-bold uppercase text-[9px] md:text-[10px] tracking-widest mt-0.5">Digital archive of settled fees</p>
         </div>
-        <div className="bg-emerald-50 px-4 py-2 rounded-xl border border-emerald-200 flex items-center gap-2 w-fit">
-           <i className="fas fa-shield-check text-success"></i>
-           <span className="text-[9px] font-black text-emerald-700 uppercase tracking-widest">Verified digital signatures</span>
+        <div className="bg-emerald-50 px-3 md:px-4 py-2 rounded-xl border border-emerald-200 flex items-center gap-2 w-fit">
+           <i className="fas fa-shield-check text-success text-xs"></i>
+           <span className="text-[8px] md:text-[9px] font-black text-emerald-700 uppercase tracking-widest">Verified digital signatures</span>
         </div>
       </div>
 

@@ -253,7 +253,7 @@ const PaymentSettings: React.FC = () => {
         </div>
 
         {/* Action Buttons */}
-        <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 pt-4">
+        <div className="sticky md:static bottom-[calc(env(safe-area-inset-bottom,0px)+5rem)] md:bottom-auto -mx-5 md:mx-0 px-5 md:px-0 pt-4 pb-3 md:pb-0 bg-white md:bg-transparent border-t md:border-0 border-slate-100 z-10 flex flex-col sm:flex-row gap-3 sm:gap-4">
           <button
             onClick={handleSave}
             disabled={!hasChanges || saving}
