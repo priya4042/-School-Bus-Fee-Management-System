@@ -57,7 +57,11 @@ const UpiPaymentFlow: React.FC<UpiPaymentFlowProps> = ({
   const [loading, setLoading] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [error, setError] = useState('');
+  const [highlightUtr, setHighlightUtr] = useState(false);
+  const [awaitingUtr, setAwaitingUtr] = useState(false);
   const screenshotInputRef = useRef<HTMLInputElement>(null);
+  const utrInputRef = useRef<HTMLInputElement>(null);
+  const utrSectionRef = useRef<HTMLDivElement>(null);
 
   const { settings: upiSettings, configured: upiConfigured } = useUpiSettings();
   const UPI_ID = upiSettings.upiId;
@@ -180,11 +184,20 @@ const UpiPaymentFlow: React.FC<UpiPaymentFlowProps> = ({
     showToast('Payment cancelled. Try again or close this window.', 'error');
   };
 
-  // User confirms they paid — close prompt so they can enter the UTR
+  // User confirms they paid — close prompt, scroll to UTR field and focus it
   const handlePaymentCompleted = () => {
     setShowReturnPrompt(false);
     setPaymentInitiated(false);
     setPaymentFailed(false);
+    setAwaitingUtr(true);
+    setHighlightUtr(true);
+    // Wait one frame so the prompt unmounts before we scroll
+    setTimeout(() => {
+      utrSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      utrInputRef.current?.focus();
+    }, 50);
+    // Drop the highlight after 4s if user hasn't started typing
+    setTimeout(() => setHighlightUtr(false), 4000);
   };
 
   // User wants to try paying again after a cancel — reopen app picker
@@ -192,6 +205,15 @@ const UpiPaymentFlow: React.FC<UpiPaymentFlowProps> = ({
     setPaymentFailed(false);
     setError('');
     setShowAppPicker(true);
+  };
+
+  // If user dismisses the dialog while we are still waiting for the UTR and
+  // they never submitted, treat it as a failed payment so admin is notified
+  const handleClose = async () => {
+    if (awaitingUtr && !submitted) {
+      await handlePaymentFailed();
+    }
+    onClose();
   };
 
   // Validate UTR
@@ -340,7 +362,8 @@ const UpiPaymentFlow: React.FC<UpiPaymentFlowProps> = ({
         console.warn('Failed to notify admins (continuing):', err);
       }
 
-      // Show success
+      // Show success — clear awaiting flag so close handler doesn't mark failed
+      setAwaitingUtr(false);
       setSubmitted(true);
       showToast('Payment submitted successfully. Awaiting verification.', 'success');
       
@@ -572,7 +595,7 @@ const UpiPaymentFlow: React.FC<UpiPaymentFlowProps> = ({
       </div>
 
       {/* UTR Input Section */}
-      <div className="space-y-3">
+      <div ref={utrSectionRef} className={`space-y-3 -mx-2 px-2 py-2 rounded-2xl transition-all ${highlightUtr ? 'bg-amber-50 ring-2 ring-amber-400 animate-pulse' : ''}`}>
         <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">
           After completing payment, please enter your UTR (Transaction ID) below for verification
         </p>
@@ -582,16 +605,33 @@ const UpiPaymentFlow: React.FC<UpiPaymentFlowProps> = ({
             UTR / Transaction ID <span className="text-red-500">*</span>
           </label>
           <input
+            ref={utrInputRef}
             type="text"
+            inputMode="numeric"
             value={utrInput}
             onChange={(e) => {
               setUtrInput(e.target.value);
               setError('');
+              if (highlightUtr) setHighlightUtr(false);
             }}
             placeholder="E.g., 518003721843 or 221209153918"
-            className="w-full px-4 py-3 bg-white border border-slate-200 rounded-2xl text-sm font-bold outline-none focus:ring-2 ring-primary/20 focus:border-primary transition-all"
+            className={`w-full px-4 py-3 bg-white border rounded-2xl text-sm font-bold outline-none focus:ring-2 ring-primary/20 focus:border-primary transition-all ${
+              highlightUtr ? 'border-amber-400 ring-2 ring-amber-200' :
+              error && (!utrInput.trim() || utrInput.trim().length < 12) ? 'border-red-400 ring-2 ring-red-100' :
+              'border-slate-200'
+            }`}
           />
-          <p className="text-[8px] text-slate-400 font-medium">Length: {utrInput.length} characters (minimum 12 required)</p>
+          <p className={`text-[8px] font-medium ${
+            utrInput && utrInput.trim().length < 12 ? 'text-red-500' :
+            utrInput && utrInput.trim().length >= 12 ? 'text-emerald-600' :
+            'text-slate-400'
+          }`}>
+            {utrInput.length === 0
+              ? 'Length: 0 characters (minimum 12 required)'
+              : utrInput.trim().length < 12
+                ? `Length: ${utrInput.length} characters — need ${12 - utrInput.trim().length} more`
+                : `Length: ${utrInput.length} characters ✓`}
+          </p>
         </div>
 
         {/* Screenshot Upload (Optional) */}
@@ -654,7 +694,7 @@ const UpiPaymentFlow: React.FC<UpiPaymentFlowProps> = ({
       {/* Action Buttons */}
       <div className="flex gap-3 pt-2">
         <button
-          onClick={onClose}
+          onClick={handleClose}
           className="flex-1 px-4 py-3 bg-slate-100 text-slate-700 font-black text-[10px] uppercase tracking-widest rounded-2xl hover:bg-slate-200 transition-all disabled:opacity-50"
           disabled={loading}
         >
