@@ -32,20 +32,24 @@ const UPI_APPS: { id: UpiApp; label: string; icon: string; color: string }[] = [
 
 interface UpiPaymentFlowProps {
   amount: number;
-  studentId: string;
+  /** monthly_dues.id this payment is settling. Used to resolve student_id and link the row. */
+  dueId: string;
+  /** Optional — if known by caller. Otherwise we look it up from monthly_dues using dueId. */
+  studentId?: string;
   studentName: string;
   userId: string;
   onSuccess: () => void;
   onClose: () => void;
 }
 
-const UpiPaymentFlow: React.FC<UpiPaymentFlowProps> = ({ 
-  amount, 
-  studentId, 
+const UpiPaymentFlow: React.FC<UpiPaymentFlowProps> = ({
+  amount,
+  dueId,
+  studentId,
   studentName,
   userId,
   onSuccess,
-  onClose 
+  onClose,
 }) => {
   const [qrUrl, setQrUrl] = useState<string>('');
   const [utrInput, setUtrInput] = useState('');
@@ -134,7 +138,7 @@ const UpiPaymentFlow: React.FC<UpiPaymentFlowProps> = ({
   const uploadScreenshot = async (file: File): Promise<string | null> => {
     try {
       const timestamp = Date.now();
-      const filename = `upi-payments/${userId}/${timestamp}-${studentId}-${file.name}`;
+      const filename = `upi-payments/${userId}/${timestamp}-${dueId}-${file.name}`;
       
       const { data, error } = await supabase.storage
         .from('receipts')
@@ -185,14 +189,35 @@ const UpiPaymentFlow: React.FC<UpiPaymentFlowProps> = ({
         screenshotUrl = await uploadScreenshot(screenshotFile);
       }
 
+      // Resolve real student_id from monthly_dues if caller didn't pass one.
+      // Falls back to null if lookup fails — student_id is now nullable in schema.
+      let resolvedStudentId: string | null = studentId || null;
+      if (!resolvedStudentId && dueId) {
+        try {
+          const { data: dueRow } = await supabase
+            .from('monthly_dues')
+            .select('student_id')
+            .eq('id', dueId)
+            .maybeSingle();
+          if (dueRow?.student_id) resolvedStudentId = dueRow.student_id;
+        } catch {
+          // ignore — keep null
+        }
+      }
+
       // Insert payment record with pending status
       const { data, error: insertError } = await supabase
         .from('payments')
         .insert({
           user_id: userId,
-          student_id: studentId,
+          parent_id: userId,
+          student_id: resolvedStudentId,
+          due_id: dueId || null,
           amount: amount,
+          total_amount: amount,
+          billing_month: dueId,
           utr: utrInput.trim(),
+          transaction_id: utrInput.trim(),
           screenshot_url: screenshotUrl,
           status: 'pending',
           payment_method: 'upi',

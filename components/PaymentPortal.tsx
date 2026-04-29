@@ -100,7 +100,8 @@ const PaymentPortal: React.FC<PaymentPortalProps> = ({ state, onClose, onInitiat
             {/* UPI Payment Flow - Only Payment Method */}
             <UpiPaymentFlow
               amount={Number(state.amount || 0)}
-              studentId={String(state.dueIds?.[0] || state.studentId || 'unknown')}
+              dueId={String(state.dueIds?.[0] || state.dueId || '')}
+              studentId={state.studentId ? String(state.studentId) : undefined}
               studentName={String(state.studentName || 'Student')}
               userId={String(user?.id || '')}
               onSuccess={onClose}

@@ -5,8 +5,10 @@ import { useAuthStore } from '../../store/authStore';
 
 interface PendingPayment {
   id: string;
-  user_id: string;
-  student_id: string;
+  user_id: string | null;
+  parent_id: string | null;
+  student_id: string | null;
+  due_id: string | null;
   amount: number;
   utr: string;
   screenshot_url: string | null;
@@ -33,24 +35,31 @@ const PendingUpiVerifications: React.FC = () => {
     try {
       const { data: rows, error } = await supabase
         .from('payments')
-        .select('id, user_id, student_id, amount, utr, screenshot_url, status, created_at')
+        .select('id, user_id, parent_id, student_id, due_id, amount, utr, screenshot_url, status, created_at')
         .eq('status', 'pending')
         .eq('payment_method', 'upi')
         .order('created_at', { ascending: false });
 
       if (error) throw error;
 
-      const userIds = [...new Set((rows || []).map((r: any) => r.user_id).filter(Boolean))];
-      const refIds = [...new Set((rows || []).map((r: any) => r.student_id).filter(Boolean))];
+      const userIds = [
+        ...new Set(
+          (rows || [])
+            .flatMap((r: any) => [r.user_id, r.parent_id])
+            .filter(Boolean)
+        ),
+      ];
+      const studentIds = [...new Set((rows || []).map((r: any) => r.student_id).filter(Boolean))];
+      const dueIds = [...new Set((rows || []).map((r: any) => r.due_id).filter(Boolean))];
 
       const profilesPromise = userIds.length
         ? supabase.from('profiles').select('id, full_name, phone_number').in('id', userIds)
         : Promise.resolve({ data: [] as any[] });
-      const studentsPromise = refIds.length
-        ? supabase.from('students').select('id, full_name').in('id', refIds)
+      const studentsPromise = studentIds.length
+        ? supabase.from('students').select('id, full_name').in('id', studentIds)
         : Promise.resolve({ data: [] as any[] });
-      const duesPromise = refIds.length
-        ? supabase.from('monthly_dues').select('id, student_id, students(full_name)').in('id', refIds)
+      const duesPromise = dueIds.length
+        ? supabase.from('monthly_dues').select('id, student_id, students(full_name)').in('id', dueIds)
         : Promise.resolve({ data: [] as any[] });
 
       const [{ data: profiles }, { data: students }, { data: dues }] = await Promise.all([
@@ -67,9 +76,10 @@ const PendingUpiVerifications: React.FC = () => {
       (dues || []).forEach((d: any) => (dueMap[d.id] = d));
 
       const enriched = (rows || []).map((r: any): PendingPayment => {
-        const profile = profileMap[r.user_id];
-        const studentDirect = studentMap[r.student_id];
-        const dueLink = dueMap[r.student_id];
+        const parentLookupId = r.user_id || r.parent_id;
+        const profile = profileMap[parentLookupId];
+        const studentDirect = r.student_id ? studentMap[r.student_id] : null;
+        const dueLink = r.due_id ? dueMap[r.due_id] : null;
         const studentName =
           studentDirect?.full_name ||
           dueLink?.students?.full_name ||
@@ -116,10 +126,13 @@ const PendingUpiVerifications: React.FC = () => {
   }, [payments]);
 
   const resolveDueId = (payment: PendingPayment): string | null => {
-    // payments.student_id is set to the bundled dueId by the parent flow.
-    // Treat it as a candidate due id.
-    return payment.student_id || null;
+    // due_id is the proper column. Legacy rows may have the dueId in student_id
+    // (from the pre-fix code path), so fall back there.
+    return payment.due_id || payment.student_id || null;
   };
+
+  const resolveParentId = (payment: PendingPayment): string | null =>
+    payment.user_id || payment.parent_id || null;
 
   const handleConfirm = async (payment: PendingPayment) => {
     const ok = await showConfirm(
@@ -165,15 +178,18 @@ const PendingUpiVerifications: React.FC = () => {
         if (receiptError) console.warn('Failed to insert receipt (continuing):', receiptError);
       }
 
-      const { error: notifyError } = await supabase
-        .from('notifications')
-        .insert({
-          user_id: payment.user_id,
-          title: 'Payment Confirmed',
-          message: `Your payment of ₹${payment.amount.toLocaleString()} has been verified. Receipt is now available to download.`,
-          type: 'SUCCESS',
-        });
-      if (notifyError) console.warn('Failed to insert notification (continuing):', notifyError);
+      const parentId = resolveParentId(payment);
+      if (parentId) {
+        const { error: notifyError } = await supabase
+          .from('notifications')
+          .insert({
+            user_id: parentId,
+            title: 'Payment Confirmed',
+            message: `Your payment of ₹${payment.amount.toLocaleString()} has been verified. Receipt is now available to download.`,
+            type: 'SUCCESS',
+          });
+        if (notifyError) console.warn('Failed to insert notification (continuing):', notifyError);
+      }
 
       closeSwal();
       showToast('Payment confirmed. Parent has been notified.', 'success');
@@ -205,12 +221,15 @@ const PendingUpiVerifications: React.FC = () => {
         .eq('id', payment.id);
       if (paymentError) throw paymentError;
 
-      await supabase.from('notifications').insert({
-        user_id: payment.user_id,
-        title: 'Payment Could Not Be Verified',
-        message: `Your payment of ₹${payment.amount.toLocaleString()} (UTR: ${payment.utr}) could not be verified. Please retry or contact the school office.`,
-        type: 'WARNING',
-      });
+      const parentId = resolveParentId(payment);
+      if (parentId) {
+        await supabase.from('notifications').insert({
+          user_id: parentId,
+          title: 'Payment Could Not Be Verified',
+          message: `Your payment of ₹${payment.amount.toLocaleString()} (UTR: ${payment.utr}) could not be verified. Please retry or contact the school office.`,
+          type: 'WARNING',
+        });
+      }
 
       closeSwal();
       showToast('Payment rejected. Parent has been notified.', 'info');
