@@ -127,25 +127,31 @@ const ParentDashboard: React.FC<{ user: User }> = ({ user }) => {
         onConfirmUpi={confirmUpiPayment}
       />
 
-      <div className="bg-white p-4 md:p-10 rounded-2xl md:rounded-[3rem] border border-slate-200 shadow-premium flex flex-row md:flex-row items-center justify-between gap-3 md:gap-6 relative overflow-hidden group">
-        <div className="absolute -right-10 md:-right-20 -top-10 md:-top-20 opacity-5 transition-transform duration-1000 group-hover:rotate-12">
+      <div className="bg-white p-4 md:p-10 rounded-2xl md:rounded-[3rem] border border-slate-200 shadow-premium relative overflow-hidden group">
+        <div className="absolute -right-10 md:-right-20 -top-10 md:-top-20 opacity-5 transition-transform duration-1000 group-hover:rotate-12 pointer-events-none">
            <i className="fas fa-bus text-[120px] md:text-[300px] text-primary"></i>
         </div>
-        <div className="flex items-center gap-3 md:gap-8 relative z-10 min-w-0">
-          <div className="w-12 h-12 md:w-24 md:h-24 bg-primary/5 text-primary rounded-xl md:rounded-[2rem] flex items-center justify-center text-base md:text-4xl border border-primary/10 flex-shrink-0">
-            <i className="fas fa-home-user"></i>
+
+        {/* Top row — Family Hub title + Consolidated Dues label */}
+        <div className="relative z-10 flex items-center justify-between gap-3">
+          <div className="flex items-center gap-3 md:gap-5 min-w-0">
+            <div className="w-10 h-10 md:w-14 md:h-14 bg-primary/5 text-primary rounded-xl md:rounded-2xl flex items-center justify-center text-sm md:text-2xl border border-primary/10 flex-shrink-0">
+              <i className="fas fa-home-user"></i>
+            </div>
+            <h2 className="text-base md:text-3xl font-black text-slate-800 tracking-tight md:tracking-tighter truncate">{t('family_hub_title')}</h2>
           </div>
-          <div className="min-w-0">
-            <h2 className="text-base md:text-4xl font-black text-slate-800 tracking-tight md:tracking-tighter leading-tight md:leading-none truncate">{t('family_hub_title')}</h2>
-            <p className="text-slate-500 font-bold uppercase text-[8px] md:text-[10px] tracking-widest mt-0.5 md:mt-2">
-               {familyStudents.length} {t('students_registered')}
-            </p>
-          </div>
+          <p className="text-[9px] md:text-[11px] font-black text-slate-400 uppercase tracking-widest flex-shrink-0">
+            {t('consolidated_dues')}
+          </p>
         </div>
-        <div className="text-right relative z-10 flex-shrink-0">
-          <p className="text-[8px] md:text-[10px] font-black text-slate-400 uppercase tracking-widest mb-0.5 md:mb-1">{t('consolidated_dues')}</p>
-          <p className={`text-lg md:text-5xl font-black tracking-tighter ${totalFamilyDue > 0 ? 'text-danger' : 'text-success'}`}>
-             ₹{Number(totalFamilyDue || 0).toLocaleString()}
+
+        {/* Bottom row — students count + amount */}
+        <div className="relative z-10 flex items-end justify-between gap-3 mt-3 md:mt-4">
+          <p className="text-[9px] md:text-[11px] font-bold text-slate-500 uppercase tracking-widest min-w-0 truncate">
+            {familyStudents.length} {t('students_registered')}
+          </p>
+          <p className={`text-xl md:text-5xl font-black tracking-tighter flex-shrink-0 ${totalFamilyDue > 0 ? 'text-danger' : 'text-success'}`}>
+            ₹{Number(totalFamilyDue || 0).toLocaleString()}
           </p>
         </div>
       </div>
