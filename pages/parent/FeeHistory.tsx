@@ -302,7 +302,7 @@ const FeeHistory: React.FC<{ user: User }> = ({ user }) => {
   }
 
   return (
-    <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
+    <div className="space-y-4 md:space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
       <PaymentPortal state={paymentState} onClose={closePortal} onInitiateRazorpay={initiateRazorpay} onInitiatePayU={initiatePayU} onInitiateUpi={initiateUpiIntent} onConfirmUpi={confirmUpiPayment} user={user} />
 
       <ReceiptViewer
@@ -314,10 +314,10 @@ const FeeHistory: React.FC<{ user: User }> = ({ user }) => {
         onDownload={viewer.pendingDownload}
       />
 
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 md:gap-6">
         <div>
-          <h1 className="text-2xl md:text-4xl font-black text-slate-900 tracking-tight">{t('fee_ledger_title')}</h1>
-          <p className="text-slate-500 font-bold uppercase text-[10px] tracking-widest mt-1">
+          <h1 className="text-xl md:text-4xl font-black text-slate-900 tracking-tight">{t('fee_ledger_title')}</h1>
+          <p className="text-slate-500 font-bold uppercase text-[9px] md:text-[10px] tracking-widest mt-1">
             {t('payment_history_subtitle')}
           </p>
         </div>
@@ -327,22 +327,22 @@ const FeeHistory: React.FC<{ user: User }> = ({ user }) => {
       <SpendingSummary dues={dues as any} />
 
       {/* Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="bg-white p-4 md:p-8 rounded-2xl md:rounded-[2.5rem] border border-slate-100 shadow-sm">
-          <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Total Cleared</p>
-          <p className="text-3xl font-black text-emerald-600 tracking-tight">
+      <div className="grid grid-cols-3 gap-2 md:gap-6">
+        <div className="bg-white p-3 md:p-8 rounded-xl md:rounded-[2.5rem] border border-slate-100 shadow-sm">
+          <p className="text-[8px] md:text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1 truncate">Cleared</p>
+          <p className="text-base md:text-3xl font-black text-emerald-600 tracking-tight">
             ₹{stats.totalPaid.toLocaleString('en-IN')}
           </p>
         </div>
-        <div className="bg-white p-4 md:p-8 rounded-2xl md:rounded-[2.5rem] border border-slate-100 shadow-sm">
-          <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Outstanding</p>
-          <p className="text-3xl font-black text-primary tracking-tight">
+        <div className="bg-white p-3 md:p-8 rounded-xl md:rounded-[2.5rem] border border-slate-100 shadow-sm">
+          <p className="text-[8px] md:text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1 truncate">Pending</p>
+          <p className="text-base md:text-3xl font-black text-primary tracking-tight">
             ₹{stats.pending.toLocaleString('en-IN')}
           </p>
         </div>
-        <div className="bg-white p-4 md:p-8 rounded-2xl md:rounded-[2.5rem] border border-slate-100 shadow-sm">
-          <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Overdue Months</p>
-          <p className="text-3xl font-black text-red-500 tracking-tight">{stats.overdue}</p>
+        <div className="bg-white p-3 md:p-8 rounded-xl md:rounded-[2.5rem] border border-slate-100 shadow-sm">
+          <p className="text-[8px] md:text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1 truncate">Overdue</p>
+          <p className="text-base md:text-3xl font-black text-red-500 tracking-tight">{stats.overdue}</p>
         </div>
       </div>
 

@@ -114,7 +114,7 @@ const Support: React.FC<{ user: User; onOpenDocumentation?: () => void; section?
   };
 
   return (
-    <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
+    <div className="space-y-4 md:space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
       <div className="flex items-center justify-between gap-3">
         <div className="min-w-0">
           <h1 className="text-xl md:text-4xl font-black text-slate-900 tracking-tight truncate">
@@ -132,27 +132,27 @@ const Support: React.FC<{ user: User; onOpenDocumentation?: () => void; section?
 
       {section === 'ticket' && (<>
       {/* Search hero */}
-      <div className="bg-slate-950 rounded-2xl md:rounded-[3rem] p-6 md:p-12 text-white shadow-2xl relative overflow-hidden text-center">
+      <div className="bg-slate-950 rounded-2xl md:rounded-[3rem] p-5 md:p-12 text-white shadow-2xl relative overflow-hidden text-center">
         <div className="absolute top-0 right-0 w-64 h-64 bg-primary/20 rounded-bl-full -mr-20 -mt-20 blur-3xl"></div>
         <div className="absolute bottom-0 left-0 w-64 h-64 bg-emerald-500/10 rounded-tr-full -ml-20 -mb-20 blur-3xl"></div>
-        <div className="relative z-10 max-w-2xl mx-auto space-y-8">
-          <h2 className="text-xl md:text-3xl font-black tracking-tight">How can we assist you today?</h2>
+        <div className="relative z-10 max-w-2xl mx-auto space-y-4 md:space-y-8">
+          <h2 className="text-base md:text-3xl font-black tracking-tight leading-tight">How can we assist you today?</h2>
           <div className="relative group">
-            <Search className="absolute left-6 top-1/2 -translate-y-1/2 text-white/20 group-focus-within:text-primary transition-colors" size={24} />
+            <Search className="absolute left-4 md:left-6 top-1/2 -translate-y-1/2 text-white/20 group-focus-within:text-primary transition-colors" size={20} />
             <input
               type="text"
-              placeholder="Search FAQs (e.g., 'fees', 'tracking', 'receipt')..."
+              placeholder="Search FAQs..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full bg-white/5 border border-white/10 rounded-[2rem] py-4 md:py-6 pl-12 md:pl-16 pr-6 md:pr-8 text-base font-bold focus:ring-4 ring-primary/20 outline-none transition-all placeholder:text-white/20"
+              className="w-full bg-white/5 border border-white/10 rounded-2xl md:rounded-[2rem] py-3 md:py-6 pl-11 md:pl-16 pr-4 md:pr-8 text-sm md:text-base font-bold focus:ring-4 ring-primary/20 outline-none transition-all placeholder:text-white/20"
             />
           </div>
-          <div className="flex flex-wrap justify-center gap-4">
+          <div className="flex flex-wrap justify-center gap-2 md:gap-4">
             {['Payments', 'Bus Tracking', 'Receipts', 'Account'].map((tag) => (
               <button
                 key={tag}
                 onClick={() => setSearchQuery(tag)}
-                className="px-6 py-2 bg-white/5 hover:bg-white/10 rounded-full text-[10px] font-black uppercase tracking-widest border border-white/5 transition-all"
+                className="px-3 md:px-6 py-1.5 md:py-2 bg-white/5 hover:bg-white/10 rounded-full text-[9px] md:text-[10px] font-black uppercase tracking-widest border border-white/5 transition-all active:scale-95"
               >
                 {tag}
               </button>
@@ -162,51 +162,54 @@ const Support: React.FC<{ user: User; onOpenDocumentation?: () => void; section?
       </div>
 
       {/* Contact channels */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-8">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-3 md:gap-8">
         <div
-          className="bg-white p-6 md:p-10 rounded-2xl md:rounded-[3rem] border border-slate-100 shadow-sm text-center group hover:border-primary/20 transition-all cursor-pointer"
+          className="bg-white p-4 md:p-10 rounded-2xl md:rounded-[3rem] border border-slate-100 shadow-sm text-center group hover:border-primary/20 transition-all cursor-pointer active:scale-[0.98]"
           onClick={() => setShowTicketForm(true)}
         >
-          <div className="w-20 h-20 bg-primary/10 text-primary rounded-[2rem] flex items-center justify-center mx-auto mb-8 transition-transform group-hover:scale-110">
-            <MessageSquare size={32} />
+          <div className="w-14 h-14 md:w-20 md:h-20 bg-primary/10 text-primary rounded-2xl md:rounded-[2rem] flex items-center justify-center mx-auto mb-3 md:mb-8 transition-transform group-hover:scale-110">
+            <MessageSquare size={24} className="md:hidden" />
+            <MessageSquare size={32} className="hidden md:block" />
           </div>
-          <h3 className="text-xl font-black text-slate-900 tracking-tight mb-4">Submit Ticket</h3>
-          <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest leading-loose mb-8">
-            Send us a detailed support request and we'll respond promptly.
+          <h3 className="text-base md:text-xl font-black text-slate-900 tracking-tight mb-2 md:mb-4">Submit Ticket</h3>
+          <p className="text-[9px] md:text-[10px] font-bold text-slate-400 uppercase tracking-widest leading-relaxed md:leading-loose mb-3 md:mb-8">
+            Send a detailed support request and we'll respond promptly.
           </p>
-          <button className="w-full bg-primary text-white py-4 rounded-2xl font-black uppercase text-[10px] tracking-widest shadow-xl shadow-primary/20 hover:bg-blue-800 transition-all">
+          <button className="w-full bg-primary text-white py-3 md:py-4 rounded-xl md:rounded-2xl font-black uppercase text-[10px] tracking-widest shadow-xl shadow-primary/20 hover:bg-blue-800 transition-all active:scale-95">
             Open Ticket
           </button>
         </div>
 
         <a
           href="tel:+911234567890"
-          className="bg-white p-6 md:p-10 rounded-2xl md:rounded-[3rem] border border-slate-100 shadow-sm text-center group hover:border-emerald-500/20 transition-all"
+          className="bg-white p-4 md:p-10 rounded-2xl md:rounded-[3rem] border border-slate-100 shadow-sm text-center group hover:border-emerald-500/20 transition-all active:scale-[0.98]"
         >
-          <div className="w-20 h-20 bg-emerald-50 text-emerald-600 rounded-[2rem] flex items-center justify-center mx-auto mb-8 transition-transform group-hover:scale-110">
-            <Phone size={32} />
+          <div className="w-14 h-14 md:w-20 md:h-20 bg-emerald-50 text-emerald-600 rounded-2xl md:rounded-[2rem] flex items-center justify-center mx-auto mb-3 md:mb-8 transition-transform group-hover:scale-110">
+            <Phone size={24} className="md:hidden" />
+            <Phone size={32} className="hidden md:block" />
           </div>
-          <h3 className="text-xl font-black text-slate-900 tracking-tight mb-4">Call Support</h3>
-          <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest leading-loose mb-8">
+          <h3 className="text-base md:text-xl font-black text-slate-900 tracking-tight mb-2 md:mb-4">Call Support</h3>
+          <p className="text-[9px] md:text-[10px] font-bold text-slate-400 uppercase tracking-widest leading-relaxed md:leading-loose mb-3 md:mb-8">
             Speak directly with our Bus Administrators.
           </p>
-          <div className="w-full bg-emerald-600 text-white py-4 rounded-2xl font-black uppercase text-[10px] tracking-widest shadow-xl shadow-emerald-600/20 hover:bg-emerald-700 transition-all text-center">
+          <div className="w-full bg-emerald-600 text-white py-3 md:py-4 rounded-xl md:rounded-2xl font-black uppercase text-[10px] tracking-widest shadow-xl shadow-emerald-600/20 hover:bg-emerald-700 transition-all text-center">
             Call Now
           </div>
         </a>
 
         <a
           href="mailto:support@school.com"
-          className="bg-white p-6 md:p-10 rounded-2xl md:rounded-[3rem] border border-slate-100 shadow-sm text-center group hover:border-slate-900/20 transition-all"
+          className="bg-white p-4 md:p-10 rounded-2xl md:rounded-[3rem] border border-slate-100 shadow-sm text-center group hover:border-slate-900/20 transition-all active:scale-[0.98]"
         >
-          <div className="w-20 h-20 bg-slate-50 text-slate-900 rounded-[2rem] flex items-center justify-center mx-auto mb-8 transition-transform group-hover:scale-110">
-            <Mail size={32} />
+          <div className="w-14 h-14 md:w-20 md:h-20 bg-slate-50 text-slate-900 rounded-2xl md:rounded-[2rem] flex items-center justify-center mx-auto mb-3 md:mb-8 transition-transform group-hover:scale-110">
+            <Mail size={24} className="md:hidden" />
+            <Mail size={32} className="hidden md:block" />
           </div>
-          <h3 className="text-xl font-black text-slate-900 tracking-tight mb-4">Email Us</h3>
-          <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest leading-loose mb-8">
+          <h3 className="text-base md:text-xl font-black text-slate-900 tracking-tight mb-2 md:mb-4">Email Us</h3>
+          <p className="text-[9px] md:text-[10px] font-bold text-slate-400 uppercase tracking-widest leading-relaxed md:leading-loose mb-3 md:mb-8">
             Send a detailed message and we'll reply within 24 hours.
           </p>
-          <div className="w-full bg-slate-950 text-white py-4 rounded-2xl font-black uppercase text-[10px] tracking-widest shadow-xl shadow-slate-950/20 hover:bg-black transition-all text-center">
+          <div className="w-full bg-slate-950 text-white py-3 md:py-4 rounded-xl md:rounded-2xl font-black uppercase text-[10px] tracking-widest shadow-xl shadow-slate-950/20 hover:bg-black transition-all text-center">
             Send Email
           </div>
         </a>
@@ -318,9 +321,9 @@ const Support: React.FC<{ user: User; onOpenDocumentation?: () => void; section?
 
       {section === 'faq' && (<>
       {/* FAQ */}
-      <div className="bg-white rounded-2xl md:rounded-[3rem] p-5 md:p-12 shadow-sm border border-slate-100">
-        <div className="flex items-center justify-between mb-12">
-          <h3 className="text-2xl font-black text-slate-900 tracking-tight">Frequently Asked Questions</h3>
+      <div className="bg-white rounded-2xl md:rounded-[3rem] p-4 md:p-12 shadow-sm border border-slate-100">
+        <div className="flex items-center justify-between mb-4 md:mb-12 gap-3">
+          <h3 className="text-base md:text-2xl font-black text-slate-900 tracking-tight">Frequently Asked Questions</h3>
           {searchQuery && (
             <button
               onClick={() => setSearchQuery('')}

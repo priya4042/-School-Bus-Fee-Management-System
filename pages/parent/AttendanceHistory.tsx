@@ -379,42 +379,61 @@ const AttendanceHistory: React.FC<{ user: User }> = ({ user }) => {
               <CollapsibleList
                 initialCount={10}
                 showMoreLabel="View"
-                className="divide-y divide-slate-50"
+                className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-4 p-4 md:p-6"
               >
-                {Object.entries(byDate).map(([date, dayRecords]) => (
-                  <div key={date} className="p-6 hover:bg-slate-50/50 transition-colors">
-                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4">
-                      {new Date(date).toLocaleDateString('en-IN', {
-                        weekday: 'long', day: '2-digit', month: 'long', year: 'numeric',
-                      })}
-                    </p>
-                    <div className="flex flex-wrap gap-3">
-                      {dayRecords.map((record) => (
-                        <div
-                          key={record.id}
-                          className={`flex items-center gap-3 px-5 py-3 rounded-2xl border text-[10px] font-black uppercase tracking-widest ${
-                            record.status
-                              ? 'bg-emerald-50 border-emerald-100 text-emerald-700'
-                              : 'bg-red-50 border-red-100 text-red-600'
-                          }`}
-                        >
-                          {record.type === 'PICKUP' ? (
-                            <ArrowUpCircle size={16} />
-                          ) : (
-                            <ArrowDownCircle size={16} />
-                          )}
-                          <span>{record.type}</span>
-                          {record.status ? (
-                            <CheckCircle2 size={14} />
-                          ) : (
-                            <XCircle size={14} />
-                          )}
-                          <span>{record.status ? 'Present' : 'Absent'}</span>
-                        </div>
-                      ))}
+                {Object.entries(byDate).map(([date, dayRecords]) => {
+                  const dateObj = new Date(date);
+                  const weekday = dateObj.toLocaleDateString('en-IN', { weekday: 'short' });
+                  const dayNum = dateObj.toLocaleDateString('en-IN', { day: '2-digit' });
+                  const monthShort = dateObj.toLocaleDateString('en-IN', { month: 'short' });
+                  return (
+                    <div
+                      key={date}
+                      className="p-3 md:p-4 bg-slate-50/60 rounded-2xl border border-slate-100 hover:bg-white hover:border-primary/20 transition-all"
+                    >
+                      <div className="text-center pb-3 mb-3 border-b border-slate-100">
+                        <p className="text-[9px] md:text-[10px] font-black text-primary uppercase tracking-widest">
+                          {weekday}
+                        </p>
+                        <p className="text-lg md:text-xl font-black text-slate-800 leading-none mt-1">
+                          {dayNum}
+                        </p>
+                        <p className="text-[8px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">
+                          {monthShort}
+                        </p>
+                      </div>
+                      <div className="flex flex-col gap-1.5">
+                        {dayRecords.map((record) => (
+                          <div
+                            key={record.id}
+                            className={`flex items-center justify-between gap-2 px-2.5 py-2 rounded-xl border text-[9px] font-black uppercase tracking-widest ${
+                              record.status
+                                ? 'bg-emerald-50 border-emerald-100 text-emerald-700'
+                                : 'bg-red-50 border-red-100 text-red-600'
+                            }`}
+                          >
+                            <div className="flex items-center gap-1.5 min-w-0">
+                              {record.type === 'PICKUP' ? (
+                                <ArrowUpCircle size={12} className="flex-shrink-0" />
+                              ) : (
+                                <ArrowDownCircle size={12} className="flex-shrink-0" />
+                              )}
+                              <span className="truncate">{record.type}</span>
+                            </div>
+                            <div className="flex items-center gap-1 flex-shrink-0">
+                              {record.status ? (
+                                <CheckCircle2 size={11} />
+                              ) : (
+                                <XCircle size={11} />
+                              )}
+                              <span>{record.status ? 'Present' : 'Absent'}</span>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </CollapsibleList>
             )}
           </div>

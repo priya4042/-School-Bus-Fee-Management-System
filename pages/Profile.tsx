@@ -188,44 +188,44 @@ const Profile: React.FC<{ user: User }> = ({ user }) => {
   if (!user) return null;
 
   return (
-    <div className="max-w-4xl space-y-8 pb-12">
-      <div className="flex justify-between items-center">
-        <div>
-          <h2 className="text-2xl font-bold text-slate-800">My Profile</h2>
-          <p className="text-slate-500">Manage account settings and contact details</p>
+    <div className="max-w-4xl mx-auto space-y-4 md:space-y-8 pb-6 md:pb-12">
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
+        <div className="min-w-0">
+          <h2 className="text-xl md:text-2xl font-black text-slate-800 tracking-tight">My Profile</h2>
+          <p className="text-slate-500 font-bold uppercase text-[9px] md:text-[10px] tracking-widest mt-0.5">Manage account & contact details</p>
         </div>
-        <button 
+        <button
           onClick={handleDeleteAccount}
           disabled={updating}
-          className="text-xs font-bold text-red-500 hover:bg-red-50 px-4 py-2 rounded-lg transition-colors border border-red-100 disabled:opacity-50"
+          className="text-[10px] font-black uppercase tracking-widest text-red-500 bg-red-50 hover:bg-red-100 px-4 py-2.5 rounded-xl border border-red-100 disabled:opacity-50 self-start sm:self-auto active:scale-95 transition-all"
         >
-           Delete Account
+          Delete Account
         </button>
       </div>
 
       {message && (
-        <div className="p-4 bg-green-50 border border-green-100 text-green-700 rounded-xl text-sm font-bold flex items-center gap-2 animate-in fade-in slide-in-from-top-2">
+        <div className="p-3 md:p-4 bg-green-50 border border-green-100 text-green-700 rounded-xl text-xs md:text-sm font-bold flex items-center gap-2 animate-in fade-in slide-in-from-top-2">
           <i className="fas fa-check-circle"></i>
           {message}
         </div>
       )}
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        <div className="lg:col-span-2 space-y-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-8">
+        <div className="lg:col-span-2 space-y-4 md:space-y-6">
           <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
-            <div className="bg-slate-50 p-8 flex items-center gap-6 border-b border-slate-100">
-              <div className="w-20 h-20 bg-primary text-white rounded-2xl flex items-center justify-center text-3xl font-bold shadow-lg shadow-primary/20 rotate-3">
+            <div className="bg-slate-50 p-4 md:p-8 flex items-center gap-3 md:gap-6 border-b border-slate-100">
+              <div className="w-14 h-14 md:w-20 md:h-20 bg-primary text-white rounded-xl md:rounded-2xl flex items-center justify-center text-xl md:text-3xl font-bold shadow-lg shadow-primary/20 rotate-3 flex-shrink-0">
                 {getInitial()}
               </div>
-              <div>
-                <h3 className="text-xl font-bold text-slate-800">{getFullName()}</h3>
-                <p className="text-slate-500 text-sm">{user.email}</p>
-                <div className="flex gap-2 mt-2">
-                   <span className="px-2 py-0.5 bg-primary/10 text-primary text-[10px] font-black uppercase rounded-full">
+              <div className="min-w-0">
+                <h3 className="text-base md:text-xl font-black text-slate-800 truncate">{getFullName()}</h3>
+                <p className="text-slate-500 text-[11px] md:text-sm truncate">{user.email}</p>
+                <div className="flex gap-1.5 mt-2 flex-wrap">
+                  <span className="px-2 py-0.5 bg-primary/10 text-primary text-[9px] md:text-[10px] font-black uppercase rounded-full">
                     {user.role}
                   </span>
                   {identityBadge && (
-                    <span className="px-2 py-0.5 bg-slate-100 text-slate-500 text-[10px] font-black uppercase rounded-full">
+                    <span className="px-2 py-0.5 bg-slate-100 text-slate-500 text-[9px] md:text-[10px] font-black uppercase rounded-full truncate max-w-[160px]">
                       {identityBadge.label}: {identityBadge.value}
                     </span>
                   )}
@@ -233,141 +233,136 @@ const Profile: React.FC<{ user: User }> = ({ user }) => {
               </div>
             </div>
 
-            <div className="p-8 space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="p-4 md:p-8 space-y-4 md:space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-6">
                 <div className="md:col-span-2">
-                  <label className="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">Full Name</label>
-                  <input 
-                    type="text" 
+                  <label className="block text-[10px] md:text-xs font-bold text-slate-400 uppercase tracking-widest mb-1.5 md:mb-2">Full Name</label>
+                  <input
+                    type="text"
                     value={profileData.fullName}
                     onChange={(e) => setProfileData({...profileData, fullName: e.target.value})}
-                    className="w-full px-4 py-3 bg-slate-50 rounded-xl border border-slate-200 outline-none focus:ring-2 focus:ring-primary/20 transition-all font-medium text-slate-700"
+                    className="w-full px-4 py-3 bg-slate-50 rounded-xl border border-slate-200 outline-none focus:ring-2 focus:ring-primary/20 transition-all font-medium text-sm text-slate-700"
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">Phone Number</label>
-                  <input 
-                    type="tel" 
+                  <label className="block text-[10px] md:text-xs font-bold text-slate-400 uppercase tracking-widest mb-1.5 md:mb-2">Phone Number</label>
+                  <input
+                    type="tel"
+                    inputMode="tel"
                     value={profileData.phoneNumber}
                     onChange={(e) => setProfileData({...profileData, phoneNumber: e.target.value})}
-                    className="w-full px-4 py-3 bg-slate-50 rounded-xl border border-slate-200 outline-none focus:ring-2 focus:ring-primary/20 transition-all font-medium text-slate-700"
+                    className="w-full px-4 py-3 bg-slate-50 rounded-xl border border-slate-200 outline-none focus:ring-2 focus:ring-primary/20 transition-all font-medium text-sm text-slate-700"
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">Secondary Contact</label>
-                  <input 
-                    type="tel" 
+                  <label className="block text-[10px] md:text-xs font-bold text-slate-400 uppercase tracking-widest mb-1.5 md:mb-2">Secondary Contact</label>
+                  <input
+                    type="tel"
+                    inputMode="tel"
                     value={profileData.secondaryPhoneNumber}
                     onChange={(e) => setProfileData({...profileData, secondaryPhoneNumber: e.target.value})}
-                    placeholder="Emergency alternative" 
-                    className="w-full px-4 py-3 bg-slate-50 rounded-xl border border-slate-200 outline-none focus:ring-2 focus:ring-primary/20 transition-all font-medium text-slate-700"
+                    placeholder="Emergency alternative"
+                    className="w-full px-4 py-3 bg-slate-50 rounded-xl border border-slate-200 outline-none focus:ring-2 focus:ring-primary/20 transition-all font-medium text-sm text-slate-700"
                   />
                 </div>
                 <div className="md:col-span-2">
-                  <label className="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">Residential Address</label>
-                  <textarea 
+                  <label className="block text-[10px] md:text-xs font-bold text-slate-400 uppercase tracking-widest mb-1.5 md:mb-2">Residential Address</label>
+                  <textarea
                     value={profileData.location}
                     onChange={(e) => setProfileData({...profileData, location: e.target.value})}
                     rows={3}
-                    className="w-full px-4 py-3 bg-slate-50 rounded-xl border border-slate-200 outline-none focus:ring-2 focus:ring-primary/20 transition-all font-medium text-slate-700"
+                    className="w-full px-4 py-3 bg-slate-50 rounded-xl border border-slate-200 outline-none focus:ring-2 focus:ring-primary/20 transition-all font-medium text-sm text-slate-700"
                   ></textarea>
                 </div>
               </div>
 
-              <div className="pt-6 border-t border-slate-100 flex justify-end">
-                <button 
+              <div className="pt-4 md:pt-6 border-t border-slate-100">
+                <button
                   onClick={handleSaveProfile}
                   disabled={updating}
-                  className="bg-primary text-white font-bold px-8 py-3 rounded-xl hover:bg-blue-700 transition-all shadow-lg shadow-primary/20 active:scale-95 disabled:opacity-50"
+                  className="w-full md:w-auto md:ml-auto md:flex bg-primary text-white font-black uppercase tracking-widest text-[10px] py-3.5 md:py-3 px-8 rounded-xl hover:bg-blue-700 transition-all shadow-lg shadow-primary/20 active:scale-95 disabled:opacity-50 flex items-center justify-center gap-2"
                 >
-                  {updating ? 'Saving...' : 'Save Information'}
+                  {updating ? (
+                    <><i className="fas fa-circle-notch fa-spin"></i> Saving</>
+                  ) : (
+                    <>Save Information</>
+                  )}
                 </button>
               </div>
             </div>
           </div>
         </div>
 
-        <div className="space-y-6">
-          <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
-             <h4 className="font-bold text-slate-800 mb-6 flex items-center gap-2">
+        <div className="space-y-4 md:space-y-6">
+          <div className="bg-white p-4 md:p-6 rounded-2xl border border-slate-200 shadow-sm">
+             <h4 className="font-black text-sm md:text-base text-slate-800 mb-4 md:mb-6 flex items-center gap-2">
                 <i className="fas fa-bell text-primary"></i>
                 Notification Preferences
              </h4>
-             
-             <div className="space-y-4">
-                <div className="flex items-center justify-between p-3 bg-slate-50 rounded-xl">
-                   <div>
-                      <p className="text-sm font-bold text-slate-700">SMS Alerts</p>
-                      <p className="text-[10px] text-slate-400 font-medium">Fee due & overdue SMS</p>
+
+             <div className="space-y-3">
+                <div className="flex items-center justify-between p-3 bg-slate-50 rounded-xl gap-3">
+                   <div className="min-w-0">
+                      <p className="text-xs md:text-sm font-bold text-slate-700">SMS Alerts</p>
+                      <p className="text-[9px] md:text-[10px] text-slate-400 font-medium truncate">Fee due & overdue SMS</p>
                    </div>
-                   <button 
+                   <button
                      disabled={updating}
                      onClick={() => togglePref('sms')}
-                     className={`w-12 h-6 rounded-full relative transition-colors ${preferences.sms ? 'bg-success' : 'bg-slate-200'} ${updating ? 'opacity-50' : ''}`}
+                     className={`w-12 h-6 rounded-full relative transition-colors flex-shrink-0 ${preferences.sms ? 'bg-success' : 'bg-slate-200'} ${updating ? 'opacity-50' : ''}`}
                    >
                      <div className={`absolute top-1 left-1 w-4 h-4 bg-white rounded-full transition-transform ${preferences.sms ? 'translate-x-6' : ''}`}></div>
                    </button>
                 </div>
 
-                <div className="flex items-center justify-between p-3 bg-slate-50 rounded-xl">
-                   <div>
-                      <p className="text-sm font-bold text-slate-700">Email Notifications</p>
-                      <p className="text-[10px] text-slate-400 font-medium">Receipts & detailed reports</p>
+                <div className="flex items-center justify-between p-3 bg-slate-50 rounded-xl gap-3">
+                   <div className="min-w-0">
+                      <p className="text-xs md:text-sm font-bold text-slate-700">Email Notifications</p>
+                      <p className="text-[9px] md:text-[10px] text-slate-400 font-medium truncate">Receipts & detailed reports</p>
                    </div>
-                   <button 
+                   <button
                      disabled={updating}
                      onClick={() => togglePref('email')}
-                     className={`w-12 h-6 rounded-full relative transition-colors ${preferences.email ? 'bg-success' : 'bg-slate-200'} ${updating ? 'opacity-50' : ''}`}
+                     className={`w-12 h-6 rounded-full relative transition-colors flex-shrink-0 ${preferences.email ? 'bg-success' : 'bg-slate-200'} ${updating ? 'opacity-50' : ''}`}
                    >
                      <div className={`absolute top-1 left-1 w-4 h-4 bg-white rounded-full transition-transform ${preferences.email ? 'translate-x-6' : ''}`}></div>
                    </button>
                 </div>
 
-                <div className="flex items-center justify-between p-3 bg-slate-50 rounded-xl">
-                   <div>
-                      <p className="text-sm font-bold text-slate-700">Push Notifications</p>
-                      <p className="text-[10px] text-slate-400 font-medium">Instant FCM mobile alerts</p>
+                <div className="flex items-center justify-between p-3 bg-slate-50 rounded-xl gap-3">
+                   <div className="min-w-0">
+                      <p className="text-xs md:text-sm font-bold text-slate-700">Push Notifications</p>
+                      <p className="text-[9px] md:text-[10px] text-slate-400 font-medium truncate">Instant FCM mobile alerts</p>
                    </div>
-                   <button 
+                   <button
                      disabled={updating}
                      onClick={() => togglePref('push')}
-                     className={`w-12 h-6 rounded-full relative transition-colors ${preferences.push ? 'bg-success' : 'bg-slate-200'} ${updating ? 'opacity-50' : ''}`}
+                     className={`w-12 h-6 rounded-full relative transition-colors flex-shrink-0 ${preferences.push ? 'bg-success' : 'bg-slate-200'} ${updating ? 'opacity-50' : ''}`}
                    >
                      <div className={`absolute top-1 left-1 w-4 h-4 bg-white rounded-full transition-transform ${preferences.push ? 'translate-x-6' : ''}`}></div>
                    </button>
                 </div>
              </div>
 
-             <div className="mt-6 p-4 bg-blue-50 rounded-xl border border-blue-100">
-                <div className="flex gap-3">
-                   <i className="fas fa-info-circle text-primary mt-0.5"></i>
-                   <p className="text-xs text-primary leading-relaxed font-medium">
+             <div className="mt-4 md:mt-6 p-3 md:p-4 bg-blue-50 rounded-xl border border-blue-100">
+                <div className="flex gap-2 md:gap-3">
+                   <i className="fas fa-info-circle text-primary mt-0.5 flex-shrink-0"></i>
+                   <p className="text-[10px] md:text-xs text-primary leading-relaxed font-medium">
                       Critical alerts like emergency broadcasts and overdue notices cannot be completely disabled.
                    </p>
                 </div>
              </div>
           </div>
 
-          <div className="bg-slate-800 p-6 rounded-2xl text-white">
-             <h4 className="font-bold mb-4 flex items-center gap-2">
+          <div className="bg-slate-800 p-4 md:p-6 rounded-2xl text-white">
+             <h4 className="font-black text-sm md:text-base mb-3 md:mb-4 flex items-center gap-2">
                 <i className="fas fa-shield-alt text-success"></i>
                 Security
              </h4>
-             <div className="space-y-4">
-                <div>
-                   <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Fleet Security Token</label>
-                   <input 
-                     type="password" 
-                     placeholder="Enter token for camera access"
-                     value={profileData.fleetSecurityToken}
-                     onChange={(e) => setProfileData({...profileData, fleetSecurityToken: e.target.value})}
-                     className="w-full px-4 py-3 bg-white/5 rounded-xl border border-white/10 outline-none focus:ring-2 focus:ring-primary/20 transition-all font-medium text-white placeholder-white/20"
-                   />
-                </div>
-                <button className="w-full py-3 bg-white/10 hover:bg-white/20 rounded-xl text-sm font-bold transition-all flex items-center justify-center gap-2">
-                   Change Password
-                </button>
-             </div>
+             <button className="w-full py-3 bg-white/10 hover:bg-white/20 rounded-xl text-xs md:text-sm font-black uppercase tracking-widest transition-all flex items-center justify-center gap-2 active:scale-95">
+                <i className="fas fa-key text-[10px]"></i>
+                Change Password
+             </button>
           </div>
         </div>
       </div>

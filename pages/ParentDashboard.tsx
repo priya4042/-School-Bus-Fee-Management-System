@@ -117,7 +117,7 @@ const ParentDashboard: React.FC<{ user: User }> = ({ user }) => {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 md:space-y-6">
       <PaymentPortal
         state={paymentState}
         onClose={closePortal}
@@ -127,26 +127,24 @@ const ParentDashboard: React.FC<{ user: User }> = ({ user }) => {
         onConfirmUpi={confirmUpiPayment}
       />
 
-      <div className="bg-white p-6 md:p-10 rounded-3xl md:rounded-[3rem] border border-slate-200 shadow-premium flex flex-col md:flex-row items-center justify-between gap-6 relative overflow-hidden group">
+      <div className="bg-white p-4 md:p-10 rounded-2xl md:rounded-[3rem] border border-slate-200 shadow-premium flex flex-row md:flex-row items-center justify-between gap-3 md:gap-6 relative overflow-hidden group">
         <div className="absolute -right-10 md:-right-20 -top-10 md:-top-20 opacity-5 transition-transform duration-1000 group-hover:rotate-12">
-           <i className="fas fa-bus text-[150px] md:text-[300px] text-primary"></i>
+           <i className="fas fa-bus text-[120px] md:text-[300px] text-primary"></i>
         </div>
-        <div className="flex items-center gap-4 md:gap-8 relative z-10 w-full sm:w-auto">
-          <div className="w-16 h-16 md:w-24 md:h-24 bg-primary/5 text-primary rounded-2xl md:rounded-[2rem] flex items-center justify-center text-2xl md:text-4xl border border-primary/10">
+        <div className="flex items-center gap-3 md:gap-8 relative z-10 min-w-0">
+          <div className="w-12 h-12 md:w-24 md:h-24 bg-primary/5 text-primary rounded-xl md:rounded-[2rem] flex items-center justify-center text-base md:text-4xl border border-primary/10 flex-shrink-0">
             <i className="fas fa-home-user"></i>
           </div>
-          <div>
-            <h2 className="text-2xl md:text-4xl font-black text-slate-800 tracking-tighter leading-none">{t('family_hub_title')}</h2>
-            <div className="flex items-center gap-3 mt-2">
-              <p className="text-slate-500 font-bold uppercase text-[9px] md:text-[10px] tracking-widest">
-                 {familyStudents.length} {t('students_registered')}
-              </p>
-            </div>
+          <div className="min-w-0">
+            <h2 className="text-base md:text-4xl font-black text-slate-800 tracking-tight md:tracking-tighter leading-tight md:leading-none truncate">{t('family_hub_title')}</h2>
+            <p className="text-slate-500 font-bold uppercase text-[8px] md:text-[10px] tracking-widest mt-0.5 md:mt-2">
+               {familyStudents.length} {t('students_registered')}
+            </p>
           </div>
         </div>
-        <div className="text-center md:text-right relative z-10 w-full sm:w-auto">
-          <p className="text-[9px] md:text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">{t('consolidated_dues')}</p>
-          <p className={`text-2xl md:text-5xl font-black tracking-tighter ${totalFamilyDue > 0 ? 'text-danger' : 'text-success'}`}>
+        <div className="text-right relative z-10 flex-shrink-0">
+          <p className="text-[8px] md:text-[10px] font-black text-slate-400 uppercase tracking-widest mb-0.5 md:mb-1">{t('consolidated_dues')}</p>
+          <p className={`text-lg md:text-5xl font-black tracking-tighter ${totalFamilyDue > 0 ? 'text-danger' : 'text-success'}`}>
              ₹{Number(totalFamilyDue || 0).toLocaleString()}
           </p>
         </div>
@@ -168,7 +166,8 @@ const ParentDashboard: React.FC<{ user: User }> = ({ user }) => {
         ))}
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className={`grid grid-cols-1 ${(user as any).preferences?.tracking === true ? 'lg:grid-cols-3' : 'lg:grid-cols-1'} gap-4 md:gap-6`}>
+        {(user as any).preferences?.tracking === true && (
         <div className="lg:col-span-2">
            <div className="bg-slate-950 rounded-2xl md:rounded-[3.5rem] shadow-2xl overflow-hidden border-2 md:border-[12px] border-white/5 relative h-[250px] md:h-[600px] group z-0">
               <div className={`absolute inset-0 transition-opacity duration-1000 ${trackingActive ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
@@ -204,48 +203,51 @@ const ParentDashboard: React.FC<{ user: User }> = ({ user }) => {
               )}
 
               {trackingActive && (
-                 <div className="absolute top-4 left-4 z-20 flex flex-col sm:flex-row gap-2">
-                    <div className="bg-black/80 backdrop-blur-xl px-4 py-3 rounded-xl border border-white/10 text-white flex items-center gap-3">
-                       <div className={`w-2 h-2 rounded-full animate-pulse ${hasArrived ? 'bg-blue-500' : 'bg-success'}`}></div>
-                       <span className="text-[9px] font-black uppercase tracking-widest leading-none">
+                 <div className="absolute top-3 left-3 right-3 md:top-4 md:left-4 md:right-auto z-20 flex flex-col md:flex-row gap-2">
+                    <div className="bg-black/80 backdrop-blur-xl px-3 py-2.5 md:px-4 md:py-3 rounded-xl border border-white/10 text-white flex items-center gap-2 md:gap-3">
+                       <div className={`w-2 h-2 rounded-full animate-pulse flex-shrink-0 ${hasArrived ? 'bg-blue-500' : 'bg-success'}`}></div>
+                       <span className="text-[8px] md:text-[9px] font-black uppercase tracking-widest leading-none truncate">
                         {hasArrived ? t('bus_at_school') : `Bus KNG-01-A • ${t('live_telemetry')}`}
                        </span>
                     </div>
-                    <button 
-                       onClick={() => setIsPickerOpen(true)}
-                       className="bg-white text-slate-900 px-4 py-3 rounded-xl border border-slate-200 font-black text-[9px] uppercase tracking-widest hover:bg-slate-50 transition-all flex items-center gap-2"
-                    >
-                       <i className="fas fa-map-marker-alt"></i>
-                       {t('set_boarding')}
-                    </button>
-                    <button
-                       onClick={() => setIsCameraOpen(true)}
-                       className="bg-slate-900/80 backdrop-blur-md text-white px-4 py-3 rounded-xl border border-white/10 font-black text-[9px] uppercase tracking-widest hover:bg-black transition-all flex items-center gap-2"
-                    >
-                       <i className="fas fa-video"></i>
-                       {t('live_cam')}
-                    </button>
-                    <button
-                       onClick={() => setTrackingActive(false)}
-                       className="bg-white/10 backdrop-blur-md text-white px-4 py-3 rounded-xl border border-white/10 font-black text-[9px] uppercase tracking-widest hover:bg-white/20 transition-all"
-                    >
-                       {t('disconnect')}
-                    </button>
+                    <div className="grid grid-cols-3 md:flex gap-2">
+                      <button
+                         onClick={() => setIsPickerOpen(true)}
+                         className="bg-white text-slate-900 px-3 py-2.5 md:px-4 md:py-3 rounded-xl border border-slate-200 font-black text-[8px] md:text-[9px] uppercase tracking-widest hover:bg-slate-50 transition-all flex items-center justify-center gap-1.5 active:scale-95"
+                      >
+                         <i className="fas fa-map-marker-alt"></i>
+                         <span className="truncate">{t('set_boarding')}</span>
+                      </button>
+                      <button
+                         onClick={() => setIsCameraOpen(true)}
+                         className="bg-slate-900/80 backdrop-blur-md text-white px-3 py-2.5 md:px-4 md:py-3 rounded-xl border border-white/10 font-black text-[8px] md:text-[9px] uppercase tracking-widest hover:bg-black transition-all flex items-center justify-center gap-1.5 active:scale-95"
+                      >
+                         <i className="fas fa-video"></i>
+                         <span className="truncate">{t('live_cam')}</span>
+                      </button>
+                      <button
+                         onClick={() => setTrackingActive(false)}
+                         className="bg-white/10 backdrop-blur-md text-white px-3 py-2.5 md:px-4 md:py-3 rounded-xl border border-white/10 font-black text-[8px] md:text-[9px] uppercase tracking-widest hover:bg-white/20 transition-all flex items-center justify-center active:scale-95"
+                      >
+                         <span className="truncate">{t('disconnect')}</span>
+                      </button>
+                    </div>
                  </div>
               )}
            </div>
         </div>
+        )}
 
         <BusCameraModal isOpen={isCameraOpen} onClose={() => setIsCameraOpen(false)} />
 
-        <div className="bg-white rounded-3xl md:rounded-[3rem] border border-slate-200 shadow-premium overflow-hidden">
-          <div className="p-6 md:p-10 bg-slate-50 border-b border-slate-100 flex items-center justify-between">
-             <div>
-                <h3 className="font-black text-[9px] md:text-[11px] uppercase tracking-widest text-slate-400 mb-1">Fee Manifest</h3>
-                <p className="text-[10px] md:text-xs font-black text-slate-800 uppercase">{selectedStudent.full_name}</p>
+        <div className="bg-white rounded-2xl md:rounded-[3rem] border border-slate-200 shadow-premium overflow-hidden">
+          <div className="p-4 md:p-10 bg-slate-50 border-b border-slate-100 flex items-center justify-between">
+             <div className="min-w-0">
+                <h3 className="font-black text-[9px] md:text-[11px] uppercase tracking-widest text-slate-400 mb-0.5 md:mb-1">Fee Manifest</h3>
+                <p className="text-[10px] md:text-xs font-black text-slate-800 uppercase truncate">{selectedStudent.full_name}</p>
              </div>
-             <div className="w-10 h-10 bg-primary/10 text-primary rounded-xl flex items-center justify-center">
-                <i className="fas fa-file-invoice"></i>
+             <div className="w-9 h-9 md:w-10 md:h-10 bg-primary/10 text-primary rounded-xl flex items-center justify-center flex-shrink-0">
+                <i className="fas fa-file-invoice text-sm md:text-base"></i>
              </div>
           </div>
           <div className="divide-y divide-slate-50">
@@ -255,7 +257,7 @@ const ParentDashboard: React.FC<{ user: User }> = ({ user }) => {
               const isOverdue = !isPaid && new Date() > new Date(due.due_date);
 
               return (
-                <div key={due.id} className={`p-6 md:p-8 flex items-center justify-between group transition-all ${isLocked ? 'opacity-30 grayscale' : 'hover:bg-slate-50'}`}>
+                <div key={due.id} className={`p-4 md:p-8 flex items-center justify-between gap-3 group transition-all ${isLocked ? 'opacity-30 grayscale' : 'hover:bg-slate-50'}`}>
                   <div>
                     <p className="font-black text-slate-800 text-xs md:text-sm uppercase tracking-tight">{MONTHS[due.month-1]} {due.year}</p>
                     <div className="flex flex-col gap-0.5 mt-1">

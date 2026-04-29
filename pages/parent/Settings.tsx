@@ -208,10 +208,10 @@ const Settings: React.FC<{ user: User; section?: 'profile' | 'security' | 'langu
       <div className="space-y-4 md:space-y-8" key={activeTab}>
           {/* Profile Tab */}
           {activeTab === 'profile' && (
-            <div className="bg-white rounded-2xl md:rounded-[3rem] p-5 md:p-10 shadow-sm border border-slate-100 animate-in fade-in slide-in-from-bottom-2 duration-500">
-              <div className="flex items-center gap-8 mb-12 pb-12 border-b border-slate-50">
-                <div className="relative group">
-                  <div className="w-32 h-32 bg-slate-50 rounded-2xl md:rounded-[2.5rem] flex items-center justify-center text-slate-300 overflow-hidden border-4 border-white shadow-xl">
+            <div className="bg-white rounded-2xl md:rounded-[3rem] p-4 md:p-10 shadow-sm border border-slate-100 animate-in fade-in slide-in-from-bottom-2 duration-500">
+              <div className="flex flex-col sm:flex-row items-center sm:items-center gap-4 sm:gap-8 mb-6 md:mb-12 pb-6 md:pb-12 border-b border-slate-50">
+                <div className="relative group flex-shrink-0">
+                  <div className="w-24 h-24 md:w-32 md:h-32 bg-slate-50 rounded-2xl md:rounded-[2.5rem] flex items-center justify-center text-slate-300 overflow-hidden border-4 border-white shadow-xl">
                     {(user.avatar_url || (user.preferences as any)?.avatar_url) ? (
                       <img
                         src={user.avatar_url || (user.preferences as any)?.avatar_url}
@@ -219,8 +219,9 @@ const Settings: React.FC<{ user: User; section?: 'profile' | 'security' | 'langu
                         className="w-full h-full object-cover"
                       />
                     ) : (
-                      <UserIcon size={64} />
+                      <UserIcon size={48} className="md:hidden" />
                     )}
+                    {!(user.avatar_url || (user.preferences as any)?.avatar_url) && <UserIcon size={64} className="hidden md:block" />}
                   </div>
                   <input
                     ref={fileInputRef}
@@ -234,25 +235,25 @@ const Settings: React.FC<{ user: User; section?: 'profile' | 'security' | 'langu
                     type="button"
                     onClick={() => fileInputRef.current?.click()}
                     disabled={uploadingAvatar}
-                    className="absolute bottom-0 right-0 w-10 h-10 bg-primary text-white rounded-xl flex items-center justify-center shadow-lg hover:scale-110 transition-transform disabled:opacity-60"
+                    className="absolute bottom-0 right-0 w-9 h-9 md:w-10 md:h-10 bg-primary text-white rounded-xl flex items-center justify-center shadow-lg hover:scale-110 active:scale-95 transition-transform disabled:opacity-60"
                   >
-                    {uploadingAvatar ? <i className="fas fa-circle-notch fa-spin"></i> : <Camera size={18} />}
+                    {uploadingAvatar ? <i className="fas fa-circle-notch fa-spin text-xs"></i> : <Camera size={16} />}
                   </button>
                   {(user.avatar_url || (user.preferences as any)?.avatar_url) && (
                     <button
                       type="button"
                       onClick={handleRemoveAvatar}
                       disabled={uploadingAvatar}
-                      className="absolute -top-2 -right-2 w-9 h-9 bg-red-500 text-white rounded-xl flex items-center justify-center shadow-lg hover:bg-red-600 transition-colors disabled:opacity-60"
+                      className="absolute -top-2 -right-2 w-8 h-8 md:w-9 md:h-9 bg-red-500 text-white rounded-xl flex items-center justify-center shadow-lg hover:bg-red-600 active:scale-95 transition-colors disabled:opacity-60"
                       title="Remove profile image"
                     >
-                      <Trash2 size={16} />
+                      <Trash2 size={14} />
                     </button>
                   )}
                 </div>
-                <div>
-                  <h3 className="text-2xl font-black text-slate-900 tracking-tight">{user.full_name}</h3>
-                  <p className="text-slate-500 font-bold uppercase text-[10px] tracking-widest mt-1">
+                <div className="text-center sm:text-left min-w-0">
+                  <h3 className="text-lg md:text-2xl font-black text-slate-900 tracking-tight truncate">{user.full_name}</h3>
+                  <p className="text-slate-500 font-bold uppercase text-[9px] md:text-[10px] tracking-widest mt-1">
                     {user.role} Account •{' '}
                     {user.created_at
                       ? `Since ${new Date(user.created_at).toLocaleDateString('en-IN', { month: 'long', year: 'numeric' })}`

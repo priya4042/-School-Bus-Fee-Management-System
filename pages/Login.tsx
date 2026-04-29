@@ -209,7 +209,7 @@ const Login: React.FC<LoginProps> = ({ onLogin, onGoToRegister }) => {
                 </button>
               </p>
 
-              <div className="pt-4 flex justify-center">
+              <div className="pt-4">
                 <LegalLinks />
               </div>
             </div>
