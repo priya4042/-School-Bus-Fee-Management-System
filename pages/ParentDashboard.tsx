@@ -17,7 +17,7 @@ import { useLanguage } from '../lib/i18n';
 const ParentDashboard: React.FC<{ user: User }> = ({ user }) => {
   const { t } = useLanguage();
   const { paymentState, openPortal, closePortal, initiatePayU, initiateRazorpay, initiateUpiIntent, confirmUpiPayment } = usePayments();
-  const { downloadReceipt } = useReceipts();
+  const { downloadReceipt, downloading } = useReceipts();
   const [familyStudents, setFamilyStudents] = useState<Student[]>([]);
   const [dues, setDues] = useState<MonthlyDue[]>([]);
   const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
@@ -285,10 +285,14 @@ const ParentDashboard: React.FC<{ user: User }> = ({ user }) => {
                            <i className="fas fa-check-circle text-success text-lg"></i>
                            <button
                              onClick={() => downloadReceipt(due.id, due.transaction_id || due.id, due)}
-                             className="text-[7px] font-black text-primary uppercase tracking-widest hover:underline flex items-center gap-1"
+                             disabled={downloading === String(due.id)}
+                             className="text-[7px] font-black text-primary uppercase tracking-widest hover:underline flex items-center gap-1 disabled:opacity-60"
                            >
-                             <i className="fas fa-download"></i>
-                             Receipt
+                             {downloading === String(due.id) ? (
+                               <><i className="fas fa-circle-notch fa-spin"></i> Downloading…</>
+                             ) : (
+                               <><i className="fas fa-download"></i> Receipt</>
+                             )}
                            </button>
                         </div>
                      ) : (

@@ -140,9 +140,14 @@ const Payments: React.FC<{ user: User }> = ({ user }) => {
                   {isPaid ? (
                     <button
                       onClick={() => downloadReceipt(due.id, due.id, due)}
-                      className="text-[9px] font-black text-primary uppercase tracking-widest px-3 py-2 rounded-lg bg-primary/5 flex items-center gap-1.5"
+                      disabled={downloading === String(due.id)}
+                      className="text-[9px] font-black text-primary uppercase tracking-widest px-3 py-2 rounded-lg bg-primary/5 flex items-center gap-1.5 disabled:opacity-60"
                     >
-                      <i className="fas fa-download text-[8px]"></i> Receipt
+                      {downloading === String(due.id) ? (
+                        <><i className="fas fa-circle-notch fa-spin text-[8px]"></i> Downloading…</>
+                      ) : (
+                        <><i className="fas fa-download text-[8px]"></i> Receipt</>
+                      )}
                     </button>
                   ) : isLocked ? (
                     <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-1">
@@ -226,10 +231,14 @@ const Payments: React.FC<{ user: User }> = ({ user }) => {
                             <i className="fas fa-check-circle text-success text-xl"></i>
                             <button
                               onClick={() => downloadReceipt(due.id, due.id, due)}
-                              className="text-[8px] font-black text-primary uppercase tracking-widest hover:underline flex items-center gap-1"
+                              disabled={downloading === String(due.id)}
+                              className="text-[8px] font-black text-primary uppercase tracking-widest hover:underline flex items-center gap-1 disabled:opacity-60"
                             >
-                              <i className="fas fa-download"></i>
-                              Receipt
+                              {downloading === String(due.id) ? (
+                                <><i className="fas fa-circle-notch fa-spin"></i> Downloading…</>
+                              ) : (
+                                <><i className="fas fa-download"></i> Receipt</>
+                              )}
                             </button>
                          </div>
                        ) : isLocked ? (

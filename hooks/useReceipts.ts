@@ -583,29 +583,34 @@ const savePDF = async (doc: any, fileName: string) => {
 
   // Capacitor mobile: use Filesystem plugin to save, then Share plugin to open
   try {
+    showToast('Generating receipt...', 'info');
     const { Filesystem, Directory } = await import('@capacitor/filesystem');
     const base64Data = doc.output('datauristring').split(',')[1];
-    showToast('Downloading receipt...', 'info');
 
+    // Documents dir is reliable across Android versions (no extra permissions on
+    // scoped storage). ExternalStorage requires WRITE_EXTERNAL_STORAGE which is
+    // restricted on Android 10+.
     const result = await Filesystem.writeFile({
-      path: `Download/${fileName}`,
+      path: fileName,
       data: base64Data,
-      directory: Directory.ExternalStorage,
+      directory: Directory.Documents,
       recursive: true,
     });
 
-    // Try to share/open the file
+    // Open share sheet so user can save / open / send the PDF
     try {
       const { Share } = await import('@capacitor/share');
       await Share.share({
         title: fileName,
         url: result.uri,
-        dialogTitle: 'Open Receipt',
+        dialogTitle: 'Save or open receipt',
       });
-    } catch {
-      showAlert('Receipt Saved', `${fileName} saved to Downloads folder. Open it from your file manager.`, 'success');
+    } catch (shareErr: any) {
+      console.warn('Share failed, file is still saved:', shareErr);
+      showAlert('Receipt Saved', `${fileName} saved to your Documents folder. Open it from your file manager.`, 'success');
     }
-  } catch {
+  } catch (fsErr: any) {
+    console.warn('Filesystem save failed, falling back to blob URL:', fsErr);
     // Filesystem plugin not available or permission denied — fallback methods
     try {
       const pdfBlob = doc.output('blob');
