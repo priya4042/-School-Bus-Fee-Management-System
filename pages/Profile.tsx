@@ -276,11 +276,11 @@ const Profile: React.FC<{ user: User }> = ({ user }) => {
                 </div>
               </div>
 
-              <div className="pt-4 md:pt-6 border-t border-slate-100">
+              <div className="pt-4 md:pt-6 border-t border-slate-100 sticky md:static bottom-[calc(env(safe-area-inset-bottom,0px)+5rem)] md:bottom-auto -mx-4 md:mx-0 px-4 md:px-0 pb-3 md:pb-0 bg-white md:bg-transparent z-10">
                 <button
                   onClick={handleSaveProfile}
                   disabled={updating}
-                  className="w-full md:w-auto md:ml-auto md:flex bg-primary text-white font-black uppercase tracking-widest text-[10px] py-3.5 md:py-3 px-8 rounded-xl hover:bg-blue-700 transition-all shadow-lg shadow-primary/20 active:scale-95 disabled:opacity-50 flex items-center justify-center gap-2"
+                  className="w-full md:w-auto md:ml-auto md:flex bg-primary text-white font-black uppercase tracking-widest text-[10px] py-3.5 md:py-3 px-8 rounded-xl hover:bg-blue-700 active:scale-95 transition-all shadow-lg shadow-primary/20 disabled:opacity-50 flex items-center justify-center gap-2"
                 >
                   {updating ? (
                     <><i className="fas fa-circle-notch fa-spin"></i> Saving</>

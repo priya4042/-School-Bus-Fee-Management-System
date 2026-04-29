@@ -302,11 +302,11 @@ const Settings: React.FC<{ user: User; section?: 'profile' | 'security' | 'langu
                 </div>
               </div>
 
-              <div className="mt-12 flex justify-end">
+              <div className="mt-6 md:mt-12 sticky md:static bottom-[calc(env(safe-area-inset-bottom,0px)+5rem)] md:bottom-auto -mx-4 md:mx-0 px-4 md:px-0 pt-3 pb-3 md:py-0 bg-white md:bg-transparent border-t md:border-0 border-slate-100 z-10 flex md:justify-end">
                 <button
                   onClick={handleSaveProfile}
                   disabled={saving}
-                  className="bg-primary text-white px-10 py-4 rounded-2xl font-black uppercase text-[10px] tracking-widest shadow-xl shadow-primary/20 hover:bg-blue-800 transition-all disabled:opacity-60 flex items-center gap-2"
+                  className="w-full md:w-auto bg-primary text-white px-6 md:px-10 py-4 rounded-xl md:rounded-2xl font-black uppercase text-[10px] tracking-widest shadow-xl shadow-primary/20 hover:bg-blue-800 active:scale-95 transition-all disabled:opacity-60 flex items-center justify-center gap-2"
                 >
                   {saving ? <i className="fas fa-circle-notch fa-spin"></i> : <Check size={16} />}
                   {saving ? 'Saving...' : 'Save Changes'}
@@ -363,14 +363,16 @@ const Settings: React.FC<{ user: User; section?: 'profile' | 'security' | 'langu
                     <p className="text-[10px] font-black text-red-500 uppercase tracking-widest ml-4">Passwords do not match</p>
                   )}
                 </div>
-                <button
-                  onClick={handleChangePassword}
-                  disabled={changingPwd || !newPassword || newPassword !== confirmPassword}
-                  className="bg-primary text-white px-10 py-4 rounded-2xl font-black uppercase text-[10px] tracking-widest shadow-xl shadow-primary/20 hover:bg-blue-800 transition-all disabled:opacity-60 flex items-center gap-2"
-                >
-                  {changingPwd ? <i className="fas fa-circle-notch fa-spin"></i> : <Shield size={16} />}
-                  {changingPwd ? 'Changing...' : 'Update Password'}
-                </button>
+                <div className="sticky md:static bottom-[calc(env(safe-area-inset-bottom,0px)+5rem)] md:bottom-auto -mx-5 md:mx-0 px-5 md:px-0 pt-3 pb-3 md:py-0 bg-white md:bg-transparent border-t md:border-0 border-slate-100 z-10">
+                  <button
+                    onClick={handleChangePassword}
+                    disabled={changingPwd || !newPassword || newPassword !== confirmPassword}
+                    className="w-full md:w-auto bg-primary text-white px-6 md:px-10 py-4 rounded-xl md:rounded-2xl font-black uppercase text-[10px] tracking-widest shadow-xl shadow-primary/20 hover:bg-blue-800 active:scale-95 transition-all disabled:opacity-60 flex items-center justify-center gap-2"
+                  >
+                    {changingPwd ? <i className="fas fa-circle-notch fa-spin"></i> : <Shield size={16} />}
+                    {changingPwd ? 'Changing...' : 'Update Password'}
+                  </button>
+                </div>
               </div>
             </div>
           )}
