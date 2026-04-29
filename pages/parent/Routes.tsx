@@ -60,12 +60,12 @@ const ParentRoutes: React.FC<{ user: User }> = ({ user }) => {
 
   if (students.length === 0) {
     return (
-      <div className="py-24 text-center bg-white rounded-[3rem] border border-slate-100 shadow-sm">
-        <div className="w-20 h-20 bg-slate-50 rounded-[2rem] flex items-center justify-center mx-auto mb-6">
-          <i className="fas fa-route text-3xl text-slate-300"></i>
+      <div className="py-12 md:py-24 text-center bg-white rounded-2xl md:rounded-[3rem] border border-slate-100 shadow-sm">
+        <div className="w-14 h-14 md:w-20 md:h-20 bg-slate-50 rounded-2xl md:rounded-[2rem] flex items-center justify-center mx-auto mb-3 md:mb-6">
+          <i className="fas fa-route text-xl md:text-3xl text-slate-300"></i>
         </div>
-        <h3 className="text-xl font-black text-slate-900 uppercase tracking-tight">{t('no_child_routes')}</h3>
-        <p className="text-slate-500 text-[10px] font-bold uppercase tracking-widest mt-2">{t('contact_admin')}</p>
+        <h3 className="text-sm md:text-xl font-black text-slate-900 uppercase tracking-tight">{t('no_child_routes')}</h3>
+        <p className="text-slate-500 text-[9px] md:text-[10px] font-bold uppercase tracking-widest mt-2">{t('contact_admin')}</p>
       </div>
     );
   }
@@ -93,19 +93,19 @@ const ParentRoutes: React.FC<{ user: User }> = ({ user }) => {
             <div
               key={student.id}
               style={{ animationDelay: `${idx * 80}ms` }}
-              className="bg-white rounded-2xl md:rounded-[2.5rem] border border-slate-100 shadow-sm p-5 md:p-8 space-y-4 md:space-y-5 animate-in fade-in slide-in-from-bottom-4 fill-mode-both hover:shadow-lg hover:-translate-y-0.5 transition-all"
+              className="bg-white rounded-2xl md:rounded-[2.5rem] border border-slate-100 shadow-sm p-4 md:p-8 space-y-3 md:space-y-5 animate-in fade-in slide-in-from-bottom-4 fill-mode-both hover:shadow-lg hover:-translate-y-0.5 transition-all"
             >
-              <div className="flex items-center gap-4">
-                <div className="w-12 h-12 bg-primary/10 rounded-2xl flex items-center justify-center text-primary font-black text-lg flex-shrink-0">
+              <div className="flex items-center gap-3 md:gap-4">
+                <div className="w-10 h-10 md:w-12 md:h-12 bg-primary/10 rounded-xl md:rounded-2xl flex items-center justify-center text-primary font-black text-base md:text-lg flex-shrink-0">
                   {student.full_name?.charAt(0)}
                 </div>
                 <div className="min-w-0 flex-1">
                   <p className="text-[8px] font-black text-slate-400 tracking-widest">Student</p>
-                  <h3 className="text-base md:text-lg font-black text-slate-900 tracking-tight truncate">{student.full_name}</h3>
-                  <p className="text-[9px] font-bold text-slate-400 tracking-widest">Admission #{student.admission_number}</p>
+                  <h3 className="text-sm md:text-lg font-black text-slate-900 tracking-tight truncate">{student.full_name}</h3>
+                  <p className="text-[9px] font-bold text-slate-400 tracking-widest truncate">Admission #{student.admission_number}</p>
                 </div>
                 {route?.code && (
-                  <span className="text-[9px] font-black text-primary bg-primary/10 px-2.5 py-1 rounded-lg uppercase tracking-widest">
+                  <span className="text-[9px] font-black text-primary bg-primary/10 px-2 md:px-2.5 py-1 rounded-lg uppercase tracking-widest flex-shrink-0">
                     {route.code}
                   </span>
                 )}
@@ -113,25 +113,25 @@ const ParentRoutes: React.FC<{ user: User }> = ({ user }) => {
 
               <div className="p-3 md:p-4 bg-slate-50 rounded-xl md:rounded-2xl border border-slate-100">
                 <p className="text-[8px] font-black text-slate-400 tracking-widest mb-1">Route Name</p>
-                <p className="text-sm font-black text-slate-800">{route?.route_name || 'Not Assigned'}</p>
+                <p className="text-sm font-black text-slate-800 break-words">{route?.route_name || 'Not Assigned'}</p>
               </div>
 
               {/* Vertical timeline of stops */}
-              <div className="relative pl-7 space-y-4">
+              <div className="relative pl-7 space-y-3 md:space-y-4">
                 <div className="absolute left-[10px] top-3 bottom-3 w-0.5 bg-gradient-to-b from-emerald-500 via-primary to-amber-500"></div>
                 {stops.map((stop, i) => (
                   <div
                     key={i}
-                    className={`relative flex items-start gap-3 group ${stop.highlight ? '' : ''}`}
+                    className="relative flex items-start gap-3 group"
                   >
-                    <span className={`absolute -left-7 top-1 w-5 h-5 rounded-full ${stop.accent} flex items-center justify-center text-white text-[8px] shadow-md ${stop.highlight ? 'ring-4 ring-primary/20 animate-pulse' : ''}`}>
+                    <span className={`absolute -left-7 top-1 w-5 h-5 rounded-full ${stop.accent} flex items-center justify-center text-white text-[8px] shadow-md flex-shrink-0 ${stop.highlight ? 'ring-4 ring-primary/20 animate-pulse' : ''}`}>
                       <i className={`fas ${stop.icon}`}></i>
                     </span>
-                    <div className={`flex-1 p-3 rounded-xl border ${stop.highlight ? 'bg-blue-50 border-blue-100' : 'bg-white border-slate-100'} transition-all group-hover:translate-x-1`}>
+                    <div className={`flex-1 min-w-0 p-3 rounded-xl border ${stop.highlight ? 'bg-blue-50 border-blue-100' : 'bg-white border-slate-100'} transition-all group-hover:translate-x-1`}>
                       <p className={`text-[8px] font-black tracking-widest uppercase ${stop.highlight ? 'text-primary' : 'text-slate-400'}`}>
                         {stop.label}
                       </p>
-                      <p className={`text-xs font-bold mt-0.5 ${stop.highlight ? 'text-blue-900' : 'text-slate-700'}`}>
+                      <p className={`text-xs font-bold mt-0.5 break-words ${stop.highlight ? 'text-blue-900' : 'text-slate-700'}`}>
                         {stop.value}
                       </p>
                     </div>
