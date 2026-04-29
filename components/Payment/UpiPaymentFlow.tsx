@@ -61,8 +61,12 @@ const UpiPaymentFlow: React.FC<UpiPaymentFlowProps> = ({
 
   const { settings: upiSettings, configured: upiConfigured } = useUpiSettings();
   const UPI_ID = upiSettings.upiId;
-  const BUSINESS_NAME = upiSettings.businessName;
+  // Payee name shown inside the UPI app — always "BusWayPro" so parents recognize the app brand
+  const BUSINESS_NAME = 'BusWayPro';
   const [showAppPicker, setShowAppPicker] = useState(false);
+  const [paymentInitiated, setPaymentInitiated] = useState(false);
+  const [showReturnPrompt, setShowReturnPrompt] = useState(false);
+  const [paymentFailed, setPaymentFailed] = useState(false);
 
   const note = `Bus Fee ${studentName}`;
   const linkParams = { upiId: UPI_ID, businessName: BUSINESS_NAME, amount, note };
@@ -92,6 +96,7 @@ const UpiPaymentFlow: React.FC<UpiPaymentFlowProps> = ({
   // Open the picked UPI app
   const handlePayWithApp = (app: UpiApp) => {
     const link = buildUpiLink(app, linkParams);
+    setPaymentInitiated(true);
     window.location.href = link;
     // If the app isn't installed, deep links silently fail. Fallback to universal upi:// after a brief moment.
     if (app !== 'any') {
@@ -100,6 +105,86 @@ const UpiPaymentFlow: React.FC<UpiPaymentFlowProps> = ({
       }, 1500);
     }
     setShowAppPicker(false);
+  };
+
+  // Detect user returning to the app after launching a UPI deep link
+  useEffect(() => {
+    if (!paymentInitiated) return;
+    const handleVisibility = () => {
+      if (document.visibilityState === 'visible' && paymentInitiated) {
+        // Slight delay so we don't fire while the deep link is still resolving
+        setTimeout(() => setShowReturnPrompt(true), 600);
+      }
+    };
+    document.addEventListener('visibilitychange', handleVisibility);
+    window.addEventListener('focus', handleVisibility);
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibility);
+      window.removeEventListener('focus', handleVisibility);
+    };
+  }, [paymentInitiated]);
+
+  // User confirms they cancelled / payment failed in the UPI app
+  const handlePaymentFailed = async () => {
+    setShowReturnPrompt(false);
+    setPaymentInitiated(false);
+    setPaymentFailed(true);
+    try {
+      // Resolve student id for the failed-attempt record
+      let resolvedStudentId: string | null = studentId || null;
+      if (!resolvedStudentId && dueId) {
+        try {
+          const { data: dueRow } = await supabase
+            .from('monthly_dues')
+            .select('student_id')
+            .eq('id', dueId)
+            .maybeSingle();
+          if (dueRow?.student_id) resolvedStudentId = dueRow.student_id;
+        } catch { /* ignore */ }
+      }
+
+      // Log a failed payment attempt
+      await supabase.from('payments').insert({
+        user_id: userId,
+        parent_id: userId,
+        student_id: resolvedStudentId,
+        due_id: dueId || null,
+        amount: amount,
+        total_amount: amount,
+        billing_month: dueId,
+        status: 'failed',
+        payment_method: 'upi',
+        created_at: new Date().toISOString(),
+      });
+
+      // Notify all admins so they know the parent attempted but cancelled
+      const { data: admins } = await supabase
+        .from('profiles')
+        .select('id')
+        .in('role', ['ADMIN', 'SUPER_ADMIN']);
+
+      const adminIds = (admins || []).map((a: any) => a.id).filter(Boolean);
+      if (adminIds.length > 0) {
+        await supabase.from('notifications').insert(
+          adminIds.map((adminId: string) => ({
+            user_id: adminId,
+            title: 'UPI Payment Failed / Cancelled',
+            message: `${studentName} attempted to pay ₹${amount.toLocaleString()} via UPI but the payment was cancelled or failed.`,
+            type: 'WARNING',
+          }))
+        );
+      }
+    } catch (err) {
+      console.warn('Failed to log payment failure (continuing):', err);
+    }
+    showToast('Payment failed. You can try again or close this window.', 'error');
+  };
+
+  // User confirms they paid — close prompt so they can enter the UTR
+  const handlePaymentCompleted = () => {
+    setShowReturnPrompt(false);
+    setPaymentInitiated(false);
+    setPaymentFailed(false);
   };
 
   // Validate UTR
@@ -296,6 +381,52 @@ const UpiPaymentFlow: React.FC<UpiPaymentFlowProps> = ({
 
   return (
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-300">
+      {/* Return prompt — shown when user comes back from UPI app */}
+      {showReturnPrompt && (
+        <div className="fixed inset-0 z-[2200] bg-black/60 backdrop-blur-sm flex items-end sm:items-center justify-center p-4 animate-in fade-in duration-200">
+          <div className="bg-white rounded-3xl w-full max-w-sm shadow-2xl p-6 animate-in zoom-in-95 slide-in-from-bottom-4 duration-300">
+            <div className="w-14 h-14 mx-auto bg-primary/10 text-primary rounded-2xl flex items-center justify-center mb-4">
+              <i className="fas fa-question-circle text-2xl"></i>
+            </div>
+            <h3 className="text-base font-black text-slate-900 text-center tracking-tight">Did you complete the payment?</h3>
+            <p className="text-[11px] font-bold text-slate-500 text-center mt-2 leading-relaxed">
+              ₹{amount.toLocaleString()} via UPI for {studentName}
+            </p>
+            <div className="space-y-2 mt-5">
+              <button
+                onClick={handlePaymentCompleted}
+                className="w-full py-3.5 bg-emerald-600 text-white font-black uppercase text-[10px] tracking-widest rounded-xl shadow-lg shadow-emerald-600/20 active:scale-95 transition-all flex items-center justify-center gap-2"
+              >
+                <i className="fas fa-check"></i>
+                Yes, I Paid — Enter UTR
+              </button>
+              <button
+                onClick={handlePaymentFailed}
+                className="w-full py-3.5 bg-red-50 text-red-600 font-black uppercase text-[10px] tracking-widest rounded-xl border border-red-100 active:scale-95 transition-all flex items-center justify-center gap-2"
+              >
+                <i className="fas fa-times"></i>
+                Cancelled / Payment Failed
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Failed banner — shown after the user confirmed cancel */}
+      {paymentFailed && (
+        <div className="p-4 bg-red-50 rounded-2xl border border-red-200 animate-in slide-in-from-top-2 duration-200 flex items-start gap-3">
+          <div className="w-9 h-9 bg-red-100 text-red-600 rounded-xl flex items-center justify-center flex-shrink-0">
+            <i className="fas fa-times-circle"></i>
+          </div>
+          <div className="min-w-0">
+            <p className="text-[11px] font-black text-red-700 uppercase tracking-widest">Payment Failed</p>
+            <p className="text-[10px] font-bold text-red-600 mt-1 leading-relaxed">
+              The payment was cancelled or did not go through. Admin has been notified. You can try paying again.
+            </p>
+          </div>
+        </div>
+      )}
+
       {/* Amount Summary */}
       <div className="p-6 bg-gradient-to-br from-primary/10 to-blue-50 rounded-3xl border border-primary/20 text-center">
         <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Amount to Pay</p>
