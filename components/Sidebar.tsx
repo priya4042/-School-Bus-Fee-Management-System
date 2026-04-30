@@ -48,6 +48,8 @@ const Sidebar: React.FC<SidebarProps> = ({ user, onLogout, activeTab, setActiveT
         { name: 'Payment Settings', label: 'UPI / Gateway', icon: 'fa-mobile-screen' },
       ],
     },
+    { name: 'Expenses', label: 'Expenses', icon: 'fa-receipt' },
+    { name: 'Holidays', label: 'Holidays', icon: 'fa-calendar-times' },
     { name: 'Notifications', label: t('notifications'), icon: 'fa-bullhorn' },
     ...(isSuperAdmin ? [{ name: 'Bus admins', label: t('bus_admins'), icon: 'fa-user-shield' }] : []),
     { name: 'Settings', label: t('settings'), icon: 'fa-cog' },

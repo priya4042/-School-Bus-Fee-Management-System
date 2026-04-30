@@ -14,6 +14,8 @@ import Settings from './pages/Settings';
 import Profile from './pages/Profile';
 import Attendance from './pages/Attendance';
 import AdminPayments from './pages/AdminPayments';
+import Expenses from './pages/Expenses';
+import Holidays from './pages/Holidays';
 import AdminNotifications from './pages/AdminNotifications';
 import AuditLogs from './pages/AuditLogs';
 import AdminManagement from './pages/AdminManagement';
@@ -70,6 +72,8 @@ const getAllowedTabs = (user?: User | null) => {
       'Payment Settings',
       'Settings',
       'Attendance',
+      'Expenses',
+      'Holidays',
       'Notifications',
       'Bus admins',
       'Live Tracking',
@@ -162,6 +166,8 @@ const App: React.FC = () => {
         case 'Payment Settings': return <PaymentSettings />;
         case 'Settings': return <Settings />;
         case 'Attendance': return <Attendance />;
+        case 'Expenses': return <Expenses />;
+        case 'Holidays': return <Holidays />;
         case 'Notifications': return <AdminNotifications focusNotificationId={selectedNotificationId} onFocusHandled={() => setSelectedNotificationId(undefined)} />;
         case 'Audit Logs': return <AdminNotifications focusNotificationId={selectedNotificationId} onFocusHandled={() => setSelectedNotificationId(undefined)} />;
         case 'Bus admins': return <AdminManagement />;
