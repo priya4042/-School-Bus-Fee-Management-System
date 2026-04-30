@@ -537,6 +537,133 @@ const generateDetailedInvoice = async (due: any) => {
   await savePDF(doc, buildHumanFileName('Invoice', due, txnId));
 };
 
+// Annual / multi-month consolidated statement — for tax records, school audit, etc.
+const generateYearlyStatement = async (paidDues: any[], academicYearLabel: string, parentName?: string) => {
+  const doc = new jsPDF({ orientation: 'p', unit: 'mm', format: 'a4' });
+  const margin = 14;
+  const pageWidth = 210;
+  const contentWidth = pageWidth - margin * 2;
+
+  const ordered = [...paidDues].sort((a, b) => getPeriodValue(a) - getPeriodValue(b));
+  const firstStudent = normalizeStudentInfo(ordered[0] || {}).student;
+  const totalPaid = ordered.reduce((sum, d) => sum + Number(d.total_due || d.amount || 0), 0);
+  const totalLateFee = ordered.reduce((sum, d) => sum + Number(d.late_fee || 0), 0);
+  const totalBase = totalPaid - totalLateFee;
+
+  // Header band
+  doc.setFillColor(15, 23, 42);
+  doc.rect(0, 0, pageWidth, 36, 'F');
+  drawLogo(doc, margin, 6, 14);
+  doc.setTextColor(255, 255, 255);
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(18);
+  doc.text('Annual Statement', margin + 18, 15);
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(8);
+  doc.text(`School Bus WayPro — Bus Fee Annual Summary`, margin + 18, 23);
+  doc.setFontSize(8);
+  doc.text(`Academic Year: ${academicYearLabel}`, pageWidth - margin, 16, { align: 'right' });
+  doc.text(`Generated: ${formatDateTime(new Date().toISOString())}`, pageWidth - margin, 22, { align: 'right' });
+
+  // Bill-to box
+  let y = 46;
+  doc.setFillColor(248, 250, 252);
+  doc.roundedRect(margin, y, contentWidth, 26, 2, 2, 'F');
+  doc.setTextColor(100, 116, 139);
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(7);
+  doc.text('STATEMENT FOR', margin + 4, y + 6);
+  doc.setTextColor(15, 23, 42);
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(9);
+  doc.text(String(firstStudent.full_name || 'Student'), margin + 4, y + 13);
+  doc.setFontSize(8);
+  doc.text(
+    `Admission: ${firstStudent.admission_number || 'N/A'}   Class: ${firstStudent.grade || 'N/A'}-${firstStudent.section || 'N/A'}${parentName ? `   Parent: ${parentName}` : ''}`,
+    margin + 4, y + 19
+  );
+
+  // Table header
+  y = 80;
+  doc.setFillColor(15, 23, 42);
+  doc.rect(margin, y, contentWidth, 9, 'F');
+  doc.setTextColor(255, 255, 255);
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(7.5);
+  doc.text('SL', margin + 4, y + 6);
+  doc.text('MONTH', margin + 16, y + 6);
+  doc.text('TXN ID', margin + 56, y + 6);
+  doc.text('PAID DATE', margin + 110, y + 6);
+  doc.text('LATE FEE', margin + 142, y + 6, { align: 'right' });
+  doc.text('AMOUNT (Rs.)', pageWidth - margin - 4, y + 6, { align: 'right' });
+
+  y += 9;
+  doc.setTextColor(15, 23, 42);
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(8);
+
+  ordered.forEach((due, idx) => {
+    if (idx % 2 === 0) {
+      doc.setFillColor(248, 250, 252);
+      doc.rect(margin, y, contentWidth, 7, 'F');
+    }
+    const monthLabel = getMonthLabel(due.month, due.year);
+    const txn = String(due.transaction_id || due.id || '').slice(-12);
+    const paidOn = due.paid_at ? new Date(due.paid_at).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: '2-digit' }) : '—';
+    const lateFee = Number(due.late_fee || 0);
+    const amount = Number(due.total_due || due.amount || 0);
+
+    doc.text(String(idx + 1), margin + 4, y + 5);
+    doc.text(monthLabel, margin + 16, y + 5);
+    doc.text(txn, margin + 56, y + 5);
+    doc.text(paidOn, margin + 110, y + 5);
+    doc.text(lateFee > 0 ? Number(lateFee).toLocaleString('en-IN') : '—', margin + 142, y + 5, { align: 'right' });
+    doc.setFont('helvetica', 'bold');
+    doc.text(amount.toLocaleString('en-IN'), pageWidth - margin - 4, y + 5, { align: 'right' });
+    doc.setFont('helvetica', 'normal');
+    y += 7;
+  });
+
+  doc.setDrawColor(226, 232, 240);
+  doc.rect(margin, 80, contentWidth, y - 80);
+
+  // Summary
+  y += 6;
+  const sumX = pageWidth - margin - 80;
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(8);
+  const summary: [string, string][] = [
+    ['Subtotal (Base Fees)', `Rs. ${totalBase.toLocaleString('en-IN')}`],
+    ['Total Late Fees', `Rs. ${totalLateFee.toLocaleString('en-IN')}`],
+  ];
+  summary.forEach(([label, val]) => {
+    doc.setTextColor(100, 116, 139);
+    doc.text(label, sumX, y);
+    doc.setTextColor(15, 23, 42);
+    doc.text(val, pageWidth - margin - 4, y, { align: 'right' });
+    y += 6;
+  });
+
+  y += 2;
+  doc.setFillColor(15, 23, 42);
+  doc.roundedRect(sumX - 4, y, pageWidth - margin - sumX + 8, 12, 2, 2, 'F');
+  doc.setTextColor(255, 255, 255);
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(10);
+  doc.text(`TOTAL PAID (${ordered.length} months)`, sumX, y + 8);
+  doc.text(`Rs. ${totalPaid.toLocaleString('en-IN')}`, pageWidth - margin - 4, y + 8, { align: 'right' });
+
+  // Footer
+  doc.setTextColor(148, 163, 184);
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(7);
+  doc.text('This is a computer-generated annual statement and does not require a physical signature.', margin, 280);
+  doc.text('For tax records, audits, or school enrolment proof.', margin, 285);
+
+  const safeName = String(firstStudent.full_name || 'Student').replace(/[^a-zA-Z0-9 ]+/g, '').replace(/\s+/g, '_').slice(0, 40);
+  await savePDF(doc, `Annual_Statement_${safeName}_${academicYearLabel.replace(/[^0-9-]/g, '')}.pdf`);
+};
+
 // Module-scoped preview mode: when set, savePDF resolves the URL instead of saving.
 let previewSink: ((url: string) => void) | null = null;
 const enterPreviewMode = (sink: (url: string) => void) => { previewSink = sink; };
@@ -563,7 +690,12 @@ const buildHumanFileName = (kind: 'Receipt' | 'Invoice', due: any, txnId?: strin
   return `${kind}_${safeName}_${period}.pdf`;
 };
 
-const savePDF = async (doc: any, fileName: string) => {
+// Shareable file URI captured during savePDF — used by shareViaWhatsApp without
+// re-generating the PDF.
+let lastSavedFileUri: string | null = null;
+let lastSavedFileName: string | null = null;
+
+const savePDF = async (doc: any, fileName: string, options?: { skipShareSheet?: boolean; toastText?: string }) => {
   if (previewSink) {
     try {
       const url = doc.output('bloburl') as unknown as string;
@@ -583,7 +715,7 @@ const savePDF = async (doc: any, fileName: string) => {
 
   // Capacitor mobile: use Filesystem plugin to save, then Share plugin to open
   try {
-    showToast('Generating receipt...', 'info');
+    showToast(options?.toastText || 'Generating receipt...', 'info');
     const { Filesystem, Directory } = await import('@capacitor/filesystem');
     const base64Data = doc.output('datauristring').split(',')[1];
 
@@ -596,6 +728,11 @@ const savePDF = async (doc: any, fileName: string) => {
       directory: Directory.Documents,
       recursive: true,
     });
+
+    lastSavedFileUri = result.uri;
+    lastSavedFileName = fileName;
+
+    if (options?.skipShareSheet) return;
 
     // Open share sheet so user can save / open / send the PDF
     try {
@@ -769,5 +906,102 @@ export const useReceipts = () => {
     });
   };
 
-  return { downloadReceipt, previewReceipt, downloading };
+  // Share a single receipt via WhatsApp / system share sheet
+  const shareReceipt = async (paymentId: string | number, txnId?: string, dueSnapshot?: any) => {
+    setDownloading(String(paymentId));
+    try {
+      const isCapacitor = !!(window as any).Capacitor?.isNativePlatform?.();
+      if (!isCapacitor) {
+        // Web: just trigger a normal download — no native share sheet available
+        await downloadReceipt(paymentId, txnId, dueSnapshot);
+        return;
+      }
+
+      // Build the PDF and save to filesystem WITHOUT auto-opening share sheet
+      const generate = generateReceiptPDF;
+      const immediateDue = normalizeDueShape(dueSnapshot, paymentId, txnId);
+      let dueData = immediateDue && hasCoreStudentFields(immediateDue) ? immediateDue : null;
+      if (!dueData) {
+        try {
+          const result = await fetchDueWithTimeout(paymentId, txnId);
+          const due = (result as any)?.data;
+          if (due) {
+            dueData = Array.isArray(due)
+              ? buildReceiptAggregate(due, paymentId, txnId)
+              : normalizeDueShape(due, paymentId, txnId);
+          }
+        } catch { /* fall back to immediateDue or minimal */ }
+      }
+      if (!dueData) dueData = normalizeDueShape({ id: paymentId, transaction_id: txnId }, paymentId, txnId);
+
+      // Save without auto-share so we can launch WhatsApp explicitly
+      const doc = new jsPDF({ orientation: 'p', unit: 'mm', format: 'a4' });
+      void doc; // generated by generate() below
+      // Re-run generator with our own savePDF skipShareSheet flag — easiest path:
+      // monkey-patch by piggy-backing on lastSavedFileUri after a generate() call.
+      lastSavedFileUri = null;
+      lastSavedFileName = null;
+
+      // Instead of patching, re-do the save manually after generation
+      await generate(dueData);
+
+      const studentName = String(dueData?.students?.full_name || 'Student');
+      const monthLabel = getMonthLabel(dueData?.month, dueData?.year);
+      const amount = Number(dueData?.total_due || dueData?.amount || 0);
+      const text = `Bus Fee Receipt for ${studentName} — ${monthLabel} — ₹${amount.toLocaleString('en-IN')}. Verified via School Bus WayPro.`;
+
+      if (lastSavedFileUri) {
+        const { Share } = await import('@capacitor/share');
+        await Share.share({
+          title: 'Bus Fee Receipt',
+          text,
+          url: lastSavedFileUri,
+          dialogTitle: 'Share via WhatsApp',
+        });
+      } else {
+        showAlert('Share Failed', 'Could not prepare the receipt for sharing. Try again.', 'error');
+      }
+    } catch (err: any) {
+      console.error('Share receipt failed:', err);
+      showToast(err?.message || 'Failed to share receipt', 'error');
+    } finally {
+      setDownloading(null);
+    }
+  };
+
+  // Download an annual consolidated statement of all paid bus fees for a parent
+  const downloadYearlyStatement = async (parentId: string, academicYear: { startYear: number; endYear: number }) => {
+    setDownloading('yearly-statement');
+    try {
+      // Indian academic year runs April -> March
+      const startMonth = 4;
+      const endMonth = 3;
+      const { data, error } = await supabase
+        .from('monthly_dues')
+        .select('id, month, year, amount, total_due, late_fee, paid_at, transaction_id, payment_method, students!inner(full_name, admission_number, grade, section, parent_id)')
+        .eq('students.parent_id', parentId)
+        .eq('status', 'PAID')
+        .or(
+          `and(year.eq.${academicYear.startYear},month.gte.${startMonth}),and(year.eq.${academicYear.endYear},month.lte.${endMonth})`
+        );
+
+      if (error) throw error;
+
+      const paidDues = data || [];
+      if (paidDues.length === 0) {
+        showAlert('No Receipts', `No paid receipts found for academic year ${academicYear.startYear}-${academicYear.endYear}.`, 'info');
+        return;
+      }
+
+      const yearLabel = `${academicYear.startYear}-${academicYear.endYear}`;
+      await generateYearlyStatement(paidDues, yearLabel);
+    } catch (err: any) {
+      console.error('Yearly statement failed:', err);
+      showAlert('Statement Error', err?.message || 'Could not generate annual statement.', 'error');
+    } finally {
+      setDownloading(null);
+    }
+  };
+
+  return { downloadReceipt, previewReceipt, shareReceipt, downloadYearlyStatement, downloading };
 };
