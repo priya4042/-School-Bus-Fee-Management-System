@@ -6,6 +6,7 @@ import { useAuthStore } from '../store/authStore';
 import { showToast } from '../lib/swal';
 import api from '../lib/api';
 import { ENV } from '../config/env';
+import PageShell from '../components/layout/PageShell';
 
 const sanitizeMetaValue = (value: string) => String(value || '').replace(/[\[\]]/g, '').trim();
 
@@ -188,21 +189,20 @@ const Profile: React.FC<{ user: User }> = ({ user }) => {
   if (!user) return null;
 
   return (
-    <div className="max-w-4xl mx-auto space-y-4 md:space-y-8 pb-6 md:pb-12">
-      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
-        <div className="min-w-0">
-          <h2 className="text-xl md:text-2xl font-black text-slate-800 tracking-tight">My Profile</h2>
-          <p className="text-slate-500 font-bold uppercase text-[9px] md:text-[10px] tracking-widest mt-0.5">Manage account & contact details</p>
-        </div>
+    <PageShell
+      title="My Profile"
+      subtitle="Manage account & contact details"
+      maxWidthClass="max-w-4xl"
+      action={
         <button
           onClick={handleDeleteAccount}
           disabled={updating}
-          className="text-[10px] font-black uppercase tracking-widest text-red-500 bg-red-50 hover:bg-red-100 px-4 py-2.5 rounded-xl border border-red-100 disabled:opacity-50 self-start sm:self-auto active:scale-95 transition-all"
+          className="text-[10px] font-black uppercase tracking-widest text-red-500 bg-red-50 hover:bg-red-100 px-4 py-2.5 rounded-xl border border-red-100 disabled:opacity-50 active:scale-95 transition-all"
         >
           Delete Account
         </button>
-      </div>
-
+      }
+    >
       {message && (
         <div className="p-3 md:p-4 bg-green-50 border border-green-100 text-green-700 rounded-xl text-xs md:text-sm font-bold flex items-center gap-2 animate-in fade-in slide-in-from-top-2">
           <i className="fas fa-check-circle"></i>
@@ -366,7 +366,7 @@ const Profile: React.FC<{ user: User }> = ({ user }) => {
           </div>
         </div>
       </div>
-    </div>
+    </PageShell>
   );
 };
 

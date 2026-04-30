@@ -273,7 +273,13 @@ const App: React.FC = () => {
               )}
 
               {/* Main Content Area */}
-              <main className="p-3 md:p-8 flex-1 overflow-auto bg-slate-50 pb-[calc(env(safe-area-inset-bottom,0px)+11rem+2vh)] lg:pb-8">
+              <main
+                className="p-3 md:p-8 flex-1 overflow-auto bg-slate-50 pb-[calc(env(safe-area-inset-bottom,0px)+11rem+2vh)] lg:pb-8"
+                style={{
+                  paddingLeft: 'max(0.75rem, env(safe-area-inset-left, 0px))',
+                  paddingRight: 'max(0.75rem, env(safe-area-inset-right, 0px))',
+                }}
+              >
                 <div className="max-w-7xl mx-auto">
                   {renderContent()}
                   {/* Bottom-nav clearance spacer — guarantees a visible gap on every phone */}
