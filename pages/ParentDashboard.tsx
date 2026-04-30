@@ -17,11 +17,13 @@ import { checkAndCreateUpcomingDueReminders } from '../services/feeReminders';
 import { markChildAbsent, submitPickupSwapRequest, getLatestBusStatusForParent, BUS_STATUS_OPTIONS, type ParsedBusStatus } from '../services/parentActions';
 import Modal from '../components/Modal';
 import { showAlert, showConfirm } from '../lib/swal';
+import { useUpiSettings } from '../lib/upiSettings';
 
 const ParentDashboard: React.FC<{ user: User }> = ({ user }) => {
   const { t } = useLanguage();
   const { paymentState, openPortal, closePortal, initiatePayU, initiateRazorpay, initiateUpiIntent, confirmUpiPayment } = usePayments();
   const { downloadReceipt, downloading, downloadFeePaidCertificate } = useReceipts();
+  const { settings: upiSettings } = useUpiSettings();
   const [familyStudents, setFamilyStudents] = useState<Student[]>([]);
   const [dues, setDues] = useState<MonthlyDue[]>([]);
   const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
@@ -304,6 +306,33 @@ const ParentDashboard: React.FC<{ user: User }> = ({ user }) => {
               <p className="text-[9px] font-black uppercase tracking-widest opacity-70">Today&apos;s Bus Status</p>
               <p className="text-sm md:text-base font-black truncate">{busStatus.cleanMessage || opt?.label}</p>
             </div>
+          </div>
+        );
+      })()}
+
+      {/* Annual pre-pay savings banner — admin-configurable */}
+      {upiSettings.annualPrepayDiscountPercent > 0 && (() => {
+        const unpaid = dues.filter((d: any) => d.status !== PaymentStatus.PAID);
+        if (unpaid.length === 0) return null;
+        const totalUnpaid = unpaid.reduce((s, d: any) => s + Number(d.total_due || d.amount || 0), 0);
+        const savings = Math.round((totalUnpaid * upiSettings.annualPrepayDiscountPercent) / 100);
+        if (savings <= 0) return null;
+        return (
+          <div className="p-3 md:p-4 rounded-xl md:rounded-2xl border bg-gradient-to-r from-amber-50 to-yellow-50 border-amber-200 flex items-center gap-3">
+            <span className="text-2xl flex-shrink-0">💰</span>
+            <div className="flex-1 min-w-0">
+              <p className="text-[9px] font-black uppercase tracking-widest text-amber-700">Annual Pre-Pay Offer</p>
+              <p className="text-sm md:text-base font-black text-slate-900 leading-tight">
+                Pay everything pending and save ₹{savings.toLocaleString('en-IN')}
+                <span className="text-[10px] font-bold text-slate-500 ml-1">({upiSettings.annualPrepayDiscountPercent}% off ₹{totalUnpaid.toLocaleString('en-IN')})</span>
+              </p>
+            </div>
+            <button
+              onClick={handlePayAllSiblings}
+              className="flex-shrink-0 bg-amber-600 text-white px-3 md:px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest active:scale-95 hover:bg-amber-700 transition-all"
+            >
+              Pay All
+            </button>
           </div>
         );
       })()}

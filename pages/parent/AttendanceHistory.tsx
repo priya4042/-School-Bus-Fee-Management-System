@@ -8,6 +8,7 @@ import { SkeletonList } from '../../components/ui/Skeleton';
 import { EmptyState } from '../../components/ui/EmptyState';
 import { CollapsibleList } from '../../components/ui/CollapsibleList';
 import AttendanceHeatmap from '../../components/Attendance/AttendanceHeatmap';
+import { fetchHolidays } from '../../services/busHolidays';
 
 interface AttendanceRecord {
   id: string;
@@ -25,12 +26,21 @@ const AttendanceHistory: React.FC<{ user: User }> = ({ user }) => {
   const [students, setStudents] = useState<Student[]>([]);
   const [selectedStudentId, setSelectedStudentId] = useState<string>('');
   const [records, setRecords] = useState<AttendanceRecord[]>([]);
+  const [holidayDates, setHolidayDates] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const [typeFilter, setTypeFilter] = useState<'ALL' | 'PICKUP' | 'DROP'>('ALL');
   const [monthFilter, setMonthFilter] = useState<string>('ALL');
   const [yearFilter, setYearFilter] = useState<string>('ALL');
   const [showMonthFilter, setShowMonthFilter] = useState(false);
   const [view, setView] = useState<'list' | 'calendar'>('calendar');
+
+  // Pull bus holidays once for the heatmap (12-month window centred on today)
+  useEffect(() => {
+    const now = new Date();
+    const from = new Date(now.getFullYear(), now.getMonth() - 6, 1).toISOString().split('T')[0];
+    const to = new Date(now.getFullYear(), now.getMonth() + 6, 31).toISOString().split('T')[0];
+    fetchHolidays(from, to).then((rows) => setHolidayDates(rows.map((r) => r.date)));
+  }, []);
 
   // Fetch parent's students
   useEffect(() => {
@@ -277,7 +287,7 @@ const AttendanceHistory: React.FC<{ user: User }> = ({ user }) => {
           )}
 
           {/* Calendar view */}
-          {view === 'calendar' && <AttendanceHeatmap records={records} />}
+          {view === 'calendar' && <AttendanceHeatmap records={records} holidayDates={holidayDates} />}
 
           {/* Filter + Records (list view only) */}
           {view === 'list' && (

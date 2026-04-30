@@ -8,6 +8,8 @@ interface AttendanceRecord {
 
 interface AttendanceHeatmapProps {
   records: AttendanceRecord[];
+  /** YYYY-MM-DD strings the bus did not run (e.g. school holidays). */
+  holidayDates?: string[];
 }
 
 const DAY_LABELS = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
@@ -26,7 +28,8 @@ const monthRange = (year: number, monthIdx: number) => {
   return { days, label: first.toLocaleString('en-IN', { month: 'long', year: 'numeric' }) };
 };
 
-const AttendanceHeatmap: React.FC<AttendanceHeatmapProps> = ({ records }) => {
+const AttendanceHeatmap: React.FC<AttendanceHeatmapProps> = ({ records, holidayDates = [] }) => {
+  const holidaySet = useMemo(() => new Set(holidayDates), [holidayDates]);
   const today = new Date();
   const [cursor, setCursor] = useState(() => ({ year: today.getFullYear(), month: today.getMonth() }));
 
@@ -107,9 +110,12 @@ const AttendanceHeatmap: React.FC<AttendanceHeatmapProps> = ({ records }) => {
           const present = entry?.present;
           const isToday = dayKey === todayKey;
           const isFuture = dayKey > todayKey;
+          const isHoliday = holidaySet.has(dayKey);
 
           let cellClass = 'bg-slate-50 text-slate-300';
-          if (entry) {
+          if (isHoliday) {
+            cellClass = 'bg-amber-50 text-amber-700 border border-amber-200';
+          } else if (entry) {
             cellClass = present
               ? 'bg-emerald-500 text-white shadow-sm shadow-emerald-500/30'
               : 'bg-red-100 text-red-500 border border-red-200';
@@ -126,14 +132,16 @@ const AttendanceHeatmap: React.FC<AttendanceHeatmapProps> = ({ records }) => {
               key={i}
               className={`relative aspect-square rounded-lg md:rounded-xl flex items-center justify-center text-[10px] md:text-xs font-black tracking-tight transition-all ${cellClass} ${isToday ? 'ring-2 ring-primary ring-offset-1' : ''}`}
               title={
-                entry
-                  ? `${dayKey} — ${present ? 'Present' : 'Absent'}${entry.total > 1 ? ` (${entry.total} entries)` : ''}`
-                  : isFuture
-                    ? `${dayKey} — Future`
-                    : `${dayKey} — No record`
+                isHoliday
+                  ? `${dayKey} — Bus holiday`
+                  : entry
+                    ? `${dayKey} — ${present ? 'Present' : 'Absent'}${entry.total > 1 ? ` (${entry.total} entries)` : ''}`
+                    : isFuture
+                      ? `${dayKey} — Future`
+                      : `${dayKey} — No record`
               }
             >
-              {day}
+              {isHoliday ? <span className="text-[9px]">🚫</span> : day}
             </div>
           );
         })}
@@ -143,6 +151,10 @@ const AttendanceHeatmap: React.FC<AttendanceHeatmapProps> = ({ records }) => {
         <span className="flex items-center gap-2 text-slate-500">
           <span className="w-3 h-3 rounded-md bg-emerald-500"></span>
           Present
+        </span>
+        <span className="flex items-center gap-2 text-slate-500">
+          <span className="w-3 h-3 rounded-md bg-amber-50 border border-amber-200"></span>
+          Bus Off
         </span>
         <span className="flex items-center gap-2 text-slate-500">
           <span className="w-3 h-3 rounded-md bg-red-100 border border-red-200"></span>

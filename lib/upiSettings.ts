@@ -6,12 +6,18 @@ export interface UpiSettings {
   businessName: string;
   source: 'admin' | 'env' | 'fallback';
   updatedAt?: string;
+  /** Discount applied automatically for the 2nd, 3rd... child of the same parent. */
+  siblingDiscountPercent: number;
+  /** Discount shown to parents who pay full year up-front. */
+  annualPrepayDiscountPercent: number;
 }
 
 const FALLBACK: UpiSettings = {
   upiId: 'business@upi',
   businessName: 'SchoolBusWay',
   source: 'fallback',
+  siblingDiscountPercent: 0,
+  annualPrepayDiscountPercent: 0,
 };
 
 const CACHE_KEY = 'busway_upi_settings_v1';
@@ -27,6 +33,8 @@ const readEnv = (): UpiSettings | null => {
     upiId,
     businessName: businessName || 'SchoolBusWay',
     source: 'env',
+    siblingDiscountPercent: 0,
+    annualPrepayDiscountPercent: 0,
   };
 };
 
@@ -57,7 +65,7 @@ export const fetchUpiSettings = async (): Promise<UpiSettings> => {
   try {
     const { data } = await supabase
       .from('payment_settings')
-      .select('upi_id, business_name, updated_at')
+      .select('upi_id, business_name, updated_at, sibling_discount_percent, annual_prepay_discount_percent')
       .limit(1)
       .single();
 
@@ -67,6 +75,8 @@ export const fetchUpiSettings = async (): Promise<UpiSettings> => {
         businessName: String(data.business_name || 'SchoolBusWay').trim(),
         source: 'admin',
         updatedAt: data.updated_at,
+        siblingDiscountPercent: Number(data.sibling_discount_percent || 0),
+        annualPrepayDiscountPercent: Number(data.annual_prepay_discount_percent || 0),
       };
       writeCache(result);
       return result;

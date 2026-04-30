@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { User, Student, MonthlyDue, PaymentStatus } from '../../types';
 import { MONTHS } from '../../constants';
 import {
@@ -7,9 +7,17 @@ import {
 } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import Modal from '../../components/Modal';
-import { showAlert, showLoading, showToast, closeSwal } from '../../lib/swal';
+import { showAlert, showLoading, showToast, closeSwal, showConfirm } from '../../lib/swal';
 import { useLanguage } from '../../lib/i18n';
 import MiniLoader from '../../components/MiniLoader';
+import {
+  DOC_TYPE_OPTIONS,
+  uploadStudentDocument,
+  fetchStudentDocuments,
+  deleteStudentDocument,
+  type DocType,
+  type StudentDocumentRow,
+} from '../../services/studentDocuments';
 
 const buildProvisionalAdmissionNumber = () => {
   const now = new Date();
@@ -25,6 +33,60 @@ const StudentProfile: React.FC<{ user: User }> = ({ user }) => {
   const [showFutureScheduled, setShowFutureScheduled] = useState(false);
   const [loading, setLoading] = useState(true);
   const [isAddChildModalOpen, setIsAddChildModalOpen] = useState(false);
+
+  // Documents
+  const [documents, setDocuments] = useState<StudentDocumentRow[]>([]);
+  const [showDocModal, setShowDocModal] = useState(false);
+  const [docType, setDocType] = useState<DocType>('vaccine');
+  const [uploadingDoc, setUploadingDoc] = useState(false);
+  const docInputRef = useRef<HTMLInputElement>(null);
+
+  const refreshDocuments = async (studentId: string) => {
+    const docs = await fetchStudentDocuments(studentId);
+    setDocuments(docs);
+  };
+
+  useEffect(() => {
+    if (selectedStudent?.id) refreshDocuments(selectedStudent.id);
+    else setDocuments([]);
+  }, [selectedStudent?.id]);
+
+  const handlePickDoc = () => {
+    docInputRef.current?.click();
+  };
+
+  const handleDocFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !selectedStudent) return;
+    setUploadingDoc(true);
+    const result = await uploadStudentDocument({
+      studentId: selectedStudent.id,
+      docType,
+      file,
+      uploadedBy: user.id,
+    });
+    setUploadingDoc(false);
+    if (docInputRef.current) docInputRef.current.value = '';
+    if (!result.ok) {
+      showAlert('Upload failed', result.error || 'Try again.', 'error');
+      return;
+    }
+    showToast('Document uploaded.', 'success');
+    setShowDocModal(false);
+    refreshDocuments(selectedStudent.id);
+  };
+
+  const handleDeleteDoc = async (doc: StudentDocumentRow) => {
+    const confirmed = await showConfirm('Delete document?', `Remove "${doc.doc_name || doc.doc_type}"?`, 'Delete');
+    if (!confirmed) return;
+    const r = await deleteStudentDocument(doc.id);
+    if (r.ok && selectedStudent) {
+      showToast('Document deleted', 'info');
+      refreshDocuments(selectedStudent.id);
+    } else {
+      showAlert('Failed', r.error || 'Try again.', 'error');
+    }
+  };
   const [newChildForm, setNewChildForm] = useState({
     full_name: '',
     admission_number: '',
@@ -255,6 +317,116 @@ const StudentProfile: React.FC<{ user: User }> = ({ user }) => {
           </button>
         </div>
       </div>
+
+      {/* Documents card — upload + view child documents */}
+      {selectedStudent && (
+        <div className="bg-white rounded-2xl md:rounded-3xl border border-slate-100 shadow-sm overflow-hidden">
+          <div className="p-4 md:p-6 bg-slate-50 border-b border-slate-100 flex items-center justify-between gap-3">
+            <div className="min-w-0">
+              <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Documents</p>
+              <p className="text-xs md:text-sm font-black text-slate-800 mt-0.5 truncate">
+                {documents.length > 0 ? `${documents.length} on file for ${selectedStudent.full_name}` : 'No documents uploaded yet'}
+              </p>
+            </div>
+            <button
+              onClick={() => { setDocType('vaccine'); setShowDocModal(true); }}
+              className="flex-shrink-0 bg-emerald-600 text-white px-3 md:px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest active:scale-95 flex items-center gap-2"
+            >
+              <i className="fas fa-cloud-upload-alt"></i> Upload
+            </button>
+          </div>
+          {documents.length > 0 && (
+            <div className="divide-y divide-slate-50 max-h-72 overflow-y-auto">
+              {documents.map((d) => {
+                const opt = DOC_TYPE_OPTIONS.find((o) => o.key === d.doc_type);
+                return (
+                  <div key={d.id} className="p-3 md:p-4 flex items-center gap-3">
+                    <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${opt?.color || 'bg-slate-100 text-slate-600'}`}>
+                      <i className={`fas ${opt?.icon || 'fa-file'}`}></i>
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs md:text-sm font-black text-slate-800">{opt?.label || d.doc_type}</p>
+                      <p className="text-[10px] font-bold text-slate-500 truncate">{d.doc_name || '—'}</p>
+                      <p className="text-[8px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">
+                        {new Date(d.created_at).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}
+                      </p>
+                    </div>
+                    <a
+                      href={d.doc_url}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="w-9 h-9 rounded-lg bg-primary/10 text-primary flex items-center justify-center"
+                      title="View"
+                    >
+                      <i className="fas fa-eye text-xs"></i>
+                    </a>
+                    <button
+                      onClick={() => handleDeleteDoc(d)}
+                      className="w-9 h-9 rounded-lg bg-slate-50 text-slate-400 hover:bg-red-50 hover:text-red-500 flex items-center justify-center flex-shrink-0"
+                    >
+                      <i className="fas fa-trash-alt text-xs"></i>
+                    </button>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Hidden file input + upload modal */}
+      <input
+        ref={docInputRef}
+        type="file"
+        accept="image/png,image/jpeg,image/jpg,application/pdf"
+        className="hidden"
+        onChange={handleDocFileChange}
+      />
+      <Modal
+        isOpen={showDocModal}
+        onClose={() => setShowDocModal(false)}
+        title="Upload Document"
+        maxWidthClass="max-w-md"
+        bodyClassName="p-4 md:p-8"
+      >
+        <div className="space-y-4">
+          <p className="text-[11px] font-bold text-slate-500 leading-relaxed">
+            Pick the document type, then choose a PNG, JPG or PDF file (max 10 MB).
+          </p>
+          <div className="space-y-2">
+            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Document Type</label>
+            <div className="grid grid-cols-2 gap-2">
+              {DOC_TYPE_OPTIONS.map((o) => (
+                <button
+                  key={o.key}
+                  onClick={() => setDocType(o.key)}
+                  className={`p-2.5 rounded-xl text-left flex items-center gap-2 border-2 transition-all active:scale-95 ${
+                    docType === o.key ? 'border-primary bg-primary/5' : 'border-slate-100 bg-white'
+                  }`}
+                >
+                  <i className={`fas ${o.icon} text-base text-slate-600`}></i>
+                  <span className="text-[10px] font-black text-slate-700 uppercase tracking-widest truncate">{o.label}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+          <div className="flex gap-2 pt-2">
+            <button
+              onClick={() => setShowDocModal(false)}
+              className="flex-1 py-3 bg-slate-100 text-slate-600 rounded-xl font-black uppercase text-[10px] tracking-widest hover:bg-slate-200 active:scale-95 transition-all"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={handlePickDoc}
+              disabled={uploadingDoc}
+              className="flex-1 py-3 bg-emerald-600 text-white rounded-xl font-black uppercase text-[10px] tracking-widest shadow-lg shadow-emerald-600/20 hover:bg-emerald-700 active:scale-95 transition-all disabled:opacity-60 flex items-center justify-center gap-2"
+            >
+              {uploadingDoc ? <><i className="fas fa-circle-notch fa-spin"></i> Uploading</> : <><i className="fas fa-cloud-upload-alt"></i> Choose File</>}
+            </button>
+          </div>
+        </div>
+      </Modal>
 
       <Modal isOpen={isAddChildModalOpen} onClose={() => setIsAddChildModalOpen(false)} title="Add Child Profile" maxWidthClass="max-w-2xl" bodyClassName="p-6 md:p-8">
         <form onSubmit={handleAddChild} className="space-y-4">

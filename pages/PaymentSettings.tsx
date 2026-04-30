@@ -7,6 +7,8 @@ interface PaymentConfig {
   id?: string;
   upi_id: string;
   business_name: string;
+  sibling_discount_percent?: number;
+  annual_prepay_discount_percent?: number;
   updated_at?: string;
 }
 
@@ -14,12 +16,16 @@ const PaymentSettings: React.FC = () => {
   const [settings, setSettings] = useState<PaymentConfig>({
     upi_id: '',
     business_name: '',
+    sibling_discount_percent: 0,
+    annual_prepay_discount_percent: 0,
   });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [originalSettings, setOriginalSettings] = useState<PaymentConfig>({
     upi_id: '',
     business_name: '',
+    sibling_discount_percent: 0,
+    annual_prepay_discount_percent: 0,
   });
 
   useEffect(() => {
@@ -37,18 +43,16 @@ const PaymentSettings: React.FC = () => {
         .single();
 
       if (data) {
-        setSettings({
+        const next = {
           id: data.id,
           upi_id: data.upi_id || '',
           business_name: data.business_name || '',
+          sibling_discount_percent: Number(data.sibling_discount_percent || 0),
+          annual_prepay_discount_percent: Number(data.annual_prepay_discount_percent || 0),
           updated_at: data.updated_at,
-        });
-        setOriginalSettings({
-          id: data.id,
-          upi_id: data.upi_id || '',
-          business_name: data.business_name || '',
-          updated_at: data.updated_at,
-        });
+        };
+        setSettings(next);
+        setOriginalSettings(next);
       }
       
       // Also get environment variable defaults if settings are empty
@@ -103,6 +107,8 @@ const PaymentSettings: React.FC = () => {
           .update({
             upi_id: settings.upi_id,
             business_name: settings.business_name,
+            sibling_discount_percent: Number(settings.sibling_discount_percent || 0),
+            annual_prepay_discount_percent: Number(settings.annual_prepay_discount_percent || 0),
             updated_at: new Date().toISOString(),
           })
           .eq('id', settings.id);
@@ -118,6 +124,8 @@ const PaymentSettings: React.FC = () => {
             {
               upi_id: settings.upi_id,
               business_name: settings.business_name,
+              sibling_discount_percent: Number(settings.sibling_discount_percent || 0),
+              annual_prepay_discount_percent: Number(settings.annual_prepay_discount_percent || 0),
               updated_at: new Date().toISOString(),
             },
           ])
@@ -229,6 +237,48 @@ const PaymentSettings: React.FC = () => {
             />
             <p className="text-[10px] text-slate-400 mt-2 font-bold">
               This will appear in customers' payment requests
+            </p>
+          </div>
+
+          {/* Sibling discount */}
+          <div className="border-t border-slate-100 pt-4">
+            <label className="block text-[11px] font-black text-slate-600 uppercase tracking-widest mb-2">
+              Sibling Discount (%)
+            </label>
+            <input
+              type="number"
+              name="sibling_discount_percent"
+              min={0}
+              max={100}
+              step={0.5}
+              value={settings.sibling_discount_percent ?? 0}
+              onChange={(e) => setSettings((prev) => ({ ...prev, sibling_discount_percent: Number(e.target.value) || 0 }))}
+              placeholder="0"
+              className={themedInputClass}
+            />
+            <p className="text-[10px] text-slate-400 mt-2 font-bold">
+              Applied automatically to the 2nd, 3rd… child of the same parent. Set 0 to disable.
+            </p>
+          </div>
+
+          {/* Annual pre-pay discount */}
+          <div>
+            <label className="block text-[11px] font-black text-slate-600 uppercase tracking-widest mb-2">
+              Annual Pre-Pay Discount (%)
+            </label>
+            <input
+              type="number"
+              name="annual_prepay_discount_percent"
+              min={0}
+              max={100}
+              step={0.5}
+              value={settings.annual_prepay_discount_percent ?? 0}
+              onChange={(e) => setSettings((prev) => ({ ...prev, annual_prepay_discount_percent: Number(e.target.value) || 0 }))}
+              placeholder="0"
+              className={themedInputClass}
+            />
+            <p className="text-[10px] text-slate-400 mt-2 font-bold">
+              Shown to parents as a banner: "Pay full year and save N%". Set 0 to disable.
             </p>
           </div>
         </div>
