@@ -11,6 +11,7 @@ import {
   parseStudentImportFile,
   runStudentImport,
   downloadStudentImportTemplate,
+  StudentImportColumnError,
   type ImportPreviewResult,
   type ImportRunResult,
 } from '../services/bulkStudentImport.ts';
@@ -102,8 +103,39 @@ const Students: React.FC = () => {
     try {
       const preview = await parseStudentImportFile(file);
       setImportPreview(preview);
+      if (preview.missingRecommended.length > 0 || preview.unknownHeaders.length > 0) {
+        const lines = [
+          preview.missingRecommended.length > 0
+            ? `Recommended columns missing: ${preview.missingRecommended.join(', ')}. Students will still import but those fields will be blank.`
+            : '',
+          preview.unknownHeaders.length > 0
+            ? `Unknown columns ignored: ${preview.unknownHeaders.join(', ')}. They don't match any student field.`
+            : '',
+        ].filter(Boolean).join('\n\n');
+        showAlert('File loaded with notes', lines, 'info');
+      }
     } catch (err: any) {
-      setParseError(err?.message || 'Could not read file. Please use a CSV or XLSX file.');
+      if (err instanceof StudentImportColumnError) {
+        // Hard stop — required columns missing. Tell admin exactly what to add.
+        const requiredText = err.missingRequired.length > 0
+          ? `Your file is missing these REQUIRED columns:\n\n${err.missingRequired.map((c) => `• ${c}`).join('\n')}\n\nWithout these we can't create student records. Add the column headers and re-upload, or download the template to start fresh.`
+          : '';
+        const recommendedText = err.missingRecommended.length > 0
+          ? `\n\nAlso missing these recommended columns: ${err.missingRecommended.join(', ')}.`
+          : '';
+        const detectedText = err.detectedHeaders.length > 0
+          ? `\n\nWe detected these headers in your file: ${err.detectedHeaders.join(', ')}.`
+          : '';
+        setParseError('Required columns missing — see the alert for details.');
+        showAlert(
+          'Cannot import — required columns missing',
+          requiredText + recommendedText + detectedText,
+          'warning',
+        );
+      } else {
+        setParseError(err?.message || 'Could not read file. Please use a CSV or XLSX file.');
+        showAlert('Import error', err?.message || 'Could not read the file. Please use a CSV or XLSX file.', 'error');
+      }
     } finally {
       // reset input so the same file can be re-uploaded after a fix
       if (fileInputRef.current) fileInputRef.current.value = '';

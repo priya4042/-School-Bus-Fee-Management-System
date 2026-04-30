@@ -24,9 +24,18 @@ export interface ImportPreviewResult {
   totalRows: number;
   validRows: number;
   invalidRows: number;
+  /** Recommended columns that the uploaded file did not include. */
+  missingRecommended: string[];
+  /** Headers that did not match any known field — shown as info to the admin. */
+  unknownHeaders: string[];
 }
 
-const REQUIRED_COLUMNS = ['full_name', 'admission_number'];
+// Columns the student form needs. REQUIRED must be present in the uploaded
+// file; the parser refuses to proceed without them. RECOMMENDED produce a
+// structured warning the UI can surface so the admin knows what's missing.
+const REQUIRED_COLUMNS = ['full_name', 'admission_number'] as const;
+const RECOMMENDED_COLUMNS = ['grade', 'section', 'monthly_fee', 'parent_name', 'parent_phone'] as const;
+
 const COLUMN_ALIASES: Record<string, string[]> = {
   full_name: ['full_name', 'name', 'student_name', 'student name', 'full name'],
   admission_number: ['admission_number', 'admission no', 'admission', 'adm no', 'roll no', 'admno', 'admission_no'],
@@ -41,6 +50,46 @@ const COLUMN_ALIASES: Record<string, string[]> = {
   status: ['status', 'active', 'is_active'],
 };
 
+const COLUMN_DESCRIPTIONS: Record<string, string> = {
+  full_name: "Student's full name",
+  admission_number: 'Unique admission / roll number',
+  grade: 'Class or grade (e.g. 5)',
+  section: 'Section letter (e.g. A, B)',
+  monthly_fee: 'Monthly bus fee in INR (used to auto-generate dues)',
+  parent_name: "Parent / guardian's full name",
+  parent_phone: "Parent's 10-digit mobile number",
+  route_name: 'Bus route name or code (e.g. Kangra Main, R-101)',
+  bus_number: 'Bus number or vehicle plate',
+  boarding_point: 'Pickup stop where the child boards',
+  status: 'active or inactive (default: active)',
+};
+
+// Custom error thrown when the file is missing required columns. UI surfaces
+// the message via showAlert.
+export class StudentImportColumnError extends Error {
+  missingRequired: string[];
+  missingRecommended: string[];
+  detectedHeaders: string[];
+  constructor(missingRequired: string[], missingRecommended: string[], detectedHeaders: string[]) {
+    const lines = [
+      missingRequired.length > 0
+        ? `Required columns missing: ${missingRequired.map((c) => `"${c}"`).join(', ')}`
+        : '',
+      ...missingRequired.map((c) => `  • ${c} — ${COLUMN_DESCRIPTIONS[c] || c}`),
+      missingRequired.length > 0 && missingRecommended.length > 0 ? '' : '',
+      missingRecommended.length > 0
+        ? `Recommended columns missing: ${missingRecommended.map((c) => `"${c}"`).join(', ')}`
+        : '',
+      ...missingRecommended.map((c) => `  • ${c} — ${COLUMN_DESCRIPTIONS[c] || c}`),
+    ].filter(Boolean);
+    super(lines.join('\n'));
+    this.name = 'StudentImportColumnError';
+    this.missingRequired = missingRequired;
+    this.missingRecommended = missingRecommended;
+    this.detectedHeaders = detectedHeaders;
+  }
+}
+
 const normalizeKey = (key: string) => String(key || '').toLowerCase().trim().replace(/\s+/g, '_');
 
 const findKey = (row: Record<string, any>, target: string): any => {
@@ -54,14 +103,52 @@ const findKey = (row: Record<string, any>, target: string): any => {
   return undefined;
 };
 
+// Returns the canonical field name (e.g. 'full_name') for a column header
+// found in the file, or null if the header doesn't match any known field.
+const matchHeaderToField = (header: string): string | null => {
+  const norm = normalizeKey(header);
+  for (const [field, aliases] of Object.entries(COLUMN_ALIASES)) {
+    if (aliases.some((a) => normalizeKey(a) === norm)) return field;
+  }
+  return null;
+};
+
 /**
  * Parse a CSV / XLSX / XLS file from the browser File API into an ImportPreviewResult.
- * Validates each row but does NOT insert anything yet.
+ * Validates the column set first (throws StudentImportColumnError if required
+ * columns are missing), then validates each row but does NOT insert anything yet.
  */
 export const parseStudentImportFile = async (file: File): Promise<ImportPreviewResult> => {
   const buffer = await file.arrayBuffer();
   const workbook = XLSX.read(buffer, { type: 'array' });
   const sheet = workbook.Sheets[workbook.SheetNames[0]];
+
+  // Pull the header row first (raw, before object conversion) so we can
+  // tell the admin exactly which columns are missing or unknown.
+  const headerRows = XLSX.utils.sheet_to_json<any[]>(sheet, { header: 1, defval: '' });
+  const headerRow: string[] = (headerRows[0] || []).map((h: any) => String(h || '').trim()).filter(Boolean);
+
+  if (headerRow.length === 0) {
+    throw new StudentImportColumnError(
+      [...REQUIRED_COLUMNS],
+      [...RECOMMENDED_COLUMNS],
+      [],
+    );
+  }
+
+  const detectedFields = new Set<string>();
+  for (const h of headerRow) {
+    const field = matchHeaderToField(h);
+    if (field) detectedFields.add(field);
+  }
+
+  const missingRequired = REQUIRED_COLUMNS.filter((c) => !detectedFields.has(c));
+  const missingRecommended = RECOMMENDED_COLUMNS.filter((c) => !detectedFields.has(c));
+
+  if (missingRequired.length > 0) {
+    throw new StudentImportColumnError(missingRequired, missingRecommended, headerRow);
+  }
+
   const raw = XLSX.utils.sheet_to_json<Record<string, any>>(sheet, { defval: '' });
 
   // Pre-fetch existing admission numbers to flag duplicates
@@ -126,11 +213,16 @@ export const parseStudentImportFile = async (file: File): Promise<ImportPreviewR
     };
   });
 
+  // Headers in the file that didn't match any known canonical field
+  const unknownHeaders = headerRow.filter((h) => !matchHeaderToField(h));
+
   return {
     rows,
     totalRows: rows.length,
     validRows: rows.filter((r) => r.errors.length === 0).length,
     invalidRows: rows.filter((r) => r.errors.length > 0).length,
+    missingRecommended,
+    unknownHeaders,
   };
 };
 
