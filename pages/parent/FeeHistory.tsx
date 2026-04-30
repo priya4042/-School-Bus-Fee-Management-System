@@ -19,7 +19,8 @@ const ReceiptDropdown: React.FC<{
   downloading: string | null;
   onDownload: (id: string, txn: string, due: any, format: 'pdf' | 'invoice' | 'receipt') => void;
   onPreview: (id: string, txn: string, due: any, format: 'pdf' | 'invoice' | 'receipt') => void;
-}> = ({ dueId, txnId, due, downloading, onDownload, onPreview }) => {
+  onShare?: (id: string, txn: string, due: any) => void;
+}> = ({ dueId, txnId, due, downloading, onDownload, onPreview, onShare }) => {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
@@ -54,7 +55,7 @@ const ReceiptDropdown: React.FC<{
         )}
       </button>
       {open && (
-        <div className="absolute right-0 bottom-full mb-2 w-60 bg-white rounded-2xl border border-slate-100 shadow-2xl z-50 p-2 animate-in fade-in slide-in-from-bottom-2 duration-200">
+        <div className="absolute right-0 bottom-full mb-2 w-64 bg-white rounded-2xl border border-slate-100 shadow-2xl z-50 p-2 animate-in fade-in slide-in-from-bottom-2 duration-200">
           <p className="text-[8px] font-black text-slate-400 tracking-widest px-3 py-2">View / Download As</p>
           {items.map((item) => (
             <div key={item.format} className="flex items-center gap-1 px-1">
@@ -85,6 +86,26 @@ const ReceiptDropdown: React.FC<{
               </button>
             </div>
           ))}
+          {onShare && (
+            <>
+              <div className="my-1 border-t border-slate-100"></div>
+              <button
+                onClick={() => {
+                  setOpen(false);
+                  onShare(dueId, txnId, due);
+                }}
+                className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-emerald-50 transition-all text-left group"
+              >
+                <div className="w-8 h-8 bg-emerald-50 rounded-lg flex items-center justify-center text-emerald-600 group-hover:bg-emerald-600 group-hover:text-white transition-all">
+                  <i className="fab fa-whatsapp"></i>
+                </div>
+                <div>
+                  <p className="text-[11px] font-black text-slate-800 tracking-widest">Share</p>
+                  <p className="text-[8px] font-bold text-slate-400">via WhatsApp / message</p>
+                </div>
+              </button>
+            </>
+          )}
         </div>
       )}
     </div>
@@ -101,7 +122,7 @@ const FeeHistory: React.FC<{ user: User }> = ({ user }) => {
 
   const { t } = useLanguage();
   const { paymentState, openPortal, closePortal, initiatePayU, initiateRazorpay, initiateUpiIntent, confirmUpiPayment } = usePayments();
-  const { downloadReceipt, previewReceipt, downloading } = useReceipts();
+  const { downloadReceipt, previewReceipt, shareReceipt, downloadYearlyStatement, downloading } = useReceipts();
 
   const [viewer, setViewer] = useState<{
     open: boolean;
@@ -321,6 +342,22 @@ const FeeHistory: React.FC<{ user: User }> = ({ user }) => {
             {t('payment_history_subtitle')}
           </p>
         </div>
+        <button
+          onClick={() => {
+            const now = new Date();
+            const month = now.getMonth() + 1;
+            const fyStart = month >= 4 ? now.getFullYear() : now.getFullYear() - 1;
+            downloadYearlyStatement(user.id, { startYear: fyStart, endYear: fyStart + 1 });
+          }}
+          disabled={downloading === 'yearly-statement'}
+          className="bg-slate-900 text-white px-4 md:px-6 py-3 md:py-3.5 rounded-xl md:rounded-2xl text-[10px] font-black uppercase tracking-widest shadow-lg active:scale-95 transition-all flex items-center justify-center gap-2 disabled:opacity-60 self-start md:self-auto"
+        >
+          {downloading === 'yearly-statement' ? (
+            <><i className="fas fa-circle-notch fa-spin"></i> Generating…</>
+          ) : (
+            <><i className="fas fa-file-invoice-dollar"></i> Annual Statement</>
+          )}
+        </button>
       </div>
 
       {/* Spending summary chart for current FY */}
@@ -427,7 +464,7 @@ const FeeHistory: React.FC<{ user: User }> = ({ user }) => {
                   )}
                   {!isPaid && !isLocked && <div />}
                   {isPaid ? (
-                    <ReceiptDropdown dueId={due.id} txnId={due.transaction_id || due.id} due={due} downloading={downloading} onDownload={downloadReceipt} onPreview={handlePreviewReceipt} />
+                    <ReceiptDropdown dueId={due.id} txnId={due.transaction_id || due.id} due={due} downloading={downloading} onDownload={downloadReceipt} onPreview={handlePreviewReceipt} onShare={shareReceipt} />
                   ) : isLocked ? (
                     <p className="text-[8px] font-bold text-slate-400"><i className="fas fa-lock mr-1"></i>Pay previous first</p>
                   ) : (
@@ -531,6 +568,7 @@ const FeeHistory: React.FC<{ user: User }> = ({ user }) => {
                           downloading={downloading}
                           onDownload={downloadReceipt}
                           onPreview={handlePreviewReceipt}
+                          onShare={shareReceipt}
                         />
                       ) : isLocked ? (
                         <div className="inline-flex items-center gap-2 text-slate-400">

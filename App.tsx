@@ -183,7 +183,7 @@ const App: React.FC = () => {
         case 'Bus Camera': return (user as any).preferences?.camera === true ? <BusCamera user={user!} /> : <ParentDashboard user={user!} />;
         case 'Payments': return <FeeHistory user={user!} />;
         case 'Fees': return <FeeHistory user={user!} />;
-        case 'Notifications': return <ParentNotifications user={user!} focusNotificationId={selectedNotificationId} onFocusHandled={() => setSelectedNotificationId(undefined)} />;
+        case 'Notifications': return <ParentNotifications user={user!} focusNotificationId={selectedNotificationId} onFocusHandled={() => setSelectedNotificationId(undefined)} onNavigateTab={setActiveTab} />;
         case 'Receipts': return <Receipts user={user!} />;
         case 'Profile': return <ParentSettings user={user!} section="profile" />;
         case 'Settings': return <ParentSettings user={user!} section="security" />;

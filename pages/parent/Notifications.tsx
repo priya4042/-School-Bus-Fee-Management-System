@@ -8,6 +8,7 @@ import { useLanguage } from '../../lib/i18n';
 import { SkeletonList } from '../../components/ui/Skeleton';
 import { EmptyState } from '../../components/ui/EmptyState';
 import { CollapsibleList } from '../../components/ui/CollapsibleList';
+import { parseFeeReminderTag, stripFeeReminderTags } from '../../services/feeReminders';
 
 interface Notification {
   id: string;
@@ -18,7 +19,7 @@ interface Notification {
   is_read: boolean;
 }
 
-const Notifications: React.FC<{ user: User; focusNotificationId?: string; onFocusHandled?: () => void }> = ({ user, focusNotificationId, onFocusHandled }) => {
+const Notifications: React.FC<{ user: User; focusNotificationId?: string; onFocusHandled?: () => void; onNavigateTab?: (tab: string) => void }> = ({ user, focusNotificationId, onFocusHandled, onNavigateTab }) => {
   const { t } = useLanguage();
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [loading, setLoading] = useState(true);
@@ -210,7 +211,12 @@ const Notifications: React.FC<{ user: User; focusNotificationId?: string; onFocu
 
           {!loading && (
           <CollapsibleList initialCount={5} showMoreLabel="View" className="space-y-3 md:space-y-4">
-          {filteredNotifications.map((notif, idx) => (
+          {filteredNotifications.map((notif, idx) => {
+            const reminder = parseFeeReminderTag(notif.message);
+            const cleanMessage = reminder.isFeeReminder
+              ? stripFeeReminderTags(notif.message)
+              : formatNotificationMessage(notif.message);
+            return (
             <div
               key={notif.id}
               id={`notif-${notif.id}`}
@@ -256,20 +262,35 @@ const Notifications: React.FC<{ user: User; focusNotificationId?: string; onFocu
                     </div>
                   </div>
                   <p className={`text-sm font-medium leading-relaxed ${notif.is_read ? 'text-slate-400' : 'text-slate-600'}`}>
-                    {formatNotificationMessage(notif.message)}
+                    {cleanMessage}
                   </p>
-                  {!notif.is_read && (
-                    <button
-                      onClick={() => markAsRead(notif.id)}
-                      className="mt-4 text-[9px] font-black text-primary uppercase tracking-[0.2em] hover:underline"
-                    >
-                      Mark as Read
-                    </button>
-                  )}
+                  <div className="mt-3 flex flex-wrap items-center gap-2">
+                    {reminder.isFeeReminder && (
+                      <button
+                        onClick={() => {
+                          markAsRead(notif.id);
+                          onNavigateTab?.('Fees');
+                        }}
+                        className="text-[10px] font-black uppercase tracking-widest px-4 py-2 rounded-xl bg-primary text-white shadow-md shadow-primary/20 hover:bg-blue-800 active:scale-95 transition-all flex items-center gap-2"
+                      >
+                        <i className="fas fa-credit-card text-[10px]"></i>
+                        Pay Now {reminder.amount ? `— ₹${reminder.amount.toLocaleString('en-IN')}` : ''}
+                      </button>
+                    )}
+                    {!notif.is_read && (
+                      <button
+                        onClick={() => markAsRead(notif.id)}
+                        className="text-[9px] font-black text-primary uppercase tracking-[0.2em] hover:underline"
+                      >
+                        Mark as Read
+                      </button>
+                    )}
+                  </div>
                 </div>
               </div>
             </div>
-          ))}
+            );
+          })}
           </CollapsibleList>
           )}
 
