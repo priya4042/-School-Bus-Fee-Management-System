@@ -74,6 +74,61 @@ export const useStudents = () => {
         studentId = fallbackStudent?.id;
       }
 
+      // Auto-generate monthly dues for the rest of the current Indian academic
+      // year (April -> March). Skips if student has no monthly_fee or if dues
+      // already exist for this student in the target window.
+      const monthlyFee = Number(studentData.monthly_fee || 0);
+      if (studentId && monthlyFee > 0) {
+        try {
+          const today = new Date();
+          const currentMonth = today.getMonth() + 1;       // 1-12
+          const currentYear = today.getFullYear();
+          const fyStart = currentMonth >= 4 ? currentYear : currentYear - 1;
+
+          // Build the (month, year) pairs from the current month -> March of fyStart+1
+          const cycles: Array<{ month: number; year: number }> = [];
+          let m = currentMonth;
+          let y = currentYear;
+          while (true) {
+            cycles.push({ month: m, year: y });
+            // Stop when we've added March of fyStart+1
+            if (y === fyStart + 1 && m === 3) break;
+            m += 1;
+            if (m > 12) { m = 1; y += 1; }
+            // Safety: never loop more than 18 cycles
+            if (cycles.length > 18) break;
+          }
+
+          // Don't insert duplicates — check existing dues for this student in the window
+          const { data: existing } = await supabase
+            .from('monthly_dues')
+            .select('month, year')
+            .eq('student_id', studentId);
+          const existingKey = new Set((existing || []).map((d: any) => `${d.year}-${d.month}`));
+
+          const rowsToInsert = cycles
+            .filter((c) => !existingKey.has(`${c.year}-${c.month}`))
+            .map((c) => ({
+              student_id: studentId,
+              month: c.month,
+              year: c.year,
+              amount: monthlyFee,
+              total_due: monthlyFee,
+              base_fee: monthlyFee,
+              due_date: new Date(Date.UTC(c.year, c.month - 1, 10)).toISOString().slice(0, 10),
+              last_date: new Date(Date.UTC(c.year, c.month - 1, 20)).toISOString().slice(0, 10),
+              status: 'PENDING',
+            }));
+
+          if (rowsToInsert.length > 0) {
+            const { error: duesErr } = await supabase.from('monthly_dues').insert(rowsToInsert);
+            if (duesErr) console.warn('Auto-generate dues failed (non-fatal):', duesErr.message);
+          }
+        } catch (genErr) {
+          console.warn('Auto-generate dues threw (non-fatal):', genErr);
+        }
+      }
+
       await fetchStudents();
       return { success: true, studentId };
     } catch (err: any) {
