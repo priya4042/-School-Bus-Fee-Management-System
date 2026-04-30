@@ -32,6 +32,9 @@ import { useAuthStore } from './store/authStore';
 import { isSupabaseConfigured } from './lib/supabase';
 import { applyPlatformClass, usePlatform } from './lib/platform';
 import { initNativeBridge } from './lib/nativeBridge';
+import { initPushNotifications } from './services/pushNotifications';
+import { maybePromptForRating } from './services/appRating';
+import OnboardingTutorial from './components/OnboardingTutorial';
 import { useWindowSize } from './hooks/useWindowSize';
 
 applyPlatformClass();
@@ -138,6 +141,11 @@ const App: React.FC = () => {
   useEffect(() => {
     if (!user?.id || !user?.role) return;
     setActiveTab('Dashboard');
+    // Once a user is logged in: register for FCM (no-op until Firebase config
+    // file is dropped in) and maybe prompt for a Play Store rating after a
+    // few good moments + 7-day age.
+    initPushNotifications(String(user.id)).catch(() => { /* non-fatal */ });
+    maybePromptForRating().catch(() => { /* non-fatal */ });
   }, [user?.id, user?.role]);
 
   useEffect(() => {
@@ -297,6 +305,7 @@ const App: React.FC = () => {
             {/* Bottom tabs: visible on mobile/tablet only */}
             {(isMobile || isTablet) && <BottomTabs user={user} activeTab={activeTab} setActiveTab={setActiveTab} />}
             <SupportChat user={user} />
+            <OnboardingTutorial role={user.role === UserRole.PARENT ? 'parent' : 'admin'} />
           </div>
         );
       })()}

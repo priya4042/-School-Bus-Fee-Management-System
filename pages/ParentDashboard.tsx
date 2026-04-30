@@ -15,6 +15,8 @@ import MiniLoader from '../components/MiniLoader';
 import { useLanguage } from '../lib/i18n';
 import { checkAndCreateUpcomingDueReminders } from '../services/feeReminders';
 import { markChildAbsent, submitPickupSwapRequest, getLatestBusStatusForParent, sendEmergencyAlert, BUS_STATUS_OPTIONS, type ParsedBusStatus } from '../services/parentActions';
+import { useHaptics } from '../hooks/useHaptics';
+import { recordGoodMoment } from '../services/appRating';
 import Modal from '../components/Modal';
 import { showAlert, showConfirm } from '../lib/swal';
 import { useUpiSettings } from '../lib/upiSettings';
@@ -24,6 +26,7 @@ const ParentDashboard: React.FC<{ user: User }> = ({ user }) => {
   const { paymentState, openPortal, closePortal, initiatePayU, initiateRazorpay, initiateUpiIntent, confirmUpiPayment } = usePayments();
   const { downloadReceipt, downloading, downloadFeePaidCertificate } = useReceipts();
   const { settings: upiSettings } = useUpiSettings();
+  const { tapMedium, tapHeavy, tapSuccess, tapError } = useHaptics();
   const [familyStudents, setFamilyStudents] = useState<Student[]>([]);
   const [dues, setDues] = useState<MonthlyDue[]>([]);
   const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
@@ -47,6 +50,7 @@ const ParentDashboard: React.FC<{ user: User }> = ({ user }) => {
 
   const handleSendEmergency = async () => {
     if (!selectedStudent) return;
+    tapHeavy();
     setSendingEmergency(true);
     let lat: number | undefined;
     let lng: number | undefined;
@@ -71,9 +75,11 @@ const ParentDashboard: React.FC<{ user: User }> = ({ user }) => {
     });
     setSendingEmergency(false);
     if (!result.ok) {
+      tapError();
       showAlert('Emergency alert failed', result.error || 'Try again or call admin directly.', 'error');
       return;
     }
+    tapSuccess();
     showToast(`Alert sent to ${result.notifiedAdmins || 0} admin${result.notifiedAdmins === 1 ? '' : 's'}.`, 'success');
     setShowEmergencyModal(false);
     setEmergencyNotes('');
@@ -89,6 +95,7 @@ const ParentDashboard: React.FC<{ user: User }> = ({ user }) => {
 
   const handleMarkAbsent = async () => {
     if (!selectedStudent) return;
+    tapMedium();
     setSavingAbsent(true);
     try {
       const result = await markChildAbsent({
@@ -98,9 +105,11 @@ const ParentDashboard: React.FC<{ user: User }> = ({ user }) => {
         notes: absentNotes.trim() || undefined,
       });
       if (!result.ok) {
+        tapError();
         showAlert('Could not mark absent', result.error || 'Try again.', 'error');
         return;
       }
+      tapSuccess();
       showToast(`${selectedStudent.full_name} marked absent for today. Admin notified.`, 'success');
       setShowAbsentModal(false);
       setAbsentNotes('');
@@ -115,6 +124,7 @@ const ParentDashboard: React.FC<{ user: User }> = ({ user }) => {
       showToast('Please enter the new pickup location.', 'warning');
       return;
     }
+    tapMedium();
     setSavingSwap(true);
     try {
       const result = await submitPickupSwapRequest({
@@ -125,9 +135,11 @@ const ParentDashboard: React.FC<{ user: User }> = ({ user }) => {
         notes: swapNotes.trim() || undefined,
       });
       if (!result.ok) {
+        tapError();
         showAlert('Could not send request', result.error || 'Try again.', 'error');
         return;
       }
+      tapSuccess();
       showToast('Pickup change request sent to admin.', 'success');
       setShowSwapModal(false);
       setSwapLocation('');
@@ -151,6 +163,7 @@ const ParentDashboard: React.FC<{ user: User }> = ({ user }) => {
       'Pay Now'
     );
     if (!confirmed) return;
+    tapMedium();
     // Pick the earliest unpaid due as the "anchor" so the portal opens on it
     const anchor = unpaidDues.sort((a: any, b: any) => (a.year * 12 + a.month) - (b.year * 12 + b.month))[0] as any;
     // Family bundle: sibling discount applies because we're paying for >1 child;
@@ -170,11 +183,13 @@ const ParentDashboard: React.FC<{ user: User }> = ({ user }) => {
 
   // Issue Fee-Paid Certificate for the current Indian academic year
   const handleDownloadCertificate = () => {
+    tapMedium();
     const now = new Date();
     const month = now.getMonth() + 1;
     const fyStart = month >= 4 ? now.getFullYear() : now.getFullYear() - 1;
     const parentName = user.fullName || user.full_name || undefined;
     downloadFeePaidCertificate(user.id, { startYear: fyStart, endYear: fyStart + 1 }, parentName);
+    recordGoodMoment();
   };
   
   const { location, hasArrived } = useTracking(selectedStudent?.bus_id || undefined);
@@ -382,7 +397,7 @@ const ParentDashboard: React.FC<{ user: User }> = ({ user }) => {
 
       {/* Emergency panic button — full-width, top of action row */}
       <button
-        onClick={() => { setEmergencyCategory('safety'); setEmergencyNotes(''); setShowEmergencyModal(true); }}
+        onClick={() => { tapHeavy(); setEmergencyCategory('safety'); setEmergencyNotes(''); setShowEmergencyModal(true); }}
         disabled={!selectedStudent}
         className="w-full p-3 md:p-4 bg-gradient-to-r from-red-600 to-rose-600 text-white rounded-xl md:rounded-2xl shadow-xl shadow-red-600/30 active:scale-[0.98] hover:from-red-700 hover:to-rose-700 transition-all flex items-center justify-center gap-3 disabled:opacity-60"
       >
@@ -542,7 +557,7 @@ const ParentDashboard: React.FC<{ user: User }> = ({ user }) => {
                         <div className="flex flex-col items-end gap-2">
                            <i className="fas fa-check-circle text-success text-lg"></i>
                            <button
-                             onClick={() => downloadReceipt(due.id, due.transaction_id || due.id, due)}
+                             onClick={() => { tapMedium(); downloadReceipt(due.id, due.transaction_id || due.id, due); recordGoodMoment(); }}
                              disabled={downloading === String(due.id)}
                              className="text-[7px] font-black text-primary uppercase tracking-widest hover:underline flex items-center gap-1 disabled:opacity-60"
                            >
@@ -557,6 +572,7 @@ const ParentDashboard: React.FC<{ user: User }> = ({ user }) => {
                        <button
                          disabled={isLocked}
                          onClick={() => {
+                         tapMedium();
                          const childIndex = familyStudents.findIndex(s => s.id === selectedStudent.id) + 1;
                          const ordinal = childIndex === 1 ? '1st' : childIndex === 2 ? '2nd' : childIndex === 3 ? '3rd' : `${childIndex}th`;
                          // Sibling discount applies to 2nd, 3rd... children only
@@ -611,6 +627,7 @@ const ParentDashboard: React.FC<{ user: User }> = ({ user }) => {
                           </p>
                           <button
                             onClick={() => {
+                              tapMedium();
                               const childIndex = familyStudents.findIndex(s => s.id === selectedStudent.id) + 1;
                               const ordinal = childIndex === 1 ? '1st' : childIndex === 2 ? '2nd' : childIndex === 3 ? '3rd' : `${childIndex}th`;
                               const payBundle = buildPaymentBundle(due, selectedStudentAllDues, new Date(), {

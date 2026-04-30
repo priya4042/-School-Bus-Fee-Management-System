@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { User } from '../../types';
 import { Bell, Info, AlertTriangle, CheckCircle2, Clock, Trash2, Mail, MessageSquare } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
@@ -9,6 +9,7 @@ import { SkeletonList } from '../../components/ui/Skeleton';
 import { EmptyState } from '../../components/ui/EmptyState';
 import { CollapsibleList } from '../../components/ui/CollapsibleList';
 import { parseFeeReminderTag, stripFeeReminderTags } from '../../services/feeReminders';
+import PullToRefresh from '../../components/PullToRefresh';
 
 interface Notification {
   id: string;
@@ -26,19 +27,20 @@ const Notifications: React.FC<{ user: User; focusNotificationId?: string; onFocu
   const [filter, setFilter] = useState<'all' | 'unread' | 'payment' | 'bus' | 'alert'>('all');
   const [highlightedId, setHighlightedId] = useState<string | null>(null);
 
-  useEffect(() => {
-    const fetchNotifications = async () => {
-      setLoading(true);
-      const { data, error } = await supabase
-        .from('notifications')
-        .select('*')
-        .eq('user_id', user.id)
-        .order('created_at', { ascending: false });
+  const fetchNotifications = useCallback(async (showSpinner = true) => {
+    if (showSpinner) setLoading(true);
+    const { data, error } = await supabase
+      .from('notifications')
+      .select('*')
+      .eq('user_id', user.id)
+      .order('created_at', { ascending: false });
 
-      if (error) console.error('Failed to load notifications:', error);
-      setNotifications(data || []);
-      setLoading(false);
-    };
+    if (error) console.error('Failed to load notifications:', error);
+    setNotifications(data || []);
+    if (showSpinner) setLoading(false);
+  }, [user.id]);
+
+  useEffect(() => {
     fetchNotifications();
 
     const channel = supabase
@@ -210,6 +212,7 @@ const Notifications: React.FC<{ user: User; focusNotificationId?: string; onFocu
           {loading && <SkeletonList count={4} />}
 
           {!loading && (
+          <PullToRefresh onRefresh={() => fetchNotifications(false)}>
           <CollapsibleList initialCount={5} showMoreLabel="View" className="space-y-3 md:space-y-4">
           {filteredNotifications.map((notif, idx) => {
             const reminder = parseFeeReminderTag(notif.message);
@@ -292,6 +295,7 @@ const Notifications: React.FC<{ user: User; focusNotificationId?: string; onFocu
             );
           })}
           </CollapsibleList>
+          </PullToRefresh>
           )}
 
           {!loading && filteredNotifications.length === 0 && (
