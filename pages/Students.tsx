@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import Modal from '../components/Modal.tsx';
 import { useStudents } from '../hooks/useStudents.ts';
 import { useRoutes } from '../hooks/useRoutes.ts';
@@ -7,6 +7,13 @@ import { useFees } from '../hooks/useFees.ts';
 import FeeManagement from './Fees.tsx';
 import { MONTHS } from '../constants.ts';
 import { showConfirm, showToast, showAlert, showLoading, closeSwal } from '../lib/swal.ts';
+import {
+  parseStudentImportFile,
+  runStudentImport,
+  downloadStudentImportTemplate,
+  type ImportPreviewResult,
+  type ImportRunResult,
+} from '../services/bulkStudentImport.ts';
 
 const toMonthInputValue = (date: Date) => {
   const year = date.getFullYear();
@@ -70,6 +77,62 @@ const Students: React.FC = () => {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [selectedStudentForFees, setSelectedStudentForFees] = useState<any>(null);
   const [activeSection, setActiveSection] = useState<'students' | 'fees'>('students');
+
+  // Bulk import state
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [showImportModal, setShowImportModal] = useState(false);
+  const [importPreview, setImportPreview] = useState<ImportPreviewResult | null>(null);
+  const [importing, setImporting] = useState(false);
+  const [importResult, setImportResult] = useState<ImportRunResult | null>(null);
+  const [parseError, setParseError] = useState<string | null>(null);
+
+  const openImportPicker = () => {
+    setImportPreview(null);
+    setImportResult(null);
+    setParseError(null);
+    setShowImportModal(true);
+    setTimeout(() => fileInputRef.current?.click(), 100);
+  };
+
+  const handleImportFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setParseError(null);
+    setImportResult(null);
+    try {
+      const preview = await parseStudentImportFile(file);
+      setImportPreview(preview);
+    } catch (err: any) {
+      setParseError(err?.message || 'Could not read file. Please use a CSV or XLSX file.');
+    } finally {
+      // reset input so the same file can be re-uploaded after a fix
+      if (fileInputRef.current) fileInputRef.current.value = '';
+    }
+  };
+
+  const handleRunImport = async () => {
+    if (!importPreview) return;
+    setImporting(true);
+    try {
+      const result = await runStudentImport(importPreview.rows);
+      setImportResult(result);
+      // Refresh student list after partial/full import
+      // useStudents.fetchStudents is invoked inside addStudent path, but bulk inserts skip it,
+      // so we trigger a soft reload by closing & re-opening the modal won't help; instead
+      // page-level data will refresh on next visit. Show toast either way.
+      if (result.successCount > 0) {
+        showToast(`${result.successCount} student${result.successCount === 1 ? '' : 's'} imported, ${result.duesGenerated} dues generated.`, 'success');
+        // Reload page data
+        window.location.reload();
+      } else if (result.failedCount > 0) {
+        showAlert('Import Failed', 'No students were imported. See the failed-rows list for details.', 'error');
+      }
+    } catch (err: any) {
+      showAlert('Import Error', err?.message || 'Bulk import failed.', 'error');
+    } finally {
+      setImporting(false);
+    }
+  };
   
   const [formData, setFormData] = useState({
     full_name: '',
@@ -338,14 +401,24 @@ const Students: React.FC = () => {
             </button>
           </div>
           {activeSection === 'students' && (
-            <button
-              onClick={() => { resetForm(); setIsModalOpen(true); }}
-              className="bg-primary text-white px-4 md:px-8 py-3 rounded-2xl font-black text-[10px] uppercase tracking-widest flex items-center justify-center gap-2 md:gap-3 hover:bg-blue-700 transition-all shadow-xl shadow-primary/20 flex-shrink-0"
-            >
-              <i className="fas fa-plus"></i>
-              <span className="hidden md:inline">Register Student</span>
-              <span className="md:hidden">Add</span>
-            </button>
+            <>
+              <button
+                onClick={openImportPicker}
+                className="bg-emerald-600 text-white px-4 md:px-6 py-3 rounded-2xl font-black text-[10px] uppercase tracking-widest flex items-center justify-center gap-2 hover:bg-emerald-700 transition-all shadow-xl shadow-emerald-600/20 flex-shrink-0"
+              >
+                <i className="fas fa-file-import"></i>
+                <span className="hidden md:inline">Import Excel/CSV</span>
+                <span className="md:hidden">Import</span>
+              </button>
+              <button
+                onClick={() => { resetForm(); setIsModalOpen(true); }}
+                className="bg-primary text-white px-4 md:px-8 py-3 rounded-2xl font-black text-[10px] uppercase tracking-widest flex items-center justify-center gap-2 md:gap-3 hover:bg-blue-700 transition-all shadow-xl shadow-primary/20 flex-shrink-0"
+              >
+                <i className="fas fa-plus"></i>
+                <span className="hidden md:inline">Register Student</span>
+                <span className="md:hidden">Add</span>
+              </button>
+            </>
           )}
         </div>
       </div>
@@ -797,7 +870,7 @@ const Students: React.FC = () => {
             </div>
 
             <div className="flex gap-3 pt-2">
-              <button 
+              <button
                 onClick={() => setIsFeeModalOpen(false)}
                 className="flex-1 bg-slate-100 text-slate-600 py-3 rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-slate-200 transition-all"
               >
@@ -806,6 +879,157 @@ const Students: React.FC = () => {
             </div>
           </div>
         )}
+      </Modal>
+
+      {/* Hidden file input for bulk import */}
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept=".csv,.xlsx,.xls,text/csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel"
+        className="hidden"
+        onChange={handleImportFileChange}
+      />
+
+      {/* Bulk Import Modal */}
+      <Modal
+        isOpen={showImportModal}
+        onClose={() => setShowImportModal(false)}
+        title="Import Students from Excel / CSV"
+        maxWidthClass="max-w-3xl"
+        bodyClassName="p-4 md:p-8"
+      >
+        <div className="space-y-4">
+          {!importPreview && !importResult && (
+            <div className="space-y-4">
+              <p className="text-[11px] font-bold text-slate-500 leading-relaxed">
+                Upload a CSV or Excel file with student details. The first row must be column headers. Required: <strong>full_name</strong>, <strong>admission_number</strong>. Optional: grade, section, monthly_fee, parent_name, parent_phone, route_name, bus_number, boarding_point, status.
+              </p>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <button
+                  onClick={() => fileInputRef.current?.click()}
+                  className="p-4 bg-emerald-50 border-2 border-dashed border-emerald-300 rounded-2xl text-center hover:bg-emerald-100 transition-all"
+                >
+                  <i className="fas fa-cloud-upload-alt text-2xl text-emerald-600 mb-2"></i>
+                  <p className="text-xs font-black text-emerald-700 uppercase tracking-widest">Choose File</p>
+                  <p className="text-[9px] font-bold text-emerald-600 mt-1">CSV, XLSX or XLS</p>
+                </button>
+                <button
+                  onClick={downloadStudentImportTemplate}
+                  className="p-4 bg-slate-50 border-2 border-dashed border-slate-300 rounded-2xl text-center hover:bg-slate-100 transition-all"
+                >
+                  <i className="fas fa-file-download text-2xl text-slate-600 mb-2"></i>
+                  <p className="text-xs font-black text-slate-700 uppercase tracking-widest">Download Template</p>
+                  <p className="text-[9px] font-bold text-slate-500 mt-1">student_import_template.csv</p>
+                </button>
+              </div>
+              {parseError && (
+                <div className="p-3 bg-red-50 border border-red-200 rounded-xl text-[11px] font-bold text-red-700">
+                  <i className="fas fa-exclamation-triangle mr-2"></i>{parseError}
+                </div>
+              )}
+            </div>
+          )}
+
+          {importPreview && !importResult && (
+            <div className="space-y-3">
+              <div className="grid grid-cols-3 gap-2">
+                <div className="p-3 bg-slate-50 rounded-xl text-center">
+                  <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest">Rows</p>
+                  <p className="text-xl font-black text-slate-800">{importPreview.totalRows}</p>
+                </div>
+                <div className="p-3 bg-emerald-50 rounded-xl text-center">
+                  <p className="text-[8px] font-black text-emerald-700 uppercase tracking-widest">Valid</p>
+                  <p className="text-xl font-black text-emerald-700">{importPreview.validRows}</p>
+                </div>
+                <div className="p-3 bg-red-50 rounded-xl text-center">
+                  <p className="text-[8px] font-black text-red-700 uppercase tracking-widest">Invalid</p>
+                  <p className="text-xl font-black text-red-700">{importPreview.invalidRows}</p>
+                </div>
+              </div>
+
+              <div className="border border-slate-100 rounded-xl overflow-hidden max-h-72 overflow-y-auto">
+                <table className="w-full text-left text-[10px]">
+                  <thead className="bg-slate-50 sticky top-0">
+                    <tr className="text-slate-500 font-black uppercase tracking-widest">
+                      <th className="px-2 py-2">#</th>
+                      <th className="px-2 py-2">Name</th>
+                      <th className="px-2 py-2">Adm</th>
+                      <th className="px-2 py-2">Class</th>
+                      <th className="px-2 py-2">Fee</th>
+                      <th className="px-2 py-2">Issues</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {importPreview.rows.map((r) => (
+                      <tr key={r.rowNumber} className={`border-t border-slate-100 ${r.errors.length > 0 ? 'bg-red-50/50' : ''}`}>
+                        <td className="px-2 py-1.5 text-slate-400">{r.rowNumber}</td>
+                        <td className="px-2 py-1.5 font-bold text-slate-700 truncate max-w-[120px]">{r.full_name || '—'}</td>
+                        <td className="px-2 py-1.5 text-slate-600">{r.admission_number || '—'}</td>
+                        <td className="px-2 py-1.5 text-slate-600">{r.grade}{r.section ? `-${r.section}` : ''}</td>
+                        <td className="px-2 py-1.5 text-slate-600">₹{r.monthly_fee || 0}</td>
+                        <td className="px-2 py-1.5">
+                          {r.errors.length > 0 && <span className="text-red-600 font-black">{r.errors.join('; ')}</span>}
+                          {r.errors.length === 0 && r.warnings.length > 0 && <span className="text-amber-600">{r.warnings.join('; ')}</span>}
+                          {r.errors.length === 0 && r.warnings.length === 0 && <span className="text-emerald-600">✓</span>}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+
+              <div className="flex gap-2 pt-2">
+                <button
+                  onClick={() => { setImportPreview(null); setParseError(null); }}
+                  className="flex-1 py-3 bg-slate-100 text-slate-600 rounded-xl font-black uppercase text-[10px] tracking-widest hover:bg-slate-200 active:scale-95 transition-all"
+                >
+                  Cancel / Re-upload
+                </button>
+                <button
+                  onClick={handleRunImport}
+                  disabled={importing || importPreview.validRows === 0}
+                  className="flex-1 py-3 bg-emerald-600 text-white rounded-xl font-black uppercase text-[10px] tracking-widest shadow-lg shadow-emerald-600/20 hover:bg-emerald-700 active:scale-95 transition-all disabled:opacity-60 flex items-center justify-center gap-2"
+                >
+                  {importing ? (
+                    <><i className="fas fa-circle-notch fa-spin"></i> Importing…</>
+                  ) : (
+                    <><i className="fas fa-check-double"></i> Import {importPreview.validRows} Students</>
+                  )}
+                </button>
+              </div>
+            </div>
+          )}
+
+          {importResult && (
+            <div className="space-y-3">
+              <div className="p-4 bg-emerald-50 border border-emerald-200 rounded-2xl text-center">
+                <i className="fas fa-check-circle text-3xl text-emerald-600 mb-2"></i>
+                <p className="text-base font-black text-emerald-800">Import complete</p>
+                <p className="text-xs font-bold text-emerald-700 mt-1">
+                  {importResult.successCount} students added · {importResult.duesGenerated} dues generated
+                </p>
+              </div>
+              {importResult.failedRows.length > 0 && (
+                <div className="p-3 bg-red-50 border border-red-200 rounded-xl">
+                  <p className="text-[11px] font-black text-red-700 uppercase tracking-widest mb-2">{importResult.failedCount} failed rows</p>
+                  <div className="space-y-1 max-h-40 overflow-y-auto">
+                    {importResult.failedRows.map((f, i) => (
+                      <p key={i} className="text-[10px] font-bold text-red-700">
+                        Row {f.rowNumber} ({f.admission_number}): {f.error}
+                      </p>
+                    ))}
+                  </div>
+                </div>
+              )}
+              <button
+                onClick={() => setShowImportModal(false)}
+                className="w-full py-3 bg-primary text-white rounded-xl font-black uppercase text-[10px] tracking-widest hover:bg-blue-800 active:scale-95 transition-all"
+              >
+                Done
+              </button>
+            </div>
+          )}
+        </div>
       </Modal>
     </div>
   );
