@@ -26,8 +26,26 @@ const Reports: React.FC = () => {
         const statsRes = await api.get('/dashboard/stats');
         setRevenueData(statsRes.data.revenueTrend || []);
         
-        const defRes = await api.get('/reports/defaulters');
-        setDefaulterData(defRes.data || []);
+        // Try API first; fall back to Supabase with parent phone enrichment
+        try {
+          const defRes = await api.get('/reports/defaulters');
+          setDefaulterData(defRes.data || []);
+        } catch {
+          const { data: overdueDues } = await supabase
+            .from('monthly_dues')
+            .select('id, month, year, total_due, amount, students(full_name, parent_id, profiles(phone_number, secondary_phone_number), routes(route_name))')
+            .eq('status', 'OVERDUE');
+          const mapped = (overdueDues || []).map((d: any) => ({
+            id: d.id,
+            full_name: d.students?.full_name || 'Student',
+            route_name: d.students?.routes?.route_name || '—',
+            month: d.month,
+            year: d.year,
+            total_due: d.total_due || d.amount,
+            parent_phone: d.students?.profiles?.phone_number || d.students?.profiles?.secondary_phone_number || '',
+          }));
+          setDefaulterData(mapped);
+        }
 
         const { data: deletedStudentsData } = await supabase
           .from('deleted_students')
@@ -203,25 +221,51 @@ const Reports: React.FC = () => {
             <>
               {/* Mobile cards */}
               <div className="md:hidden divide-y divide-slate-50">
-                {defaulterData.map((d, i) => (
-                  <div key={i} className="p-4 flex items-start gap-3">
-                    <div className="w-10 h-10 rounded-xl bg-danger/10 text-danger flex items-center justify-center font-black flex-shrink-0">{d.full_name.charAt(0)}</div>
-                    <div className="flex-1 min-w-0">
-                      <p className="font-black text-slate-800 tracking-tight text-sm truncate">{d.full_name}</p>
-                      <p className="text-[9px] font-bold text-slate-500 uppercase tracking-widest truncate mt-0.5">{d.route_name}</p>
-                      <div className="flex items-center justify-between gap-2 mt-2">
-                        <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest">M{d.month}/{d.year}</span>
-                        <span className="font-black text-danger text-sm">₹{Number(d.total_due || 0).toLocaleString()}</span>
+                {defaulterData.map((d, i) => {
+                  const phone = String(d.parent_phone || '').replace(/\D/g, '');
+                  const waMessage = encodeURIComponent(`Hi, ${d.full_name}'s bus fee for ${d.month}/${d.year} (₹${Number(d.total_due || 0).toLocaleString()}) is overdue. Please settle it via the BusWayPro app.`);
+                  return (
+                    <div key={i} className="p-4 space-y-3">
+                      <div className="flex items-start gap-3">
+                        <div className="w-10 h-10 rounded-xl bg-danger/10 text-danger flex items-center justify-center font-black flex-shrink-0">{d.full_name.charAt(0)}</div>
+                        <div className="flex-1 min-w-0">
+                          <p className="font-black text-slate-800 tracking-tight text-sm truncate">{d.full_name}</p>
+                          <p className="text-[9px] font-bold text-slate-500 uppercase tracking-widest truncate mt-0.5">{d.route_name}</p>
+                          <div className="flex items-center justify-between gap-2 mt-2">
+                            <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest">M{d.month}/{d.year}</span>
+                            <span className="font-black text-danger text-sm">₹{Number(d.total_due || 0).toLocaleString()}</span>
+                          </div>
+                        </div>
+                      </div>
+                      <div className="flex gap-2">
+                        {phone && (
+                          <>
+                            <a
+                              href={`tel:+91${phone}`}
+                              className="flex-1 h-10 flex items-center justify-center gap-1.5 bg-emerald-50 text-emerald-700 rounded-xl text-[10px] font-black uppercase tracking-widest border border-emerald-100 active:scale-95"
+                            >
+                              <i className="fas fa-phone text-xs"></i> Call
+                            </a>
+                            <a
+                              href={`https://wa.me/91${phone}?text=${waMessage}`}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="flex-1 h-10 flex items-center justify-center gap-1.5 bg-green-50 text-green-700 rounded-xl text-[10px] font-black uppercase tracking-widest border border-green-100 active:scale-95"
+                            >
+                              <i className="fab fa-whatsapp text-sm"></i> WhatsApp
+                            </a>
+                          </>
+                        )}
+                        <button
+                          onClick={() => showToast('Reminder Sent', 'success')}
+                          className={`${phone ? 'flex-1' : 'w-full'} h-10 flex items-center justify-center gap-1.5 bg-primary/5 text-primary rounded-xl text-[10px] font-black uppercase tracking-widest active:scale-95`}
+                        >
+                          <i className="fas fa-bell text-xs"></i> Notice
+                        </button>
                       </div>
                     </div>
-                    <button
-                      onClick={() => showToast('Reminder Sent', 'success')}
-                      className="text-[9px] font-black text-primary uppercase tracking-widest px-3 py-2 rounded-xl bg-primary/5 flex-shrink-0 self-start"
-                    >
-                      Notice
-                    </button>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
 
               {/* Desktop table */}
@@ -237,7 +281,10 @@ const Reports: React.FC = () => {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-50">
-                    {defaulterData.map((d, i) => (
+                    {defaulterData.map((d, i) => {
+                      const phone = String(d.parent_phone || '').replace(/\D/g, '');
+                      const waMessage = encodeURIComponent(`Hi, ${d.full_name}'s bus fee for ${d.month}/${d.year} (₹${Number(d.total_due || 0).toLocaleString()}) is overdue. Please settle it via the BusWayPro app.`);
+                      return (
                       <tr key={i} className="hover:bg-slate-50/50 transition-colors group">
                         <td className="px-10 py-5">
                            <div className="flex items-center gap-3">
@@ -249,15 +296,38 @@ const Reports: React.FC = () => {
                         <td className="px-8 py-5 text-xs font-black text-slate-400 uppercase tracking-widest">Month {d.month} / {d.year}</td>
                         <td className="px-8 py-5 text-right font-black text-danger text-lg">₹{Number(d.total_due || 0).toLocaleString()}</td>
                         <td className="px-10 py-5 text-right">
+                          <div className="inline-flex items-center gap-1.5">
+                            {phone && (
+                              <>
+                                <a
+                                  href={`tel:+91${phone}`}
+                                  className="w-9 h-9 flex items-center justify-center rounded-xl bg-emerald-50 text-emerald-700 hover:bg-emerald-100 transition-all"
+                                  title="Call parent"
+                                >
+                                  <i className="fas fa-phone text-xs"></i>
+                                </a>
+                                <a
+                                  href={`https://wa.me/91${phone}?text=${waMessage}`}
+                                  target="_blank"
+                                  rel="noreferrer"
+                                  className="w-9 h-9 flex items-center justify-center rounded-xl bg-green-50 text-green-700 hover:bg-green-100 transition-all"
+                                  title="WhatsApp parent"
+                                >
+                                  <i className="fab fa-whatsapp text-sm"></i>
+                                </a>
+                              </>
+                            )}
                           <button
                             onClick={() => showToast('Reminder Sent', 'success')}
-                            className="text-[10px] font-black text-primary uppercase tracking-widest hover:underline transition-all"
+                            className="text-[10px] font-black text-primary uppercase tracking-widest hover:underline transition-all px-2"
                           >
                             Send Notice
                           </button>
+                          </div>
                         </td>
                       </tr>
-                    ))}
+                      );
+                    })}
                   </tbody>
                 </table>
               </div>
