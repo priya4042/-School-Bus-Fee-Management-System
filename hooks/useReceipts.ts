@@ -664,6 +664,129 @@ const generateYearlyStatement = async (paidDues: any[], academicYearLabel: strin
   await savePDF(doc, `Annual_Statement_${safeName}_${academicYearLabel.replace(/[^0-9-]/g, '')}.pdf`);
 };
 
+// Fee-paid certificate — official-looking single-page PDF that confirms the
+// parent has cleared all dues for the academic year. Useful for school
+// transfer applications, scholarship paperwork, employer reimbursement, etc.
+const generateFeePaidCertificate = async (paidDues: any[], academicYearLabel: string, parentName?: string) => {
+  const doc = new jsPDF({ orientation: 'p', unit: 'mm', format: 'a4' });
+  const margin = 18;
+  const pageWidth = 210;
+  const contentWidth = pageWidth - margin * 2;
+
+  const ordered = [...paidDues].sort((a, b) => getPeriodValue(a) - getPeriodValue(b));
+  const firstStudent = normalizeStudentInfo(ordered[0] || {}).student;
+  const totalPaid = ordered.reduce((sum, d) => sum + Number(d.total_due || d.amount || 0), 0);
+  const monthsCovered = ordered.length;
+  const certNo = `BWP-CERT-${Date.now().toString(36).toUpperCase().slice(-8)}`;
+
+  // Outer border
+  doc.setDrawColor(30, 64, 175);
+  doc.setLineWidth(1.5);
+  doc.rect(8, 8, pageWidth - 16, 297 - 16);
+  doc.setLineWidth(0.3);
+  doc.rect(11, 11, pageWidth - 22, 297 - 22);
+
+  // Header band
+  doc.setFillColor(30, 64, 175);
+  doc.rect(margin, 20, contentWidth, 22, 'F');
+  drawLogo(doc, margin + 4, 23, 16);
+  doc.setTextColor(255, 255, 255);
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(18);
+  doc.text('SCHOOL BUS WAYPRO', margin + 24, 30);
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(8);
+  doc.text('Bus Fee Payment Certificate', margin + 24, 36);
+
+  // Title
+  doc.setTextColor(30, 64, 175);
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(22);
+  doc.text('CERTIFICATE OF FEE PAYMENT', pageWidth / 2, 60, { align: 'center' });
+
+  doc.setDrawColor(245, 158, 11);
+  doc.setLineWidth(0.8);
+  doc.line(pageWidth / 2 - 35, 64, pageWidth / 2 + 35, 64);
+
+  // Body
+  doc.setTextColor(15, 23, 42);
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(11);
+
+  let y = 80;
+  doc.text('This is to certify that the school bus transportation fee for', pageWidth / 2, y, { align: 'center' });
+
+  y += 10;
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(16);
+  doc.text(String(firstStudent.full_name || 'Student').toUpperCase(), pageWidth / 2, y, { align: 'center' });
+
+  y += 7;
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(10);
+  const detailLine = `Admission No: ${firstStudent.admission_number || 'N/A'}    |    Class: ${firstStudent.grade || 'N/A'}-${firstStudent.section || 'N/A'}`;
+  doc.text(detailLine, pageWidth / 2, y, { align: 'center' });
+
+  y += 12;
+  doc.setFontSize(11);
+  doc.text(`for the academic year`, pageWidth / 2, y, { align: 'center' });
+
+  y += 8;
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(14);
+  doc.setTextColor(30, 64, 175);
+  doc.text(academicYearLabel, pageWidth / 2, y, { align: 'center' });
+
+  y += 12;
+  doc.setTextColor(15, 23, 42);
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(11);
+  doc.text(`has been paid IN FULL, totalling`, pageWidth / 2, y, { align: 'center' });
+
+  y += 10;
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(20);
+  doc.setTextColor(34, 197, 94);
+  doc.text(`Rs. ${totalPaid.toLocaleString('en-IN')}/-`, pageWidth / 2, y, { align: 'center' });
+
+  y += 8;
+  doc.setTextColor(100, 116, 139);
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(9);
+  doc.text(`(across ${monthsCovered} month${monthsCovered === 1 ? '' : 's'} of bus service)`, pageWidth / 2, y, { align: 'center' });
+
+  // Verified seal
+  y += 18;
+  doc.setFillColor(34, 197, 94);
+  doc.roundedRect(pageWidth / 2 - 35, y, 70, 14, 3, 3, 'F');
+  doc.setTextColor(255, 255, 255);
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(11);
+  doc.text('PAYMENT VERIFIED', pageWidth / 2, y + 9, { align: 'center' });
+
+  // Footer with certificate metadata
+  doc.setTextColor(100, 116, 139);
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(8);
+  doc.text(`Certificate No: ${certNo}`, margin + 4, 245);
+  doc.text(`Issued on: ${new Date().toLocaleDateString('en-IN', { day: '2-digit', month: 'long', year: 'numeric' })}`, margin + 4, 250);
+  if (parentName) doc.text(`Parent / Guardian: ${parentName}`, margin + 4, 255);
+
+  doc.text('This is a system-generated certificate.', pageWidth - margin - 4, 245, { align: 'right' });
+  doc.text('No physical signature required.', pageWidth - margin - 4, 250, { align: 'right' });
+
+  // Note for usage
+  doc.setFontSize(7.5);
+  doc.setTextColor(148, 163, 184);
+  doc.text(
+    'This certificate can be used as proof of bus fee payment for school transfers, scholarships, employer reimbursements or tax records.',
+    pageWidth / 2, 268, { align: 'center', maxWidth: contentWidth - 10 } as any
+  );
+
+  const safeName = String(firstStudent.full_name || 'Student').replace(/[^a-zA-Z0-9 ]+/g, '').replace(/\s+/g, '_').slice(0, 40);
+  await savePDF(doc, `Fee_Paid_Certificate_${safeName}_${academicYearLabel.replace(/[^0-9-]/g, '')}.pdf`);
+};
+
 // Module-scoped preview mode: when set, savePDF resolves the URL instead of saving.
 let previewSink: ((url: string) => void) | null = null;
 const enterPreviewMode = (sink: (url: string) => void) => { previewSink = sink; };
@@ -1003,5 +1126,62 @@ export const useReceipts = () => {
     }
   };
 
-  return { downloadReceipt, previewReceipt, shareReceipt, downloadYearlyStatement, downloading };
+  // Download a one-page Fee-Paid Certificate for the parent's currently
+  // PAID dues in the given academic year (April -> March).
+  const downloadFeePaidCertificate = async (
+    parentId: string,
+    academicYear: { startYear: number; endYear: number },
+    parentName?: string,
+  ) => {
+    setDownloading('fee-paid-certificate');
+    try {
+      const startMonth = 4;
+      const endMonth = 3;
+      const { data, error } = await supabase
+        .from('monthly_dues')
+        .select('id, month, year, amount, total_due, late_fee, paid_at, transaction_id, payment_method, students!inner(full_name, admission_number, grade, section, parent_id)')
+        .eq('students.parent_id', parentId)
+        .eq('status', 'PAID')
+        .or(
+          `and(year.eq.${academicYear.startYear},month.gte.${startMonth}),and(year.eq.${academicYear.endYear},month.lte.${endMonth})`
+        );
+
+      if (error) throw error;
+      const paidDues = data || [];
+      if (paidDues.length === 0) {
+        showAlert('No paid dues', `No paid receipts found for academic year ${academicYear.startYear}-${academicYear.endYear}. Pay at least one month before issuing a certificate.`, 'info');
+        return;
+      }
+
+      // Confirm there are no UNPAID dues in this window — certificate is meant
+      // for fully-cleared accounts.
+      const { data: unpaid } = await supabase
+        .from('monthly_dues')
+        .select('id, status, students!inner(parent_id)')
+        .eq('students.parent_id', parentId)
+        .neq('status', 'PAID')
+        .or(
+          `and(year.eq.${academicYear.startYear},month.gte.${startMonth}),and(year.eq.${academicYear.endYear},month.lte.${endMonth})`
+        );
+
+      if (unpaid && unpaid.length > 0) {
+        showAlert(
+          'Outstanding dues found',
+          `You still have ${unpaid.length} unpaid month${unpaid.length === 1 ? '' : 's'} for ${academicYear.startYear}-${academicYear.endYear}. Settle the balance to issue a Fee-Paid Certificate.`,
+          'warning',
+        );
+        return;
+      }
+
+      const yearLabel = `${academicYear.startYear}-${academicYear.endYear}`;
+      await generateFeePaidCertificate(paidDues, yearLabel, parentName);
+    } catch (err: any) {
+      console.error('Fee-paid certificate failed:', err);
+      showAlert('Certificate Error', err?.message || 'Could not generate certificate.', 'error');
+    } finally {
+      setDownloading(null);
+    }
+  };
+
+  return { downloadReceipt, previewReceipt, shareReceipt, downloadYearlyStatement, downloadFeePaidCertificate, downloading };
 };
