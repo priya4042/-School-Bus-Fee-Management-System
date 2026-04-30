@@ -13,6 +13,7 @@ import GoogleMap from '../components/GoogleMap';
 import { supabase } from '../lib/supabase';
 import MiniLoader from '../components/MiniLoader';
 import { useLanguage } from '../lib/i18n';
+import { checkAndCreateUpcomingDueReminders } from '../services/feeReminders';
 
 const ParentDashboard: React.FC<{ user: User }> = ({ user }) => {
   const { t } = useLanguage();
@@ -30,6 +31,10 @@ const ParentDashboard: React.FC<{ user: User }> = ({ user }) => {
   const { location, hasArrived } = useTracking(selectedStudent?.bus_id || undefined);
 
   useEffect(() => {
+    // Fire-and-forget: scan upcoming dues and create reminder notifications.
+    // Idempotent — won't spam if a reminder for the same due already exists.
+    checkAndCreateUpcomingDueReminders(user.id).catch(() => { /* non-fatal */ });
+
     const loadInitialData = async () => {
       setLoading(true);
       try {
