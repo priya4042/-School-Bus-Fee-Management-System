@@ -19,6 +19,8 @@ interface ParentRouteStudent {
   buses?: {
     bus_number?: string;
     plate?: string;
+    driver_name?: string;
+    driver_phone?: string;
   } | null;
 }
 
@@ -33,7 +35,7 @@ const ParentRoutes: React.FC<{ user: User }> = ({ user }) => {
       try {
         const { data, error } = await supabase
           .from('students')
-          .select('id, full_name, admission_number, boarding_point, route_id, routes(route_name, code, start_point, end_point), buses(bus_number, plate)')
+          .select('id, full_name, admission_number, boarding_point, route_id, routes(route_name, code, start_point, end_point), buses(bus_number, plate, driver_name, driver_phone)')
           .eq('parent_id', user.id)
           .order('full_name', { ascending: true });
 
@@ -149,6 +151,48 @@ const ParentRoutes: React.FC<{ user: User }> = ({ user }) => {
                   <p className="text-xs font-bold text-slate-700 truncate">{bus?.plate || 'N/A'}</p>
                 </div>
               </div>
+
+              {/* Driver contact card */}
+              {(bus?.driver_name || bus?.driver_phone) && (() => {
+                const phoneDigits = String(bus?.driver_phone || '').replace(/\D/g, '');
+                const waMessage = encodeURIComponent(`Hi, I'm ${student.full_name}'s parent. `);
+                return (
+                  <div className="p-3 md:p-4 bg-gradient-to-br from-emerald-50 to-emerald-100/50 rounded-xl md:rounded-2xl border border-emerald-200">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 md:w-12 md:h-12 bg-emerald-600 text-white rounded-xl flex items-center justify-center flex-shrink-0">
+                        <i className="fas fa-id-badge"></i>
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-[8px] font-black text-emerald-700 tracking-widest uppercase">Driver Assigned</p>
+                        <p className="text-sm font-black text-slate-900 truncate">{bus?.driver_name || 'Driver'}</p>
+                        {phoneDigits && (
+                          <p className="text-[10px] font-bold text-slate-500 truncate">+91 {phoneDigits}</p>
+                        )}
+                      </div>
+                      {phoneDigits && (
+                        <div className="flex gap-1.5 flex-shrink-0">
+                          <a
+                            href={`tel:+91${phoneDigits}`}
+                            className="w-9 h-9 md:w-10 md:h-10 rounded-xl bg-emerald-600 text-white flex items-center justify-center active:scale-95"
+                            title="Call driver"
+                          >
+                            <i className="fas fa-phone text-xs"></i>
+                          </a>
+                          <a
+                            href={`https://wa.me/91${phoneDigits}?text=${waMessage}`}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="w-9 h-9 md:w-10 md:h-10 rounded-xl bg-green-600 text-white flex items-center justify-center active:scale-95"
+                            title="WhatsApp driver"
+                          >
+                            <i className="fab fa-whatsapp text-sm"></i>
+                          </a>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                );
+              })()}
             </div>
           );
         })}

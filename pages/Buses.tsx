@@ -4,13 +4,50 @@ import { useRoutes } from '../hooks/useRoutes';
 import Routes from './Routes';
 import Modal from '../components/Modal';
 import { showConfirm, showToast, showLoading, closeSwal, showAlert } from '../lib/swal';
+import { pushBusStatus, BUS_STATUS_OPTIONS, type BusStatusKey } from '../services/parentActions';
+import { useAuthStore } from '../store/authStore';
 
 const Buses: React.FC = () => {
+  const { user: adminUser } = useAuthStore();
   const { buses, loading, registerBus, updateBus, deleteBus } = useBuses();
   const { routes } = useRoutes();
   const [view, setView] = useState<'buses' | 'routes'>('buses');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
+
+  // Bus status push (announces today's status to all parents on this bus)
+  const [statusBus, setStatusBus] = useState<any | null>(null);
+  const [statusKey, setStatusKey] = useState<BusStatusKey>('on_route');
+  const [statusMessage, setStatusMessage] = useState('');
+  const [pushingStatus, setPushingStatus] = useState(false);
+
+  const openStatusModal = (bus: any) => {
+    setStatusBus(bus);
+    setStatusKey('on_route');
+    setStatusMessage('');
+  };
+
+  const handlePushStatus = async () => {
+    if (!statusBus || !adminUser) return;
+    setPushingStatus(true);
+    try {
+      const result = await pushBusStatus({
+        busId: statusBus.id,
+        routeId: statusBus.route_id || null,
+        status: statusKey,
+        customMessage: statusMessage.trim() || undefined,
+        adminUserId: adminUser.id,
+      });
+      if (!result.ok) {
+        showAlert('Could not push status', result.error || 'Try again.', 'error');
+        return;
+      }
+      showToast(`Status sent to ${result.parentsNotified || 0} parent${result.parentsNotified === 1 ? '' : 's'}.`, 'success');
+      setStatusBus(null);
+    } finally {
+      setPushingStatus(false);
+    }
+  };
   
   const [formData, setFormData] = useState({
     bus_number: '',
@@ -166,6 +203,9 @@ const Buses: React.FC = () => {
                     <p className="text-[10px] text-slate-400 font-black uppercase tracking-widest mt-0.5 truncate">{bus.plate || bus.vehicle_number}</p>
                   </div>
                   <div className="flex gap-2 flex-shrink-0">
+                    <button onClick={() => openStatusModal(bus)} className="w-9 h-9 bg-blue-50 text-blue-600 rounded-xl flex items-center justify-center" title="Push status to parents">
+                      <i className="fas fa-bullhorn text-xs"></i>
+                    </button>
                     <button onClick={() => handleEdit(bus)} className="w-9 h-9 bg-slate-50 rounded-xl text-slate-400 flex items-center justify-center">
                       <i className="fas fa-edit text-xs"></i>
                     </button>
@@ -242,10 +282,17 @@ const Buses: React.FC = () => {
                     </td>
                     <td className="px-8 py-5 text-right">
                       <div className="flex justify-end gap-2">
+                        <button
+                          onClick={() => openStatusModal(bus)}
+                          className="w-9 h-9 bg-blue-50 text-blue-600 hover:bg-blue-100 rounded-xl transition-all flex items-center justify-center"
+                          title="Push status to parents"
+                        >
+                          <i className="fas fa-bullhorn text-xs"></i>
+                        </button>
                         <button onClick={() => handleEdit(bus)} className="w-9 h-9 bg-slate-50 hover:bg-slate-100 rounded-xl transition-all text-slate-400 flex items-center justify-center">
                           <i className="fas fa-edit text-xs"></i>
                         </button>
-                        <button 
+                        <button
                           onClick={() => handleDelete(bus.id, bus.plate || bus.vehicle_number)}
                           className="w-9 h-9 bg-slate-50 hover:bg-red-50 hover:text-red-500 rounded-xl transition-all text-slate-400 flex items-center justify-center"
                         >
@@ -387,6 +434,63 @@ const Buses: React.FC = () => {
       </Modal>
         </>
       )}
+
+      {/* Push status to parents modal */}
+      <Modal
+        isOpen={!!statusBus}
+        onClose={() => setStatusBus(null)}
+        title={`Push status — ${statusBus?.bus_number || 'Bus'}`}
+        maxWidthClass="max-w-md"
+        bodyClassName="p-4 md:p-8"
+      >
+        <div className="space-y-4">
+          <p className="text-[11px] font-bold text-slate-500 leading-relaxed">
+            Sends a one-tap status update to every parent whose child rides this bus.
+          </p>
+          <div className="space-y-2">
+            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Status</label>
+            <div className="grid grid-cols-1 gap-2">
+              {BUS_STATUS_OPTIONS.map((opt) => (
+                <button
+                  key={opt.key}
+                  onClick={() => setStatusKey(opt.key)}
+                  className={`p-3 rounded-xl text-left flex items-center gap-3 border-2 transition-all active:scale-[0.98] ${
+                    statusKey === opt.key ? 'border-primary bg-primary/5' : 'border-slate-100 bg-white'
+                  }`}
+                >
+                  <span className="text-xl flex-shrink-0">{opt.emoji}</span>
+                  <span className="text-xs font-black text-slate-700 uppercase tracking-widest">{opt.label}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+          <div className="space-y-2">
+            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Custom Note (optional)</label>
+            <input
+              type="text"
+              value={statusMessage}
+              onChange={(e) => setStatusMessage(e.target.value)}
+              placeholder="e.g. running 15 min late, traffic on NH-21"
+              className="w-full px-4 py-3 rounded-xl bg-slate-50 border border-slate-200 font-bold text-sm outline-none focus:ring-4 ring-primary/10 focus:border-primary"
+            />
+          </div>
+          <div className="flex gap-2 pt-2">
+            <button
+              onClick={() => setStatusBus(null)}
+              className="flex-1 py-3 bg-slate-100 text-slate-600 rounded-xl font-black uppercase text-[10px] tracking-widest hover:bg-slate-200 active:scale-95 transition-all"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={handlePushStatus}
+              disabled={pushingStatus}
+              className="flex-1 py-3 bg-primary text-white rounded-xl font-black uppercase text-[10px] tracking-widest shadow-lg shadow-primary/20 hover:bg-blue-800 active:scale-95 transition-all disabled:opacity-60 flex items-center justify-center gap-2"
+            >
+              {pushingStatus ? <><i className="fas fa-circle-notch fa-spin"></i> Sending</> : <><i className="fas fa-bullhorn"></i> Push to Parents</>}
+            </button>
+          </div>
+        </div>
+      </Modal>
     </div>
   );
 };
