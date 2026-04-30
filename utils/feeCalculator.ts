@@ -22,11 +22,32 @@ export interface PaymentBundle {
   items: PaymentBundleItem[];
   totalBaseAmount: number;
   totalLateFee: number;
+  /** Total discount applied to this bundle (sibling + annual prepay combined). */
+  totalDiscount: number;
+  /** Sub-total before discount. */
+  subtotal: number;
+  /** True if sibling discount was applied (child is 2nd, 3rd...). */
+  isSiblingDiscount: boolean;
+  /** True if annual pre-pay discount was applied (≥ 8 months bundled). */
+  isAnnualPrepayDiscount: boolean;
   hasArrears: boolean;
   firstMonthLabel: string;
   targetMonthLabel: string;
   explanation: string;
 }
+
+/**
+ * Discount inputs sourced from payment_settings + the parent's child order.
+ */
+export interface DiscountConfig {
+  /** Set when this child is NOT the parent's first child (oldest by created_at).
+   *  Sibling discount % from payment_settings is then applied to this bundle. */
+  siblingDiscountPercent?: number;
+  /** Annual pre-pay discount %. Triggered when bundle covers ≥ 8 months. */
+  annualPrepayDiscountPercent?: number;
+}
+
+const ANNUAL_PREPAY_MIN_MONTHS = 8;
 
 const toPeriod = (due: MonthlyDue) => Number(due.year || 0) * 12 + Number(due.month || 0);
 
@@ -79,7 +100,8 @@ export const calculateCurrentLedger = (due: MonthlyDue, referenceDate: Date = ne
 export const buildPaymentBundle = (
   targetDue: MonthlyDue,
   allDues: MonthlyDue[],
-  referenceDate: Date = new Date()
+  referenceDate: Date = new Date(),
+  discountConfig: DiscountConfig = {},
 ): PaymentBundle => {
   const studentDueRows = allDues
     .filter((due) => String(due.student_id) === String(targetDue.student_id))
@@ -124,9 +146,27 @@ export const buildPaymentBundle = (
 
   const totalBaseAmount = items.reduce((sum, item) => sum + item.baseAmount, 0);
   const totalLateFee = items.reduce((sum, item) => sum + item.lateFee, 0);
+  const subtotal = items.reduce((sum, item) => sum + item.total, 0);
   const hasArrears = items.length > 1;
   const firstMonthLabel = items[0]?.label || getMonthLabel(targetDue);
   const targetMonthLabel = getMonthLabel(targetDue);
+
+  // Apply discounts on top of the calculated subtotal.
+  // Sibling discount fires for any non-first child of the parent.
+  // Annual pre-pay fires when bundle includes >= ANNUAL_PREPAY_MIN_MONTHS months.
+  const siblingPct = Math.max(0, Number(discountConfig.siblingDiscountPercent || 0));
+  const annualPct = Math.max(0, Number(discountConfig.annualPrepayDiscountPercent || 0));
+  const isSiblingDiscount = siblingPct > 0;
+  const isAnnualPrepayDiscount = annualPct > 0 && items.length >= ANNUAL_PREPAY_MIN_MONTHS;
+
+  let totalDiscount = 0;
+  if (isSiblingDiscount) totalDiscount += Math.round((subtotal * siblingPct) / 100);
+  if (isAnnualPrepayDiscount) {
+    // Annual pre-pay applies on the post-sibling-discount amount
+    const afterSibling = Math.max(0, subtotal - totalDiscount);
+    totalDiscount += Math.round((afterSibling * annualPct) / 100);
+  }
+  const finalAmount = Math.max(0, subtotal - totalDiscount);
 
   let explanation = `Paying ${targetMonthLabel} settles ${items.length} month${items.length > 1 ? 's' : ''} from ${firstMonthLabel} to ${targetMonthLabel}.`;
   if (hasArrears && totalLateFee > 0) {
@@ -136,14 +176,25 @@ export const buildPaymentBundle = (
   } else if (totalLateFee > 0) {
     explanation += ' The amount is higher because late fee is applied for overdue days.';
   }
+  if (isSiblingDiscount && isAnnualPrepayDiscount) {
+    explanation += ` Sibling discount ${siblingPct}% and annual pre-pay discount ${annualPct}% applied — you save ₹${totalDiscount.toLocaleString('en-IN')}.`;
+  } else if (isSiblingDiscount) {
+    explanation += ` Sibling discount ${siblingPct}% applied — you save ₹${totalDiscount.toLocaleString('en-IN')}.`;
+  } else if (isAnnualPrepayDiscount) {
+    explanation += ` Annual pre-pay discount ${annualPct}% applied — you save ₹${totalDiscount.toLocaleString('en-IN')}.`;
+  }
 
   return {
     dueIds: items.map((item) => item.dueId),
-    amount: items.reduce((sum, item) => sum + item.total, 0),
+    amount: finalAmount,
     monthsCount: items.length,
     items,
     totalBaseAmount,
     totalLateFee,
+    subtotal,
+    totalDiscount,
+    isSiblingDiscount,
+    isAnnualPrepayDiscount,
     hasArrears,
     firstMonthLabel,
     targetMonthLabel,

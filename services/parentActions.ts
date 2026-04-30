@@ -203,7 +203,91 @@ export const getLatestBusStatusForParent = async (parentId: string, busId: strin
 };
 
 // ============================================================================
-// 3. Pickup location swap request
+// 3. Emergency / panic alert — parent taps a red button, all admins get
+//    a DANGER notification with student + parent + optional location.
+// ============================================================================
+
+export interface EmergencyAlertInput {
+  studentId: string;
+  parentId: string;
+  parentName?: string;
+  parentPhone?: string;
+  category: 'safety' | 'late_drop' | 'lost_stop' | 'medical' | 'other';
+  notes?: string;
+  /** Optional GPS coordinates if the parent allowed location. */
+  lat?: number;
+  lng?: number;
+}
+
+export interface EmergencyAlertResult {
+  ok: boolean;
+  error?: string;
+  notifiedAdmins?: number;
+}
+
+const EMERGENCY_LABELS: Record<string, string> = {
+  safety:    'Child safety concern',
+  late_drop: 'Bus is very late / not arrived',
+  lost_stop: 'Child got off wrong stop',
+  medical:   'Medical emergency',
+  other:     'Other emergency',
+};
+
+export const sendEmergencyAlert = async (input: EmergencyAlertInput): Promise<EmergencyAlertResult> => {
+  try {
+    const { data: student } = await supabase
+      .from('students')
+      .select('full_name, route_id, buses(bus_number, plate, driver_name, driver_phone)')
+      .eq('id', input.studentId)
+      .maybeSingle();
+    const studentName = (student as any)?.full_name || 'Student';
+    const bus: any = Array.isArray((student as any)?.buses) ? (student as any).buses[0] : (student as any)?.buses;
+
+    const { data: admins } = await supabase
+      .from('profiles')
+      .select('id')
+      .in('role', ['ADMIN', 'SUPER_ADMIN']);
+
+    const adminIds = (admins || []).map((a: any) => a.id).filter(Boolean);
+    if (adminIds.length === 0) return { ok: false, error: 'No admin available to receive alert' };
+
+    const categoryLabel = EMERGENCY_LABELS[input.category] || 'Emergency';
+    const locationStr = input.lat != null && input.lng != null
+      ? ` Location: ${input.lat.toFixed(5)},${input.lng.toFixed(5)} (https://maps.google.com/?q=${input.lat},${input.lng})`
+      : '';
+    const busStr = bus?.bus_number ? ` Bus: ${bus.bus_number}.` : '';
+    const driverStr = bus?.driver_phone ? ` Driver: ${bus.driver_name || ''} ${bus.driver_phone}.` : '';
+    const parentStr = input.parentPhone ? ` Parent: ${input.parentName || ''} ${input.parentPhone}.` : '';
+
+    const message = `[EMERGENCY][STUDENT_ID:${input.studentId}][CATEGORY:${input.category}] ${studentName} — ${categoryLabel}.${busStr}${driverStr}${parentStr}${input.notes ? ` Note: ${input.notes}.` : ''}${locationStr}`;
+
+    await supabase.from('notifications').insert(
+      adminIds.map((adminId: string) => ({
+        user_id: adminId,
+        title: `🚨 EMERGENCY — ${studentName}`,
+        message,
+        type: 'DANGER',
+        is_read: false,
+      }))
+    );
+
+    // Confirmation for the parent so they know it landed
+    await supabase.from('notifications').insert({
+      user_id: input.parentId,
+      title: 'Emergency alert sent',
+      message: `Your emergency alert about ${studentName} (${categoryLabel}) has been sent to admin. They will contact you immediately.`,
+      type: 'WARNING',
+      is_read: false,
+    });
+
+    return { ok: true, notifiedAdmins: adminIds.length };
+  } catch (err: any) {
+    return { ok: false, error: err?.message || 'Failed to send emergency alert' };
+  }
+};
+
+// ============================================================================
+// 4. Pickup location swap request
 // ============================================================================
 
 export interface PickupSwapInput {

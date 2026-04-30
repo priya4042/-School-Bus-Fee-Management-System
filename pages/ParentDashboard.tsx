@@ -14,7 +14,7 @@ import { supabase } from '../lib/supabase';
 import MiniLoader from '../components/MiniLoader';
 import { useLanguage } from '../lib/i18n';
 import { checkAndCreateUpcomingDueReminders } from '../services/feeReminders';
-import { markChildAbsent, submitPickupSwapRequest, getLatestBusStatusForParent, BUS_STATUS_OPTIONS, type ParsedBusStatus } from '../services/parentActions';
+import { markChildAbsent, submitPickupSwapRequest, getLatestBusStatusForParent, sendEmergencyAlert, BUS_STATUS_OPTIONS, type ParsedBusStatus } from '../services/parentActions';
 import Modal from '../components/Modal';
 import { showAlert, showConfirm } from '../lib/swal';
 import { useUpiSettings } from '../lib/upiSettings';
@@ -40,6 +40,44 @@ const ParentDashboard: React.FC<{ user: User }> = ({ user }) => {
   const [absentNotes, setAbsentNotes] = useState('');
   const [savingAbsent, setSavingAbsent] = useState(false);
   const [showSwapModal, setShowSwapModal] = useState(false);
+  const [showEmergencyModal, setShowEmergencyModal] = useState(false);
+  const [emergencyCategory, setEmergencyCategory] = useState<'safety' | 'late_drop' | 'lost_stop' | 'medical' | 'other'>('safety');
+  const [emergencyNotes, setEmergencyNotes] = useState('');
+  const [sendingEmergency, setSendingEmergency] = useState(false);
+
+  const handleSendEmergency = async () => {
+    if (!selectedStudent) return;
+    setSendingEmergency(true);
+    let lat: number | undefined;
+    let lng: number | undefined;
+    try {
+      // Best-effort: ask for browser geolocation; ignore if denied
+      const pos = await new Promise<GeolocationPosition>((resolve, reject) => {
+        if (!navigator.geolocation) return reject(new Error('No geolocation'));
+        navigator.geolocation.getCurrentPosition(resolve, reject, { timeout: 4000, maximumAge: 60000 });
+      });
+      lat = pos.coords.latitude;
+      lng = pos.coords.longitude;
+    } catch { /* user denied or unsupported */ }
+
+    const result = await sendEmergencyAlert({
+      studentId: selectedStudent.id,
+      parentId: user.id,
+      parentName: user.fullName || user.full_name,
+      parentPhone: (user as any).phoneNumber || (user as any).phone_number,
+      category: emergencyCategory,
+      notes: emergencyNotes.trim() || undefined,
+      lat, lng,
+    });
+    setSendingEmergency(false);
+    if (!result.ok) {
+      showAlert('Emergency alert failed', result.error || 'Try again or call admin directly.', 'error');
+      return;
+    }
+    showToast(`Alert sent to ${result.notifiedAdmins || 0} admin${result.notifiedAdmins === 1 ? '' : 's'}.`, 'success');
+    setShowEmergencyModal(false);
+    setEmergencyNotes('');
+  };
   const [swapDate, setSwapDate] = useState(() => {
     const d = new Date();
     d.setDate(d.getDate() + 1); // default tomorrow
@@ -115,7 +153,12 @@ const ParentDashboard: React.FC<{ user: User }> = ({ user }) => {
     if (!confirmed) return;
     // Pick the earliest unpaid due as the "anchor" so the portal opens on it
     const anchor = unpaidDues.sort((a: any, b: any) => (a.year * 12 + a.month) - (b.year * 12 + b.month))[0] as any;
-    const bundle = buildPaymentBundle(anchor, unpaidDues as any);
+    // Family bundle: sibling discount applies because we're paying for >1 child;
+    // annual prepay applies because items.length will be ≥ 8 most of the time.
+    const bundle = buildPaymentBundle(anchor, unpaidDues as any, new Date(), {
+      siblingDiscountPercent: familyStudents.length > 1 ? upiSettings.siblingDiscountPercent : 0,
+      annualPrepayDiscountPercent: upiSettings.annualPrepayDiscountPercent,
+    });
     openPortal(
       anchor.id,
       bundle.amount || total,
@@ -337,6 +380,16 @@ const ParentDashboard: React.FC<{ user: User }> = ({ user }) => {
         );
       })()}
 
+      {/* Emergency panic button — full-width, top of action row */}
+      <button
+        onClick={() => { setEmergencyCategory('safety'); setEmergencyNotes(''); setShowEmergencyModal(true); }}
+        disabled={!selectedStudent}
+        className="w-full p-3 md:p-4 bg-gradient-to-r from-red-600 to-rose-600 text-white rounded-xl md:rounded-2xl shadow-xl shadow-red-600/30 active:scale-[0.98] hover:from-red-700 hover:to-rose-700 transition-all flex items-center justify-center gap-3 disabled:opacity-60"
+      >
+        <span className="text-2xl">🚨</span>
+        <span className="text-sm md:text-base font-black uppercase tracking-widest">Emergency — Alert Admin</span>
+      </button>
+
       {/* Parent quick-actions row */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-3">
         <button
@@ -501,12 +554,16 @@ const ParentDashboard: React.FC<{ user: User }> = ({ user }) => {
                            </button>
                         </div>
                      ) : (
-                       <button 
+                       <button
                          disabled={isLocked}
                          onClick={() => {
-                         const payBundle = buildPaymentBundle(due, selectedStudentAllDues);
                          const childIndex = familyStudents.findIndex(s => s.id === selectedStudent.id) + 1;
                          const ordinal = childIndex === 1 ? '1st' : childIndex === 2 ? '2nd' : childIndex === 3 ? '3rd' : `${childIndex}th`;
+                         // Sibling discount applies to 2nd, 3rd... children only
+                         const payBundle = buildPaymentBundle(due, selectedStudentAllDues, new Date(), {
+                           siblingDiscountPercent: childIndex >= 2 ? upiSettings.siblingDiscountPercent : 0,
+                           annualPrepayDiscountPercent: upiSettings.annualPrepayDiscountPercent,
+                         });
                          openPortal(due.id, payBundle.amount || Number(due.total_due || due.amount || 0), `${selectedStudent.full_name} (${ordinal} Child)`, payBundle.dueIds, payBundle);
                        }}
                          className={`px-4 md:px-6 py-2 text-[8px] md:text-[9px] font-black uppercase tracking-widest rounded-lg md:rounded-xl transition-all ${isLocked ? 'bg-slate-100 text-slate-400 cursor-not-allowed' : 'bg-primary text-white hover:bg-blue-800 shadow-xl shadow-primary/20'}`}
@@ -554,9 +611,12 @@ const ParentDashboard: React.FC<{ user: User }> = ({ user }) => {
                           </p>
                           <button
                             onClick={() => {
-                              const payBundle = buildPaymentBundle(due, selectedStudentAllDues);
                               const childIndex = familyStudents.findIndex(s => s.id === selectedStudent.id) + 1;
                               const ordinal = childIndex === 1 ? '1st' : childIndex === 2 ? '2nd' : childIndex === 3 ? '3rd' : `${childIndex}th`;
+                              const payBundle = buildPaymentBundle(due, selectedStudentAllDues, new Date(), {
+                                siblingDiscountPercent: childIndex >= 2 ? upiSettings.siblingDiscountPercent : 0,
+                                annualPrepayDiscountPercent: upiSettings.annualPrepayDiscountPercent,
+                              });
                               openPortal(due.id, payBundle.amount || Number(due.total_due || due.amount || 0), `${selectedStudent.full_name} (${ordinal} Child)`, payBundle.dueIds, payBundle);
                             }}
                             className="px-3 py-2 rounded-lg bg-primary text-white text-[8px] font-black uppercase tracking-widest hover:bg-blue-800 transition-all"
@@ -690,6 +750,68 @@ const ParentDashboard: React.FC<{ user: User }> = ({ user }) => {
               className="flex-1 py-3 bg-primary text-white rounded-xl font-black uppercase text-[10px] tracking-widest shadow-lg shadow-primary/20 hover:bg-blue-800 active:scale-95 transition-all disabled:opacity-60 flex items-center justify-center gap-2"
             >
               {savingSwap ? <><i className="fas fa-circle-notch fa-spin"></i> Sending</> : <><i className="fas fa-paper-plane"></i> Send Request</>}
+            </button>
+          </div>
+        </div>
+      </Modal>
+
+      {/* Emergency alert modal */}
+      <Modal
+        isOpen={showEmergencyModal}
+        onClose={() => setShowEmergencyModal(false)}
+        title={`🚨 Send Emergency Alert`}
+        maxWidthClass="max-w-md"
+        bodyClassName="p-4 md:p-8"
+      >
+        <div className="space-y-4">
+          <p className="text-[11px] font-bold text-red-700 leading-relaxed bg-red-50 border border-red-200 p-3 rounded-xl">
+            All admins will be notified instantly. They will contact you directly. Use only for genuine urgent matters affecting {selectedStudent?.full_name || 'your child'}.
+          </p>
+          <div className="space-y-2">
+            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Category</label>
+            <div className="grid grid-cols-1 gap-2">
+              {([
+                { key: 'safety',    label: '🛡️  Child safety concern' },
+                { key: 'late_drop', label: '⏰  Bus is very late / not arrived' },
+                { key: 'lost_stop', label: '🚏  Child got off wrong stop' },
+                { key: 'medical',   label: '🩺  Medical emergency' },
+                { key: 'other',     label: '⚠️  Other urgent issue' },
+              ] as const).map((c) => (
+                <button
+                  key={c.key}
+                  onClick={() => setEmergencyCategory(c.key)}
+                  className={`p-3 rounded-xl text-left text-[11px] font-black uppercase tracking-widest transition-all border-2 active:scale-[0.98] ${
+                    emergencyCategory === c.key ? 'border-red-500 bg-red-50 text-red-700' : 'border-slate-100 bg-white text-slate-600'
+                  }`}
+                >
+                  {c.label}
+                </button>
+              ))}
+            </div>
+          </div>
+          <div className="space-y-2">
+            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Notes (optional)</label>
+            <textarea
+              rows={2}
+              value={emergencyNotes}
+              onChange={(e) => setEmergencyNotes(e.target.value)}
+              placeholder="any details that will help admin act fast"
+              className="w-full px-4 py-3 rounded-xl bg-slate-50 border border-slate-200 font-bold text-sm outline-none focus:ring-4 ring-red-500/10 focus:border-red-500 resize-none"
+            />
+          </div>
+          <div className="flex gap-2 pt-2">
+            <button
+              onClick={() => setShowEmergencyModal(false)}
+              className="flex-1 py-3 bg-slate-100 text-slate-600 rounded-xl font-black uppercase text-[10px] tracking-widest hover:bg-slate-200 active:scale-95 transition-all"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={handleSendEmergency}
+              disabled={sendingEmergency}
+              className="flex-1 py-3 bg-gradient-to-r from-red-600 to-rose-600 text-white rounded-xl font-black uppercase text-[10px] tracking-widest shadow-lg shadow-red-600/20 hover:from-red-700 hover:to-rose-700 active:scale-95 transition-all disabled:opacity-60 flex items-center justify-center gap-2"
+            >
+              {sendingEmergency ? <><i className="fas fa-circle-notch fa-spin"></i> Sending</> : <>🚨 Send Alert</>}
             </button>
           </div>
         </div>
