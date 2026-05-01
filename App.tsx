@@ -288,19 +288,25 @@ const App: React.FC = () => {
 
               {/* Main Content Area */}
               <main
-                className="p-3 md:p-8 flex-1 overflow-auto bg-slate-50 pb-[calc(env(safe-area-inset-bottom,0px)+12rem+8vh)] lg:pb-8"
+                className="p-3 md:p-8 flex-1 overflow-auto bg-slate-50 lg:pb-8"
                 style={{
                   paddingLeft: 'max(0.75rem, env(safe-area-inset-left, 0px))',
                   paddingRight: 'max(0.75rem, env(safe-area-inset-right, 0px))',
+                  // Tall, fixed clearance — does not rely on vh (unreliable on Android
+                  // Capacitor) or safe-area-inset-bottom alone (often 0 on Android)
+                  paddingBottom: (isMobile || isTablet)
+                    ? 'calc(env(safe-area-inset-bottom, 0px) + 16rem)'
+                    : undefined,
                 }}
               >
                 <div className="max-w-7xl mx-auto">
                   {renderContent()}
-                  {/* Bottom-nav clearance spacer — physical gap at the end of every page on phone */}
+                  {/* Belt-and-suspenders: a real DOM spacer that physically sits at the end
+                      of every page so even short pages keep content above the bottom nav. */}
                   {(isMobile || isTablet) && (
                     <div
                       aria-hidden="true"
-                      style={{ height: 'calc(env(safe-area-inset-bottom, 0px) + 6rem)' }}
+                      style={{ height: 'calc(env(safe-area-inset-bottom, 0px) + 8rem)' }}
                     />
                   )}
                 </div>
