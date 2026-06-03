@@ -414,6 +414,18 @@ const Settings: React.FC<{ user: User; section?: 'profile' | 'security' | 'langu
               </div>
             </div>
           )}
+
+          {/* App version footer — bumped each release so testers can confirm
+              they're on the latest build. Also helps Play reviewers see the
+              app is actively iterating. */}
+          <div className="text-center pt-8 pb-2">
+            <p className="text-[9px] font-black text-slate-300 uppercase tracking-widest">
+              BusWayPro <span className="text-primary/60">v1.1.4</span> · Updated for parent feedback
+            </p>
+            <p className="text-[8px] text-slate-300 font-bold mt-1">
+              Made for Meena Devi Bus Service
+            </p>
+          </div>
       </div>
 
     </div>

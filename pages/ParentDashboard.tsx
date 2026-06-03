@@ -376,13 +376,19 @@ const ParentDashboard: React.FC<{ user: User }> = ({ user }) => {
         const savings = Math.round((totalUnpaid * upiSettings.annualPrepayDiscountPercent) / 100);
         if (savings <= 0) return null;
         return (
-          <div className="p-3 md:p-4 rounded-xl md:rounded-2xl border bg-gradient-to-r from-amber-50 to-yellow-50 border-amber-200 flex items-center gap-3">
-            <span className="text-2xl flex-shrink-0">💰</span>
+          <div className="p-3 md:p-4 rounded-xl md:rounded-2xl border bg-gradient-to-r from-amber-50 via-yellow-50 to-orange-50 border-amber-200 flex items-center gap-3 shadow-sm">
+            {/* Savings callout — the actual ₹ number is what parents want to see */}
+            <div className="flex-shrink-0 w-16 md:w-20 text-center bg-amber-500 text-white rounded-xl md:rounded-2xl py-2 shadow-md shadow-amber-500/30">
+              <p className="text-[7px] md:text-[8px] font-black uppercase tracking-widest opacity-90">Save</p>
+              <p className="text-base md:text-xl font-black tracking-tighter leading-tight">₹{savings.toLocaleString('en-IN')}</p>
+            </div>
             <div className="flex-1 min-w-0">
               <p className="text-[9px] font-black uppercase tracking-widest text-amber-700">Annual Pre-Pay Offer</p>
               <p className="text-sm md:text-base font-black text-slate-900 leading-tight">
-                Pay everything pending and save ₹{savings.toLocaleString('en-IN')}
-                <span className="text-[10px] font-bold text-slate-500 ml-1">({upiSettings.annualPrepayDiscountPercent}% off ₹{totalUnpaid.toLocaleString('en-IN')})</span>
+                Clear all pending dues in one payment
+              </p>
+              <p className="text-[10px] font-bold text-slate-500 mt-0.5">
+                {upiSettings.annualPrepayDiscountPercent}% off ₹{totalUnpaid.toLocaleString('en-IN')} total
               </p>
             </div>
             <button
