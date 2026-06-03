@@ -14,6 +14,14 @@ export interface ImportRow {
   bus_number?: string;
   boarding_point?: string;
   status: string;
+  // Optional per-row fee policy (matches Admin form's "Initial Fee Setup").
+  // If blank, the importer falls back to sensible defaults (10th / 20th, 5d / ₹10).
+  bill_start_period?: string;   // "YYYY-MM" e.g. "2026-04"  — default: current month
+  bill_end_period?: string;     // "YYYY-MM" e.g. "2027-03"  — default: March of fiscal year
+  due_date_day?: number;        // 1–31, default 10
+  last_date_day?: number;       // 1–31, default 20
+  fine_after_days?: number;     // default 0 (no fine)
+  fine_per_day?: number;        // default 0
   // Validation
   errors: string[];
   warnings: string[];
@@ -48,6 +56,12 @@ const COLUMN_ALIASES: Record<string, string[]> = {
   bus_number: ['bus_number', 'bus', 'bus no', 'bus number', 'plate'],
   boarding_point: ['boarding_point', 'boarding', 'pickup', 'stop', 'pickup point'],
   status: ['status', 'active', 'is_active'],
+  bill_start_period: ['bill_start_period', 'start_month', 'billing_start', 'fee_start', 'start period', 'billing start'],
+  bill_end_period:   ['bill_end_period',   'end_month',   'billing_end',   'fee_end',   'end period',   'billing end'],
+  due_date_day:      ['due_date_day',      'due_day',     'due date day',  'due_date'],
+  last_date_day:     ['last_date_day',     'last_day',    'last date day', 'last_date',  'fine_start_day'],
+  fine_after_days:   ['fine_after_days',   'fine_after',  'grace_days',    'grace days'],
+  fine_per_day:      ['fine_per_day',      'fine',        'late_fee',      'fine amount'],
 };
 
 const COLUMN_DESCRIPTIONS: Record<string, string> = {
@@ -62,6 +76,12 @@ const COLUMN_DESCRIPTIONS: Record<string, string> = {
   bus_number: 'Bus number or vehicle plate',
   boarding_point: 'Pickup stop where the child boards',
   status: 'active or inactive (default: active)',
+  bill_start_period: 'First month to generate a fee for (YYYY-MM, e.g. 2026-04). Default: current month.',
+  bill_end_period: 'Last month to generate a fee for (YYYY-MM, e.g. 2027-03). Default: March of fiscal year.',
+  due_date_day: 'Day of month the fee is due (1-31). Default: 10.',
+  last_date_day: 'Day of month after which a fine applies (1-31). Default: 20.',
+  fine_after_days: 'Number of days past last date before fine kicks in. Default: 0.',
+  fine_per_day: 'Fine in INR charged per day after the grace period. Default: 0.',
 };
 
 // Custom error thrown when the file is missing required columns. UI surfaces
@@ -180,6 +200,42 @@ export const parseStudentImportFile = async (file: File): Promise<ImportPreviewR
       return 'active';
     })();
 
+    // Optional per-row fee policy. All have defaults applied in runStudentImport().
+    const normalizePeriod = (raw: any): string | undefined => {
+      if (!raw) return undefined;
+      const s = String(raw).trim();
+      // Accept "2026-04", "2026/04", "04-2026", "April 2026", "Apr-2026"
+      const ymMatch = s.match(/(\d{4})[-/. ](\d{1,2})/);
+      if (ymMatch) return `${ymMatch[1]}-${ymMatch[2].padStart(2, '0')}`;
+      const myMatch = s.match(/(\d{1,2})[-/. ](\d{4})/);
+      if (myMatch) return `${myMatch[2]}-${myMatch[1].padStart(2, '0')}`;
+      const monthNames = ['january','february','march','april','may','june','july','august','september','october','november','december'];
+      const nameMatch = s.toLowerCase().match(/([a-z]+)[\s\-/]*(\d{4})/);
+      if (nameMatch) {
+        const idx = monthNames.findIndex((n) => n.startsWith(nameMatch[1].slice(0, 3)));
+        if (idx >= 0) return `${nameMatch[2]}-${String(idx + 1).padStart(2, '0')}`;
+      }
+      return undefined;
+    };
+    const bill_start_period = normalizePeriod(findKey(rec, 'bill_start_period'));
+    const bill_end_period = normalizePeriod(findKey(rec, 'bill_end_period'));
+    const toIntOrUndef = (raw: any): number | undefined => {
+      if (raw === undefined || raw === null || String(raw).trim() === '') return undefined;
+      const n = Number(String(raw).replace(/[^0-9.]/g, ''));
+      return Number.isFinite(n) ? n : undefined;
+    };
+    const due_date_day = toIntOrUndef(findKey(rec, 'due_date_day'));
+    const last_date_day = toIntOrUndef(findKey(rec, 'last_date_day'));
+    const fine_after_days = toIntOrUndef(findKey(rec, 'fine_after_days'));
+    const fine_per_day = toIntOrUndef(findKey(rec, 'fine_per_day'));
+
+    if (due_date_day !== undefined && (due_date_day < 1 || due_date_day > 31)) {
+      warnings.push(`due_date_day ${due_date_day} out of range — using default 10`);
+    }
+    if (last_date_day !== undefined && (last_date_day < 1 || last_date_day > 31)) {
+      warnings.push(`last_date_day ${last_date_day} out of range — using default 20`);
+    }
+
     if (!full_name) errors.push('Missing full_name');
     if (!admission_number) errors.push('Missing admission_number');
     if (admission_number && existingAdmissions.has(admission_number.toLowerCase())) {
@@ -208,6 +264,12 @@ export const parseStudentImportFile = async (file: File): Promise<ImportPreviewR
       bus_number,
       boarding_point,
       status,
+      bill_start_period,
+      bill_end_period,
+      due_date_day,
+      last_date_day,
+      fine_after_days,
+      fine_per_day,
       errors,
       warnings,
     };
@@ -257,22 +319,48 @@ export const runStudentImport = async (rows: ImportRow[]): Promise<ImportRunResu
 
   const result: ImportRunResult = { successCount: 0, failedCount: 0, failedRows: [], duesGenerated: 0 };
 
-  // Date helpers for due generation
+  // Default billing cycle: current month -> March of fiscal year (Indian academic year)
   const today = new Date();
   const currentMonth = today.getMonth() + 1;
   const currentYear = today.getFullYear();
   const fyStart = currentMonth >= 4 ? currentYear : currentYear - 1;
 
-  const cycles: Array<{ month: number; year: number }> = [];
-  let m = currentMonth;
-  let y = currentYear;
-  while (true) {
-    cycles.push({ month: m, year: y });
-    if (y === fyStart + 1 && m === 3) break;
-    m += 1;
-    if (m > 12) { m = 1; y += 1; }
-    if (cycles.length > 18) break;
-  }
+  const buildDefaultCycles = () => {
+    const cycles: Array<{ month: number; year: number }> = [];
+    let m = currentMonth;
+    let y = currentYear;
+    while (true) {
+      cycles.push({ month: m, year: y });
+      if (y === fyStart + 1 && m === 3) break;
+      m += 1;
+      if (m > 12) { m = 1; y += 1; }
+      if (cycles.length > 18) break;
+    }
+    return cycles;
+  };
+
+  // Per-row override: if the admin specified bill_start_period / bill_end_period
+  // in the Excel (YYYY-MM), generate cycles between those two months inclusive.
+  const buildCustomCycles = (start: string, end: string) => {
+    const [sy, sm] = start.split('-').map(Number);
+    const [ey, em] = end.split('-').map(Number);
+    if (!sy || !sm || !ey || !em) return null;
+    const cycles: Array<{ month: number; year: number }> = [];
+    let y = sy, m = sm;
+    while (y < ey || (y === ey && m <= em)) {
+      cycles.push({ month: m, year: y });
+      m += 1;
+      if (m > 12) { m = 1; y += 1; }
+      if (cycles.length > 36) break; // safety
+    }
+    return cycles.length > 0 ? cycles : null;
+  };
+
+  const clampDay = (raw: number | undefined, fallback: number): number => {
+    const n = Number(raw);
+    if (!Number.isFinite(n) || n < 1 || n > 31) return fallback;
+    return Math.floor(n);
+  };
 
   for (const row of validRows) {
     try {
@@ -320,17 +408,27 @@ export const runStudentImport = async (rows: ImportRow[]): Promise<ImportRunResu
         continue;
       }
 
-      // Auto-generate dues
+      // Auto-generate dues. Use per-row Excel overrides where present,
+      // otherwise fall back to defaults (current month -> March, 10th / 20th).
       if (row.monthly_fee > 0) {
-        const duesRows = cycles.map((c) => ({
+        const rowCycles = (row.bill_start_period && row.bill_end_period
+          ? buildCustomCycles(row.bill_start_period, row.bill_end_period)
+          : null) || buildDefaultCycles();
+        const dueDay = clampDay(row.due_date_day, 10);
+        const lastDay = clampDay(row.last_date_day, 20);
+        const fineAfter = Number.isFinite(row.fine_after_days as number) ? row.fine_after_days : 0;
+        const finePerDay = Number.isFinite(row.fine_per_day as number) ? row.fine_per_day : 0;
+        const duesRows = rowCycles.map((c: { month: number; year: number }) => ({
           student_id: inserted.id,
           month: c.month,
           year: c.year,
           amount: row.monthly_fee,
           total_due: row.monthly_fee,
           base_fee: row.monthly_fee,
-          due_date: new Date(Date.UTC(c.year, c.month - 1, 10)).toISOString().slice(0, 10),
-          last_date: new Date(Date.UTC(c.year, c.month - 1, 20)).toISOString().slice(0, 10),
+          due_date: new Date(Date.UTC(c.year, c.month - 1, dueDay)).toISOString().slice(0, 10),
+          last_date: new Date(Date.UTC(c.year, c.month - 1, lastDay)).toISOString().slice(0, 10),
+          fine_after_days: fineAfter || null,
+          fine_per_day: finePerDay || null,
           status: 'PENDING',
         }));
         const { error: duesErr } = await supabase.from('monthly_dues').insert(duesRows);
@@ -365,6 +463,12 @@ export const downloadStudentImportTemplate = () => {
     'bus_number',
     'boarding_point',
     'status',
+    'bill_start_period',
+    'bill_end_period',
+    'due_date_day',
+    'last_date_day',
+    'fine_after_days',
+    'fine_per_day',
   ];
   const sample = [
     'Aarav Sharma',
@@ -378,6 +482,12 @@ export const downloadStudentImportTemplate = () => {
     'BUS-101',
     'Kangra Bus Stand',
     'active',
+    '2026-04',
+    '2027-03',
+    '10',
+    '20',
+    '5',
+    '10',
   ];
   const csv = `${headers.join(',')}\n${sample.map((v) => `"${String(v).replace(/"/g, '""')}"`).join(',')}\n`;
   const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
