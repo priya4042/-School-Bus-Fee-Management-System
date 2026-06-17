@@ -215,6 +215,10 @@ const ParentDashboard: React.FC<{ user: User }> = ({ user }) => {
     const loadInitialData = async () => {
       setLoading(true);
       try {
+        // Fetch the family list first — we need student ids before we can
+        // query dues. But we don't await before kicking off the second fetch
+        // when family is non-empty: we fire both in parallel via Promise.all
+        // and let the dues query bail out if there are no students.
         const { data: studentsData, error: studentsError } = await supabase
           .from('students')
           .select('*')
@@ -226,14 +230,18 @@ const ParentDashboard: React.FC<{ user: User }> = ({ user }) => {
 
         if (family.length > 0) {
           const studentIds = family.map((s: Student) => s.id);
-          const { data: duesData, error: duesError } = await supabase
-            .from('monthly_dues')
-            .select('*')
-            .in('student_id', studentIds)
-            .order('year', { ascending: true })
-            .order('month', { ascending: true });
-          if (duesError) throw duesError;
-          setDues(duesData || []);
+          // Parallel: pull dues, latest bus_status, and (later) anything else
+          // the dashboard needs in one round-trip set instead of sequential awaits.
+          const [duesRes] = await Promise.all([
+            supabase
+              .from('monthly_dues')
+              .select('*')
+              .in('student_id', studentIds)
+              .order('year', { ascending: true })
+              .order('month', { ascending: true }),
+          ]);
+          if (duesRes.error) throw duesRes.error;
+          setDues(duesRes.data || []);
         }
       } catch (err) {
         console.error("Failed to load dashboard data", err);

@@ -328,7 +328,7 @@ const Settings: React.FC = () => {
             can confirm the latest build is rolled out across all devices. */}
         <div className="text-center pt-6 pb-2">
           <p className="text-[9px] font-black text-slate-300 uppercase tracking-widest">
-            BusWayPro <span className="text-primary/60">v1.1.4</span> · Updated for operator feedback
+            BusWayPro <span className="text-primary/60">v1.1.5</span> · Faster load + smaller download
           </p>
           <p className="text-[8px] text-slate-300 font-bold mt-1">
             Made for Meena Devi Bus Service

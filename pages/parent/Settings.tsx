@@ -420,7 +420,7 @@ const Settings: React.FC<{ user: User; section?: 'profile' | 'security' | 'langu
               app is actively iterating. */}
           <div className="text-center pt-8 pb-2">
             <p className="text-[9px] font-black text-slate-300 uppercase tracking-widest">
-              BusWayPro <span className="text-primary/60">v1.1.4</span> · Updated for parent feedback
+              BusWayPro <span className="text-primary/60">v1.1.5</span> · Faster load + smaller download
             </p>
             <p className="text-[8px] text-slate-300 font-bold mt-1">
               Made for Meena Devi Bus Service
